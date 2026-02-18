@@ -1,0 +1,5 @@
+.home {
+  border: 1px solid var(--color-border, oklch(80% 0 0));
+  border-radius: var(--radius-md, 6px);
+  padding: 1rem;
+}
