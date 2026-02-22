@@ -1,3 +1,6 @@
+import "@fontsource-variable/quicksand/index.css";
+import "./index.css";
+
 import { createHashHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";

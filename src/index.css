@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Quicksand Variable", sans-serif;
+  --color-pt-blue-500: oklch(47% 0.15 255);
+  --color-pt-red-500: oklch(48% 0.19 27);
+  --color-pt-green-500: oklch(52% 0.17 142);
+  --color-pt-yellow-500: oklch(90% 0.19 98);
+
+  /* Logo text fill */
+  --color-logo-text: #ffffff;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-logo-text: #1a1a1a;
+  }
+}

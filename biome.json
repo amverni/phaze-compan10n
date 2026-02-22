@@ -68,5 +68,23 @@
         "organizeImports": "on"
       }
     }
+  },
+
+  "css": {
+    "parser": {
+      "cssModules": true,
+      "allowWrongLineComments": true
+    },
+    "linter": {
+      "enabled": false
+    },
+    "formatter": {
+      "enabled": false
+    }
+  },
+
+  "files": {
+    "includes": ["**"],
+    "exclude": ["**/*.css"]
   }
 }
