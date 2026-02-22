@@ -1,10 +1,10 @@
 import React from "react";
 
 const STRIPES = [
-  '--color-pt-blue-500',
   '--color-pt-red-500',
-  '--color-pt-yellow-500',
+  '--color-pt-blue-500',
   '--color-pt-green-500',
+  '--color-pt-yellow-500',
 ];
 
 // ── Font ─────────────────────────────────────────────────────────────────────
@@ -30,8 +30,9 @@ const textBlockTop = phazeY - capHeight;
 const textBlockBottom = companY + fontSize * 0.2;
 
 // Stripe geometry
-const stripeHeight = 10;
-const stripeGap = 7;
+const stripeAngle = -5; // degrees; negative = slants upward left-to-right
+const stripeHeight = 12;
+const stripeGap = 5;
 const totalStripeH = STRIPES.length * stripeHeight + (STRIPES.length - 1) * stripeGap;
 const stripeCenterY = (textBlockTop + textBlockBottom) / 2 - fontSize * 0.05;
 const stripeBandTop = stripeCenterY - totalStripeH / 2;
@@ -75,17 +76,21 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* ── Stripes ───────────────────────────────────────────────────── */}
-        {STRIPES.map((color, i) => (
-          <rect
-            key={color}
-            x={0}
-            y={stripeBandTop + i * (stripeHeight + stripeGap)}
-            width={vbWidth}
-            height={stripeHeight}
-            rx={0}
-            fill={`var(${color})`}
-          />
-        ))}
+        {STRIPES.map((color, i) => {
+          const cy = stripeBandTop + i * (stripeHeight + stripeGap) + stripeHeight / 2;
+          return (
+            <rect
+              key={color}
+              x={0}
+              y={stripeBandTop + i * (stripeHeight + stripeGap)}
+              width={vbWidth}
+              height={stripeHeight}
+              rx={0}
+              fill={`var(${color})`}
+              transform={`rotate(${stripeAngle}, ${vbWidth / 2}, ${cy})`}
+            />
+          );
+        })}
 
         {/* ── Phaze ─────────────────────────────────────────────────────── */}
         <text
