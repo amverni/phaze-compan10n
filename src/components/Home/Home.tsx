@@ -6,7 +6,7 @@ export const Home: React.FC = () => {
   return (
     <>
       <h1 className="home">Hello from TanStack Router</h1>
-      <Logo height={160} />
+      <Logo height={160} width="100%" />
     </>
   );
 };

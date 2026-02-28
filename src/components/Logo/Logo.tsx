@@ -41,9 +41,6 @@ const stripeBandTop = stripeCenterY - totalStripeH / 2;
 const innerWidth = 420;
 const vbWidth = innerWidth + stripeOverhang * 2;
 const wordHeight = textBlockBottom + fontSize * 0.1 + 8; // just the text area
-const stripeAngleOffset = Math.abs((vbWidth / 2) * Math.tan((stripeAngle * Math.PI) / 180));
-const vbHeight = wordHeight + stripeAngleOffset * 2; // includes stripe overshoot
-const vbOriginY = -stripeAngleOffset;
 const textCenterX = vbWidth / 2;
 
 // Shared SVG stroke props — stroke color set via Tailwind classes on <text>
@@ -58,25 +55,27 @@ interface LogoProps {
   /** Height of the word area — stripes may extend beyond this. */
   height: number;
   /** Crops the rendered width without affecting scale (overflow hidden). */
-  width?: number;
+  width?: number | string;
 }
 
 /** Phaze Compan10n logo. */
 export const Logo: React.FC<LogoProps> = ({ height, width }) => {
   const scale = height / wordHeight;
   const scaledWidth = vbWidth * scale;
-  const scaledTotalHeight = vbHeight * scale;
 
   return (
     <div
-      className="overflow-x-clip shrink-0 flex justify-center"
-      style={{ width: width ?? scaledWidth, height: scaledTotalHeight }}
+      className="overflow-x-clip overflow-y-visible shrink-0 flex justify-center"
+      style={{
+        width: width ?? scaledWidth,
+        height,
+      }}
     >
       <svg
-        className="block shrink-0"
-        viewBox={`0 ${vbOriginY} ${vbWidth} ${vbHeight}`}
+        className="block shrink-0 overflow-visible"
+        viewBox={`0 0 ${vbWidth} ${wordHeight}`}
         width={scaledWidth}
-        height={scaledTotalHeight}
+        height={height}
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* ── Stripes ───────────────────────────────────────────────────── */}
