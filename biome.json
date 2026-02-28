@@ -84,7 +84,6 @@
   },
 
   "files": {
-    "includes": ["**"],
-    "exclude": ["**/*.css"]
+    "includes": ["**", "!**/*.css"]
   }
 }

@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/phase-10-scoreboard/',
+  base: "/phase-10-scoreboard/",
   plugins: [
     tailwindcss(),
     react({

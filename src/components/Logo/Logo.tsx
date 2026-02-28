@@ -1,10 +1,10 @@
 import React from "react";
 
 const STRIPES = [
-  '--color-pt-red-500',
-  '--color-pt-blue-500',
-  '--color-pt-green-500',
-  '--color-pt-yellow-500',
+  "--color-pt-red-500",
+  "--color-pt-blue-500",
+  "--color-pt-green-500",
+  "--color-pt-yellow-500",
 ];
 
 // ── Font ─────────────────────────────────────────────────────────────────────
@@ -77,7 +77,9 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
         width={scaledWidth}
         height={height}
         xmlns="http://www.w3.org/2000/svg"
+        role="img"
       >
+        <title>Phaze Compan10n</title>
         {/* ── Stripes ───────────────────────────────────────────────────── */}
         {STRIPES.map((color, i) => {
           const y = stripeBandTop + i * (stripeHeight + stripeGap);
@@ -86,18 +88,12 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
           const dyLeft = -(vbWidth / 2) * Math.tan(angleRad);
           const dyRight = (vbWidth / 2) * Math.tan(angleRad);
           const points = [
-            `0,${y + dyLeft}`,           // top-left
-            `${vbWidth},${y + dyRight}`,  // top-right
+            `0,${y + dyLeft}`, // top-left
+            `${vbWidth},${y + dyRight}`, // top-right
             `${vbWidth},${y + stripeHeight + dyRight}`, // bottom-right
-            `0,${y + stripeHeight + dyLeft}`,           // bottom-left
+            `0,${y + stripeHeight + dyLeft}`, // bottom-left
           ].join(" ");
-          return (
-            <polygon
-              key={color}
-              points={points}
-              fill={`var(${color})`}
-            />
-          );
+          return <polygon key={color} points={points} fill={`var(${color})`} />;
         })}
 
         {/* ── Phaze ─────────────────────────────────────────────────────── */}
@@ -138,4 +134,4 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
       </svg>
     </div>
   );
-}
+};
