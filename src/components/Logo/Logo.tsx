@@ -19,7 +19,7 @@ const smallFontSize = fontSize * 0.75;
 const capHeight = fontSize * 0.72;
 const lineGap = 6;
 const strokeWidth = 12;
-const stripeOverhang = 300; // stripes extend this far beyond text; width prop crops them
+const stripeOverhang = 2000; // stripes extend this far beyond text; width prop crops them
 
 // Baseline positions
 const phazeY = fontSize;
@@ -40,7 +40,10 @@ const stripeBandTop = stripeCenterY - totalStripeH / 2;
 // ViewBox
 const innerWidth = 420;
 const vbWidth = innerWidth + stripeOverhang * 2;
-const vbHeight = textBlockBottom + fontSize * 0.1 + 8;
+const wordHeight = textBlockBottom + fontSize * 0.1 + 8; // just the text area
+const stripeAngleOffset = Math.abs((vbWidth / 2) * Math.tan((stripeAngle * Math.PI) / 180));
+const vbHeight = wordHeight + stripeAngleOffset * 2; // includes stripe overshoot
+const vbOriginY = -stripeAngleOffset;
 const textCenterX = vbWidth / 2;
 
 // Shared SVG stroke props — stroke color set via Tailwind classes on <text>
@@ -52,7 +55,7 @@ const textStrokeProps = {
 };
 
 interface LogoProps {
-  /** Scales the entire logo. */
+  /** Height of the word area — stripes may extend beyond this. */
   height: number;
   /** Crops the rendered width without affecting scale (overflow hidden). */
   width?: number;
@@ -60,19 +63,20 @@ interface LogoProps {
 
 /** Phaze Compan10n logo. */
 export const Logo: React.FC<LogoProps> = ({ height, width }) => {
-  const scale = height / vbHeight;
+  const scale = height / wordHeight;
   const scaledWidth = vbWidth * scale;
+  const scaledTotalHeight = vbHeight * scale;
 
   return (
     <div
-      className="overflow-hidden shrink-0 flex justify-center"
-      style={{ width: width ?? scaledWidth, height }}
+      className="overflow-x-clip shrink-0 flex justify-center"
+      style={{ width: width ?? scaledWidth, height: scaledTotalHeight }}
     >
       <svg
         className="block shrink-0"
-        viewBox={`0 0 ${vbWidth} ${vbHeight}`}
+        viewBox={`0 ${vbOriginY} ${vbWidth} ${vbHeight}`}
         width={scaledWidth}
-        height={height}
+        height={scaledTotalHeight}
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* ── Stripes ───────────────────────────────────────────────────── */}
