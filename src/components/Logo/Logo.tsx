@@ -77,17 +77,22 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
       >
         {/* ── Stripes ───────────────────────────────────────────────────── */}
         {STRIPES.map((color, i) => {
-          const cy = stripeBandTop + i * (stripeHeight + stripeGap) + stripeHeight / 2;
+          const y = stripeBandTop + i * (stripeHeight + stripeGap);
+          // vertical offset at each edge so the stripe slants but ends stay vertical
+          const angleRad = (stripeAngle * Math.PI) / 180;
+          const dyLeft = -(vbWidth / 2) * Math.tan(angleRad);
+          const dyRight = (vbWidth / 2) * Math.tan(angleRad);
+          const points = [
+            `0,${y + dyLeft}`,           // top-left
+            `${vbWidth},${y + dyRight}`,  // top-right
+            `${vbWidth},${y + stripeHeight + dyRight}`, // bottom-right
+            `0,${y + stripeHeight + dyLeft}`,           // bottom-left
+          ].join(" ");
           return (
-            <rect
+            <polygon
               key={color}
-              x={0}
-              y={stripeBandTop + i * (stripeHeight + stripeGap)}
-              width={vbWidth}
-              height={stripeHeight}
-              rx={0}
+              points={points}
               fill={`var(${color})`}
-              transform={`rotate(${stripeAngle}, ${vbWidth / 2}, ${cy})`}
             />
           );
         })}
