@@ -4,6 +4,7 @@ import "./index.css";
 import { createHashHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { QueryProvider } from "./components/QueryProvider/QueryProvider";
 import { indexRoute } from "./routes/index";
 import { rootRoute } from "./routes/root";
 
@@ -20,8 +21,13 @@ declare module "@tanstack/react-router" {
   }
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <QueryProvider>
+        <RouterProvider router={router} />
+      </QueryProvider>
+    </React.StrictMode>,
+  );
+}
