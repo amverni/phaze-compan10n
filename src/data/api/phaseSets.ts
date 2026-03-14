@@ -1,0 +1,103 @@
+import type { PhaseSet, PhaseSetId, SavedPhaseSet, VisiblePhaseSet } from "../../types";
+import type { BuiltInT, SavedT } from "../../types/utils";
+import { builtInPhaseSets } from "../constants/phaseSets";
+import { getDB } from "../db";
+import { nameMatchScore } from "./utils";
+
+export const phaseSetsApi = {
+  /**
+   * Get all phase sets, optionally filtered by type and/or name.
+   *
+   * Only returns the `id`, `name`, and `type` of each phase set.
+   * Temporary phase sets are never returned by this method.
+   *
+   * Built-in phase sets (from constants) are merged with saved phase sets
+   * stored in the database.
+   *
+   * @param filters - Optional filters to narrow results.
+   * @param filters.type - Filter by phase set type: `"built-in"` or `"saved"`.
+   *   When omitted, both `"built-in"` and `"saved"` phase sets are returned.
+   * @param filters.name - Filter by name substring match. Results are sorted by match quality:
+   *   - Name starts with search string (best)
+   *   - Any word starts with search string
+   *   - Contains search string
+   * @returns The matching phase set summaries, sorted by name relevance when a name filter is provided.
+   */
+  async getAll(filters?: {
+    type?: BuiltInT | SavedT;
+    name?: string;
+  }): Promise<Pick<VisiblePhaseSet, "id" | "name" | "type">[]> {
+    let phaseSets: VisiblePhaseSet[] = [];
+
+    if (filters?.type !== "saved") {
+      phaseSets.push(...builtInPhaseSets);
+    }
+    if (filters?.type !== "built-in") {
+      const db = await getDB();
+      const all = await db.getAll("customPhaseSets");
+      const saved = all.filter((ps): ps is SavedPhaseSet => ps.type === "saved");
+      phaseSets.push(...saved);
+    }
+
+    if (filters?.name) {
+      const search = filters.name.toLowerCase();
+      phaseSets = phaseSets
+        .filter((ps) => ps.name.toLowerCase().includes(search))
+        .sort((a, b) => nameMatchScore(b.name, search) - nameMatchScore(a.name, search));
+    }
+
+    return phaseSets.map(({ id, name, type }) => ({ id, name, type }));
+  },
+
+  /**
+   * Get a single phase set by its unique ID.
+   *
+   * Looks up the phase set in built-in constants first, then checks the
+   * database for custom phase sets. Returns any phase set type, including
+   * temporary.
+   *
+   * @param id - The unique identifier of the phase set to retrieve.
+   * @returns The phase set if found, or `undefined` if no phase set exists with the given ID.
+   */
+  async getById(id: PhaseSetId): Promise<PhaseSet | undefined> {
+    const builtIn = builtInPhaseSets.find((ps) => ps.id === id);
+    if (builtIn) return builtIn;
+
+    const db = await getDB();
+    return db.get("customPhaseSets", id);
+  },
+
+  /**
+   * Create a new phase set.
+   *
+   * Automatically generates a unique ID (UUID v4).
+   *
+   * @param data - The phase set data, excluding `id` which is generated automatically.
+   * @returns The newly created phase set, including the generated `id`.
+   */
+  async create(data: Omit<SavedPhaseSet, "id">): Promise<PhaseSet> {
+    const db = await getDB();
+    const newPhaseSet = { ...data, id: crypto.randomUUID() } as PhaseSet;
+    await db.add("customPhaseSets", newPhaseSet);
+    return newPhaseSet;
+  },
+
+  /**
+   * Delete a phase set by ID.
+   *
+   * Removes the phase set record from the database. No error is thrown if the
+   * phase set does not exist. Only custom phase sets (saved) can be deleted;
+   * built-in phase sets cannot be removed and will cause an error.
+   *
+   * @param id - The unique identifier of the phase set to delete.
+   * @throws {Error} If the ID belongs to a built-in phase set.
+   */
+  async delete(id: PhaseSetId): Promise<void> {
+    if (builtInPhaseSets.some((ps) => ps.id === id)) {
+      throw new Error(`Cannot delete built-in phase set: ${id}`);
+    }
+
+    const db = await getDB();
+    await db.delete("customPhaseSets", id);
+  },
+};

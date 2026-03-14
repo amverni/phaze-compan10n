@@ -4,6 +4,7 @@ import type { PhaseId } from "../../types/phase";
 import type { PlayerId } from "../../types/player";
 import type { ArrayAtLeastOne } from "../../types/utils";
 import { getDB } from "../db";
+import { phasesApi } from "./phases";
 
 export const gamesApi = {
   /**
@@ -146,16 +147,27 @@ export const gamesApi = {
   /**
    * Delete a game by ID.
    *
-   * Removes the game record from the database. No error is thrown if the
-   * game does not exist.
+   * Removes the game record from the database and deletes any temporary
+   * phases associated with the game. No error is thrown if the game does
+   * not exist.
    *
    * @param id - The unique identifier of the game to delete.
    */
   async delete(id: GameId): Promise<void> {
     const db = await getDB();
+    const game = await db.get("games", id);
+
+    if (game) {
+      const phases = await phasesApi.getByIds(game.phaseSet.phases);
+      const temporaryPhaseIds = phases.filter((p) => p.type === "temporary").map((p) => p.id);
+
+      if (temporaryPhaseIds.length > 0) {
+        await phasesApi.deleteByIds(temporaryPhaseIds);
+      }
+    }
+
     await db.delete("games", id);
     // roundsApi.deleteByGameId(id);
-    // delete temporary phases
   },
 };
 

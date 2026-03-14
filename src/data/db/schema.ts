@@ -31,6 +31,9 @@ export interface Phase10DB extends DBSchema {
   customPhases: {
     key: PhaseId;
     value: Phase;
+    indexes: {
+      "by-type": string;
+    };
   };
   customPhaseSets: {
     key: PhaseSetId;

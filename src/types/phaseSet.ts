@@ -8,6 +8,9 @@ export interface PhaseSet {
   type: BuiltInT | SavedT | TemporaryT;
 }
 
+export type BuiltInPhaseSet = PhaseSet & { type: BuiltInT };
+export type SavedPhaseSet = PhaseSet & { type: SavedT };
 export type TemporaryPhaseSet = PhaseSet & { type: TemporaryT };
+export type VisiblePhaseSet = BuiltInPhaseSet | SavedPhaseSet;
 
 export type PhaseSetId = string;

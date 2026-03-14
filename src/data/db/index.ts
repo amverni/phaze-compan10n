@@ -1,4 +1,4 @@
-import { type IDBPDatabase, openDB } from "idb";
+import { type IDBPDatabase, type IDBPTransaction, openDB, type StoreNames } from "idb";
 import type { Phase10DB } from "./schema";
 
 let dbInstance: IDBPDatabase<Phase10DB> | null = null;
@@ -6,8 +6,13 @@ let dbInstance: IDBPDatabase<Phase10DB> | null = null;
 export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
   if (dbInstance) return dbInstance;
 
-  dbInstance = await openDB<Phase10DB>("phase10-db", 1, {
-    upgrade(db: IDBPDatabase<Phase10DB>): void {
+  dbInstance = await openDB<Phase10DB>("phase10-db", 2, {
+    upgrade(
+      db: IDBPDatabase<Phase10DB>,
+      _oldVersion: number,
+      _newVersion: number | null,
+      transaction: IDBPTransaction<Phase10DB, StoreNames<Phase10DB>[], "versionchange">,
+    ): void {
       // Create players store
       if (!db.objectStoreNames.contains("players")) {
         const playerStore = db.createObjectStore("players", { keyPath: "id" });
@@ -29,7 +34,10 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
 
       // Create customPhases store
       if (!db.objectStoreNames.contains("customPhases")) {
-        db.createObjectStore("customPhases", { keyPath: "id" });
+        const customPhasesStore = db.createObjectStore("customPhases", { keyPath: "id" });
+        customPhasesStore.createIndex("by-type", "type");
+      } else if (!transaction.objectStore("customPhases").indexNames.contains("by-type")) {
+        transaction.objectStore("customPhases").createIndex("by-type", "type");
       }
 
       // Create customPhaseSets store

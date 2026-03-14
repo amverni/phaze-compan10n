@@ -2,6 +2,8 @@ import type { ArrayAtLeastOne, BuiltInT, SavedT, TemporaryT } from "./utils";
 
 export type Phase = BuiltInPhase | SavedPhase | TemporaryPhase;
 
+export type VisiblePhase = Exclude<Phase, TemporaryPhase>;
+
 export interface BuiltInPhase extends BasePhase {
   type: BuiltInT;
   name: string;
