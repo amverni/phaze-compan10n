@@ -1,14 +1,14 @@
 import type React from "react";
 import "./home.css";
-import { Link } from "@tanstack/react-router";
+import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
+import { CreateButton } from "./CreateButton";
 
 export const Home: React.FC = () => {
   return (
-    <>
-      <h1 className="home">Hello from TanStack Router</h1>
-      <Logo height={160} width="100%" />
-      <Link to="/create">Create Game</Link>
-    </>
+    <CardBackground
+      mainContent={<Logo height={160} width="100%" />}
+      footerContent={<CreateButton />}
+    />
   );
 };

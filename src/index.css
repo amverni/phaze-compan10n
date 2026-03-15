@@ -11,8 +11,17 @@
   --color-logo-text: #ffffff;
 }
 
+/* Card edge shadow – dark mode uses a stronger black shadow with a subtle
+   lighter border-like edge, mimicking natural elevation on dark surfaces. */
+:root {
+  --card-shadow-lg: rgba(0, 0, 0, 0.95);
+  --card-shadow-sm: rgba(0, 0, 0, 0.70);
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     --color-logo-text: #1a1a1a;
+    --card-shadow-lg: rgba(0, 0, 0, 0.18);
+    --card-shadow-sm: rgba(0, 0, 0, 0.12);
   }
 }
