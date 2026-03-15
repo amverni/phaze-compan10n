@@ -1,5 +1,6 @@
 import type React from "react";
 import "./home.css";
+import { Link } from "@tanstack/react-router";
 import { Logo } from "../Logo/Logo";
 
 export const Home: React.FC = () => {
@@ -7,6 +8,7 @@ export const Home: React.FC = () => {
     <>
       <h1 className="home">Hello from TanStack Router</h1>
       <Logo height={160} width="100%" />
+      <Link to="/create">Create Game</Link>
     </>
   );
 };
