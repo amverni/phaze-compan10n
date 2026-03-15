@@ -1,4 +1,4 @@
-export type { ActiveGame, CompletedGame, Game } from "./game";
+export type { ActiveGame, CompletedGame, Game, GameId } from "./game";
 export type {
   BuiltInPhase,
   Phase,
@@ -15,5 +15,6 @@ export type {
   TemporaryPhaseSet,
   VisiblePhaseSet,
 } from "./phaseSet";
-export type { Player } from "./player";
-export type { Round } from "./round";
+export type { Player, PlayerId } from "./player";
+export type { Round, RoundScore } from "./round";
+export type { ArrayAtLeastOne, BuiltInT, SavedT, TemporaryT } from "./utils";

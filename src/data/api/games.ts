@@ -1,10 +1,16 @@
-import type { ActiveGame, CompletedGame, Game, TemporaryPhaseSet } from "../../types";
-import type { GameId } from "../../types/game";
-import type { PhaseId } from "../../types/phase";
-import type { PlayerId } from "../../types/player";
-import type { ArrayAtLeastOne } from "../../types/utils";
+import type {
+  ActiveGame,
+  ArrayAtLeastOne,
+  CompletedGame,
+  Game,
+  GameId,
+  PhaseId,
+  PlayerId,
+  TemporaryPhaseSet,
+} from "../../types";
 import { getDB } from "../db";
 import { phasesApi } from "./phases";
+import { roundsApi } from "./rounds";
 
 export const gamesApi = {
   /**
@@ -106,6 +112,8 @@ export const gamesApi = {
 
     if (phases.length === 1) throw new Error("Cannot remove the last phase from a game");
 
+    /** @todo: verify that the phase hasn't been completed */
+
     const updatedPhaseSet: TemporaryPhaseSet = {
       ...game.phaseSet,
       phases: game.phaseSet.phases.filter((id) => id !== phaseId) as ArrayAtLeastOne<PhaseId>,
@@ -167,7 +175,7 @@ export const gamesApi = {
     }
 
     await db.delete("games", id);
-    // roundsApi.deleteByGameId(id);
+    await roundsApi.deleteByGameId(id);
   },
 };
 

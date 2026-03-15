@@ -1,9 +1,15 @@
 import type { DBSchema } from "idb";
-import type { Game, Player, Round } from "../../types";
-import type { GameId } from "../../types/game";
-import type { Phase, PhaseId } from "../../types/phase";
-import type { PhaseSet, PhaseSetId } from "../../types/phaseSet";
-import type { PlayerId } from "../../types/player";
+import type {
+  Game,
+  GameId,
+  Phase,
+  PhaseId,
+  PhaseSet,
+  PhaseSetId,
+  Player,
+  PlayerId,
+  Round,
+} from "../../types";
 
 export interface Phase10DB extends DBSchema {
   players: {

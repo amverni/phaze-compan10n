@@ -1,5 +1,4 @@
-import type { Player } from "../../types";
-import type { PlayerId } from "../../types/player";
+import type { Player, PlayerId } from "../../types";
 import { getDB } from "../db";
 import { nameMatchScore } from "./utils";
 
