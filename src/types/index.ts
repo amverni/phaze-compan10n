@@ -16,5 +16,5 @@ export type {
   VisiblePhaseSet,
 } from "./phaseSet";
 export type { Player, PlayerId } from "./player";
-export type { Round, RoundScore } from "./round";
+export type { PhaseStatus, Round, RoundScore } from "./round";
 export type { ArrayAtLeastOne, BuiltInT, SavedT, TemporaryT } from "./utils";

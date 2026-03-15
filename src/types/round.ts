@@ -8,9 +8,11 @@ export interface Round {
   scores: ArrayAtLeastOne<RoundScore>;
 }
 
+export type PhaseStatus = "failed" | "completed" | "skipped" | "satOut";
+
 export interface RoundScore {
   playerId: PlayerId;
   score: number;
-  completedPhase: boolean;
+  phaseStatus: PhaseStatus;
   currentPhase: number;
 }
