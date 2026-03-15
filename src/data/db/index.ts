@@ -28,7 +28,9 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
 
       // Create rounds store
       if (!db.objectStoreNames.contains("rounds")) {
-        const roundStore = db.createObjectStore("rounds", { keyPath: "id" });
+        const roundStore = db.createObjectStore("rounds", {
+          keyPath: ["gameId", "roundNumber"],
+        });
         roundStore.createIndex("by-game", "gameId");
       }
 

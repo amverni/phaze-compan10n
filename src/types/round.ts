@@ -8,7 +8,7 @@ export interface Round {
   scores: ArrayAtLeastOne<RoundScore>;
 }
 
-interface RoundScore {
+export interface RoundScore {
   playerId: PlayerId;
   score: number;
   completedPhase: boolean;
