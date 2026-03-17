@@ -33,16 +33,21 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
   mainContent,
   footerContent,
 }) => {
+  const topClip = `polygon(0 0, 100% 0, 100% calc(100% - ${SLANT}), 0% 100%)`;
+  const bottomClip = `polygon(0 ${SLANT}, 100% 0, 100% 100%, 0% 100%)`;
+
   return (
     <div className="flex min-h-svh flex-col overflow-x-clip">
       {/* ── Top panel: flat top, angled bottom ────────────────────── */}
-      <div className="relative z-10" style={{ filter: PANEL_SHADOW }}>
+      <div className="relative z-10">
+        {/* Shadow layer (no children → never re-rendered by interactions) */}
+        <div aria-hidden className="absolute inset-0" style={{ filter: PANEL_SHADOW }}>
+          <div className="h-full bg-white dark:bg-neutral-900" style={{ clipPath: topClip }} />
+        </div>
+        {/* Content layer */}
         <div
-          className="h-[15svh] bg-white dark:bg-neutral-900"
-          style={{
-            clipPath: `polygon(0 0, 100% 0, 100% calc(100% - ${SLANT}), 0% 100%)`,
-            paddingBottom: SLANT,
-          }}
+          className="relative h-[15svh] bg-white dark:bg-neutral-900"
+          style={{ clipPath: topClip, paddingBottom: SLANT }}
         >
           {headerContent}
         </div>
@@ -52,13 +57,15 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
       <div className="relative z-0 flex-1">{mainContent}</div>
 
       {/* ── Bottom panel: angled top, flat bottom ─────────────────── */}
-      <div className="relative z-10" style={{ filter: PANEL_SHADOW }}>
+      <div className="relative z-10">
+        {/* Shadow layer */}
+        <div aria-hidden className="absolute inset-0" style={{ filter: PANEL_SHADOW }}>
+          <div className="h-full bg-white dark:bg-neutral-900" style={{ clipPath: bottomClip }} />
+        </div>
+        {/* Content layer */}
         <div
-          className="h-[15svh] bg-white dark:bg-neutral-900"
-          style={{
-            clipPath: `polygon(0 ${SLANT}, 100% 0, 100% 100%, 0% 100%)`,
-            paddingTop: SLANT,
-          }}
+          className="relative h-[15svh] bg-white dark:bg-neutral-900"
+          style={{ clipPath: bottomClip, paddingTop: SLANT }}
         >
           {footerContent}
         </div>
