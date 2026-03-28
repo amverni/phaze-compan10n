@@ -63,7 +63,7 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
         {/* Content layer */}
         <div
           className="relative h-[15svh] bg-white dark:bg-neutral-900"
-          style={{ clipPath: bottomClip, paddingTop: SLANT }}
+          style={{ clipPath: bottomClip }}
         >
           {footerContent}
         </div>
