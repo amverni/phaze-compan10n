@@ -1,9 +1,5 @@
 import { createHashHistory, createRouter } from "@tanstack/react-router";
-import { createGameRoute } from "./createGame";
-import { indexRoute } from "./index";
-import { rootRoute } from "./root";
-
-const routeTree = rootRoute.addChildren([indexRoute, createGameRoute]);
+import { routeTree } from "../routeTree.gen";
 
 export const router = createRouter({
   routeTree,

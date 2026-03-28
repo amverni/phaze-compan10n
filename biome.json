@@ -84,6 +84,6 @@
   },
 
   "files": {
-    "includes": ["**", "!**/*.css"]
+    "includes": ["**", "!**/*.css", "!src/routeTree.gen.ts"]
   }
 }
