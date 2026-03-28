@@ -1,4 +1,6 @@
-import React from "react";
+import type React from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { SLANT_PX } from "../../constants/layout";
 
 const STRIPES = [
   "--color-pt-red-500",
@@ -30,7 +32,6 @@ const textBlockTop = phazeY - capHeight;
 const textBlockBottom = companY + fontSize * 0.2;
 
 // Stripe geometry
-const stripeAngle = -5; // degrees; negative = slants upward left-to-right
 const stripeHeight = 12;
 const stripeGap = 5;
 const totalStripeH = STRIPES.length * stripeHeight + (STRIPES.length - 1) * stripeGap;
@@ -63,8 +64,26 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
   const scale = height / wordHeight;
   const scaledWidth = vbWidth * scale;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setContainerWidth(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Half the total viewBox-unit drop so the visible slant equals SLANT_PX.
+  const dyHalf = containerWidth > 0 ? (SLANT_PX * vbWidth) / (2 * containerWidth) : 0;
+
   return (
     <div
+      ref={containerRef}
       className="overflow-x-clip overflow-y-visible shrink-0 flex justify-center"
       style={{
         width: width ?? scaledWidth,
@@ -83,15 +102,11 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
         {/* ── Stripes ───────────────────────────────────────────────────── */}
         {STRIPES.map((color, i) => {
           const y = stripeBandTop + i * (stripeHeight + stripeGap);
-          // vertical offset at each edge so the stripe slants but ends stay vertical
-          const angleRad = (stripeAngle * Math.PI) / 180;
-          const dyLeft = -(vbWidth / 2) * Math.tan(angleRad);
-          const dyRight = (vbWidth / 2) * Math.tan(angleRad);
           const points = [
-            `0,${y + dyLeft}`, // top-left
-            `${vbWidth},${y + dyRight}`, // top-right
-            `${vbWidth},${y + stripeHeight + dyRight}`, // bottom-right
-            `0,${y + stripeHeight + dyLeft}`, // bottom-left
+            `0,${y + dyHalf}`, // top-left  (shifted down)
+            `${vbWidth},${y - dyHalf}`, // top-right (shifted up)
+            `${vbWidth},${y + stripeHeight - dyHalf}`, // bottom-right
+            `0,${y + stripeHeight + dyHalf}`, // bottom-left
           ].join(" ");
           return <polygon key={color} points={points} fill={`var(${color})`} />;
         })}

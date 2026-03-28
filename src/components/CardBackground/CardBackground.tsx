@@ -1,10 +1,8 @@
 import type React from "react";
+import { SLANT_PX } from "../../constants/layout";
 
-/**
- * Vertical offset for the angled edge.
- * Matches the logo stripe angle of −5°: tan(5°) × 100vw ≈ 8.75vw.
- */
-const SLANT = "8.75vw";
+/** Slant as a CSS length string for use in polygon / padding expressions. */
+const SLANT = `${SLANT_PX}px`;
 
 /** Shared filter string — shadow colour comes from CSS custom properties
  *  that flip between light mode (dark shadow) and dark mode (light glow). */
