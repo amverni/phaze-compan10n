@@ -1,60 +1,57 @@
-import { Tab as HeadlessTab, TabList as HeadlessTabList } from "@headlessui/react";
-import type { LucideIcon } from "lucide-react";
+import { TabList as HeadlessTabList, type TabListProps } from "@headlessui/react";
+import { Children, type ElementType, isValidElement, type ReactNode } from "react";
 import "./TabList.css";
 
-export type Tab = {
-  /** Visible label text. */
-  label: string;
-  /** Optional Lucide icon shown before the label. */
-  icon?: LucideIcon;
-};
-
-type TabListProps = {
-  /** Tab definitions. */
-  tabs: Tab[];
-  /** Currently selected (controlled) index. */
-  selectedIndex: number;
-  /** Extra classes on the outer TabList. */
-  className?: string;
-};
+const baseClasses = "glass glass-tabs relative flex w-full max-w-md items-center rounded-full p-1";
 
 /**
- * A frosted-glass segmented tab bar.
+ * A frosted-glass tab bar that wraps Headless UI's `TabList`.
  *
- * Renders a Headless UI `<TabList>` with a sliding glass indicator.
+ * Accepts the same props as `@headlessui/react`'s `TabList` and layers on
+ * the app's glass styling. Place `<Tab>` children inside just like you
+ * would with the Headless UI component.
+ *
+ * Automatically renders a sliding glass indicator that tracks the selected
+ * tab. The tab count is derived from `React.Children.count`.
+ *
  * Must be placed inside a `<TabGroup>`.
  */
-export function TabList({ tabs, selectedIndex, className }: TabListProps) {
-  return (
-    <HeadlessTabList
-      className={[
-        "glass glass-tabs relative flex w-full max-w-md items-center rounded-full p-1",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      {/* Sliding glass indicator */}
-      <div
-        className="glass glass-tab-indicator absolute top-1 bottom-1 rounded-full transition-all duration-300 ease-in-out"
-        style={{
-          width: `calc(${100 / tabs.length}% - 8px)`,
-          left: `calc(${(selectedIndex * 100) / tabs.length}% + 4px)`,
-        }}
-        aria-hidden
-      />
+export function TabList<TTag extends ElementType = "div">(props: TabListProps<TTag>) {
+  const { children, ...rest } = props as TabListProps<"div"> & {
+    children?: ReactNode | ((bag: { selectedIndex: number }) => ReactNode);
+  };
 
-      {tabs.map(({ label, icon: Icon }) => (
-        <HeadlessTab
-          key={label}
-          className="relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold text-white/60 outline-none transition-colors duration-200 data-selected:text-white"
-        >
-          <span className="inline-flex items-center justify-center gap-1.5">
-            {Icon && <Icon className="size-4" />}
-            {label}
-          </span>
-        </HeadlessTab>
-      ))}
+  const incomingClassName = (rest as Record<string, unknown>).className;
+  const merged =
+    typeof incomingClassName === "function"
+      ? (...args: unknown[]) =>
+          [baseClasses, (incomingClassName as (...a: unknown[]) => string)(...args)]
+            .filter(Boolean)
+            .join(" ")
+      : [baseClasses, incomingClassName].filter(Boolean).join(" ");
+
+  return (
+    <HeadlessTabList {...rest} className={merged}>
+      {({ selectedIndex }: { selectedIndex: number }) => {
+        const resolved = typeof children === "function" ? children({ selectedIndex }) : children;
+        const tabCount = Children.toArray(resolved).filter(isValidElement).length;
+
+        return (
+          <>
+            {tabCount > 0 && (
+              <div
+                className="glass glass-tab-indicator absolute top-1 bottom-1 rounded-full transition-all duration-300 ease-in-out"
+                style={{
+                  width: `calc(${100 / tabCount}% - 8px)`,
+                  left: `calc(${(selectedIndex * 100) / tabCount}% + 4px)`,
+                }}
+                aria-hidden
+              />
+            )}
+            {resolved}
+          </>
+        );
+      }}
     </HeadlessTabList>
   );
 }

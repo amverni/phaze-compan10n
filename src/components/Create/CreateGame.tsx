@@ -1,15 +1,17 @@
-import { TabGroup, TabPanel, TabPanels } from "@headlessui/react";
+import { Tab, TabGroup, TabPanel, TabPanels } from "@headlessui/react";
+import { Link } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
 import { Info, ListChecks, Play, Settings as SettingsIcon, Users, X } from "lucide-react";
 import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { Button } from "../ui/Button/Button";
-import { type Tab, TabList } from "../ui/TabList/TabList";
+import { TabList } from "../ui/TabList/TabList";
 import { Phases } from "./Phases";
 import { Players } from "./Players";
 import { Settings } from "./Settings";
 
-const TABS: Tab[] = [
+const TABS: { label: string; icon: LucideIcon }[] = [
   { label: "Players", icon: Users },
   { label: "Phases", icon: ListChecks },
   { label: "Settings", icon: SettingsIcon },
@@ -28,13 +30,27 @@ export function CreateGame() {
           </div>
 
           {/* Info icon in normal flow, on top */}
-          <Button aria-label="Tips" size="small" icon={Info} />
+          <Button aria-label="Tips" className="size-10">
+            <Info className="size-6 relative z-10" />
+          </Button>
         </div>
       }
       mainContent={
         <TabGroup selectedIndex={selectedIndex} onChange={setSelectedIndex}>
           <div className="flex justify-center px-4 pt-2 pb-3">
-            <TabList tabs={TABS} selectedIndex={selectedIndex} />
+            <TabList>
+              {TABS.map(({ label, icon: Icon }) => (
+                <Tab
+                  key={label}
+                  className="relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none transition-[color,opacity] duration-200 data-selected:opacity-100"
+                >
+                  <span className="inline-flex items-center justify-center gap-1.5">
+                    <Icon className="size-4" />
+                    {label}
+                  </span>
+                </Tab>
+              ))}
+            </TabList>
           </div>
 
           <TabPanels>
@@ -55,10 +71,14 @@ export function CreateGame() {
       footerContent={
         <div className="flex h-full items-center justify-between px-6">
           {/* Cancel — back to home */}
-          <Button as="link" to="/" aria-label="Cancel" icon={X} />
+          <Button as={Link} to="/" aria-label="Cancel" className="size-14">
+            <X className="size-8 relative z-10" />
+          </Button>
 
           {/* Start game */}
-          <Button aria-label="Start" icon={Play} />
+          <Button aria-label="Start" className="size-14">
+            <Play className="size-8 relative z-10" />
+          </Button>
         </div>
       }
     />
