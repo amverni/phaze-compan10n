@@ -36,25 +36,15 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const iconSizeClasses: Record<ButtonSize, string> = {
-  small: "size-5",
-  regular: "size-7",
+  small: "size-6",
+  regular: "size-8",
 };
 
 const baseClasses = [
-  /* shape */
-  "inline-flex items-center justify-center rounded-full",
-  /* liquid-glass surface */
-  "bg-white/20 dark:bg-white/10",
-  "backdrop-blur-xl",
-  "border border-white/30 dark:border-white/15",
-  "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),0_2px_6px_rgba(0,0,0,0.12)]",
-  "dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_2px_6px_rgba(0,0,0,0.4)]",
-  /* interaction */
-  "cursor-pointer",
-  "transition-all duration-150",
-  "hover:bg-white/30 dark:hover:bg-white/15",
-  "active:scale-95 active:bg-white/40 dark:active:bg-white/20",
-  /* focus ring */
+  "liquid-glass",
+  "inline-flex items-center justify-center rounded-full relative",
+  "cursor-pointer transition-all duration-150",
+  "hover:brightness-110 active:scale-95",
   "focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60",
 ].join(" ");
 
@@ -72,7 +62,7 @@ export function Button(props: Props) {
   if (props.as === "link") {
     return (
       <HeadlessButton as={Link} to={props.to} className={classes} aria-label={ariaLabel}>
-        <Icon className={iconSizeClasses[size]} />
+        <Icon className={`${iconSizeClasses[size]} relative z-10`} />
       </HeadlessButton>
     );
   }
@@ -83,7 +73,7 @@ export function Button(props: Props) {
       aria-label={ariaLabel}
       onClick={(rest as ButtonProps).onClick}
     >
-      <Icon className={iconSizeClasses[size]} />
+      <Icon className={`${iconSizeClasses[size]} relative z-10`} />
     </HeadlessButton>
   );
 }

@@ -12,9 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CreateIndexRouteImport } from './routes/create/index'
-import { Route as CreateSummaryRouteImport } from './routes/create/summary'
-import { Route as CreatePlayersRouteImport } from './routes/create/players'
-import { Route as CreatePhasesRouteImport } from './routes/create/phases'
 
 const CreateRoute = CreateRouteImport.update({
   id: '/create',
@@ -31,65 +28,28 @@ const CreateIndexRoute = CreateIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CreateRoute,
 } as any)
-const CreateSummaryRoute = CreateSummaryRouteImport.update({
-  id: '/summary',
-  path: '/summary',
-  getParentRoute: () => CreateRoute,
-} as any)
-const CreatePlayersRoute = CreatePlayersRouteImport.update({
-  id: '/players',
-  path: '/players',
-  getParentRoute: () => CreateRoute,
-} as any)
-const CreatePhasesRoute = CreatePhasesRouteImport.update({
-  id: '/phases',
-  path: '/phases',
-  getParentRoute: () => CreateRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRouteWithChildren
-  '/create/phases': typeof CreatePhasesRoute
-  '/create/players': typeof CreatePlayersRoute
-  '/create/summary': typeof CreateSummaryRoute
   '/create/': typeof CreateIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/create/phases': typeof CreatePhasesRoute
-  '/create/players': typeof CreatePlayersRoute
-  '/create/summary': typeof CreateSummaryRoute
   '/create': typeof CreateIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRouteWithChildren
-  '/create/phases': typeof CreatePhasesRoute
-  '/create/players': typeof CreatePlayersRoute
-  '/create/summary': typeof CreateSummaryRoute
   '/create/': typeof CreateIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/create'
-    | '/create/phases'
-    | '/create/players'
-    | '/create/summary'
-    | '/create/'
+  fullPaths: '/' | '/create' | '/create/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/create/phases' | '/create/players' | '/create/summary' | '/create'
-  id:
-    | '__root__'
-    | '/'
-    | '/create'
-    | '/create/phases'
-    | '/create/players'
-    | '/create/summary'
-    | '/create/'
+  to: '/' | '/create'
+  id: '__root__' | '/' | '/create' | '/create/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -120,41 +80,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateIndexRouteImport
       parentRoute: typeof CreateRoute
     }
-    '/create/summary': {
-      id: '/create/summary'
-      path: '/summary'
-      fullPath: '/create/summary'
-      preLoaderRoute: typeof CreateSummaryRouteImport
-      parentRoute: typeof CreateRoute
-    }
-    '/create/players': {
-      id: '/create/players'
-      path: '/players'
-      fullPath: '/create/players'
-      preLoaderRoute: typeof CreatePlayersRouteImport
-      parentRoute: typeof CreateRoute
-    }
-    '/create/phases': {
-      id: '/create/phases'
-      path: '/phases'
-      fullPath: '/create/phases'
-      preLoaderRoute: typeof CreatePhasesRouteImport
-      parentRoute: typeof CreateRoute
-    }
   }
 }
 
 interface CreateRouteChildren {
-  CreatePhasesRoute: typeof CreatePhasesRoute
-  CreatePlayersRoute: typeof CreatePlayersRoute
-  CreateSummaryRoute: typeof CreateSummaryRoute
   CreateIndexRoute: typeof CreateIndexRoute
 }
 
 const CreateRouteChildren: CreateRouteChildren = {
-  CreatePhasesRoute: CreatePhasesRoute,
-  CreatePlayersRoute: CreatePlayersRoute,
-  CreateSummaryRoute: CreateSummaryRoute,
   CreateIndexRoute: CreateIndexRoute,
 }
 

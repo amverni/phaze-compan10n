@@ -1,7 +1,6 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { CreateGame } from "../../components/Create/CreateGame";
 
 export const Route = createFileRoute("/create/")({
-  beforeLoad: () => {
-    throw redirect({ to: "/create/players" });
-  },
+  component: CreateGame,
 });

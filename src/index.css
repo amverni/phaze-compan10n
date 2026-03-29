@@ -25,3 +25,55 @@
     --card-shadow-sm: rgba(0, 0, 0, 0.12);
   }
 }
+
+/* ── Liquid Glass ─────────────────────────────────────────────
+   Adapted from https://dev.to/kevinbism/recreating-apples-liquid-glass-effect-with-pure-css-3gpl
+   Foundation: transparent tinted surface with backdrop-filter.
+   ::after: liquid-shine highlight layer faking light refraction at edges. */
+
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px) saturate(80%);
+  -webkit-backdrop-filter: blur(4px) saturate(80%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.2),
+    inset 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+.liquid-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  box-shadow:
+    inset -10px -8px 0px -11px rgba(255, 255, 255, 1),
+    inset 0px -9px 0px -8px rgba(255, 255, 255, 1);
+  opacity: 0.6;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(1px) drop-shadow(10px 4px 6px black) brightness(115%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(4px) saturate(120%) brightness(0.9);
+    -webkit-backdrop-filter: blur(4px) saturate(120%) brightness(0.9);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .liquid-glass::after {
+    box-shadow:
+      inset -10px -8px 0px -11px rgba(255, 255, 255, 0.5),
+      inset 0px -9px 0px -8px rgba(255, 255, 255, 0.5);
+    opacity: 0.2;
+    filter: blur(1px) brightness(90%);
+  }
+}
