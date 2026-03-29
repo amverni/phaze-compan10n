@@ -1,24 +1,25 @@
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
-import type { PlayerId } from "../../types";
+import type { Player, PlayerId } from "../../types";
 
 interface CreateGameContextValue {
-  playerIds: PlayerId[];
-  addPlayer: (id: PlayerId) => void;
+  players: Player[];
+  addPlayer: (player: Player) => void;
   removePlayer: (id: PlayerId) => void;
 }
 
 const CreateGameContext = createContext<CreateGameContextValue | null>(null);
 
 export function CreateGameProvider({ children }: { children: ReactNode }) {
-  const [playerIds, setPlayerIds] = useState<PlayerId[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
 
   const value = useMemo<CreateGameContextValue>(
     () => ({
-      playerIds,
-      addPlayer: (id) => setPlayerIds((prev) => (prev.includes(id) ? prev : [...prev, id])),
-      removePlayer: (id) => setPlayerIds((prev) => prev.filter((pid) => pid !== id)),
+      players,
+      addPlayer: (player) =>
+        setPlayers((prev) => (prev.some((p) => p.id === player.id) ? prev : [...prev, player])),
+      removePlayer: (id) => setPlayers((prev) => prev.filter((p) => p.id !== id)),
     }),
-    [playerIds],
+    [players],
   );
 
   return <CreateGameContext.Provider value={value}>{children}</CreateGameContext.Provider>;
@@ -30,7 +31,7 @@ function useCreateGameContext(): CreateGameContextValue {
   return ctx;
 }
 
-export function useGamePlayers(): PlayerId[] {
-  const { playerIds } = useCreateGameContext();
-  return playerIds;
+export function useGamePlayers(): Player[] {
+  const { players } = useCreateGameContext();
+  return players;
 }

@@ -42,7 +42,7 @@ export function CreateGame() {
               {TABS.map(({ label, icon: Icon }) => (
                 <Tab
                   key={label}
-                  className="relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none transition-[color,opacity] duration-200 data-selected:opacity-100"
+                  className="relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none transition-all duration-200 hover:brightness-110 data-selected:opacity-100"
                 >
                   <span className="inline-flex items-center justify-center gap-1.5">
                     <Icon className="size-4" />

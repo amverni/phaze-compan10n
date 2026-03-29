@@ -1,17 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
-import { playerListOptions } from "../../../data/hooks/usePlayers";
+import { useEffect, useState } from "react";
+import { List } from "../../ui/List/List";
+
+const DUMMY_PLAYERS = [
+  { id: "1", name: "Andrew" },
+  { id: "2", name: "Sam" },
+];
 
 export function FavoritePlayers() {
-  const { data: favorites = [] } = useQuery(playerListOptions({ isFavorite: 1 }));
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 3_000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <section>
       <h2>Favorites</h2>
-      <ul>
-        {favorites.map((player) => (
-          <li key={player.id}>{player.name}</li>
-        ))}
-      </ul>
+      <List isLoading={isLoading} shimmerRows={2}>
+        {!isLoading && DUMMY_PLAYERS.map((player) => <span key={player.id}>{player.name}</span>)}
+      </List>
     </section>
   );
 }
