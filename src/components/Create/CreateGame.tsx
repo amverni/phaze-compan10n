@@ -1,15 +1,23 @@
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
-import { Info, Play, X } from "lucide-react";
+import { TabGroup, TabPanel, TabPanels } from "@headlessui/react";
+import { Info, ListChecks, Play, Settings as SettingsIcon, Users, X } from "lucide-react";
+import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { Button } from "../ui/Button/Button";
+import { type Tab, TabList } from "../ui/TabList/TabList";
 import { Phases } from "./Phases";
 import { Players } from "./Players";
 import { Settings } from "./Settings";
 
-const TABS = ["Players", "Phases", "Settings"] as const;
+const TABS: Tab[] = [
+  { label: "Players", icon: Users },
+  { label: "Phases", icon: ListChecks },
+  { label: "Settings", icon: SettingsIcon },
+];
 
 export function CreateGame() {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
   return (
     <CardBackground
       headerContent={
@@ -24,12 +32,10 @@ export function CreateGame() {
         </div>
       }
       mainContent={
-        <TabGroup>
-          <TabList>
-            {TABS.map((label) => (
-              <Tab key={label}>{label}</Tab>
-            ))}
-          </TabList>
+        <TabGroup selectedIndex={selectedIndex} onChange={setSelectedIndex}>
+          <div className="flex justify-center px-4 pt-2 pb-3">
+            <TabList tabs={TABS} selectedIndex={selectedIndex} />
+          </div>
 
           <TabPanels>
             <TabPanel>

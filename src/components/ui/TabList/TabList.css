@@ -1,0 +1,52 @@
+/* ── Glass Tabs ───────────────────────────────────────────────
+   iOS 26-style segmented tabs: a single pill container with a
+   frosted glass selected-tab indicator.
+   Always pair variant classes with .glass for the shared surface. */
+
+.glass-tabs {
+  --_g-bg: rgba(255, 255, 255, 0.1);
+  --_g-filter: blur(12px) saturate(120%);
+  --_g-border: rgba(255, 255, 255, 0.25);
+  --_g-shadow: 0 4px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-tab-indicator {
+  --_g-bg: rgba(255, 255, 255, 0.18);
+  --_g-filter: blur(6px) saturate(100%);
+  --_g-border: rgba(255, 255, 255, 0.35);
+  --_g-shadow: 0 2px 8px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.glass-tab-indicator::after {
+  --_gs-bg: rgba(255, 255, 255, 0.08);
+  --_gs-shadow: inset -6px -5px 0px -7px rgba(255, 255, 255, 0.8),
+    inset 0px -6px 0px -5px rgba(255, 255, 255, 0.8);
+  --_gs-opacity: 0.5;
+  --_gs-filter: blur(0.5px) brightness(110%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-tabs {
+    --_g-bg: rgba(255, 255, 255, 0.05);
+    --_g-filter: blur(12px) saturate(140%) brightness(0.85);
+    --_g-border: rgba(255, 255, 255, 0.12);
+    --_g-shadow: 0 4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-tab-indicator {
+    --_g-bg: rgba(255, 255, 255, 0.1);
+    --_g-border: rgba(255, 255, 255, 0.2);
+    --_g-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .glass-tab-indicator::after {
+    --_gs-shadow: inset -6px -5px 0px -7px rgba(255, 255, 255, 0.4),
+      inset 0px -6px 0px -5px rgba(255, 255, 255, 0.4);
+    --_gs-opacity: 0.25;
+    --_gs-filter: blur(0.5px) brightness(90%);
+  }
+}

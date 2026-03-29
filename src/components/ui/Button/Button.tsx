@@ -41,7 +41,7 @@ const iconSizeClasses: Record<ButtonSize, string> = {
 };
 
 const baseClasses = [
-  "liquid-glass",
+  "glass",
   "inline-flex items-center justify-center rounded-full relative",
   "cursor-pointer transition-all duration-150",
   "hover:brightness-110 active:scale-95",
