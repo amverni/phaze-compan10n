@@ -35,3 +35,13 @@ export function useGamePlayers(): Player[] {
   const { players } = useCreateGameContext();
   return players;
 }
+
+export function useAddPlayer(): (player: Player) => void {
+  const { addPlayer } = useCreateGameContext();
+  return addPlayer;
+}
+
+export function useRemovePlayer(): (id: PlayerId) => void {
+  const { removePlayer } = useCreateGameContext();
+  return removePlayer;
+}

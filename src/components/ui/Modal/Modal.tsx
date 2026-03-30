@@ -1,5 +1,5 @@
 import { Dialog, DialogPanel, Transition, TransitionChild } from "@headlessui/react";
-import type { ReactNode } from "react";
+import type { MutableRefObject, ReactNode } from "react";
 import "./Modal.css";
 
 export interface ModalProps {
@@ -8,6 +8,8 @@ export interface ModalProps {
   children: ReactNode;
   /** Extra classes applied to the glass panel. */
   className?: string;
+  /** Ref to the element that should receive initial focus when the modal opens. */
+  initialFocus?: MutableRefObject<HTMLElement | null>;
 }
 
 /**
@@ -20,10 +22,10 @@ export interface ModalProps {
  * </Modal>
  * ```
  */
-export function Modal({ open, onClose, children, className }: ModalProps) {
+export function Modal({ open, onClose, children, className, initialFocus }: ModalProps) {
   return (
     <Transition show={open}>
-      <Dialog onClose={onClose} className="relative z-50">
+      <Dialog onClose={onClose} initialFocus={initialFocus} className="relative z-50">
         {/* Dim overlay */}
         <TransitionChild
           enter="modal-backdrop-enter"
@@ -48,7 +50,10 @@ export function Modal({ open, onClose, children, className }: ModalProps) {
             leaveTo="modal-panel-closed"
           >
             <DialogPanel
-              className={["glass modal-glass relative w-[85vw] max-w-lg rounded-2xl p-6", className]
+              className={[
+                "glass modal-glass relative w-[85vw] max-w-lg overflow-hidden rounded-2xl",
+                className,
+              ]
                 .filter(Boolean)
                 .join(" ")}
             >

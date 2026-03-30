@@ -1,6 +1,6 @@
 import { List } from "../../ui/List/List";
 import { useGamePlayers } from "../CreateGameContext";
-import { AddPlayerRow } from "./AddPlayerRow";
+import { AddPlayerDialog } from "./AddPlayerDialog";
 import { PlayerRow } from "./PlayerRow";
 
 export function GamePlayers() {
@@ -13,7 +13,7 @@ export function GamePlayers() {
         {players.map((player) => (
           <PlayerRow key={player.id} player={player} />
         ))}
-        <AddPlayerRow />
+        <AddPlayerDialog />
       </List>
     </section>
   );
