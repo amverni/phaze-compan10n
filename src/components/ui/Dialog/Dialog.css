@@ -45,7 +45,7 @@
 
 @media (prefers-color-scheme: dark) {
   .dialog-glass {
-    --_g-bg: rgba(255, 255, 255, 0.12);
-    --_g-filter: blur(4px) saturate(120%) brightness(1.4);
+    --_g-bg: rgba(30, 30, 30, 0.75);
+    --_g-filter: blur(4px) saturate(120%) brightness(1.1);
   }
 }

@@ -8,7 +8,8 @@ import {
 import type { ElementType } from "react";
 import "./Dialog.css";
 
-const panelClasses = "glass dialog-glass relative w-[85vw] max-w-lg overflow-hidden rounded-2xl";
+const panelClasses =
+  "glass dialog-glass relative w-[90vw] max-w-lg h-[75svh] overflow-y-auto rounded-t-2xl";
 
 /**
  * A frosted-glass dialog that wraps Headless UI's `Dialog`.
@@ -43,8 +44,8 @@ export function Dialog<TTag extends ElementType = "div">(props: DialogProps<TTag
           <div className="fixed inset-0 bg-black/40" />
         </TransitionChild>
 
-        {/* Centering wrapper — above the backdrop */}
-        <div className="fixed inset-0 z-10 flex items-center justify-center">
+        {/* Bottom-anchored wrapper — above the backdrop */}
+        <div className="fixed inset-0 z-10 flex items-end justify-center">
           {/* Glass panel — slides up */}
           <TransitionChild
             enter="dialog-panel-enter"
