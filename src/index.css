@@ -9,6 +9,10 @@
 
   /* Logo text fill */
   --color-logo-text: #ffffff;
+
+  /* Text / stroke colours */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
 }
 
 /* Card edge shadow – dark mode uses a stronger black shadow with a subtle
@@ -21,9 +25,15 @@
 @media (prefers-color-scheme: light) {
   :root {
     --color-logo-text: #1a1a1a;
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: rgba(26, 26, 26, 0.6);
     --card-shadow-lg: rgba(0, 0, 0, 0.18);
     --card-shadow-sm: rgba(0, 0, 0, 0.12);
   }
+}
+
+body {
+  color: var(--color-text-primary);
 }
 
 /* ── Glass ────────────────────────────────────────────────────
@@ -33,11 +43,11 @@
    with .glass in markup. */
 
 .glass {
-  --_g-bg: rgba(255, 255, 255, 0.15);
+  --_g-bg: rgba(255, 255, 255, 0.12);
   --_g-filter: blur(4px) saturate(80%);
-  --_g-border: rgba(255, 255, 255, 0.8);
-  --_g-shadow: 0 8px 32px rgba(31, 38, 135, 0.2),
-    inset 0 4px 20px rgba(255, 255, 255, 0.3);
+  --_g-border: rgba(255, 255, 255, 0.25);
+  --_g-shadow: 0 4px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 
   background: var(--_g-bg);
   backdrop-filter: var(--_g-filter);
@@ -47,11 +57,11 @@
 }
 
 .glass::after {
-  --_gs-bg: rgba(255, 255, 255, 0.1);
-  --_gs-shadow: inset -10px -8px 0px -11px rgba(255, 255, 255, 1),
-    inset 0px -9px 0px -8px rgba(255, 255, 255, 1);
-  --_gs-opacity: 0.6;
-  --_gs-filter: blur(1px) drop-shadow(10px 4px 6px black) brightness(115%);
+  --_gs-bg: rgba(255, 255, 255, 0.08);
+  --_gs-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.03);
+  --_gs-opacity: 0.5;
+  --_gs-filter: blur(0.5px) brightness(110%);
 
   content: "";
   position: absolute;
@@ -77,9 +87,9 @@
   }
 
   .glass::after {
-    --_gs-shadow: inset -10px -8px 0px -11px rgba(255, 255, 255, 0.5),
-      inset 0px -9px 0px -8px rgba(255, 255, 255, 0.5);
+    --_gs-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 0 rgba(0, 0, 0, 0.15);
     --_gs-opacity: 0.2;
-    --_gs-filter: blur(1px) brightness(90%);
+    --_gs-filter: blur(0.5px) brightness(90%);
   }
 }

@@ -5,7 +5,7 @@ const baseClasses = [
   "glass",
   "inline-flex items-center justify-center rounded-full relative",
   "cursor-pointer transition-all duration-150",
-  "hover:brightness-110 active:scale-95",
+  "hover:brightness-110 active:scale-110",
   "focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60",
 ].join(" ");
 

@@ -1,0 +1,10 @@
+/* ── Horizontal slide transition between dialog pages ─────── */
+
+.add-player-slider {
+  display: flex;
+  transition: transform 300ms cubic-bezier(0, 1, 0.5, 1);
+}
+
+.add-player-slider[data-view="create"] {
+  transform: translateX(-100%);
+}

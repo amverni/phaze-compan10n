@@ -41,6 +41,8 @@ export interface ListProps {
   isLoading?: boolean;
   /** Number of shimmer rows to show while loading (default: 3). */
   shimmerRows?: number;
+  /** Content to render when the list is empty (not loading, no children). */
+  emptyMessage?: ReactNode;
 }
 
 /**
@@ -50,27 +52,47 @@ export interface ListProps {
  * - **Empty** → renders nothing.
  * - **Data** → renders each child separated by an inset divider.
  */
-export function List({ children, isLoading = false, shimmerRows = 0 }: ListProps) {
+export function List({ children, isLoading = false, shimmerRows = 0, emptyMessage }: ListProps) {
   const childArray = Children.toArray(children);
 
-  if (!isLoading && childArray.length === 0) return null;
+  if (!isLoading && childArray.length === 0) {
+    if (!emptyMessage) return null;
+    return (
+      <div className="flex items-center justify-center py-8 text-sm text-text-secondary">
+        {emptyMessage}
+      </div>
+    );
+  }
 
   return (
     <div className="glass relative overflow-hidden rounded-2xl">
       {isLoading ? (
         <ShimmerRows count={shimmerRows} />
       ) : (
-        childArray.map((child, i) => (
-          /* biome-ignore lint/suspicious/noArrayIndexKey: children already have their own keys */
-          <div key={i}>
-            {i > 0 && <RowDivider />}
-            <div
-              className={`${ROW_HEIGHT} flex items-center px-3 text-sm transition-colors duration-150 hover:bg-white/10`}
-            >
-              {child}
+        childArray.map((child, i) => {
+          const isFirst = i === 0;
+          const isLast = i === childArray.length - 1;
+          const radius =
+            isFirst && isLast
+              ? "rounded-2xl"
+              : isFirst
+                ? "rounded-t-2xl"
+                : isLast
+                  ? "rounded-b-2xl"
+                  : "";
+
+          return (
+            /* biome-ignore lint/suspicious/noArrayIndexKey: children already have their own keys */
+            <div key={i}>
+              {i > 0 && <RowDivider />}
+              <div
+                className={`${ROW_HEIGHT} ${radius} flex items-center px-3 text-sm transition-colors duration-150 hover:bg-white/10 focus-within:bg-white/10 focus-within:ring-2 focus-within:ring-inset focus-within:ring-white/50`}
+              >
+                {child}
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
