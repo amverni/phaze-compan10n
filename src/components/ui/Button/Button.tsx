@@ -7,6 +7,7 @@ const baseClasses = [
   "cursor-pointer transition-all duration-150",
   "hover:brightness-110 active:scale-110",
   "focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60",
+  "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
 ].join(" ");
 
 /**

@@ -29,7 +29,12 @@ export const playersApi = {
       const search = filters.name.toLowerCase();
       players = players
         .filter((p) => p.name.toLowerCase().includes(search))
-        .sort((a, b) => nameMatchScore(b.name, search) - nameMatchScore(a.name, search));
+        .sort((a, b) => {
+          const scoreDiff = nameMatchScore(b.name, search) - nameMatchScore(a.name, search);
+          return scoreDiff !== 0 ? scoreDiff : a.name.localeCompare(b.name);
+        });
+    } else {
+      players.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return players;

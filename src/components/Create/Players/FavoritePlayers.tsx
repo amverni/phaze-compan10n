@@ -1,24 +1,27 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { playerListOptions } from "../../../data/hooks/usePlayers";
 import { List } from "../../ui/List/List";
-
-const DUMMY_PLAYERS = [
-  { id: "1", name: "Andrew" },
-  { id: "2", name: "Sam" },
-];
+import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
+import { AddPlayerRow } from "./AddPlayerRow";
 
 export function FavoritePlayers() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 3_000);
-    return () => clearTimeout(timer);
-  }, []);
+  const addPlayer = useAddPlayer();
+  const gamePlayers = useGamePlayers();
+  const gamePlayerIds = new Set(gamePlayers.map((p) => p.id));
+  const { data: favorites = [], isLoading } = useQuery(playerListOptions({ isFavorite: 1 }));
 
   return (
     <section>
       <h2>Favorites</h2>
       <List isLoading={isLoading} shimmerRows={2}>
-        {!isLoading && DUMMY_PLAYERS.map((player) => <span key={player.id}>{player.name}</span>)}
+        {favorites.map((player) => (
+          <AddPlayerRow
+            key={player.id}
+            player={player}
+            onSelect={addPlayer}
+            disabled={gamePlayerIds.has(player.id)}
+          />
+        ))}
       </List>
     </section>
   );

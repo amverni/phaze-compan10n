@@ -1,5 +1,5 @@
-import { queryOptions } from "@tanstack/react-query";
-import type { PlayerId } from "../../types";
+import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Player, PlayerId } from "../../types";
 import { playersApi } from "../api/players";
 
 export const playerKeys = {
@@ -24,5 +24,13 @@ export function playersByIdsOptions(ids: PlayerId[]) {
     queryKey: playerKeys.byIds(ids),
     queryFn: () => playersApi.getByIds(ids),
     enabled: ids.length > 0,
+  });
+}
+
+export function useCreatePlayer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Omit<Player, "id" | "createdAt">) => playersApi.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
   });
 }

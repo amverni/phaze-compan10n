@@ -86,7 +86,7 @@ export function List({ children, isLoading = false, shimmerRows = 0, emptyMessag
             <div key={i}>
               {i > 0 && <RowDivider />}
               <div
-                className={`${ROW_HEIGHT} ${radius} flex items-center px-3 text-sm transition-colors duration-150 hover:bg-white/10 focus-within:bg-white/10 focus-within:ring-2 focus-within:ring-inset focus-within:ring-white/50`}
+                className={`${ROW_HEIGHT} ${radius} flex items-center px-3 text-sm transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10 focus-within:bg-black/5 dark:focus-within:bg-white/10 focus-within:ring-2 focus-within:ring-inset focus-within:ring-white/50`}
               >
                 {child}
               </div>
