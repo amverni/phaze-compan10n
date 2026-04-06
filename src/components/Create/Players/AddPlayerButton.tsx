@@ -11,7 +11,7 @@ export function AddPlayerButton() {
       <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full cursor-pointer items-center gap-2 opacity-50 outline-none transition-opacity duration-150 hover:opacity-80"
+        className="-mx-3 flex h-full w-[calc(100%+1.5rem)] cursor-pointer items-center gap-2 px-3 opacity-50 outline-none transition-all duration-150 hover:bg-black/5 hover:opacity-80 dark:hover:bg-white/10"
       >
         <span className="text-base leading-none">+</span>
         <span>Add Player</span>

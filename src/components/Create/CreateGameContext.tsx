@@ -5,6 +5,7 @@ interface CreateGameContextValue {
   players: Player[];
   addPlayer: (player: Player) => void;
   removePlayer: (id: PlayerId) => void;
+  reorderPlayers: (players: Player[]) => void;
 }
 
 const CreateGameContext = createContext<CreateGameContextValue | null>(null);
@@ -18,6 +19,7 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
       addPlayer: (player) =>
         setPlayers((prev) => (prev.some((p) => p.id === player.id) ? prev : [...prev, player])),
       removePlayer: (id) => setPlayers((prev) => prev.filter((p) => p.id !== id)),
+      reorderPlayers: setPlayers,
     }),
     [players],
   );
@@ -44,4 +46,9 @@ export function useAddPlayer(): (player: Player) => void {
 export function useRemovePlayer(): (id: PlayerId) => void {
   const { removePlayer } = useCreateGameContext();
   return removePlayer;
+}
+
+export function useReorderPlayers(): (players: Player[]) => void {
+  const { reorderPlayers } = useCreateGameContext();
+  return reorderPlayers;
 }

@@ -12,7 +12,7 @@ export interface AddPlayerRowProps {
 export function AddPlayerRow({ player, onSelect, disabled }: AddPlayerRowProps) {
   return (
     <Button
-      className="flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left text-sm disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
+      className="-mx-3 flex h-full w-[calc(100%+1.5rem)] cursor-pointer items-center justify-between px-3 text-left text-sm hover:bg-black/5 dark:hover:bg-white/10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
       onClick={() => onSelect(player)}
       disabled={disabled}
     >
