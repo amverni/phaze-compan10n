@@ -139,51 +139,42 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
           style={{ gridTemplateColumns: `repeat(${COLOR_GRID.length}, 1fr)` }}
         >
           {/* Render column by column, but CSS grid fills row-first, so we transpose */}
-          {Array.from({ length: Math.max(...COLOR_GRID.map((c) => c.length)) }, (_, row) => {
-            const rowCount = Math.max(...COLOR_GRID.map((c) => c.length));
-            const isFirstRow = row === 0;
-            const isLastRow = row === rowCount - 1;
-            return COLOR_GRID.map((column, col) => {
+          {Array.from({ length: Math.max(...COLOR_GRID.map((c) => c.length)) }, (_, row) =>
+            COLOR_GRID.map((column) => {
               const entry = column[row];
               if (!entry) return <div key={`empty-${row}-${column[0].hex}`} />;
               const { hex, name, icon: Icon } = entry;
               const isSelected = value?.toUpperCase() === hex.toUpperCase();
               const contrastColor = isLightColor(hex) ? "#000" : "#fff";
-              const isFirstCol = col === 0;
-              const isLastCol = col === COLOR_GRID.length - 1;
-              const borderRadius = [
-                isFirstRow && isFirstCol ? "8px" : "0",
-                isFirstRow && isLastCol ? "8px" : "0",
-                isLastRow && isLastCol ? "8px" : "0",
-                isLastRow && isFirstCol ? "8px" : "0",
-              ].join(" ");
               return (
                 <Button
                   key={hex}
                   type="button"
                   aria-label={`Select color ${name}`}
                   className="relative aspect-square w-full cursor-pointer"
-                  style={{
-                    backgroundColor: hex,
-                    borderRadius,
-                    boxShadow: isSelected
-                      ? `inset 0 0 0 2px ${hex}, inset 0 0 0 4px ${contrastColor}`
-                      : "none",
-                  }}
+                  style={{ backgroundColor: hex }}
                   onClick={() => onChange(hex)}
                 >
                   {isSelected && (
-                    <Icon
-                      className="absolute inset-0 m-auto"
-                      size={20}
-                      strokeWidth={2}
-                      color={contrastColor}
-                    />
+                    <>
+                      <span
+                        className="absolute inset-0.5 rounded-md pointer-events-none"
+                        style={{
+                          border: `2px solid ${contrastColor}`,
+                        }}
+                      />
+                      <Icon
+                        className="absolute inset-0 m-auto"
+                        size={20}
+                        strokeWidth={2}
+                        color={contrastColor}
+                      />
+                    </>
                   )}
                 </Button>
               );
-            });
-          })}
+            }),
+          )}
         </div>
       </div>
       {selectedEntry && (
