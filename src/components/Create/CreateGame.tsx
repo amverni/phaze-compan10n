@@ -22,21 +22,23 @@ export function CreateGame() {
   return (
     <CardBackground
       headerContent={
-        <div className="relative flex h-full items-center justify-end px-4">
+        <div className="relative flex h-full items-center justify-end">
           {/* Logo as background */}
           <div className="absolute inset-0 flex items-center justify-center pt-6">
             <Logo height={100} width="100%" />
           </div>
 
           {/* Info icon in normal flow, on top */}
-          <Button aria-label="Tips" className="size-10">
-            <Info className="size-6 relative z-10" />
-          </Button>
+          <div className="relative z-10 mx-auto flex h-full w-full max-w-lg items-center justify-end px-4">
+            <Button aria-label="Tips" className="size-10">
+              <Info className="size-6 relative z-10" />
+            </Button>
+          </div>
         </div>
       }
       mainContent={
         <TabGroup selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-          <div className="flex justify-center px-4 pt-2 pb-3">
+          <div className="mx-auto flex max-w-lg justify-center px-4 pt-2 pb-3">
             <TabList>
               {TABS.map(({ label, icon: Icon }) => (
                 <Tab
@@ -52,7 +54,7 @@ export function CreateGame() {
             </TabList>
           </div>
 
-          <TabPanels>
+          <TabPanels className="mx-auto max-w-lg">
             <TabPanel>
               <Players />
             </TabPanel>
@@ -68,7 +70,7 @@ export function CreateGame() {
         </TabGroup>
       }
       footerContent={
-        <div className="flex h-full items-center justify-between px-6">
+        <div className="mx-auto flex h-full max-w-lg justify-between px-6">
           {/* Cancel — back to home */}
           <Button as={Link} to="/" aria-label="Cancel" className="size-14">
             <X className="size-8 relative z-10" />

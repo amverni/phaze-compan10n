@@ -19,6 +19,9 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
 
   function handleClose() {
     onClose();
+  }
+
+  function handleAfterLeave() {
     setSearchTerm("");
     setView("search");
   }
@@ -30,7 +33,13 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} initialFocus={inputRef} className="overflow-hidden">
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      afterLeave={handleAfterLeave}
+      initialFocus={inputRef}
+      className="overflow-hidden"
+    >
       <div className="add-player-slider h-full" data-view={view}>
         {/* ── Page 1: Search ───────────────────────────── */}
         <SearchPlayer
@@ -42,7 +51,7 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
 
         {/* ── Page 2: Create Player ────────────────────── */}
         <div className="h-full w-full shrink-0">
-          <CreatePlayer defaultName={searchTerm} onBack={handleBack} />
+          {view === "create" && <CreatePlayer defaultName={searchTerm} onBack={handleBack} />}
         </div>
       </div>
     </Dialog>

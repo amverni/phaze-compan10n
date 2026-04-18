@@ -40,13 +40,13 @@
 
 .dialog-glass {
   --_g-bg: rgba(255, 255, 255, 0.35);
-  --_g-filter: blur(4px) saturate(80%) brightness(1.5);
+  --_g-filter: blur(24px) saturate(80%) brightness(1.5);
   border-bottom: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .dialog-glass {
     --_g-bg: rgba(30, 30, 30, 0.75);
-    --_g-filter: blur(4px) saturate(120%) brightness(1.1);
+    --_g-filter: blur(24px) saturate(120%) brightness(1.1);
   }
 }

@@ -94,13 +94,13 @@ function SortableRow({
       <div className={className}>
         <div className="flex min-w-0 flex-1 items-center">{children}</div>
         {removable && onRemove && <RemoveButton onClick={() => onRemove(id)} />}
-        <button
+        <Button
           type="button"
           className="touch-none cursor-grab rounded-full p-1 text-text-secondary transition-colors duration-150 hover:bg-black/5 active:cursor-grabbing dark:hover:bg-white/10"
           {...listeners}
         >
           <GripVertical className="h-5 w-5 shrink-0" />
-        </button>
+        </Button>
       </div>
     </div>
   );

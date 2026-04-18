@@ -1,4 +1,5 @@
 export { Button } from "./Button/Button";
+export { Checkbox } from "./Checkbox/Checkbox";
 export type { ColorPickerProps } from "./ColorPicker/ColorPicker";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
 export { Dialog } from "./Dialog/Dialog";

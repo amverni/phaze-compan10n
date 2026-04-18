@@ -10,11 +10,11 @@ export const Home: React.FC = () => {
     <CardBackground
       mainContent={<Logo height={160} width="100%" />}
       footerContent={
-        <div className="flex h-full flex-col">
+        <div className="mx-auto flex h-full max-w-lg flex-col">
           <div className="flex flex-1 items-center justify-end px-6">
             <CreateButton />
           </div>
-          <div className="flex justify-center pb-2.5">
+          <div className="flex justify-center">
             <Disclaimer />
           </div>
         </div>

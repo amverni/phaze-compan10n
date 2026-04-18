@@ -1,3 +1,4 @@
+export type { ColorEntry } from "./color";
 export type { ActiveGame, CompletedGame, Game, GameId } from "./game";
 export type {
   BuiltInPhase,

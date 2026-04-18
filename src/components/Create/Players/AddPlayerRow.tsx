@@ -1,6 +1,7 @@
 import { Button } from "@headlessui/react";
 import { Plus } from "lucide-react";
 import type { Player } from "../../../types";
+import { PlayerAvatar } from "../../PlayerAvatar/PlayerAvatar";
 
 export interface AddPlayerRowProps {
   player: Player;
@@ -16,7 +17,10 @@ export function AddPlayerRow({ player, onSelect, disabled }: AddPlayerRowProps) 
       onClick={() => onSelect(player)}
       disabled={disabled}
     >
-      {player.name}
+      <span className="flex items-center gap-2">
+        <PlayerAvatar color={player.color} />
+        {player.name}
+      </span>
       <Plus className="h-5 w-5 shrink-0 text-text-secondary" />
     </Button>
   );
