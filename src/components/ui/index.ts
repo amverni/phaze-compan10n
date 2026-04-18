@@ -5,4 +5,5 @@ export { ColorPicker } from "./ColorPicker/ColorPicker";
 export { Dialog } from "./Dialog/Dialog";
 export type { ListProps, SortableItem } from "./List/List";
 export { List } from "./List/List";
+export { Popover, PopoverButton, PopoverPanel } from "./Popover/Popover";
 export { TabList } from "./TabList/TabList";

@@ -4,10 +4,16 @@ import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { CreateButton } from "./CreateButton";
 import { Disclaimer } from "./Disclaimer";
+import { HomeMenu } from "./HomeMenu";
 
 export const Home: React.FC = () => {
   return (
     <CardBackground
+      headerContent={
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-lg items-center justify-end px-4">
+          <HomeMenu />
+        </div>
+      }
       mainContent={<Logo height={160} width="100%" />}
       footerContent={
         <div className="mx-auto flex h-full max-w-lg flex-col">
