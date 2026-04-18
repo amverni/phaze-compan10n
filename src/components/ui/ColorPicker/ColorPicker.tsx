@@ -70,20 +70,6 @@ const COLOR_GRID: ColorEntry[][] = [
     { hex: "#feaf68", name: "Creamsicle", icon: Popsicle },
   ],
 
-  // // 🟫 Earth (Brown / Natural)
-  // [
-  //   { hex: "#C2980C", name: "Stone", icon: Mountain },
-  //   { hex: "#D4AF37", name: "Reign", icon: Crown },
-  //   { hex: "#E7C995", name: "Beach", icon: Palmtree },
-  // ],
-
-  // // 🟡 Yellow
-  // [
-  //   { hex: "#ffcb05", name: "Wolverine", icon: FoxFaceTail },
-  //   { hex: "#fff700", name: "Limoncello", icon: Lemon },
-  //   { hex: "#fdfe98", name: "Butter", icon: Popcorn },
-  // ],
-
   // 🟡 Yellow
   [
     { hex: "#C2980C", name: "Reign", icon: Crown },
@@ -147,43 +133,58 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div
-        className="grid overflow-hidden"
-        style={{ gridTemplateColumns: `repeat(${COLOR_GRID.length}, 1fr)` }}
-      >
-        {/* Render column by column, but CSS grid fills row-first, so we transpose */}
-        {Array.from({ length: Math.max(...COLOR_GRID.map((c) => c.length)) }, (_, row) =>
-          COLOR_GRID.map((column) => {
-            const entry = column[row];
-            if (!entry) return <div key={`empty-${row}-${column[0].hex}`} />;
-            const { hex, name, icon: Icon } = entry;
-            const isSelected = value?.toUpperCase() === hex.toUpperCase();
-            const contrastColor = isLightColor(hex) ? "#000" : "#fff";
-            return (
-              <Button
-                key={hex}
-                type="button"
-                aria-label={`Select color ${name}`}
-                className="relative aspect-square w-full cursor-pointer -mb-px"
-                style={{
-                  backgroundColor: hex,
-                  outline: isSelected ? `2px solid ${contrastColor}` : "none",
-                  outlineOffset: isSelected ? "-4px" : "0",
-                }}
-                onClick={() => onChange(hex)}
-              >
-                {isSelected && (
-                  <Icon
-                    className="absolute inset-0 m-auto"
-                    size={20}
-                    strokeWidth={2}
-                    color={contrastColor}
-                  />
-                )}
-              </Button>
-            );
-          }),
-        )}
+      <div className="rounded-xl bg-white p-2 shadow-[0_2px_12px_rgba(0,0,0,0.12)] dark:bg-neutral-900 dark:shadow-[0_2px_16px_rgba(0,0,0,0.5)]">
+        <div
+          className="grid overflow-hidden rounded-lg"
+          style={{ gridTemplateColumns: `repeat(${COLOR_GRID.length}, 1fr)` }}
+        >
+          {/* Render column by column, but CSS grid fills row-first, so we transpose */}
+          {Array.from({ length: Math.max(...COLOR_GRID.map((c) => c.length)) }, (_, row) => {
+            const rowCount = Math.max(...COLOR_GRID.map((c) => c.length));
+            const isFirstRow = row === 0;
+            const isLastRow = row === rowCount - 1;
+            return COLOR_GRID.map((column, col) => {
+              const entry = column[row];
+              if (!entry) return <div key={`empty-${row}-${column[0].hex}`} />;
+              const { hex, name, icon: Icon } = entry;
+              const isSelected = value?.toUpperCase() === hex.toUpperCase();
+              const contrastColor = isLightColor(hex) ? "#000" : "#fff";
+              const isFirstCol = col === 0;
+              const isLastCol = col === COLOR_GRID.length - 1;
+              const borderRadius = [
+                isFirstRow && isFirstCol ? "8px" : "0",
+                isFirstRow && isLastCol ? "8px" : "0",
+                isLastRow && isLastCol ? "8px" : "0",
+                isLastRow && isFirstCol ? "8px" : "0",
+              ].join(" ");
+              return (
+                <Button
+                  key={hex}
+                  type="button"
+                  aria-label={`Select color ${name}`}
+                  className="relative aspect-square w-full cursor-pointer"
+                  style={{
+                    backgroundColor: hex,
+                    borderRadius,
+                    boxShadow: isSelected
+                      ? `inset 0 0 0 2px ${hex}, inset 0 0 0 4px ${contrastColor}`
+                      : "none",
+                  }}
+                  onClick={() => onChange(hex)}
+                >
+                  {isSelected && (
+                    <Icon
+                      className="absolute inset-0 m-auto"
+                      size={20}
+                      strokeWidth={2}
+                      color={contrastColor}
+                    />
+                  )}
+                </Button>
+              );
+            });
+          })}
+        </div>
       </div>
       {selectedEntry && (
         <p className="text-center text-sm text-text-secondary">{selectedEntry.name}</p>
