@@ -1,5 +1,5 @@
-import type { SortableItem } from "../../ui/List/List";
-import { List } from "../../ui/List/List";
+import type { SortableItem } from "../../ui";
+import { List } from "../../ui";
 import { useGamePlayers, useRemovePlayer, useReorderPlayers } from "../CreateGameContext";
 import { AddPlayerButton } from "./AddPlayerButton";
 import { PlayerRow } from "./PlayerRow";

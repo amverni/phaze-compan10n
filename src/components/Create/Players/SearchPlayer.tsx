@@ -2,8 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Plus, Search, X } from "lucide-react";
 import { type RefObject, useDeferredValue } from "react";
 import { playerListOptions } from "../../../data/hooks/usePlayers";
-import { Button } from "../../ui/Button/Button";
-import { List } from "../../ui/List/List";
+import { Button, List } from "../../ui";
 import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
 import { AddPlayerRow } from "./AddPlayerRow";
 

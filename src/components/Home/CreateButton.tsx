@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import type React from "react";
-import { Button } from "../ui/Button/Button";
+import { Button } from "../ui";
 
 export const CreateButton: React.FC = () => {
   return (

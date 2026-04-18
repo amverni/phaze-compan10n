@@ -1,19 +1,130 @@
-import { useState } from "react";
-import { HexColorPicker } from "react-colorful";
+import { Button } from "@headlessui/react";
+import {
+  bullHead,
+  catBig,
+  cheese,
+  foxFaceTail,
+  golfDriver,
+  lemon,
+  shark,
+  strawberry,
+} from "@lucide/lab";
+import type { LucideIcon } from "lucide-react";
+import {
+  Anchor,
+  Check,
+  Cherry,
+  CloudLightning,
+  Crown,
+  CupSoda,
+  createLucideIcon,
+  Dog,
+  IceCream,
+  Landmark,
+  Leaf,
+  MoonStar,
+  MountainSnow,
+  PawPrint,
+  Popsicle,
+  Rose,
+  Siren,
+  SunSnow,
+  Sword,
+  Wheat,
+} from "lucide-react";
 
-const PRESET_COLORS = [
-  "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#14b8a6", // teal
-  "#3b82f6", // blue
-  "#6366f1", // indigo
-  "#a855f7", // purple
-  "#ec4899", // pink
-  "#f43f5e", // rose
-  "#06b6d4", // cyan
-  "#84cc16", // lime
+const Cheese = createLucideIcon("Cheese", cheese);
+const BullHead = createLucideIcon("BullHead", bullHead);
+const Shark = createLucideIcon("Shark", shark);
+const FoxFaceTail = createLucideIcon("FoxFaceTail", foxFaceTail);
+const Lemon = createLucideIcon("Lemon", lemon);
+const GolfDriver = createLucideIcon("GolfDriver", golfDriver);
+const Strawberry = createLucideIcon("Strawberry", strawberry);
+const CatBig = createLucideIcon("CatBig", catBig);
+
+interface ColorEntry {
+  hex: string;
+  name: string;
+  icon: LucideIcon;
+}
+
+// Each sub-array is a hue column, from dark (top) to light (bottom)
+const COLOR_GRID: ColorEntry[][] = [
+  // 🌸 Pink
+  [
+    { hex: "#df0e88", name: "Jam", icon: Strawberry }, //f32ba5, 9B1C5C
+    { hex: "#ff66a6", name: "Panther", icon: CatBig },
+    { hex: "#ff99c3", name: "Blossom", icon: Cherry },
+  ],
+  // 🔴 Red
+  [
+    { hex: "#A00000", name: "Rose", icon: Rose },
+    { hex: "#e9072b", name: "Siren", icon: Siren },
+    { hex: "#FD5E53", name: "Sorbet", icon: IceCream },
+  ],
+
+  // 🟠 Orange
+  [
+    { hex: "#bf5700", name: "Longhorn", icon: BullHead },
+    { hex: "#FC931E", name: "Cheddar", icon: Cheese }, // ff6600
+    { hex: "#feaf68", name: "Creamsicle", icon: Popsicle },
+  ],
+
+  // // 🟫 Earth (Brown / Natural)
+  // [
+  //   { hex: "#C2980C", name: "Stone", icon: Mountain },
+  //   { hex: "#D4AF37", name: "Reign", icon: Crown },
+  //   { hex: "#E7C995", name: "Beach", icon: Palmtree },
+  // ],
+
+  // // 🟡 Yellow
+  // [
+  //   { hex: "#ffcb05", name: "Wolverine", icon: FoxFaceTail },
+  //   { hex: "#fff700", name: "Limoncello", icon: Lemon },
+  //   { hex: "#fdfe98", name: "Butter", icon: Popcorn },
+  // ],
+
+  // 🟡 Yellow
+  [
+    { hex: "#C2980C", name: "Reign", icon: Crown },
+    { hex: "#ffcb05", name: "Wolverine", icon: FoxFaceTail },
+    { hex: "#faf438", name: "Limoncello", icon: Lemon },
+  ],
+
+  // 🟢 Green
+  [
+    { hex: "#18453B", name: "Spartan", icon: Sword },
+    { hex: "#16A34A", name: "Spearmint", icon: Leaf },
+    { hex: "#92F073", name: "Fairway", icon: GolfDriver },
+  ],
+
+  // 🌊 Teal (Blue-Green)
+  [
+    { hex: "#006D75", name: "Pacific", icon: Shark },
+    { hex: "#2ad2c9", name: "Diablo", icon: MountainSnow },
+    { hex: "#99F6E4", name: "Lagoon", icon: SunSnow },
+  ],
+
+  // 🔵 Blue (Deep)
+  [
+    { hex: "#00274C", name: "Midnight", icon: PawPrint },
+    { hex: "#1D4ED8", name: "Santorini", icon: Landmark },
+    { hex: "#84cfff", name: "Sky", icon: Check },
+  ],
+
+  // 🟣 Purple
+  [
+    { hex: "#4B008C", name: "Husky", icon: Dog },
+    { hex: "#9636ff", name: "Lupine", icon: Wheat },
+    { hex: "#c896ff", name: "Taro", icon: CupSoda },
+  ],
+
+  // ⚫ Neutral (Gray scale)
+  [
+    { hex: "#111827", name: "Storm", icon: CloudLightning },
+    { hex: "#355464", name: "Anchor", icon: Anchor },
+    { hex: "#C4C4C4", name: "Moonlight", icon: MoonStar },
+  ],
 ];
 
 export interface ColorPickerProps {
@@ -21,48 +132,61 @@ export interface ColorPickerProps {
   onChange: (color: string) => void;
 }
 
+function isLightColor(hex: string): boolean {
+  const r = Number.parseInt(hex.slice(1, 3), 16);
+  const g = Number.parseInt(hex.slice(3, 5), 16);
+  const b = Number.parseInt(hex.slice(5, 7), 16);
+  // Perceived luminance
+  return r * 0.299 + g * 0.587 + b * 0.114 > 160;
+}
+
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
-  const [showFullPicker, setShowFullPicker] = useState(false);
+  const selectedEntry = COLOR_GRID.flat().find(
+    (entry) => entry.hex.toUpperCase() === value?.toUpperCase(),
+  );
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Preset swatches */}
-      <div className="flex flex-wrap gap-2">
-        {PRESET_COLORS.map((color) => (
-          <button
-            key={color}
-            type="button"
-            aria-label={`Select color ${color}`}
-            className="h-8 w-8 shrink-0 cursor-pointer rounded-full border-2 transition-all duration-150"
-            style={{
-              backgroundColor: color,
-              borderColor: value === color ? "white" : "transparent",
-              boxShadow: value === color ? `0 0 0 2px ${color}` : "none",
-            }}
-            onClick={() => {
-              onChange(color);
-              setShowFullPicker(false);
-            }}
-          />
-        ))}
-
-        {/* Rainbow toggle button */}
-        <button
-          type="button"
-          aria-label="Open color picker"
-          className="h-8 w-8 shrink-0 cursor-pointer rounded-full border-2 transition-all duration-150"
-          style={{
-            background:
-              "conic-gradient(#ef4444, #eab308, #22c55e, #3b82f6, #a855f7, #ec4899, #ef4444)",
-            borderColor: showFullPicker && !PRESET_COLORS.includes(value) ? "white" : "transparent",
-          }}
-          onClick={() => setShowFullPicker((prev) => !prev)}
-        />
+    <div className="flex flex-col gap-2">
+      <div
+        className="grid overflow-hidden"
+        style={{ gridTemplateColumns: `repeat(${COLOR_GRID.length}, 1fr)` }}
+      >
+        {/* Render column by column, but CSS grid fills row-first, so we transpose */}
+        {Array.from({ length: Math.max(...COLOR_GRID.map((c) => c.length)) }, (_, row) =>
+          COLOR_GRID.map((column) => {
+            const entry = column[row];
+            if (!entry) return <div key={`empty-${row}-${column[0].hex}`} />;
+            const { hex, name, icon: Icon } = entry;
+            const isSelected = value?.toUpperCase() === hex.toUpperCase();
+            const contrastColor = isLightColor(hex) ? "#000" : "#fff";
+            return (
+              <Button
+                key={hex}
+                type="button"
+                aria-label={`Select color ${name}`}
+                className="relative aspect-square w-full cursor-pointer -mb-px"
+                style={{
+                  backgroundColor: hex,
+                  outline: isSelected ? `2px solid ${contrastColor}` : "none",
+                  outlineOffset: isSelected ? "-4px" : "0",
+                }}
+                onClick={() => onChange(hex)}
+              >
+                {isSelected && (
+                  <Icon
+                    className="absolute inset-0 m-auto"
+                    size={20}
+                    strokeWidth={2}
+                    color={contrastColor}
+                  />
+                )}
+              </Button>
+            );
+          }),
+        )}
       </div>
-
-      {/* Full color picker */}
-      {showFullPicker && (
-        <HexColorPicker color={value} onChange={onChange} style={{ width: "100%" }} />
+      {selectedEntry && (
+        <p className="text-center text-sm text-text-secondary">{selectedEntry.name}</p>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { playerListOptions } from "../../../data/hooks/usePlayers";
-import { List } from "../../ui/List/List";
+import { List } from "../../ui";
 import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
 import { AddPlayerRow } from "./AddPlayerRow";
 

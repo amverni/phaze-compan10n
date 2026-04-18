@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Dialog } from "../../ui/Dialog/Dialog";
+import { Dialog } from "../../ui";
 import { CreatePlayer } from "./CreatePlayer";
 import { SearchPlayer } from "./SearchPlayer";
 import "./AddPlayerDialog.css";

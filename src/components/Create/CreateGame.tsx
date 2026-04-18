@@ -5,8 +5,7 @@ import { Info, ListChecks, Play, Settings as SettingsIcon, Users, X } from "luci
 import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button } from "../ui/Button/Button";
-import { TabList } from "../ui/TabList/TabList";
+import { Button, TabList } from "../ui";
 import { Phases } from "./Phases";
 import { Players } from "./Players";
 import { Settings } from "./Settings";
