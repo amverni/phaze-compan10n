@@ -10,7 +10,7 @@ export const Home: React.FC = () => {
   return (
     <CardBackground
       headerContent={
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-lg items-center justify-end px-4">
+        <div className="relative z-10 mx-auto flex h-full w-full items-center justify-end px-4">
           <HomeMenu />
         </div>
       }

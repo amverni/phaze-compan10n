@@ -29,7 +29,7 @@ export function CreateGame() {
           </div>
 
           {/* Info icon in normal flow, on top */}
-          <div className="relative z-10 mx-auto flex h-full w-full max-w-lg items-center justify-end px-4">
+          <div className="relative z-10 mx-auto flex h-full w-full items-center justify-end px-4">
             <Button aria-label="Tips" className="size-10">
               <Info className="size-6 relative z-10" />
             </Button>

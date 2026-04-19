@@ -1,35 +1,35 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Plus, Search, X } from "lucide-react";
-import { type RefObject, useDeferredValue } from "react";
+import { Search, X } from "lucide-react";
+import { type ReactNode, type RefObject, useDeferredValue } from "react";
 import { playerListOptions } from "../../../data/hooks/usePlayers";
+import type { Player } from "../../../types";
 import { Button, List } from "../../ui";
-import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
-import { AddPlayerRow } from "./AddPlayerRow";
 
-export interface SearchPlayerProps {
+export interface PlayersSearchProps {
   /** Ref forwarded to the search input for focus management. */
   inputRef: RefObject<HTMLInputElement | null>;
   /** Current search term (controlled). */
   searchTerm: string;
   /** Called when the search term changes. */
   onSearchTermChange: (value: string) => void;
-  /** Called when the user wants to create a new player. */
-  onCreatePlayer: () => void;
+  /** Render function for each player row in the results list. */
+  renderRow: (player: Player) => ReactNode;
+  /** Optional extra action buttons rendered after the clear button. */
+  actions?: ReactNode;
 }
 
 /**
- * Reusable player-search view with a search bar, clear/create buttons,
- * and a scrollable results list.
+ * Reusable player-search view with a search bar and a scrollable results list.
+ * The caller controls what each row looks like via `renderRow` and can inject
+ * extra action buttons (e.g. create-player) via `actions`.
  */
-export function SearchPlayer({
+export function PlayersSearch({
   inputRef,
   searchTerm,
   onSearchTermChange,
-  onCreatePlayer,
-}: SearchPlayerProps) {
-  const addPlayer = useAddPlayer();
-  const gamePlayers = useGamePlayers();
-  const gamePlayerIds = new Set(gamePlayers.map((p) => p.id));
+  renderRow,
+  actions,
+}: PlayersSearchProps) {
   const deferredSearch = useDeferredValue(searchTerm);
 
   const { data: players, isLoading } = useQuery({
@@ -66,26 +66,13 @@ export function SearchPlayer({
           <X className="h-5 w-5" />
         </Button>
 
-        <Button
-          onClick={onCreatePlayer}
-          className="h-9 w-9 shrink-0 p-0"
-          aria-label="Create new player"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
+        {actions}
       </div>
 
       {/* Results */}
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
         <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
-          {players?.map((player) => (
-            <AddPlayerRow
-              key={player.id}
-              player={player}
-              onSelect={addPlayer}
-              disabled={gamePlayerIds.has(player.id)}
-            />
-          ))}
+          {players?.map((player) => renderRow(player))}
         </List>
       </div>
     </div>
