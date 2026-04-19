@@ -1,0 +1,104 @@
+.toast {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  pointer-events: auto;
+  touch-action: none;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.toast.is-swiping {
+  transition: none;
+}
+
+.toast-dismiss {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+}
+
+.toast-dismiss:active {
+  opacity: 1;
+}
+
+.toast-glass {
+  --_g-bg: rgba(180, 40, 40, 0.35);
+  --_g-border: rgba(255, 100, 100, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .toast-glass {
+    --_g-bg: rgba(200, 50, 50, 0.25);
+    --_g-border: rgba(255, 120, 120, 0.25);
+  }
+}
+
+.toast-bounce {
+  animation: toast-bounce 0.3s ease-out !important;
+}
+
+@keyframes toast-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.04); }
+  60% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.2s ease-out forwards;
+}
+
+.toast-exit {
+  animation: toast-slide-out 0.2s ease-in forwards;
+}
+
+.toast-swipe-exit {
+  animation: toast-swipe-out 0.2s ease-in forwards;
+}
+
+@keyframes toast-swipe-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

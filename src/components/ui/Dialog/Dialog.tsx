@@ -59,9 +59,19 @@ export function Dialog<TTag extends ElementType = "div">(
   const applyOffset = useCallback((y: number) => {
     const panel = panelRef.current;
     if (!panel) return;
-    drag.current.offset = Math.max(0, y);
-    panel.style.transform = `translateY(${drag.current.offset}px)`;
+    if (y < 0) {
+      // Dragging up — stretch effect with rubber-band resistance
+      const stretch = Math.sqrt(Math.abs(y)) * 0.003;
+      drag.current.offset = 0;
+      panel.style.transformOrigin = "bottom";
+      panel.style.transform = `scaleY(${1 + stretch})`;
+    } else {
+      drag.current.offset = y;
+      panel.style.transformOrigin = "";
+      panel.style.transform = `translateY(${y}px)`;
+    }
     panel.style.transition = "none";
+    panel.style.userSelect = "none";
   }, []);
 
   const finishGesture = useCallback(() => {
@@ -83,12 +93,14 @@ export function Dialog<TTag extends ElementType = "div">(
       setTimeout(finish, 250);
     } else {
       panel.style.transition = "transform 200ms ease-out";
-      panel.style.transform = "translateY(0)";
+      panel.style.transform = "translateY(0) scaleY(1)";
       panel.addEventListener(
         "transitionend",
         () => {
           panel.style.transform = "";
           panel.style.transition = "";
+          panel.style.transformOrigin = "";
+          panel.style.userSelect = "";
         },
         { once: true },
       );
@@ -103,6 +115,7 @@ export function Dialog<TTag extends ElementType = "div">(
   // ── Handle bar: pointer events ──────────────────────────────
   const onHandlePointerDown = useCallback((e: ReactPointerEvent) => {
     if (e.button !== 0) return;
+    e.preventDefault();
     const d = drag.current;
     d.startY = e.clientY;
     d.offset = 0;

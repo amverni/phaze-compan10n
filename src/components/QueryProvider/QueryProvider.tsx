@@ -11,7 +11,6 @@ const queryClient = new QueryClient({
       retry: false, // IndexedDB rarely fails, no need to retry
       refetchOnWindowFocus: false, // Typically not needed for IndexedDB
       refetchOnReconnect: false, // No network involved
-      refetchOnMount: false, // Data is fresh until you change it
     },
   },
 });

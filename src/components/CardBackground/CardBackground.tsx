@@ -35,7 +35,7 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
   const bottomClip = `polygon(0 ${SLANT}, 100% 0, 100% 100%, 0% 100%)`;
 
   return (
-    <div className="flex min-h-svh flex-col overflow-x-clip">
+    <div className="flex h-svh flex-col overflow-x-clip">
       {/* ── Top panel: flat top, angled bottom ────────────────────── */}
       <div className="relative z-10">
         {/* Shadow layer (no children → never re-rendered by interactions) */}
@@ -52,7 +52,12 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
       </div>
 
       {/* ── Main content ──────────────────────────────────────────── */}
-      <div className="relative z-0 flex-1">{mainContent}</div>
+      <div
+        className="relative z-0 min-h-0 flex-1 overflow-y-auto"
+        style={{ marginTop: `-${SLANT}`, paddingTop: SLANT, marginBottom: `-${SLANT}`, paddingBottom: SLANT }}
+      >
+        {mainContent}
+      </div>
 
       {/* ── Bottom panel: angled top, flat bottom ─────────────────── */}
       <div className="relative z-10">

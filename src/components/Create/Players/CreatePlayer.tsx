@@ -1,12 +1,15 @@
 import { Field, Fieldset, Label, Legend } from "@headlessui/react";
 import { useForm } from "@tanstack/react-form";
 import { ArrowLeft } from "lucide-react";
+import { useRef, useState } from "react";
+import { playersApi } from "../../../data/api/players";
 import { getRandomColorName } from "../../../data/constants/colors";
 import { useCreatePlayer } from "../../../data/hooks/usePlayers";
 import { Button } from "../../ui/Button/Button";
 import { Checkbox } from "../../ui/Checkbox/Checkbox";
 import { ColorPicker } from "../../ui/ColorPicker/ColorPicker";
 import { List } from "../../ui/List/List";
+import { Toast, type ToastHandle } from "../../ui/Toast/Toast";
 import { useAddPlayer } from "../CreateGameContext";
 
 export interface CreatePlayerProps {
@@ -19,6 +22,19 @@ export interface CreatePlayerProps {
 export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
   const addPlayer = useAddPlayer();
   const createPlayer = useCreatePlayer();
+  const [nameError, setNameError] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const toastRef = useRef<ToastHandle>(null);
+
+  /** Trigger a shake animation on the name input. */
+  function shakeNameInput() {
+    const el = nameInputRef.current;
+    if (!el) return;
+    el.classList.remove("shake");
+    // Force reflow so re-adding the class restarts the animation
+    void el.offsetWidth;
+    el.classList.add("shake");
+  }
 
   const form = useForm({
     defaultValues: {
@@ -27,19 +43,33 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
       isFavorite: 0 as 0 | 1,
     },
     onSubmit: async ({ value }) => {
-      const player = await createPlayer.mutateAsync({
+      const data = {
         name: value.name.trim(),
         color: value.color,
         wins: 0,
         isFavorite: value.isFavorite,
-      });
+      };
+
+      const errors = await playersApi.validate(data);
+      if (errors) {
+        if (errors.name) {
+          toastRef.current?.show(errors.name);
+          setNameError(true);
+          shakeNameInput();
+        }
+        return;
+      }
+
+      const player = await createPlayer.mutateAsync(data);
       addPlayer(player);
       onBack();
     },
   });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
+      <Toast ref={toastRef} duration={10000} />
+
       {/* Header */}
       <div className="flex items-center gap-2 p-3 pb-0">
         <Button onClick={onBack} className="h-9 w-9 shrink-0 p-0" aria-label="Back to search">
@@ -67,22 +97,34 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
                 name="name"
                 validators={{
                   onChange: ({ value }) => (!value.trim() ? "Name is required" : undefined),
-                  onSubmit: ({ value }) => (!value.trim() ? "Name is required" : undefined),
                 }}
               >
-                {(field) => (
-                  <Field className="flex flex-col gap-1">
-                    <Label className="text-sm font-medium text-text-secondary">Name</Label>
-                    <input
-                      type="text"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      placeholder="Player name"
-                      className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50"
-                    />
-                  </Field>
-                )}
+                {(field) => {
+                  const hasError = field.state.meta.errors.length > 0 || nameError;
+                  return (
+                    <Field className="flex flex-col gap-1">
+                      <Label className="text-sm font-medium text-text-secondary">Name</Label>
+                      <input
+                        ref={nameInputRef}
+                        type="text"
+                        value={field.state.value}
+                        onChange={(e) => {
+                          setNameError(false);
+                          field.handleChange(e.target.value);
+                        }}
+                        onBlur={field.handleBlur}
+                        placeholder="Player name"
+                        aria-invalid={hasError}
+                        style={
+                          hasError
+                            ? ({ "--_g-border": "rgba(248, 113, 113, 0.6)" } as React.CSSProperties)
+                            : undefined
+                        }
+                        className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50 transition-colors"
+                      />
+                    </Field>
+                  );
+                }}
               </form.Field>
 
               {/* Color */}
@@ -114,12 +156,9 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button type="button" onClick={onBack} className="flex-1 px-4 py-2 text-sm">
-                  Discard
-                </Button>
                 <form.Subscribe
                   selector={(state) => [
-                    state.canSubmit && !!state.values.name.trim(),
+                    state.canSubmit && !!state.values.name.trim() && !nameError,
                     state.isSubmitting,
                   ]}
                 >
@@ -127,7 +166,7 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
                     <Button
                       type="submit"
                       disabled={!canSubmit}
-                      className="flex-1 px-4 py-2 text-sm"
+                      className="w-full px-4 py-2 text-sm"
                     >
                       {isSubmitting ? "Saving…" : "Save"}
                     </Button>

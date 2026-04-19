@@ -66,14 +66,53 @@ export const playersApi = {
   },
 
   /**
+   * Check whether a player with the given name already exists (case-insensitive).
+   *
+   * @param name - The name to check.
+   * @returns `true` if a player with this name exists.
+   */
+  async nameExists(name: string): Promise<boolean> {
+    const db = await getDB();
+    const all = await db.getAll("players");
+    const lower = name.trim().toLowerCase();
+    return all.some((p) => p.name.toLowerCase() === lower);
+  },
+
+  /**
+   * Validate player data before creation.
+   *
+   * @param data - The player data to validate.
+   * @returns A map of field names to error messages, or `undefined` if valid.
+   */
+  async validate(
+    data: Omit<Player, "id" | "createdAt">,
+  ): Promise<Partial<Record<keyof Omit<Player, "id" | "createdAt">, string>> | undefined> {
+    const errors: Partial<Record<keyof Omit<Player, "id" | "createdAt">, string>> = {};
+
+    if (!data.name.trim()) {
+      errors.name = "Name is required";
+    } else if (await this.nameExists(data.name)) {
+      errors.name = "A player with this name already exists";
+    }
+
+    return Object.keys(errors).length > 0 ? errors : undefined;
+  },
+
+  /**
    * Create a new player.
    *
    * Automatically generates a unique ID (UUID v4) and sets the `createdAt` timestamp.
    *
    * @param data - The player data, excluding `id` and `createdAt` which are generated automatically.
    * @returns The newly created player, including the generated `id` and `createdAt` fields.
+   * @throws {Error} If validation fails (e.g. duplicate name).
    */
   async create(data: Omit<Player, "id" | "createdAt">): Promise<Player> {
+    const errors = await this.validate(data);
+    if (errors) {
+      throw new Error(Object.values(errors).join(", "));
+    }
+
     const db = await getDB();
     const newPlayer: Player = {
       ...data,
