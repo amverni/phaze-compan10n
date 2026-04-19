@@ -1,10 +1,10 @@
 import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
+import { PlayersSearch } from "../../Players/PlayersSearch";
 import { Button, Dialog } from "../../ui";
 import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
 import { AddPlayerRow } from "./AddPlayerRow";
 import { CreatePlayer } from "./CreatePlayer";
-import { PlayersSearch } from "./PlayersSearch";
 import "./AddPlayerDialog.css";
 
 type View = "search" | "create";

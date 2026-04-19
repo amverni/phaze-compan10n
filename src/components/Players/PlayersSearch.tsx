@@ -1,9 +1,9 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { type ReactNode, type RefObject, useDeferredValue } from "react";
-import { playerListOptions } from "../../../data/hooks/usePlayers";
-import type { Player } from "../../../types";
-import { Button, List } from "../../ui";
+import { playerListOptions } from "../../data/hooks/usePlayers";
+import type { Player } from "../../types";
+import { Button, List } from "../ui";
 
 export interface PlayersSearchProps {
   /** Ref forwarded to the search input for focus management. */

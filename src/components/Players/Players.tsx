@@ -1,10 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 import { useRef, useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
-import { PlayersSearch } from "../Create/Players/PlayersSearch";
 import { Logo } from "../Logo/Logo";
 import { Button } from "../ui";
 import { PlayerListRow } from "./PlayerListRow";
+import { PlayersSearch } from "./PlayersSearch";
 
 export function Players() {
   const [searchTerm, setSearchTerm] = useState("");
