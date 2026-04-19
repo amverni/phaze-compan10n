@@ -34,3 +34,11 @@ export function useCreatePlayer() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
   });
 }
+
+export function useDeletePlayer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: PlayerId) => playersApi.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+  });
+}

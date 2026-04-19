@@ -70,7 +70,7 @@ export function PlayersSearch({
       </div>
 
       {/* Results */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-2">
         <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
           {players?.map((player) => renderRow(player))}
         </List>

@@ -53,7 +53,7 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
 
       {/* ── Main content ──────────────────────────────────────────── */}
       <div
-        className="relative z-0 min-h-0 flex-1 overflow-y-auto"
+        className="relative z-0 min-h-0 flex-1 overflow-x-visible overflow-y-auto"
         style={{
           marginTop: `-${SLANT}`,
           paddingTop: SLANT,

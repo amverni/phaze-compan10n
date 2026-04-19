@@ -36,10 +36,10 @@ export const HomeMenu: React.FC = () => {
                 {label}
               </CloseButton>
             ) : (
-              <button key={label} type="button" className={itemClassName}>
+              <CloseButton key={label} as="button" type="button" className={itemClassName}>
                 <Icon className="size-5 shrink-0" />
                 {label}
-              </button>
+              </CloseButton>
             ),
           )}
         </nav>

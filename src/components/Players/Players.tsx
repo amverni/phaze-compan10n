@@ -20,12 +20,14 @@ export function Players() {
         </div>
       }
       mainContent={
-        <PlayersSearch
-          inputRef={inputRef}
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
-          renderRow={(player) => <PlayerListRow player={player} />}
-        />
+        <div className="mx-auto h-full max-w-lg">
+          <PlayersSearch
+            inputRef={inputRef}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            renderRow={(player) => <PlayerListRow player={player} />}
+          />
+        </div>
       }
       footerContent={
         <div className="flex h-full items-center justify-center px-4">
