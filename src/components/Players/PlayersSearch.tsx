@@ -1,21 +1,17 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
-import { type ReactNode, type RefObject, useDeferredValue } from "react";
+import { type ReactNode, type RefObject, useDeferredValue, useRef, useState } from "react";
 import { playerListOptions } from "../../data/hooks/usePlayers";
 import type { Player } from "../../types";
 import { Button, List } from "../ui";
 
 export interface PlayersSearchProps {
   /** Ref forwarded to the search input for focus management. */
-  inputRef: RefObject<HTMLInputElement | null>;
-  /** Current search term (controlled). */
-  searchTerm: string;
-  /** Called when the search term changes. */
-  onSearchTermChange: (value: string) => void;
+  inputRef?: RefObject<HTMLInputElement | null>;
   /** Render function for each player row in the results list. */
   renderRow: (player: Player) => ReactNode;
-  /** Optional extra action buttons rendered after the clear button. */
-  actions?: ReactNode;
+  /** Optional render function for extra action buttons. Receives the current search term. */
+  actions?: (searchTerm: string) => ReactNode;
 }
 
 /**
@@ -24,12 +20,14 @@ export interface PlayersSearchProps {
  * extra action buttons (e.g. create-player) via `actions`.
  */
 export function PlayersSearch({
-  inputRef,
-  searchTerm,
-  onSearchTermChange,
+  inputRef: externalInputRef,
   renderRow,
   actions,
 }: PlayersSearchProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = externalInputRef ?? internalInputRef;
+
   const deferredSearch = useDeferredValue(searchTerm);
 
   const { data: players, isLoading } = useQuery({
@@ -44,21 +42,21 @@ export function PlayersSearch({
   return (
     <div className="h-full w-full shrink-0 flex flex-col">
       {/* Search bar row */}
-      <div className="flex items-center gap-2 p-3 pb-0">
+      <div className="flex items-center gap-2 pt-3">
         <div className="glass relative flex h-9 min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-full px-3">
           <Search className="h-5 w-5 shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
             value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search players…"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-secondary"
           />
         </div>
 
         <Button
-          onClick={() => onSearchTermChange("")}
+          onClick={() => setSearchTerm("")}
           disabled={!searchTerm}
           className="h-9 w-9 shrink-0 p-0"
           aria-label="Clear search"
@@ -66,11 +64,11 @@ export function PlayersSearch({
           <X className="h-5 w-5" />
         </Button>
 
-        {actions}
+        {actions?.(searchTerm)}
       </div>
 
-      {/* Results */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-2">
+      {/* Results – negative margin lets shadow bleed, inner padding restores layout */}
+      <div className="min-h-0 flex-1 overflow-y-auto -mx-4 px-4 py-2">
         <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
           {players?.map((player) => renderRow(player))}
         </List>

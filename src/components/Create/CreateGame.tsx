@@ -38,7 +38,7 @@ export function CreateGame() {
       }
       mainContent={
         <TabGroup selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-          <div className="mx-auto flex max-w-lg justify-center px-4 pt-2 pb-3">
+          <div className="content-container flex justify-center pt-2 pb-3">
             <TabList>
               {TABS.map(({ label, icon: Icon }) => (
                 <Tab
@@ -54,7 +54,7 @@ export function CreateGame() {
             </TabList>
           </div>
 
-          <TabPanels className="mx-auto max-w-lg">
+          <TabPanels className="content-container">
             <TabPanel>
               <Players />
             </TabPanel>
@@ -70,7 +70,7 @@ export function CreateGame() {
         </TabGroup>
       }
       footerContent={
-        <div className="mx-auto flex h-full max-w-lg justify-between px-6">
+        <div className="content-container flex h-full justify-between">
           {/* Cancel — back to home */}
           <Button as={Link} to="/" aria-label="Cancel" className="size-14">
             <X className="size-8 relative z-10" />

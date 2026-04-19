@@ -69,29 +69,32 @@ export const playersApi = {
    * Check whether a player with the given name already exists (case-insensitive).
    *
    * @param name - The name to check.
+   * @param excludeId - Optional player ID to exclude from the check (useful when editing).
    * @returns `true` if a player with this name exists.
    */
-  async nameExists(name: string): Promise<boolean> {
+  async nameExists(name: string, excludeId?: PlayerId): Promise<boolean> {
     const db = await getDB();
     const all = await db.getAll("players");
     const lower = name.trim().toLowerCase();
-    return all.some((p) => p.name.toLowerCase() === lower);
+    return all.some((p) => p.name.toLowerCase() === lower && p.id !== excludeId);
   },
 
   /**
-   * Validate player data before creation.
+   * Validate player data before creation or update.
    *
    * @param data - The player data to validate.
+   * @param excludeId - Optional player ID to exclude from the uniqueness check (useful when editing).
    * @returns A map of field names to error messages, or `undefined` if valid.
    */
   async validate(
     data: Omit<Player, "id" | "createdAt">,
+    excludeId?: PlayerId,
   ): Promise<Partial<Record<keyof Omit<Player, "id" | "createdAt">, string>> | undefined> {
     const errors: Partial<Record<keyof Omit<Player, "id" | "createdAt">, string>> = {};
 
     if (!data.name.trim()) {
       errors.name = "Name is required";
-    } else if (await this.nameExists(data.name)) {
+    } else if (await this.nameExists(data.name, excludeId)) {
       errors.name = "A player with this name already exists";
     }
 

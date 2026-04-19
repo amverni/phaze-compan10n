@@ -16,8 +16,8 @@ export const Home: React.FC = () => {
       }
       mainContent={<Logo height={160} width="100%" />}
       footerContent={
-        <div className="mx-auto flex h-full max-w-lg flex-col">
-          <div className="flex flex-1 items-center justify-end px-6">
+        <div className="content-container flex h-full flex-col">
+          <div className="flex flex-1 items-center justify-end">
             <CreateButton />
           </div>
           <div className="flex justify-center">

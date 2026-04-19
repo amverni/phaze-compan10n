@@ -6,16 +6,17 @@ import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 
 export interface PlayerListRowProps {
   player: Player;
+  onEdit?: (player: Player) => void;
 }
 
-export function PlayerListRow({ player }: PlayerListRowProps) {
+export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
   const deletePlayer = useDeletePlayer();
 
   return (
     <div className="group/row -mx-3 flex h-full w-[calc(100%+1.5rem)] items-center text-sm [&:hover:not(:has(.trash-btn:hover))]:bg-black/5 dark:[&:hover:not(:has(.trash-btn:hover))]:bg-white/10">
       <Button
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 h-full text-left"
-        onClick={() => {}}
+        onClick={() => onEdit?.(player)}
       >
         <PlayerAvatar color={player.color} />
         <span className="flex-1 truncate">{player.name}</span>

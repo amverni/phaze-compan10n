@@ -1,18 +1,11 @@
 import { Button } from "@headlessui/react";
 import { COLOR_GRID, getColorEntry } from "../../../data/constants/colors";
+import { getContrastColor } from "../../../utils";
 
 export interface ColorPickerProps {
   /** Color entry name (or legacy hex value). */
   value: string;
   onChange: (colorName: string) => void;
-}
-
-function isLightColor(hex: string): boolean {
-  const r = Number.parseInt(hex.slice(1, 3), 16);
-  const g = Number.parseInt(hex.slice(3, 5), 16);
-  const b = Number.parseInt(hex.slice(5, 7), 16);
-  // Perceived luminance
-  return r * 0.299 + g * 0.587 + b * 0.114 > 160;
 }
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
@@ -30,7 +23,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
               {COLOR_GRID.map((column) => {
                 const { hex, name, icon: Icon } = column[row];
                 const isSelected = selectedEntry?.name === name;
-                const contrastColor = isLightColor(hex) ? "#000" : "#fff";
+                const contrastColor = getContrastColor(hex);
                 return (
                   <Button
                     key={hex}

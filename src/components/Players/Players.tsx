@@ -1,14 +1,31 @@
-import { ArrowLeft } from "lucide-react";
-import { useRef, useState } from "react";
+import { ArrowLeft, Plus } from "lucide-react";
+import { useState } from "react";
+import type { Player } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button } from "../ui";
+import { Button, Dialog } from "../ui";
+import { CreatePlayer } from "./CreatePlayer";
 import { PlayerListRow } from "./PlayerListRow";
 import { PlayersSearch } from "./PlayersSearch";
 
 export function Players() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [defaultName, setDefaultName] = useState("");
+  const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
+
+  function handleClose() {
+    setDialogOpen(false);
+  }
+
+  function handleAfterLeave() {
+    setDefaultName("");
+    setEditingPlayer(undefined);
+  }
+
+  function handleEdit(player: Player) {
+    setEditingPlayer(player);
+    setDialogOpen(true);
+  }
 
   return (
     <CardBackground
@@ -20,17 +37,34 @@ export function Players() {
         </div>
       }
       mainContent={
-        <div className="mx-auto h-full max-w-lg">
+        <div className="content-container h-full">
           <PlayersSearch
-            inputRef={inputRef}
-            searchTerm={searchTerm}
-            onSearchTermChange={setSearchTerm}
-            renderRow={(player) => <PlayerListRow player={player} />}
+            renderRow={(player) => <PlayerListRow player={player} onEdit={handleEdit} />}
+            actions={(searchTerm) => (
+              <Button
+                onClick={() => {
+                  setDefaultName(searchTerm);
+                  setDialogOpen(true);
+                }}
+                className="h-9 w-9 shrink-0 p-0"
+                aria-label="Create new player"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            )}
           />
+          <Dialog open={dialogOpen} onClose={handleClose} afterLeave={handleAfterLeave}>
+            <CreatePlayer
+              defaultName={defaultName}
+              player={editingPlayer}
+              onBack={handleClose}
+              onDeleted={handleClose}
+            />
+          </Dialog>
         </div>
       }
       footerContent={
-        <div className="flex h-full items-center justify-center px-4">
+        <div className="content-container flex h-full items-center">
           <Button
             onClick={() => window.history.back()}
             className="size-14 p-0"

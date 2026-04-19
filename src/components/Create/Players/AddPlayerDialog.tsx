@@ -1,10 +1,10 @@
 import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
+import { CreatePlayer } from "../../Players/CreatePlayer";
 import { PlayersSearch } from "../../Players/PlayersSearch";
 import { Button, Dialog } from "../../ui";
 import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
 import { AddPlayerRow } from "./AddPlayerRow";
-import { CreatePlayer } from "./CreatePlayer";
 import "./AddPlayerDialog.css";
 
 type View = "search" | "create";
@@ -16,7 +16,7 @@ export interface AddPlayerDialogProps {
 
 /** Dialog for searching and creating players. */
 export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [defaultName, setDefaultName] = useState("");
   const [view, setView] = useState<View>("search");
   const inputRef = useRef<HTMLInputElement>(null);
   const addPlayer = useAddPlayer();
@@ -28,7 +28,7 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
   }
 
   function handleAfterLeave() {
-    setSearchTerm("");
+    setDefaultName("");
     setView("search");
   }
 
@@ -50,8 +50,6 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
         {/* ── Page 1: Search ───────────────────────────── */}
         <PlayersSearch
           inputRef={inputRef}
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
           renderRow={(player) => (
             <AddPlayerRow
               player={player}
@@ -59,20 +57,25 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
               disabled={gamePlayerIds.has(player.id)}
             />
           )}
-          actions={
+          actions={(searchTerm) => (
             <Button
-              onClick={() => setView("create")}
+              onClick={() => {
+                setDefaultName(searchTerm);
+                setView("create");
+              }}
               className="h-9 w-9 shrink-0 p-0"
               aria-label="Create new player"
             >
               <Plus className="h-5 w-5" />
             </Button>
-          }
+          )}
         />
 
         {/* ── Page 2: Create Player ────────────────────── */}
         <div className="h-full w-full shrink-0">
-          {view === "create" && <CreatePlayer defaultName={searchTerm} onBack={handleBack} />}
+          {view === "create" && (
+            <CreatePlayer defaultName={defaultName} onBack={handleBack} onCreated={addPlayer} />
+          )}
         </div>
       </div>
     </Dialog>

@@ -94,6 +94,12 @@ body {
   }
 }
 
+/* ── Content container ────────────────────────────────────── */
+
+.content-container {
+  @apply mx-auto max-w-lg px-4;
+}
+
 /* ── Shake ────────────────────────────────────────────────── */
 
 @keyframes shake {

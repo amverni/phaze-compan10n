@@ -1,27 +1,41 @@
 import { Field, Fieldset, Label, Legend } from "@headlessui/react";
 import { useForm } from "@tanstack/react-form";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { playersApi } from "../../../data/api/players";
-import { getRandomColorName } from "../../../data/constants/colors";
-import { useCreatePlayer } from "../../../data/hooks/usePlayers";
-import { Button } from "../../ui/Button/Button";
-import { Checkbox } from "../../ui/Checkbox/Checkbox";
-import { ColorPicker } from "../../ui/ColorPicker/ColorPicker";
-import { List } from "../../ui/List/List";
-import { Toast, type ToastHandle } from "../../ui/Toast/Toast";
-import { useAddPlayer } from "../CreateGameContext";
+import { playersApi } from "../../data/api/players";
+import { getRandomColorName } from "../../data/constants/colors";
+import { useCreatePlayer, useDeletePlayer, useUpdatePlayer } from "../../data/hooks/usePlayers";
+import type { Player } from "../../types";
+import { Button } from "../ui/Button/Button";
+import { Checkbox } from "../ui/Checkbox/Checkbox";
+import { ColorPicker } from "../ui/ColorPicker/ColorPicker";
+import { List } from "../ui/List/List";
+import { Toast, type ToastHandle } from "../ui/Toast/Toast";
 
 export interface CreatePlayerProps {
   /** Pre-filled player name (e.g. from the search box). */
   defaultName?: string;
+  /** Existing player to edit. When provided, the form operates in edit mode. */
+  player?: Player;
   /** Called when the user navigates back to the previous view. */
   onBack: () => void;
+  /** Called after a player is successfully created. */
+  onCreated?: (player: Player) => void;
+  /** Called after a player is successfully deleted (edit mode only). */
+  onDeleted?: () => void;
 }
 
-export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
-  const addPlayer = useAddPlayer();
+export function CreatePlayer({
+  defaultName,
+  player,
+  onBack,
+  onCreated,
+  onDeleted,
+}: CreatePlayerProps) {
+  const isEditing = !!player;
   const createPlayer = useCreatePlayer();
+  const updatePlayer = useUpdatePlayer();
+  const deletePlayer = useDeletePlayer();
   const [nameError, setNameError] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const toastRef = useRef<ToastHandle>(null);
@@ -38,19 +52,19 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
 
   const form = useForm({
     defaultValues: {
-      name: defaultName ?? "",
-      color: getRandomColorName(),
-      isFavorite: 0 as 0 | 1,
+      name: player?.name ?? defaultName ?? "",
+      color: player?.color ?? getRandomColorName(),
+      isFavorite: (player?.isFavorite ?? 0) as 0 | 1,
     },
     onSubmit: async ({ value }) => {
       const data = {
         name: value.name.trim(),
         color: value.color,
-        wins: 0,
+        wins: player?.wins ?? 0,
         isFavorite: value.isFavorite,
       };
 
-      const errors = await playersApi.validate(data);
+      const errors = await playersApi.validate(data, player?.id);
       if (errors) {
         if (errors.name) {
           toastRef.current?.show(errors.name);
@@ -60,22 +74,36 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
         return;
       }
 
-      const player = await createPlayer.mutateAsync(data);
-      addPlayer(player);
+      if (isEditing) {
+        const updated = await updatePlayer.mutateAsync({ id: player.id, updates: data });
+        onCreated?.(updated);
+      } else {
+        const created = await createPlayer.mutateAsync(data);
+        onCreated?.(created);
+      }
       onBack();
     },
   });
 
+  async function handleDelete() {
+    if (!player) return;
+    await deletePlayer.mutateAsync(player.id);
+    onDeleted?.();
+    onBack();
+  }
+
   return (
     <div className="relative flex h-full flex-col">
-      <Toast ref={toastRef} duration={10000} />
+      <Toast ref={toastRef} />
 
       {/* Header */}
       <div className="flex items-center gap-2 p-3 pb-0">
         <Button onClick={onBack} className="h-9 w-9 shrink-0 p-0" aria-label="Back to search">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-base font-medium text-text-secondary">New Player</h2>
+        <h2 className="text-base font-medium text-text-secondary">
+          {isEditing ? "Edit Player" : "New Player"}
+        </h2>
       </div>
 
       {/* Form */}
@@ -90,7 +118,7 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Fieldset disabled={isSubmitting} className="flex flex-1 flex-col gap-4">
-              <Legend className="sr-only">New Player</Legend>
+              <Legend className="sr-only">{isEditing ? "Edit Player" : "New Player"}</Legend>
 
               {/* Name */}
               <form.Field
@@ -156,6 +184,22 @@ export function CreatePlayer({ defaultName, onBack }: CreatePlayerProps) {
 
               {/* Actions */}
               <div className="flex gap-2">
+                {isEditing && (
+                  <Button
+                    type="button"
+                    onClick={handleDelete}
+                    className="toast-glass px-4 py-2 text-sm text-white"
+                    style={
+                      {
+                        "--_g-bg": "rgba(185, 40, 40, 0.55)",
+                        "--_g-border": "rgba(255, 100, 100, 0.4)",
+                      } as React.CSSProperties
+                    }
+                    aria-label="Delete player"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
                 <form.Subscribe
                   selector={(state) => [
                     state.canSubmit && !!state.values.name.trim() && !nameError,

@@ -35,6 +35,20 @@ export function useCreatePlayer() {
   });
 }
 
+export function useUpdatePlayer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      updates,
+    }: {
+      id: PlayerId;
+      updates: Partial<Omit<Player, "id" | "createdAt">>;
+    }) => playersApi.update(id, updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+  });
+}
+
 export function useDeletePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
