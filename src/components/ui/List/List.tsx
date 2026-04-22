@@ -48,7 +48,7 @@ function ShimmerRows({ count }: { count: number }) {
 /* ── Divider between rows ──────────────────────────────────── */
 
 function RowDivider() {
-  return <div className="mx-3 border-t border-white/10 dark:border-white/5" />;
+  return <div className="list-divider mx-3 border-t border-white/10 dark:border-white/5" />;
 }
 
 /* ── Sortable row wrapper ──────────────────────────────────── */

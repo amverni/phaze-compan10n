@@ -23,7 +23,7 @@ const itemClassName =
 export const HomeMenu: React.FC = () => {
   return (
     <Popover className="relative">
-      <PopoverButton as={Button} aria-label="Menu" className="size-10 active:scale-100!">
+      <PopoverButton as={Button} aria-label="Menu" className="size-10">
         <Menu className="size-6 relative z-10" />
       </PopoverButton>
 

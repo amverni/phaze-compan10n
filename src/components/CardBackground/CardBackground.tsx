@@ -1,13 +1,4 @@
 import type React from "react";
-import { SLANT_PX } from "../../constants/layout";
-
-/** Slant as a CSS length string for use in polygon / padding expressions. */
-const SLANT = `${SLANT_PX}px`;
-
-/** Shared filter string — shadow colour comes from CSS custom properties
- *  that flip between light mode (dark shadow) and dark mode (light glow). */
-const PANEL_SHADOW =
-  "drop-shadow(0 0 12px var(--card-shadow-lg)) drop-shadow(0 0 4px var(--card-shadow-sm))";
 
 interface CardBackgroundProps {
   /** Content rendered inside the angled top panel (e.g. logo, page header). */
@@ -25,56 +16,42 @@ interface CardBackgroundProps {
  * (angled top, flat bottom) that each occupy 15 % of the viewport height.
  * Both panels match the page background colour and use a drop-shadow on
  * the angled edge to create depth.
+ *
+ * Panel geometry (slant, clip-paths, shadow) is defined in index.css —
+ * adjust the `--slant` custom property there to change the angle.
  */
 export const CardBackground: React.FC<CardBackgroundProps> = ({
   headerContent,
   mainContent,
   footerContent,
 }) => {
-  const topClip = `polygon(0 0, 100% 0, 100% calc(100% - ${SLANT}), 0% 100%)`;
-  const bottomClip = `polygon(0 ${SLANT}, 100% 0, 100% 100%, 0% 100%)`;
-
   return (
     <div className="flex h-svh flex-col overflow-x-clip">
       {/* ── Top panel: flat top, angled bottom ────────────────────── */}
       <div className="relative z-10">
         {/* Shadow layer (no children → never re-rendered by interactions) */}
-        <div aria-hidden className="absolute inset-0" style={{ filter: PANEL_SHADOW }}>
-          <div className="h-full bg-white dark:bg-neutral-900" style={{ clipPath: topClip }} />
+        <div aria-hidden className="card-panel-shadow absolute inset-0">
+          <div className="card-panel-top h-full bg-white dark:bg-neutral-900" />
         </div>
         {/* Content layer */}
-        <div
-          className="relative h-[15svh] bg-white dark:bg-neutral-900"
-          style={{ clipPath: topClip, paddingBottom: SLANT }}
-        >
+        <div className="card-panel-top card-panel-top-content relative h-[15svh] bg-white dark:bg-neutral-900">
           {headerContent}
         </div>
       </div>
 
       {/* ── Main content ──────────────────────────────────────────── */}
-      <div
-        className="relative z-0 min-h-0 flex-1 overflow-x-visible overflow-y-auto"
-        style={{
-          marginTop: `-${SLANT}`,
-          paddingTop: SLANT,
-          marginBottom: `-${SLANT}`,
-          paddingBottom: SLANT,
-        }}
-      >
+      <div className="card-panel-main relative z-0 min-h-0 flex-1 overflow-x-visible overflow-y-auto">
         {mainContent}
       </div>
 
       {/* ── Bottom panel: angled top, flat bottom ─────────────────── */}
       <div className="relative z-10">
         {/* Shadow layer */}
-        <div aria-hidden className="absolute inset-0" style={{ filter: PANEL_SHADOW }}>
-          <div className="h-full bg-white dark:bg-neutral-900" style={{ clipPath: bottomClip }} />
+        <div aria-hidden className="card-panel-shadow absolute inset-0">
+          <div className="card-panel-bottom h-full bg-white dark:bg-neutral-900" />
         </div>
         {/* Content layer */}
-        <div
-          className="relative h-[15svh] bg-white dark:bg-neutral-900"
-          style={{ clipPath: bottomClip, paddingTop: SLANT }}
-        >
+        <div className="card-panel-bottom card-panel-bottom-content relative h-[15svh] bg-white dark:bg-neutral-900">
           {footerContent}
         </div>
       </div>

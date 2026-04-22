@@ -12,7 +12,7 @@ import { ColorPicker } from "../ui/ColorPicker/ColorPicker";
 import { List } from "../ui/List/List";
 import { Toast, type ToastHandle } from "../ui/Toast/Toast";
 
-export interface CreatePlayerProps {
+export interface PlayerEditorProps {
   /** Pre-filled player name (e.g. from the search box). */
   defaultName?: string;
   /** Existing player to edit. When provided, the form operates in edit mode. */
@@ -25,13 +25,13 @@ export interface CreatePlayerProps {
   onDeleted?: () => void;
 }
 
-export function CreatePlayer({
+export function PlayerEditor({
   defaultName,
   player,
   onBack,
   onCreated,
   onDeleted,
-}: CreatePlayerProps) {
+}: PlayerEditorProps) {
   const isEditing = !!player;
   const createPlayer = useCreatePlayer();
   const updatePlayer = useUpdatePlayer();
@@ -143,12 +143,9 @@ export function CreatePlayer({
                         onBlur={field.handleBlur}
                         placeholder="Player name"
                         aria-invalid={hasError}
-                        style={
-                          hasError
-                            ? ({ "--_g-border": "rgba(248, 113, 113, 0.6)" } as React.CSSProperties)
-                            : undefined
-                        }
-                        className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50 transition-colors"
+                        className={`glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50 transition-colors${
+                          hasError ? " glass-error" : ""
+                        }`}
                       />
                     </Field>
                   );
@@ -188,13 +185,7 @@ export function CreatePlayer({
                   <Button
                     type="button"
                     onClick={handleDelete}
-                    className="toast-glass px-4 py-2 text-sm text-white"
-                    style={
-                      {
-                        "--_g-bg": "rgba(185, 40, 40, 0.55)",
-                        "--_g-border": "rgba(255, 100, 100, 0.4)",
-                      } as React.CSSProperties
-                    }
+                    className="glass-danger px-4 py-2 text-sm text-white"
                     aria-label="Delete player"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -210,7 +201,7 @@ export function CreatePlayer({
                     <Button
                       type="submit"
                       disabled={!canSubmit}
-                      className="w-full px-4 py-2 text-sm"
+                      className="w-full px-4 py-2 text-sm active:scale-102!"
                     >
                       {isSubmitting ? "Saving…" : "Save"}
                     </Button>

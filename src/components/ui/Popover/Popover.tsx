@@ -7,6 +7,7 @@ import {
   type PopoverProps,
 } from "@headlessui/react";
 import type { ElementType, ReactNode } from "react";
+import { interactiveClasses } from "../sharedClasses";
 import "./Popover.css";
 
 /* ── Root ──────────────────────────────────────────────────── */
@@ -20,7 +21,9 @@ export function Popover<TTag extends ElementType = "div">(props: PopoverProps<TT
 export function PopoverButton<TTag extends ElementType = "button">(
   props: PopoverButtonProps<TTag>,
 ) {
-  return <HeadlessPopoverButton {...(props as PopoverButtonProps<"button">)} />;
+  const { className, ...rest } = props as PopoverButtonProps<"button"> & { className?: string };
+  const merged = [interactiveClasses, className].filter(Boolean).join(" ");
+  return <HeadlessPopoverButton {...(rest as PopoverButtonProps<"button">)} className={merged} />;
 }
 
 /* ── Panel ─────────────────────────────────────────────────── */

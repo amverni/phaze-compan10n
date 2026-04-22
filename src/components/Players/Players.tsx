@@ -4,7 +4,7 @@ import type { Player } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { Button, Dialog } from "../ui";
-import { CreatePlayer } from "./CreatePlayer";
+import { PlayerEditor } from "./PlayerEditor";
 import { PlayerListRow } from "./PlayerListRow";
 import { PlayersSearch } from "./PlayersSearch";
 
@@ -54,7 +54,7 @@ export function Players() {
             )}
           />
           <Dialog open={dialogOpen} onClose={handleClose} afterLeave={handleAfterLeave}>
-            <CreatePlayer
+            <PlayerEditor
               defaultName={defaultName}
               player={editingPlayer}
               onBack={handleClose}
@@ -64,7 +64,7 @@ export function Players() {
         </div>
       }
       footerContent={
-        <div className="content-container flex h-full items-center">
+        <div className="content-container flex h-full">
           <Button
             onClick={() => window.history.back()}
             className="size-14 p-0"

@@ -1,12 +1,12 @@
 import { type ButtonProps, Button as HeadlessButton } from "@headlessui/react";
 import type { ElementType } from "react";
+import { interactiveClasses } from "../sharedClasses";
 
 const baseClasses = [
   "glass",
   "inline-flex items-center justify-center rounded-full relative",
-  "cursor-pointer transition-all duration-150",
+  interactiveClasses,
   "hover:brightness-110 active:scale-110",
-  "focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60",
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
 ].join(" ");
 

@@ -66,4 +66,8 @@
     );
     background-size: 200% 100%;
   }
+
+  .list-divider {
+    border-color: rgba(0, 0, 0, 0.06);
+  }
 }

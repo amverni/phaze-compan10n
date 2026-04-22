@@ -23,7 +23,7 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
         <Pencil className="h-4 w-4 shrink-0 text-text-secondary group-hover/row:text-blue-500 group-has-[.trash-btn:hover]/row:text-text-secondary" />
       </Button>
       <Button
-        className="trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary group-hover/row:text-text-secondary/30 hover:!text-red-500 hover:bg-black/5 dark:hover:bg-white/20"
+        className="trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary group-hover/row:text-text-secondary/30 hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
         onClick={() => deletePlayer.mutate(player.id)}
         aria-label={`Delete ${player.name}`}
       >

@@ -50,3 +50,20 @@
     --_g-filter: blur(24px) saturate(120%) brightness(1.1);
   }
 }
+
+@media (prefers-color-scheme: light) {
+  .dialog-glass {
+    --_g-bg: rgba(255, 255, 255, 0.92);
+    --_g-filter: blur(24px) saturate(80%) brightness(1);
+    --_g-border: rgba(0, 0, 0, 0.08);
+    --_g-shadow: 0 8px 32px rgba(0, 0, 0, 0.10),
+      0 1px 3px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .dialog-glass .glass {
+    --_g-border: rgba(0, 0, 0, 0.14);
+    --_g-shadow: 0 4px 20px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
