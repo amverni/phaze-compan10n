@@ -115,102 +115,95 @@ export function PlayerEditor({
           form.handleSubmit();
         }}
       >
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <Fieldset disabled={isSubmitting} className="flex flex-1 flex-col gap-4">
-              <Legend className="sr-only">{isEditing ? "Edit Player" : "New Player"}</Legend>
+        <Fieldset className="flex flex-1 flex-col gap-4">
+          <Legend className="sr-only">{isEditing ? "Edit Player" : "New Player"}</Legend>
 
-              {/* Name */}
-              <form.Field
-                name="name"
-                validators={{
-                  onChange: ({ value }) => (!value.trim() ? "Name is required" : undefined),
-                }}
+          {/* Name */}
+          <form.Field
+            name="name"
+            validators={{
+              onChange: ({ value }) => (!value.trim() ? "Name is required" : undefined),
+            }}
+          >
+            {(field) => {
+              const hasError = field.state.meta.errors.length > 0 || nameError;
+              return (
+                <Field className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium text-text-secondary">Name</Label>
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={field.state.value}
+                    onChange={(e) => {
+                      setNameError(false);
+                      field.handleChange(e.target.value);
+                    }}
+                    onBlur={field.handleBlur}
+                    placeholder="Player name"
+                    aria-invalid={hasError}
+                    className={`glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50 transition-colors${
+                      hasError ? " glass-error" : ""
+                    }`}
+                  />
+                </Field>
+              );
+            }}
+          </form.Field>
+
+          {/* Color */}
+          <form.Field name="color">
+            {(field) => (
+              <Field>
+                <ColorPicker value={field.state.value} onChange={field.handleChange} />
+              </Field>
+            )}
+          </form.Field>
+
+          {/* Options */}
+          <List>
+            <form.Field name="isFavorite">
+              {(field) => (
+                <Field className="flex w-full items-center justify-between">
+                  <Label className="cursor-pointer text-sm text-text-secondary">Favorite</Label>
+                  <Checkbox
+                    checked={field.state.value === 1}
+                    onChange={(checked: boolean) => field.handleChange(checked ? 1 : 0)}
+                  />
+                </Field>
+              )}
+            </form.Field>
+          </List>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            {isEditing && (
+              <Button
+                type="button"
+                onClick={handleDelete}
+                className="glass-danger px-4 py-2 text-sm text-white"
+                aria-label="Delete player"
               >
-                {(field) => {
-                  const hasError = field.state.meta.errors.length > 0 || nameError;
-                  return (
-                    <Field className="flex flex-col gap-1">
-                      <Label className="text-sm font-medium text-text-secondary">Name</Label>
-                      <input
-                        ref={nameInputRef}
-                        type="text"
-                        value={field.state.value}
-                        onChange={(e) => {
-                          setNameError(false);
-                          field.handleChange(e.target.value);
-                        }}
-                        onBlur={field.handleBlur}
-                        placeholder="Player name"
-                        aria-invalid={hasError}
-                        className={`glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50 transition-colors${
-                          hasError ? " glass-error" : ""
-                        }`}
-                      />
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              {/* Color */}
-              <form.Field name="color">
-                {(field) => (
-                  <Field>
-                    <ColorPicker value={field.state.value} onChange={field.handleChange} />
-                  </Field>
-                )}
-              </form.Field>
-
-              {/* Options */}
-              <List>
-                <form.Field name="isFavorite">
-                  {(field) => (
-                    <Field className="flex w-full items-center justify-between">
-                      <Label className="cursor-pointer text-sm text-text-secondary">Favorite</Label>
-                      <Checkbox
-                        checked={field.state.value === 1}
-                        onChange={(checked: boolean) => field.handleChange(checked ? 1 : 0)}
-                      />
-                    </Field>
-                  )}
-                </form.Field>
-              </List>
-
-              {/* Spacer */}
-              <div className="flex-1" />
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                {isEditing && (
-                  <Button
-                    type="button"
-                    onClick={handleDelete}
-                    className="glass-danger px-4 py-2 text-sm text-white"
-                    aria-label="Delete player"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-                <form.Subscribe
-                  selector={(state) => [
-                    state.canSubmit && !!state.values.name.trim() && !nameError,
-                    state.isSubmitting,
-                  ]}
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <form.Subscribe
+              selector={(state) => [state.canSubmit && !!state.values.name.trim() && !nameError]}
+            >
+              {([canSubmit]) => (
+                <Button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="w-full px-4 py-2 text-sm active:scale-102!"
                 >
-                  {([canSubmit, isSubmitting]) => (
-                    <Button
-                      type="submit"
-                      disabled={!canSubmit}
-                      className="w-full px-4 py-2 text-sm active:scale-102!"
-                    >
-                      {isSubmitting ? "Saving…" : "Save"}
-                    </Button>
-                  )}
-                </form.Subscribe>
-              </div>
-            </Fieldset>
-          )}
-        </form.Subscribe>
+                  Save
+                </Button>
+              )}
+            </form.Subscribe>
+          </div>
+        </Fieldset>
       </form>
     </div>
   );
