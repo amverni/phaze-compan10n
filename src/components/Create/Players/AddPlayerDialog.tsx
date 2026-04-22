@@ -46,38 +46,40 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
       initialFocus={inputRef}
       className="overflow-hidden"
     >
-      <div className="add-player-slider h-full" data-view={view}>
-        {/* ── Page 1: Search ───────────────────────────── */}
-        <div className="h-full w-full shrink-0 px-4">
-          <PlayersSearch
-            inputRef={inputRef}
-            renderRow={(player) => (
-              <AddPlayerRow
-                player={player}
-                onSelect={addPlayer}
-                disabled={gamePlayerIds.has(player.id)}
-              />
-            )}
-            actions={(searchTerm) => (
-              <Button
-                onClick={() => {
-                  setDefaultName(searchTerm);
-                  setView("create");
-                }}
-                className="h-9 w-9 shrink-0 p-0"
-                aria-label="Create new player"
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-            )}
-          />
-        </div>
+      <div className="h-full w-full overflow-hidden">
+        <div className="add-player-slider h-full" data-view={view}>
+          {/* ── Page 1: Search ───────────────────────────── */}
+          <div className="h-full w-full shrink-0 px-4">
+            <PlayersSearch
+              inputRef={inputRef}
+              renderRow={(player) => (
+                <AddPlayerRow
+                  player={player}
+                  onSelect={addPlayer}
+                  disabled={gamePlayerIds.has(player.id)}
+                />
+              )}
+              actions={(searchTerm) => (
+                <Button
+                  onClick={() => {
+                    setDefaultName(searchTerm);
+                    setView("create");
+                  }}
+                  className="h-9 w-9 shrink-0 p-0"
+                  aria-label="Create new player"
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+              )}
+            />
+          </div>
 
-        {/* ── Page 2: Create Player ────────────────────── */}
-        <div className="h-full w-full shrink-0">
-          {view === "create" && (
-            <PlayerEditor defaultName={defaultName} onBack={handleBack} onCreated={addPlayer} />
-          )}
+          {/* ── Page 2: Create Player ────────────────────── */}
+          <div className="h-full w-full shrink-0">
+            {view === "create" && (
+              <PlayerEditor defaultName={defaultName} onBack={handleBack} onCreated={addPlayer} />
+            )}
+          </div>
         </div>
       </div>
     </Dialog>
