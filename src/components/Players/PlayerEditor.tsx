@@ -1,6 +1,6 @@
 import { Field, Fieldset, Label, Legend } from "@headlessui/react";
 import { useForm } from "@tanstack/react-form";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash } from "lucide-react";
 import { useRef, useState } from "react";
 import { playersApi } from "../../data/api/players";
 import { getRandomColorName } from "../../data/constants/colors";
@@ -168,6 +168,7 @@ export function PlayerEditor({
                   <Checkbox
                     checked={field.state.value === 1}
                     onChange={(checked: boolean) => field.handleChange(checked ? 1 : 0)}
+                    className="data-checked:bg-amber-400!"
                   />
                 </Field>
               )}
@@ -186,7 +187,7 @@ export function PlayerEditor({
                 className="glass-danger px-4 py-2 text-sm text-white"
                 aria-label="Delete player"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
               </Button>
             )}
             <form.Subscribe

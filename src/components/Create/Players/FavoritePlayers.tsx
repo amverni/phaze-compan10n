@@ -20,6 +20,7 @@ export function FavoritePlayers() {
             player={player}
             onSelect={addPlayer}
             disabled={gamePlayerIds.has(player.id)}
+            showFavoriteAccent={false}
           />
         ))}
       </List>

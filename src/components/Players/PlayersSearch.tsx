@@ -67,7 +67,7 @@ export function PlayersSearch({
         {actions?.(searchTerm)}
       </div>
 
-      {/* Results – negative margin lets shadow bleed, inner padding restores layout */}
+      {/* Results - negative margin lets shadow bleed, inner padding restores layout */}
       <div className="min-h-0 flex-1 overflow-y-auto -mx-4 px-4 py-2">
         <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
           {players?.map((player) => renderRow(player))}
