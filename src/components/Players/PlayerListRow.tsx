@@ -48,7 +48,7 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
         <Pencil className="h-4 w-4 shrink-0 fill-none text-text-secondary group-hover/row:fill-blue-500 group-hover/row:text-blue-500 group-has-[.trash-btn:hover]/row:fill-none group-has-[.trash-btn:hover]/row:text-text-secondary group-has-[.favorite-btn:hover]/row:fill-none group-has-[.favorite-btn:hover]/row:text-text-secondary" />
       </Button>
       <Button
-        className="favorite-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary group-hover/row:text-text-secondary/30 hover:text-amber-400! hover:bg-black/5 dark:hover:bg-white/20"
+        className="favorite-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-amber-400! hover:bg-black/5 dark:hover:bg-white/20"
         onClick={handleToggleFavorite}
         aria-label={`${isFavorite ? "Remove" : "Add"} ${player.name} ${
           isFavorite ? "from" : "to"
@@ -57,7 +57,7 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
         <Star className={isFavorite ? "h-4 w-4 shrink-0 fill-current" : "h-4 w-4 shrink-0"} />
       </Button>
       <Button
-        className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary group-hover/row:text-text-secondary/30 hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
+        className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
         onClick={() => deletePlayer.mutate(player.id)}
         aria-label={`Delete ${player.name}`}
       >
