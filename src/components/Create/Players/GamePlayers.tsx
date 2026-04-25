@@ -25,7 +25,7 @@ export function GamePlayers() {
         removable
         items={items}
         onReorder={handleReorder}
-        onRemove={(id) => removePlayer(id as string)}
+        onRemove={removePlayer}
         animateNewItems
       >
         {players.map((player) => (

@@ -23,10 +23,6 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
   const gamePlayers = useGamePlayers();
   const gamePlayerIds = new Set(gamePlayers.map((p) => p.id));
 
-  function handleClose() {
-    onClose();
-  }
-
   function handleAfterLeave() {
     setDefaultName("");
     setView("search");
@@ -41,7 +37,7 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       afterLeave={handleAfterLeave}
       initialFocus={inputRef}
       className="overflow-hidden"

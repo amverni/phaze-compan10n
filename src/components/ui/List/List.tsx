@@ -72,11 +72,11 @@ function SortableRow({
   removable,
   onRemove,
 }: {
-  id: string | number;
+  id: string;
   children: ReactNode;
   className: string;
   removable?: boolean;
-  onRemove?: (id: string | number) => void;
+  onRemove?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -109,7 +109,7 @@ function SortableRow({
 /* ── Public API ────────────────────────────────────────────── */
 
 export interface SortableItem {
-  id: string | number;
+  id: string;
 }
 
 export interface ListProps {
@@ -132,7 +132,7 @@ export interface ListProps {
   /** Show a remove button on each item row. Requires `items` and `onRemove`. */
   removable?: boolean;
   /** Called when a row's remove button is clicked. */
-  onRemove?: (id: string | number) => void;
+  onRemove?: (id: string) => void;
 }
 
 /**
@@ -158,9 +158,9 @@ export function List({
   const childArray = Children.toArray(children);
 
   // Track newly added items for slide-in animation
-  const prevItemIdsRef = useRef<Set<string | number> | null>(null);
-  const [animatingId, setAnimatingId] = useState<string | number | null>(null);
-  const [removingId, setRemovingId] = useState<string | number | null>(null);
+  const prevItemIdsRef = useRef<Set<string> | null>(null);
+  const [animatingId, setAnimatingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   // useLayoutEffect runs after DOM mutation but before paint — no flash
   useLayoutEffect(() => {
@@ -193,7 +193,7 @@ export function List({
     );
   }
 
-  function handleRemove(id: string | number) {
+  function handleRemove(id: string) {
     setRemovingId(id);
   }
 
