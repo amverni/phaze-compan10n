@@ -20,7 +20,6 @@ export function GamePlayers() {
 
   return (
     <section>
-      <h2>In This Game</h2>
       <List
         sortable
         removable

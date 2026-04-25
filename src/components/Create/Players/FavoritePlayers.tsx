@@ -10,6 +10,10 @@ export function FavoritePlayers() {
   const gamePlayerIds = new Set(gamePlayers.map((p) => p.id));
   const { data: favorites = [], isLoading } = useQuery(playerListOptions({ isFavorite: 1 }));
 
+  if (!favorites.length) {
+    return null;
+  }
+
   return (
     <section>
       <h2>Favorites</h2>

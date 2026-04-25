@@ -37,8 +37,12 @@ export function CreateGame() {
         </div>
       }
       mainContent={
-        <TabGroup selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-          <div className="content-container flex justify-center pt-2 pb-3">
+        <TabGroup
+          selectedIndex={selectedIndex}
+          onChange={setSelectedIndex}
+          className="flex h-full min-h-0 flex-col"
+        >
+          <div className="content-container w-full flex shrink-0 justify-center pt-2 pb-3">
             <TabList>
               {TABS.map(({ label, icon: Icon }) => (
                 <Tab
@@ -54,7 +58,7 @@ export function CreateGame() {
             </TabList>
           </div>
 
-          <TabPanels className="content-container">
+          <TabPanels className="content-container w-full min-h-0 flex-1 overflow-y-auto">
             <TabPanel>
               <Players />
             </TabPanel>
