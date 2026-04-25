@@ -1,5 +1,6 @@
 import { type CheckboxProps, Checkbox as HeadlessCheckbox } from "@headlessui/react";
-import type { ElementType } from "react";
+import type { ElementType, ReactElement } from "react";
+import { mergeClassName } from "../mergeClassName";
 
 const baseClasses = [
   "group",
@@ -18,18 +19,14 @@ const knobClasses = [
   "translate-x-[2px] group-data-[checked]:translate-x-[18px]",
 ].join(" ");
 
-export function Checkbox<TTag extends ElementType = "span">(props: CheckboxProps<TTag>) {
-  const incomingClassName = (props as Record<string, unknown>).className;
-  const merged =
-    typeof incomingClassName === "function"
-      ? (...args: unknown[]) =>
-          [baseClasses, (incomingClassName as (...a: unknown[]) => string)(...args)]
-            .filter(Boolean)
-            .join(" ")
-      : [baseClasses, incomingClassName].filter(Boolean).join(" ");
+export function Checkbox<TTag extends ElementType = "span">(
+  props: CheckboxProps<TTag>,
+): ReactElement;
+export function Checkbox(props: CheckboxProps<"span">) {
+  const merged = mergeClassName(baseClasses, props);
 
   return (
-    <HeadlessCheckbox {...(props as CheckboxProps<"span">)} className={merged}>
+    <HeadlessCheckbox {...props} className={merged}>
       <span aria-hidden="true" className={knobClasses} />
     </HeadlessCheckbox>
   );

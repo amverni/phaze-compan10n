@@ -38,11 +38,8 @@ export const phasesApi = {
     }
     if (filters?.type !== "built-in") {
       const db = await getDB();
-      const savedPhases = (await db.getAllFromIndex(
-        "customPhases",
-        "by-type",
-        "saved",
-      )) as SavedPhase[];
+      const allByType = await db.getAllFromIndex("customPhases", "by-type", "saved");
+      const savedPhases = allByType.filter((p): p is SavedPhase => p.type === "saved");
 
       phases.push(...savedPhases);
     }
@@ -110,7 +107,8 @@ export const phasesApi = {
    */
   async create(data: Omit<SavedPhase, "id"> | Omit<TemporaryPhase, "id">): Promise<Phase> {
     const db = await getDB();
-    const newPhase = { ...data, id: crypto.randomUUID() } as Phase;
+    const id: PhaseId = crypto.randomUUID();
+    const newPhase: SavedPhase | TemporaryPhase = { ...data, id };
     await db.add("customPhases", newPhase);
     return newPhase;
   },

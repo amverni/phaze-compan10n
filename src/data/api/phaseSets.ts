@@ -83,7 +83,8 @@ export const phaseSetsApi = {
    */
   async create(data: Omit<SavedPhaseSet, "id">): Promise<PhaseSet> {
     const db = await getDB();
-    const newPhaseSet = { ...data, id: crypto.randomUUID() } as PhaseSet;
+    const id: PhaseSetId = crypto.randomUUID();
+    const newPhaseSet: SavedPhaseSet = { ...data, id };
     await db.add("customPhaseSets", newPhaseSet);
     return newPhaseSet;
   },

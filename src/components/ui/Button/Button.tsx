@@ -1,5 +1,6 @@
 import { type ButtonProps, Button as HeadlessButton } from "@headlessui/react";
-import type { ElementType } from "react";
+import type { ElementType, ReactElement } from "react";
+import { mergeClassName } from "../mergeClassName";
 import { interactiveClasses } from "../sharedClasses";
 
 const baseClasses = [
@@ -17,15 +18,8 @@ const baseClasses = [
  * the app's glass styling. Pass `as`, `children`, `className`, etc. just
  * like you would with the Headless UI component.
  */
-export function Button<TTag extends ElementType = "button">(props: ButtonProps<TTag>) {
-  const incomingClassName = (props as Record<string, unknown>).className;
-  const merged =
-    typeof incomingClassName === "function"
-      ? (...args: unknown[]) =>
-          [baseClasses, (incomingClassName as (...a: unknown[]) => string)(...args)]
-            .filter(Boolean)
-            .join(" ")
-      : [baseClasses, incomingClassName].filter(Boolean).join(" ");
-
-  return <HeadlessButton {...(props as ButtonProps<"button">)} className={merged} />;
+export function Button<TTag extends ElementType = "button">(props: ButtonProps<TTag>): ReactElement;
+export function Button(props: ButtonProps<"button">) {
+  const merged = mergeClassName(baseClasses, props);
+  return <HeadlessButton {...props} className={merged} />;
 }

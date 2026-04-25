@@ -81,7 +81,9 @@ export const Toast = forwardRef<ToastHandle, ToastProps>(function Toast({ durati
     touchStartRef.current = e.clientY;
     draggingRef.current = true;
     setSwiping(true);
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    if (e.target instanceof HTMLElement) {
+      e.target.setPointerCapture(e.pointerId);
+    }
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {

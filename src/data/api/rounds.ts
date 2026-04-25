@@ -69,6 +69,7 @@ export const roundsApi = {
         ...input,
         currentPhase: getNextPhase(prevScore, totalPhases),
       };
+      // Input guarantees at least one score; .map() preserves length but TS can't infer tuple minimum
     }) as ArrayAtLeastOne<RoundScore>;
 
     const round: Round = {
@@ -112,6 +113,7 @@ export const roundsApi = {
     const scoreIndex = round.scores.findIndex((s) => s.playerId === playerId);
     if (scoreIndex === -1) throw new Error("Player not found in round");
 
+    // Spread preserves minimum length of original; TS can't infer tuple minimum from spread
     const updatedScores = [...round.scores] as ArrayAtLeastOne<RoundScore>;
     updatedScores[scoreIndex] = { ...updatedScores[scoreIndex], ...updates };
 
@@ -144,6 +146,7 @@ export const roundsApi = {
         const newCurrentPhase = getNextPhase(prevScore, totalPhases);
 
         if (laterRound.scores[laterScoreIndex].currentPhase !== newCurrentPhase) {
+          // Spread preserves minimum length of original; TS can't infer tuple minimum from spread
           const newScores = [...laterRound.scores] as ArrayAtLeastOne<RoundScore>;
           newScores[laterScoreIndex] = {
             ...newScores[laterScoreIndex],

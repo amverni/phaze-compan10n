@@ -218,5 +218,4 @@ async function update(
 
   const updated: ActiveGame = { ...existing, ...updates };
   await db.put("games", updated);
-  updated;
 }

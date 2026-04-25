@@ -7,7 +7,7 @@ export type GameId = string;
 
 export interface ActiveGame extends BaseGame {
   status: "active";
-  activePlayers: string[]; // Players actively playing, allows players to be added/removed mid-game
+  activePlayers: PlayerId[]; // Players actively playing, allows players to be added/removed mid-game
 }
 
 export interface CompletedGame extends BaseGame {
@@ -20,6 +20,6 @@ export interface CompletedGame extends BaseGame {
 interface BaseGame {
   id: GameId;
   phaseSet: TemporaryPhaseSet;
-  players: string[];
+  players: PlayerId[];
   createdAt: number;
 }

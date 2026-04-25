@@ -5,14 +5,13 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import {
-  type ElementType,
-  type ReactNode,
-  type PointerEvent as ReactPointerEvent,
-  useCallback,
-  useRef,
-} from "react";
+import { type ReactNode, type PointerEvent as ReactPointerEvent, useCallback, useRef } from "react";
 import "./Dialog.css";
+
+interface AppDialogProps extends Omit<DialogProps<"div">, "children"> {
+  children?: ReactNode;
+  afterLeave?: () => void;
+}
 
 const panelClasses =
   "glass dialog-glass relative w-[90vw] max-w-lg h-[75svh] flex flex-col rounded-t-2xl";
@@ -35,11 +34,8 @@ const DISMISS_THRESHOLD = 0.3;
  * </Dialog>
  * ```
  */
-export function Dialog<TTag extends ElementType = "div">(
-  props: DialogProps<TTag> & { afterLeave?: () => void },
-) {
-  const { children, open, onClose, className, afterLeave, ...rest } =
-    props as DialogProps<"div"> & { afterLeave?: () => void };
+export function Dialog(props: AppDialogProps) {
+  const { children, open, onClose, className, afterLeave, ...rest } = props;
 
   const mergedPanelClasses = [panelClasses, className].filter(Boolean).join(" ");
 
@@ -87,7 +83,7 @@ export function Dialog<TTag extends ElementType = "div">(
       const finish = () => {
         if (done) return;
         done = true;
-        (onClose as (v: boolean) => void)?.(false);
+        onClose?.(false);
       };
       panel.addEventListener("transitionend", finish, { once: true });
       setTimeout(finish, 250);
@@ -122,7 +118,9 @@ export function Dialog<TTag extends ElementType = "div">(
     d.active = true;
     d.decided = true;
     d.source = "handle";
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    if (e.target instanceof HTMLElement) {
+      e.target.setPointerCapture(e.pointerId);
+    }
   }, []);
 
   const onHandlePointerMove = useCallback(
@@ -210,7 +208,7 @@ export function Dialog<TTag extends ElementType = "div">(
 
   return (
     <Transition show={open} afterLeave={afterLeave}>
-      <HeadlessDialog {...(rest as DialogProps<"div">)} onClose={onClose} className="relative z-50">
+      <HeadlessDialog {...rest} onClose={onClose} className="relative z-50">
         {/* Dim overlay */}
         <TransitionChild
           enter="dialog-backdrop-enter"
@@ -250,7 +248,7 @@ export function Dialog<TTag extends ElementType = "div">(
                 ref={contentCallbackRef}
                 className="min-h-0 flex-1 overflow-y-auto overscroll-none"
               >
-                {children as ReactNode}
+                {children}
               </div>
             </DialogPanel>
           </TransitionChild>
