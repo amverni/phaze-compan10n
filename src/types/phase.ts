@@ -25,17 +25,19 @@ interface BasePhase {
 
 export type PhaseId = string;
 
-type Meld = NumericalMeld | ColorMeld;
+export type Meld = NumericalMeld | ColorMeld;
 
-interface NumericalMeld {
+export type MeldType = Meld["type"];
+
+export interface NumericalMeld {
   type: "set" | "run";
   count: number;
   isSameColor: boolean;
   quantity: number;
 }
 
-interface ColorMeld {
-  type: "group";
+export interface ColorMeld {
+  type: "colorGroup";
   count: number;
   isSameColor: true;
   quantity: number;

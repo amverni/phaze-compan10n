@@ -79,9 +79,21 @@ Reusable class combinations live in shared constants (e.g., `interactiveClasses`
 
 ## Headless UI
 
-- Shared wrappers in `src/components/ui/` with consistent glass styling
-- Follow the existing `mergeClassName()` pattern in `src/components/ui/mergeClassName.ts` for className handling in wrappers
-- Native `<input>` elements are used directly — no wrapping needed
+- **Always use app wrappers over native HTML or raw Headless UI** — shared wrappers in `src/components/ui/` (Button, Dialog, Input, SearchBar, Listbox, Switch, TabList, etc.) provide consistent glass styling, interactive states, and accessibility. Never reach for native elements (`<button>`, `<input>`, `<dialog>`) or import directly from `@headlessui/react` when a wrapper exists. Pass only additional classes (e.g., sizing) via `className`; the wrapper handles base styling via `mergeClassName()`.
+- Follow the existing `mergeClassName()` pattern in `src/components/ui/mergeClassName.ts` for className handling when creating new wrappers
+
+---
+
+## Icons
+
+- **Always use the project's icon library** — never create icons from text characters (e.g., `+`, `×`, `▶`), inline SVGs, or other ad-hoc approaches. The icon library provides consistent sizing, stroke width, and accessibility. When reviewing code, flag any character-based or hand-rolled SVG icon and recommend the appropriate library equivalent.
+
+---
+
+## Component Reuse
+
+- **Extract repeated UI patterns into `src/components/ui/`** — when the same combination of elements, styling, and behavior appears in 2+ places, it should be a shared component. Look for identical or near-identical JSX structures (e.g., a glass pill with an icon + input + clear button → `SearchBar`). Wrappers should mirror the Headless UI prop interface where applicable to feel native.
+- When reviewing code, flag duplicated UI structures across components as candidates for extraction into `src/components/ui/`.
 
 ---
 
@@ -89,3 +101,11 @@ Reusable class combinations live in shared constants (e.g., `interactiveClasses`
 
 - **Version migrations**: check for store/index existence before creating in `upgrade()`, increment DB version for schema changes
 - Use transactions for batch operations (see `deleteByGameId` in `src/data/api/rounds.ts`)
+
+---
+
+## Data Architecture & Separation of Concerns
+
+- **Components should not contain data logic** — filtering, sorting, aggregation, random sampling, and any logic that decides *which* data to return belongs in the API layer (`src/data/api/`), not in components or event handlers. Components call API methods and render results; they don't orchestrate queries and transform raw data.
+- **Follow the established data flow**: `Routes → Components → TanStack Query hooks → API layer → IndexedDB`. Each layer has a single responsibility. When reviewing code, flag data logic that has leaked into components and recommend moving it to the API layer.
+- **Design API methods as stable contracts** — write API function signatures as if they could be backed by a REST endpoint. This keeps the codebase ready for a future backend migration without component changes.

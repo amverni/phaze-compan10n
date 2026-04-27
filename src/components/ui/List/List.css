@@ -13,36 +13,32 @@
 
 @keyframes list-slide-in {
   from {
-    opacity: 0;
-    max-height: 0;
+    height: 0;
   }
   to {
-    opacity: 1;
-    max-height: 2.5rem; /* matches ROW_HEIGHT h-10 */
+    height: 2.5rem; /* matches ROW_HEIGHT h-10 */
   }
 }
 
 .list-slide-in {
   overflow: hidden;
-  animation: list-slide-in 200ms ease-out;
+  animation: list-slide-in var(--list-transition-ms, 500ms) ease-out;
 }
 
 /* ── Slide-out animation for removed rows ───────────────────── */
 
 @keyframes list-slide-out {
   from {
-    opacity: 1;
-    max-height: 2.5rem;
+    height: 2.5rem; /* matches ROW_HEIGHT h-10 */
   }
   to {
-    opacity: 0;
-    max-height: 0;
+    height: 0;
   }
 }
 
 .list-slide-out {
   overflow: hidden;
-  animation: list-slide-out 200ms ease-in forwards;
+  animation: list-slide-out var(--list-transition-ms, 500ms) ease forwards;
 }
 
 .list-shimmer {

@@ -8,30 +8,26 @@ import type {
 } from "../../types";
 import { builtInPhaseSets } from "../constants/phaseSets";
 import { getDB } from "../db";
+import { favoritesApi } from "./favorites";
 import { nameMatchScore } from "./utils";
 
 export const phaseSetsApi = {
   /**
-   * Get all phase sets, optionally filtered by type and/or name.
+   * Get all phase sets, optionally filtered by type, name, and favorite status.
    *
    * Only returns the `id`, `name`, and `type` of each phase set.
    * Temporary phase sets are never returned by this method.
    *
-   * Built-in phase sets (from constants) are merged with saved phase sets
-   * stored in the database.
-   *
    * @param filters - Optional filters to narrow results.
    * @param filters.type - Filter by phase set type: `"built-in"` or `"saved"`.
-   *   When omitted, both `"built-in"` and `"saved"` phase sets are returned.
-   * @param filters.name - Filter by name substring match. Results are sorted by match quality:
-   *   - Name starts with search string (best)
-   *   - Any word starts with search string
-   *   - Contains search string
+   * @param filters.name - Filter by name substring match.
+   * @param filters.isFavorite - Filter to only favorited phase sets when `1`.
    * @returns The matching phase set summaries, sorted by name relevance when a name filter is provided.
    */
   async getAll(filters?: {
     type?: BuiltInT | SavedT;
     name?: string;
+    isFavorite?: 0 | 1;
   }): Promise<Pick<VisiblePhaseSet, "id" | "name" | "type">[]> {
     let phaseSets: VisiblePhaseSet[] = [];
 
@@ -43,6 +39,13 @@ export const phaseSetsApi = {
       const all = await db.getAll("customPhaseSets");
       const saved = all.filter((ps): ps is SavedPhaseSet => ps.type === "saved");
       phaseSets.push(...saved);
+    }
+
+    // Filter by favorite status
+    if (filters?.isFavorite === 1) {
+      const favoriteIds = await favoritesApi.getAll("phaseSet");
+      const favoriteSet = new Set(favoriteIds);
+      phaseSets = phaseSets.filter((ps) => favoriteSet.has(ps.id));
     }
 
     if (filters?.name) {

@@ -116,7 +116,7 @@ const classicPhase8: BuiltInPhase = {
   name: "Phase 8",
   requirements: [
     {
-      type: "group",
+      type: "colorGroup",
       count: 7,
       isSameColor: true,
       quantity: 1,

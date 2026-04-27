@@ -13,7 +13,7 @@ interface MenuItem {
 
 const items: MenuItem[] = [
   { label: "Players", icon: Users, to: "/players" },
-  { label: "Phases", icon: ListChecks },
+  { label: "Phases", icon: ListChecks, to: "/phases" },
   { label: "Settings", icon: Settings },
 ];
 

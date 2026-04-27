@@ -5,7 +5,7 @@ import { Info, ListChecks, Play, Settings as SettingsIcon, Users, X } from "luci
 import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button, TabList } from "../ui";
+import { Button, ScrollFade, TabList } from "../ui";
 import { Phases } from "./Phases";
 import { Players } from "./Players";
 import { Settings } from "./Settings";
@@ -58,17 +58,23 @@ export function CreateGame() {
             </TabList>
           </div>
 
-          <TabPanels className="content-container w-full min-h-0 flex-1 overflow-y-auto">
-            <TabPanel>
-              <Players />
+          <TabPanels className="content-container w-full min-h-0 flex-1">
+            <TabPanel className="h-full">
+              <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
+                <Players />
+              </ScrollFade>
             </TabPanel>
 
-            <TabPanel>
-              <Phases />
+            <TabPanel className="h-full">
+              <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
+                <Phases />
+              </ScrollFade>
             </TabPanel>
 
-            <TabPanel>
-              <Settings />
+            <TabPanel className="h-full">
+              <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
+                <Settings />
+              </ScrollFade>
             </TabPanel>
           </TabPanels>
         </TabGroup>

@@ -1,11 +1,15 @@
 export { Button } from "./Button/Button";
-export { Checkbox } from "./Checkbox/Checkbox";
 export type { ColorPickerProps } from "./ColorPicker/ColorPicker";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
 export { Dialog } from "./Dialog/Dialog";
 export { FavoriteAccent } from "./FavoriteAccent/FavoriteAccent";
+export { Input } from "./Input/Input";
 export type { ListProps, SortableItem } from "./List/List";
 export { List } from "./List/List";
+export { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "./Listbox/Listbox";
 export { Popover, PopoverButton, PopoverPanel } from "./Popover/Popover";
+export { ScrollFade } from "./ScrollFade/ScrollFade";
+export { SearchBar } from "./SearchBar/SearchBar";
+export { Switch } from "./Switch/Switch";
 export { TabList } from "./TabList/TabList";
 export { Toast } from "./Toast/Toast";

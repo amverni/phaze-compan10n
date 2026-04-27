@@ -5,16 +5,16 @@ export const classicPhaseSet: BuiltInPhaseSet = {
   id: "classic",
   name: "Classic",
   phases: [
-    "default-classic-1",
-    "default-classic-2",
-    "default-classic-3",
-    "default-classic-4",
-    "default-classic-5",
-    "default-classic-6",
-    "default-classic-7",
-    "default-classic-8",
-    "default-classic-9",
-    "default-classic-10",
+    "classic-1",
+    "classic-2",
+    "classic-3",
+    "classic-4",
+    "classic-5",
+    "classic-6",
+    "classic-7",
+    "classic-8",
+    "classic-9",
+    "classic-10",
   ],
 };
 
@@ -22,14 +22,7 @@ export const skipSimilarPhaseSet: BuiltInPhaseSet = {
   type: "built-in",
   id: "skip-similar",
   name: "Quick Game",
-  phases: [
-    "default-classic-1",
-    "default-classic-3",
-    "default-classic-6",
-    "default-classic-7",
-    "default-classic-8",
-    "default-classic-10",
-  ],
+  phases: ["classic-1", "classic-3", "classic-6", "classic-7", "classic-8", "classic-10"],
 };
 
 export const builtInPhaseSets: BuiltInPhaseSet[] = [classicPhaseSet, skipSimilarPhaseSet];

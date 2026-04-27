@@ -1,5 +1,6 @@
 import type {
   BuiltInT,
+  MeldType,
   Phase,
   PhaseId,
   SavedPhase,
@@ -7,13 +8,17 @@ import type {
   TemporaryPhase,
   VisiblePhase,
 } from "../../types";
+import { shuffle } from "../../utils";
+import { builtInPhaseSets } from "../constants/phaseSets";
 import { builtInPhases } from "../constants/phases";
 import { getDB } from "../db";
+import { favoritesApi } from "./favorites";
 import { nameMatchScore } from "./utils";
 
 export const phasesApi = {
   /**
-   * Get all phases, optionally filtered by type and/or name.
+   * Get all phases, optionally filtered by type, name, favorite status,
+   * meld type, and/or phase set membership.
    *
    * Temporary phases are never returned by this method. Use `getById` or
    * `getByIds` to retrieve temporary phases.
@@ -23,14 +28,19 @@ export const phasesApi = {
    *
    * @param filters - Optional filters to narrow results.
    * @param filters.type - Filter by phase type: `"built-in"` or `"saved"`.
-   *   When omitted, both `"built-in"` and `"saved"` phases are returned.
-   * @param filters.name - Filter by name substring match. Results are sorted by match quality:
-   *   - Name starts with search string (best)
-   *   - Any word starts with search string
-   *   - Contains search string
+   * @param filters.name - Filter by name substring match.
+   * @param filters.isFavorite - Filter to only favorited phases when `1`.
+   * @param filters.meldTypes - Filter to phases containing a meld of any of these types.
+   * @param filters.phaseSetId - Filter to phases belonging to this phase set.
    * @returns The matching phases, sorted by name relevance when a name filter is provided.
    */
-  async getAll(filters?: { type?: BuiltInT | SavedT; name?: string }): Promise<VisiblePhase[]> {
+  async getAll(filters?: {
+    type?: BuiltInT | SavedT;
+    name?: string;
+    isFavorite?: 0 | 1;
+    meldTypes?: MeldType[];
+    phaseSetId?: string;
+  }): Promise<VisiblePhase[]> {
     let phases: VisiblePhase[] = [];
 
     if (filters?.type !== "saved") {
@@ -42,6 +52,37 @@ export const phasesApi = {
       const savedPhases = allByType.filter((p): p is SavedPhase => p.type === "saved");
 
       phases.push(...savedPhases);
+    }
+
+    // Filter by phase set membership
+    if (filters?.phaseSetId) {
+      const phaseSet = builtInPhaseSets.find((ps) => ps.id === filters.phaseSetId);
+      if (phaseSet) {
+        const phaseSetIds = new Set(phaseSet.phases);
+        phases = phases.filter((p) => phaseSetIds.has(p.id));
+      } else {
+        const db = await getDB();
+        const customPhaseSet = await db.get("customPhaseSets", filters.phaseSetId);
+        if (customPhaseSet) {
+          const phaseSetIds = new Set(customPhaseSet.phases);
+          phases = phases.filter((p) => phaseSetIds.has(p.id));
+        } else {
+          phases = [];
+        }
+      }
+    }
+
+    // Filter by meld type
+    if (filters?.meldTypes && filters.meldTypes.length > 0) {
+      const types = new Set(filters.meldTypes);
+      phases = phases.filter((p) => p.requirements.some((m) => types.has(m.type)));
+    }
+
+    // Filter by favorite status
+    if (filters?.isFavorite === 1) {
+      const favoriteIds = await favoritesApi.getAll("phase");
+      const favoriteSet = new Set(favoriteIds);
+      phases = phases.filter((p) => favoriteSet.has(p.id));
     }
 
     if (filters?.name) {
@@ -111,6 +152,21 @@ export const phasesApi = {
     const newPhase: SavedPhase | TemporaryPhase = { ...data, id };
     await db.add("customPhases", newPhase);
     return newPhase;
+  },
+
+  /**
+   * Get a random selection of phases.
+   *
+   * Returns up to `count` phases randomly sampled from all visible phases.
+   * If fewer phases exist than requested, returns all of them (shuffled).
+   *
+   * @param count - The maximum number of phases to return.
+   * @returns A shuffled array of up to `count` phases.
+   */
+  async getRandom(count: number): Promise<VisiblePhase[]> {
+    const allPhases = await this.getAll();
+    if (allPhases.length === 0) return [];
+    return shuffle(allPhases).slice(0, count);
   },
 
   /**

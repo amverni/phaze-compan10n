@@ -6,7 +6,7 @@ let dbInstance: IDBPDatabase<Phase10DB> | null = null;
 export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
   if (dbInstance) return dbInstance;
 
-  dbInstance = await openDB<Phase10DB>("phase10-db", 2, {
+  dbInstance = await openDB<Phase10DB>("phase10-db", 3, {
     upgrade(
       db: IDBPDatabase<Phase10DB>,
       _oldVersion: number,
@@ -45,6 +45,14 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
       // Create customPhaseSets store
       if (!db.objectStoreNames.contains("customPhaseSets")) {
         db.createObjectStore("customPhaseSets", { keyPath: "id" });
+      }
+
+      // Create favorites store
+      if (!db.objectStoreNames.contains("favorites")) {
+        const favoritesStore = db.createObjectStore("favorites", {
+          keyPath: ["entityType", "entityId"],
+        });
+        favoritesStore.createIndex("by-type", "entityType");
       }
     },
   });

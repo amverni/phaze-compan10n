@@ -28,13 +28,13 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
   return (
     <div className="flex h-svh flex-col overflow-x-clip">
       {/* ── Top panel: flat top, angled bottom ────────────────────── */}
-      <div className="relative z-10">
+      <div className="pointer-events-none relative z-10">
         {/* Shadow layer (no children → never re-rendered by interactions) */}
         <div aria-hidden className="card-panel-shadow absolute inset-0">
           <div className="card-panel-top h-full bg-white dark:bg-neutral-900" />
         </div>
         {/* Content layer */}
-        <div className="card-panel-top card-panel-top-content relative h-[15svh] bg-white dark:bg-neutral-900">
+        <div className="card-panel-top card-panel-top-content pointer-events-auto relative h-[15svh] bg-white dark:bg-neutral-900">
           {headerContent}
         </div>
       </div>
@@ -45,13 +45,13 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
       </div>
 
       {/* ── Bottom panel: angled top, flat bottom ─────────────────── */}
-      <div className="relative z-10">
+      <div className="pointer-events-none relative z-10">
         {/* Shadow layer */}
         <div aria-hidden className="card-panel-shadow absolute inset-0">
           <div className="card-panel-bottom h-full bg-white dark:bg-neutral-900" />
         </div>
         {/* Content layer */}
-        <div className="card-panel-bottom card-panel-bottom-content relative h-[15svh] bg-white dark:bg-neutral-900">
+        <div className="card-panel-bottom card-panel-bottom-content pointer-events-auto relative h-[15svh] bg-white dark:bg-neutral-900">
           {footerContent}
         </div>
       </div>

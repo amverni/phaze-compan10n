@@ -1,4 +1,4 @@
-import { type CheckboxProps, Checkbox as HeadlessCheckbox } from "@headlessui/react";
+import { Switch as HeadlessSwitch, type SwitchProps } from "@headlessui/react";
 import type { ElementType, ReactElement } from "react";
 import { mergeClassName } from "../mergeClassName";
 
@@ -19,15 +19,19 @@ const knobClasses = [
   "translate-x-[2px] group-data-[checked]:translate-x-[18px]",
 ].join(" ");
 
-export function Checkbox<TTag extends ElementType = "span">(
-  props: CheckboxProps<TTag>,
-): ReactElement;
-export function Checkbox(props: CheckboxProps<"span">) {
+/**
+ * A sliding toggle switch that wraps Headless UI's `Switch`.
+ *
+ * Uses `role="switch"` for correct screen-reader semantics.
+ * Accepts the same props as `@headlessui/react`'s `Switch`.
+ */
+export function Switch<TTag extends ElementType = "button">(props: SwitchProps<TTag>): ReactElement;
+export function Switch(props: SwitchProps<"button">) {
   const merged = mergeClassName(baseClasses, props);
 
   return (
-    <HeadlessCheckbox {...props} className={merged}>
+    <HeadlessSwitch {...props} className={merged}>
       <span aria-hidden="true" className={knobClasses} />
-    </HeadlessCheckbox>
+    </HeadlessSwitch>
   );
 }

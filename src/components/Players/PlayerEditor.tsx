@@ -7,9 +7,10 @@ import { getRandomColorName } from "../../data/constants/colors";
 import { useCreatePlayer, useDeletePlayer, useUpdatePlayer } from "../../data/hooks/usePlayers";
 import type { Player } from "../../types";
 import { Button } from "../ui/Button/Button";
-import { Checkbox } from "../ui/Checkbox/Checkbox";
 import { ColorPicker } from "../ui/ColorPicker/ColorPicker";
+import { Input } from "../ui/Input/Input";
 import { List } from "../ui/List/List";
+import { Switch } from "../ui/Switch/Switch";
 import { Toast, type ToastHandle } from "../ui/Toast/Toast";
 
 export interface PlayerEditorProps {
@@ -130,7 +131,7 @@ export function PlayerEditor({
               return (
                 <Field className="flex flex-col gap-1">
                   <Label className="text-sm font-medium text-text-secondary">Name</Label>
-                  <input
+                  <Input
                     ref={nameInputRef}
                     type="text"
                     value={field.state.value}
@@ -140,10 +141,11 @@ export function PlayerEditor({
                     }}
                     onBlur={field.handleBlur}
                     placeholder="Player name"
-                    aria-invalid={hasError}
-                    className={`glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-secondary/50 transition-colors${
-                      hasError ? " glass-error" : ""
-                    }`}
+                    invalid={hasError}
+                    className={[
+                      "glass rounded-xl px-3 py-2 transition-colors",
+                      hasError ? "glass-error" : "",
+                    ].join(" ")}
                   />
                 </Field>
               );
@@ -165,7 +167,7 @@ export function PlayerEditor({
               {(field) => (
                 <Field className="flex w-full items-center justify-between">
                   <Label className="cursor-pointer text-sm text-text-secondary">Favorite</Label>
-                  <Checkbox
+                  <Switch
                     checked={field.state.value === 1}
                     onChange={(checked: boolean) => field.handleChange(checked ? 1 : 0)}
                     className="data-checked:bg-amber-400!"

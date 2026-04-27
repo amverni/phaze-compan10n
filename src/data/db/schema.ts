@@ -11,6 +11,13 @@ import type {
   Round,
 } from "../../types";
 
+export type FavoriteEntityType = "phase" | "phaseSet";
+
+export interface Favorite {
+  entityType: FavoriteEntityType;
+  entityId: string;
+}
+
 export interface Phase10DB extends DBSchema {
   players: {
     key: PlayerId;
@@ -44,5 +51,12 @@ export interface Phase10DB extends DBSchema {
   customPhaseSets: {
     key: PhaseSetId;
     value: PhaseSet;
+  };
+  favorites: {
+    key: [string, string]; // Composite key: [entityType, entityId]
+    value: Favorite;
+    indexes: {
+      "by-type": string;
+    };
   };
 }

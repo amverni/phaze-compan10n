@@ -15,13 +15,22 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Minus } from "lucide-react";
-import { Children, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { ChevronsUpDown, Minus } from "lucide-react";
+import {
+  Children,
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import "./List.css";
 import { Button } from "@headlessui/react";
 
 /** Height of a single row — keeps loading and loaded states identical. */
 const ROW_HEIGHT = "h-10";
+const DEFAULT_TRANSITION_MS = 500;
 
 /* ── Sub-components ────────────────────────────────────────── */
 
@@ -80,6 +89,8 @@ function SortableRow({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
+    // Reorder animation is orchestrated externally via FLIP; disable dnd-kit layout tweening.
+    transition: null,
   });
 
   const style = {
@@ -99,7 +110,7 @@ function SortableRow({
           className="touch-none cursor-grab rounded-full p-1 text-text-secondary transition-colors duration-150 hover:bg-black/5 active:cursor-grabbing dark:hover:bg-white/10"
           {...listeners}
         >
-          <GripVertical className="h-5 w-5 shrink-0" />
+          <ChevronsUpDown className="h-5 w-5 shrink-0" />
         </Button>
       </div>
     </div>
@@ -133,6 +144,14 @@ export interface ListProps {
   removable?: boolean;
   /** Called when a row's remove button is clicked. */
   onRemove?: (id: string) => void;
+  /** Animate sortable row position changes (e.g. shuffle/reorder). */
+  animateReorderChanges?: boolean;
+  /** Transition duration used for list animations (reorder, height, slide in/out). */
+  transitionDurationMs?: number;
+  /** Animate container height changes. */
+  animateContainerHeight?: boolean;
+  /** Explicit per-item animation state, useful for external transition orchestration. */
+  itemAnimationStateById?: Record<string, "enter" | "exit">;
 }
 
 /**
@@ -154,13 +173,29 @@ export function List({
   animateNewItems = false,
   removable = false,
   onRemove,
+  animateReorderChanges = true,
+  transitionDurationMs = DEFAULT_TRANSITION_MS,
+  animateContainerHeight = true,
+  itemAnimationStateById,
 }: ListProps) {
   const childArray = Children.toArray(children);
+  const itemCount = items?.length ?? childArray.length;
+  const sortableCount = sortable && items ? items.length : 0;
+  const sortableIds = items?.map((item) => item.id) ?? [];
 
   // Track newly added items for slide-in animation
   const prevItemIdsRef = useRef<Set<string> | null>(null);
   const [animatingId, setAnimatingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const prevContentHeightRef = useRef<number | null>(null);
+  const heightAnimationFrameRef = useRef<number | null>(null);
+  const rowRefsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const previousRowTopsRef = useRef<Map<string, number>>(new Map());
+  const previousSortableIdsRef = useRef<string[] | null>(null);
+  const reorderAnimationFramesRef = useRef<number[]>([]);
+  const [containerHeight, setContainerHeight] = useState<number | null>(null);
 
   // useLayoutEffect runs after DOM mutation but before paint — no flash
   useLayoutEffect(() => {
@@ -170,14 +205,127 @@ export function List({
 
     if (prevItemIdsRef.current !== null) {
       const prevIds = prevItemIdsRef.current;
-      const newItem = items.find((item) => !prevIds.has(item.id));
-      if (newItem && items.length > prevIds.size) {
-        setAnimatingId(newItem.id);
+      const newIds = items.filter((item) => !prevIds.has(item.id)).map((item) => item.id);
+      if (newIds.length > 0 && items.length > prevIds.size) {
+        setAnimatingIds(new Set(newIds));
+        setAnimatingId(newIds[0]);
       }
     }
 
     prevItemIdsRef.current = currentIds;
   }, [animateNewItems, items]);
+
+  useLayoutEffect(() => {
+    if (!animateContainerHeight) {
+      setContainerHeight(null);
+      prevContentHeightRef.current = null;
+      return;
+    }
+    if (isLoading) return;
+    const content = contentRef.current;
+    if (!content) return;
+
+    const nextHeight = content.getBoundingClientRect().height;
+    if (itemCount === 0) {
+      prevContentHeightRef.current = nextHeight;
+      return;
+    }
+    const prevHeight = prevContentHeightRef.current;
+    prevContentHeightRef.current = nextHeight;
+
+    if (prevHeight === null || Math.abs(prevHeight - nextHeight) < 1) return;
+
+    setContainerHeight(prevHeight);
+    if (heightAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(heightAnimationFrameRef.current);
+    }
+
+    heightAnimationFrameRef.current = window.requestAnimationFrame(() => {
+      setContainerHeight(nextHeight);
+      heightAnimationFrameRef.current = null;
+    });
+  }, [animateContainerHeight, isLoading, itemCount]);
+
+  useEffect(
+    () => () => {
+      if (heightAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(heightAnimationFrameRef.current);
+      }
+      for (const frame of reorderAnimationFramesRef.current) {
+        window.cancelAnimationFrame(frame);
+      }
+      reorderAnimationFramesRef.current = [];
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    if (!sortable) {
+      previousRowTopsRef.current = new Map();
+      previousSortableIdsRef.current = null;
+      return;
+    }
+    for (const frame of reorderAnimationFramesRef.current) {
+      window.cancelAnimationFrame(frame);
+    }
+    reorderAnimationFramesRef.current = [];
+
+    const nextTops = new Map<string, number>();
+    for (const id of sortableIds) {
+      const row = rowRefsRef.current.get(id);
+      if (row) {
+        nextTops.set(id, row.getBoundingClientRect().top);
+      }
+    }
+
+    if (!animateReorderChanges) {
+      for (const id of sortableIds) {
+        const row = rowRefsRef.current.get(id);
+        if (!row) continue;
+        row.style.transition = "";
+        row.style.transform = "";
+      }
+      previousRowTopsRef.current = nextTops;
+      previousSortableIdsRef.current = sortableIds;
+      return;
+    }
+
+    const previousSortableIds = previousSortableIdsRef.current;
+    const hasReorderChange =
+      previousSortableIds !== null &&
+      sortableIds.some((id, index) => {
+        const previousIndex = previousSortableIds.indexOf(id);
+        return previousIndex !== -1 && previousIndex !== index;
+      });
+
+    if (!hasReorderChange || sortableIds.length < 2) {
+      previousRowTopsRef.current = nextTops;
+      previousSortableIdsRef.current = sortableIds;
+      return;
+    }
+
+    const previousTops = previousRowTopsRef.current;
+    for (const [id, nextTop] of nextTops) {
+      const previousTop = previousTops.get(id);
+      const row = rowRefsRef.current.get(id);
+      if (previousTop === undefined || !row) continue;
+
+      const deltaY = previousTop - nextTop;
+      if (Math.abs(deltaY) < 1) continue;
+
+      row.style.transition = "none";
+      row.style.transform = `translateY(${deltaY}px)`;
+
+      const frameId = window.requestAnimationFrame(() => {
+        row.style.transition = `transform ${transitionDurationMs}ms linear`;
+        row.style.transform = "";
+      });
+      reorderAnimationFramesRef.current.push(frameId);
+    }
+
+    previousRowTopsRef.current = nextTops;
+    previousSortableIdsRef.current = sortableIds;
+  }, [animateReorderChanges, sortable, sortableIds, transitionDurationMs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -225,7 +373,6 @@ export function List({
   };
 
   // Split children: sortable items use `items` length, rest are static (e.g. AddPlayerButton)
-  const sortableCount = sortable && items ? items.length : 0;
   const sortableChildren = childArray.slice(0, sortableCount);
   const staticChildren = childArray.slice(sortableCount);
   const totalCount = childArray.length;
@@ -233,23 +380,41 @@ export function List({
   const renderRows = () => (
     <>
       {sortable && items ? (
-        <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
           {sortableChildren.map((child, i) => {
             const isFirst = i === 0;
             const isLast = i === totalCount - 1;
-            const itemId = items[i].id;
-            const isAnimating = animatingId === itemId;
+            const itemId = sortableIds[i];
+            const isAnimating = animatingIds.has(itemId) || animatingId === itemId;
             const isRemoving = removingId === itemId;
-            const animClass = isRemoving ? "list-slide-out" : isAnimating ? "list-slide-in" : "";
+            const explicitAnimation = itemAnimationStateById?.[itemId];
+            const isEntering = explicitAnimation === "enter" || isAnimating;
+            const isExiting = explicitAnimation === "exit" || isRemoving;
+            const animClass = isExiting ? "list-slide-out" : isEntering ? "list-slide-in" : "";
             return (
               <div
                 key={itemId}
+                ref={(node) => {
+                  if (node) {
+                    rowRefsRef.current.set(itemId, node);
+                    return;
+                  }
+                  rowRefsRef.current.delete(itemId);
+                }}
                 className={animClass}
                 onAnimationEnd={
                   isRemoving
                     ? handleRemoveAnimationEnd
                     : isAnimating
-                      ? () => setAnimatingId(null)
+                      ? () => {
+                          setAnimatingId((current) => (current === itemId ? null : current));
+                          setAnimatingIds((current) => {
+                            if (!current.has(itemId)) return current;
+                            const next = new Set(current);
+                            next.delete(itemId);
+                            return next;
+                          });
+                        }
                       : undefined
                 }
               >
@@ -295,21 +460,39 @@ export function List({
     });
 
   return (
-    <div className="glass relative overflow-hidden rounded-2xl">
-      {isLoading ? (
-        <ShimmerRows count={shimmerRows} />
-      ) : sortable && items ? (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis]}
-          onDragEnd={handleDragEnd}
-        >
-          {renderRows()}
-        </DndContext>
-      ) : (
-        nonSortableRows()
-      )}
+    <div
+      className={`glass relative overflow-hidden rounded-2xl ${animateContainerHeight ? "transition-[height] ease-out" : ""}`}
+      style={
+        {
+          ...(animateContainerHeight && containerHeight !== null
+            ? { height: `${containerHeight}px` }
+            : {}),
+          ...(animateContainerHeight ? { transitionDuration: `${transitionDurationMs}ms` } : {}),
+          "--list-transition-ms": `${transitionDurationMs}ms`,
+        } as CSSProperties
+      }
+      onTransitionEnd={(event) => {
+        if (!animateContainerHeight) return;
+        if (event.propertyName !== "height") return;
+        setContainerHeight(null);
+      }}
+    >
+      <div ref={contentRef}>
+        {isLoading ? (
+          <ShimmerRows count={shimmerRows} />
+        ) : sortable && items ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+          >
+            {renderRows()}
+          </DndContext>
+        ) : (
+          nonSortableRows()
+        )}
+      </div>
     </div>
   );
 }
