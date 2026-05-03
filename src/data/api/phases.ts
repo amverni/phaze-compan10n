@@ -9,7 +9,7 @@ import type {
   VisiblePhase,
 } from "../../types";
 import { shuffle } from "../../utils";
-import { builtInPhaseSets } from "../constants/phaseSets";
+import { builtInPhaseSets, normalizePhaseSetId } from "../constants/phaseSets";
 import { builtInPhases } from "../constants/phases";
 import { getDB } from "../db";
 import { favoritesApi } from "./favorites";
@@ -56,7 +56,8 @@ export const phasesApi = {
 
     // Filter by phase set membership
     if (filters?.phaseSetId) {
-      const phaseSet = builtInPhaseSets.find((ps) => ps.id === filters.phaseSetId);
+      const normalizedPhaseSetId = normalizePhaseSetId(filters.phaseSetId);
+      const phaseSet = builtInPhaseSets.find((ps) => ps.id === normalizedPhaseSetId);
       if (phaseSet) {
         const phaseSetIds = new Set(phaseSet.phases);
         phases = phases.filter((p) => phaseSetIds.has(p.id));

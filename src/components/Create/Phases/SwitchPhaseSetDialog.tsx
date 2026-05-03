@@ -3,7 +3,6 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import { phaseSetsApi } from "../../../data/api/phaseSets";
-import { phasesApi } from "../../../data/api/phases";
 import { phaseSetListOptions } from "../../../data/hooks/usePhaseSets";
 import type { Phase, PhaseSetId } from "../../../types";
 import { Dialog, List, SearchBar } from "../../ui";
@@ -25,9 +24,8 @@ export function SwitchPhaseSetDialog({ open, onClose, onSelectPhases }: SwitchPh
 
   async function handleSelect(id: PhaseSetId) {
     try {
-      const phaseSet = await phaseSetsApi.getById(id);
-      if (!phaseSet) return;
-      const phases = await phasesApi.getByIds([...phaseSet.phases]);
+      const phases = await phaseSetsApi.getPhases(id);
+      if (phases.length === 0) return;
       onSelectPhases(phases);
       onClose();
     } catch {

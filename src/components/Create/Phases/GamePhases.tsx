@@ -1,6 +1,8 @@
-import { ArrowRightLeft, Dices, Shuffle } from "lucide-react";
+import { ArrowRightLeft, Dices, RotateCcw, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { phaseSetsApi } from "../../../data/api/phaseSets";
 import { phasesApi } from "../../../data/api/phases";
+import { originalPhaseSet } from "../../../data/constants/phaseSets";
 import type { Phase } from "../../../types";
 import { shuffle } from "../../../utils";
 import type { SortableItem } from "../../ui";
@@ -47,6 +49,11 @@ export function GamePhases({
     setPhases(nextPhases);
   }
 
+  async function handleOriginal10() {
+    const originalPhases = await phaseSetsApi.getPhases(originalPhaseSet.id);
+    handleReplacePhases(originalPhases);
+  }
+
   async function handleRandom10() {
     try {
       const picked = await phasesApi.getRandom(10);
@@ -66,7 +73,7 @@ export function GamePhases({
 
   return (
     <section>
-      <div className="flex items-center gap-2 pb-2">
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         <Button
           className={actionClasses}
           onClick={() => setSwitchOpen(true)}
@@ -74,6 +81,14 @@ export function GamePhases({
         >
           <ArrowRightLeft className="size-3.5" />
           <span>Phase Set</span>
+        </Button>
+        <Button
+          className={actionClasses}
+          onClick={handleOriginal10}
+          aria-label="Use original 10 phases"
+        >
+          <RotateCcw className="size-3.5" />
+          <span>Original 10</span>
         </Button>
         <Button
           className={actionClasses}

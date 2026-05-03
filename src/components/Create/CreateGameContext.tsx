@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
-import { classicPhaseSet } from "../../data/constants/phaseSets";
+import { originalPhaseSet } from "../../data/constants/phaseSets";
 import { builtInPhases } from "../../data/constants/phases";
 import type { Phase, PhaseId, Player, PlayerId } from "../../types";
 
@@ -19,7 +19,7 @@ const CreateGameContext = createContext<CreateGameContextValue | null>(null);
 
 function resolveDefaultPhases(): Phase[] {
   const phaseMap = new Map<string, Phase>(builtInPhases.map((p) => [p.id, p]));
-  return classicPhaseSet.phases
+  return originalPhaseSet.phases
     .map((id) => phaseMap.get(id))
     .filter((p): p is Phase => p !== undefined);
 }

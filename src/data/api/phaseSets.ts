@@ -1,14 +1,16 @@
 import type {
   BuiltInT,
+  Phase,
   PhaseSet,
   PhaseSetId,
   SavedPhaseSet,
   SavedT,
   VisiblePhaseSet,
 } from "../../types";
-import { builtInPhaseSets } from "../constants/phaseSets";
+import { builtInPhaseSets, normalizePhaseSetId } from "../constants/phaseSets";
 import { getDB } from "../db";
 import { favoritesApi } from "./favorites";
+import { phasesApi } from "./phases";
 import { nameMatchScore } from "./utils";
 
 export const phaseSetsApi = {
@@ -44,7 +46,7 @@ export const phaseSetsApi = {
     // Filter by favorite status
     if (filters?.isFavorite === 1) {
       const favoriteIds = await favoritesApi.getAll("phaseSet");
-      const favoriteSet = new Set(favoriteIds);
+      const favoriteSet = new Set(favoriteIds.map(normalizePhaseSetId));
       phaseSets = phaseSets.filter((ps) => favoriteSet.has(ps.id));
     }
 
@@ -69,11 +71,26 @@ export const phaseSetsApi = {
    * @returns The phase set if found, or `undefined` if no phase set exists with the given ID.
    */
   async getById(id: PhaseSetId): Promise<PhaseSet | undefined> {
-    const builtIn = builtInPhaseSets.find((ps) => ps.id === id);
+    const normalizedId = normalizePhaseSetId(id);
+    const builtIn = builtInPhaseSets.find((ps) => ps.id === normalizedId);
     if (builtIn) return builtIn;
 
     const db = await getDB();
     return db.get("customPhaseSets", id);
+  },
+
+  /**
+   * Get the phases included in a phase set.
+   *
+   * Looks up the phase set first, then resolves the phases in phase-set order.
+   *
+   * @param id - The unique identifier of the phase set whose phases should be retrieved.
+   * @returns The phases in the phase set, or an empty array if no phase set exists with the given ID.
+   */
+  async getPhases(id: PhaseSetId): Promise<Phase[]> {
+    const phaseSet = await this.getById(id);
+    if (!phaseSet) return [];
+    return phasesApi.getByIds([...phaseSet.phases]);
   },
 
   /**
@@ -103,8 +120,9 @@ export const phaseSetsApi = {
    * @throws {Error} If the ID belongs to a built-in phase set.
    */
   async delete(id: PhaseSetId): Promise<void> {
-    if (builtInPhaseSets.some((ps) => ps.id === id)) {
-      throw new Error(`Cannot delete built-in phase set: ${id}`);
+    const normalizedId = normalizePhaseSetId(id);
+    if (builtInPhaseSets.some((ps) => ps.id === normalizedId)) {
+      throw new Error(`Cannot delete built-in phase set: ${normalizedId}`);
     }
 
     const db = await getDB();

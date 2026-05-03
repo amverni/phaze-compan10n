@@ -1,5 +1,14 @@
+import { getPhaseSetIdVariants, normalizePhaseSetId } from "../constants/phaseSets";
 import { getDB } from "../db";
 import type { FavoriteEntityType } from "../db/schema";
+
+function normalizeFavoriteEntityId(entityType: FavoriteEntityType, entityId: string): string {
+  return entityType === "phaseSet" ? normalizePhaseSetId(entityId) : entityId;
+}
+
+function getFavoriteEntityIdVariants(entityType: FavoriteEntityType, entityId: string): string[] {
+  return entityType === "phaseSet" ? getPhaseSetIdVariants(entityId) : [entityId];
+}
 
 export const favoritesApi = {
   /**
@@ -11,7 +20,7 @@ export const favoritesApi = {
   async getAll(entityType: FavoriteEntityType): Promise<string[]> {
     const db = await getDB();
     const favorites = await db.getAllFromIndex("favorites", "by-type", entityType);
-    return favorites.map((f) => f.entityId);
+    return [...new Set(favorites.map((f) => normalizeFavoriteEntityId(entityType, f.entityId)))];
   },
 
   /**
@@ -23,8 +32,11 @@ export const favoritesApi = {
    */
   async isFavorite(entityType: FavoriteEntityType, entityId: string): Promise<boolean> {
     const db = await getDB();
-    const favorite = await db.get("favorites", [entityType, entityId]);
-    return favorite !== undefined;
+    const favoriteIds = getFavoriteEntityIdVariants(entityType, entityId);
+    const favorites = await Promise.all(
+      favoriteIds.map((id) => db.get("favorites", [entityType, id])),
+    );
+    return favorites.some((favorite) => favorite !== undefined);
   },
 
   /**
@@ -35,7 +47,10 @@ export const favoritesApi = {
    */
   async add(entityType: FavoriteEntityType, entityId: string): Promise<void> {
     const db = await getDB();
-    await db.put("favorites", { entityType, entityId });
+    await db.put("favorites", {
+      entityType,
+      entityId: normalizeFavoriteEntityId(entityType, entityId),
+    });
   },
 
   /**
@@ -46,7 +61,11 @@ export const favoritesApi = {
    */
   async remove(entityType: FavoriteEntityType, entityId: string): Promise<void> {
     const db = await getDB();
-    await db.delete("favorites", [entityType, entityId]);
+    await Promise.all(
+      getFavoriteEntityIdVariants(entityType, entityId).map((id) =>
+        db.delete("favorites", [entityType, id]),
+      ),
+    );
   },
 
   /**

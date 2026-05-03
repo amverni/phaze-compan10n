@@ -2,7 +2,6 @@ import { Button } from "@headlessui/react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronsRight } from "lucide-react";
 import { phaseSetsApi } from "../../../data/api/phaseSets";
-import { phasesApi } from "../../../data/api/phases";
 import { phaseSetListOptions } from "../../../data/hooks/usePhaseSets";
 import type { Phase, PhaseSetId } from "../../../types";
 import { List } from "../../ui";
@@ -16,9 +15,8 @@ export function FavoritePhaseSets({ onSelectPhases }: FavoritePhaseSetsProps) {
 
   async function handleSelect(id: PhaseSetId) {
     try {
-      const phaseSet = await phaseSetsApi.getById(id);
-      if (!phaseSet) return;
-      const phases = await phasesApi.getByIds([...phaseSet.phases]);
+      const phases = await phaseSetsApi.getPhases(id);
+      if (phases.length === 0) return;
       onSelectPhases(phases);
     } catch {
       // Silently fail — the UI remains unchanged
