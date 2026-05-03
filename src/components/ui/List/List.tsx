@@ -17,10 +17,40 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@headlessui/react";
 import { ChevronsUpDown, Minus } from "lucide-react";
-import { Children, type ReactNode } from "react";
+import { Children, isValidElement, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import "./List.css";
 
 const ROW_HEIGHT = "h-10";
+const LIST_ANIMATION_MS = 220;
+const LIST_MOVE_EASING = "cubic-bezier(0.2, 0, 0, 1)";
+const LIST_HEIGHT_EASING = "linear";
+
+interface RowRect {
+  top: number;
+  height: number;
+}
+
+interface ListRow {
+  key: string;
+  child: ReactNode;
+  sortableId?: string;
+}
+
+interface ExitingListRow extends ListRow {
+  exitId: number;
+  previousIndex: number;
+  previousKeys: string[];
+}
+
+type RenderRow = (ListRow & { phase: "present" }) | (ExitingListRow & { phase: "exiting" });
+
+interface PendingAnimations {
+  id: number;
+  entering: Set<string>;
+  exiting: Set<string>;
+  moving: Set<string>;
+  previousRects: Map<string, RowRect>;
+}
 
 function ShimmerRow() {
   return (
@@ -100,11 +130,170 @@ function SortableRow({ id, children, className, removable, onRemove }: SortableR
   );
 }
 
+function PlainRow({ children, className }: { children: ReactNode; className: string }) {
+  return <div className={className}>{children}</div>;
+}
+
+function getExplicitKeyedChildren(children: ReactNode) {
+  const explicitKeys: Array<string | null> = [];
+
+  Children.forEach(children, (child) => {
+    if (child === null || child === undefined || typeof child === "boolean") return;
+    explicitKeys.push(isValidElement(child) && child.key !== null ? String(child.key) : null);
+  });
+
+  return {
+    childArray: Children.toArray(children),
+    explicitKeys,
+  };
+}
+
+function assertListChildrenHaveKeys(explicitKeys: Array<string | null>) {
+  const missingIndex = explicitKeys.indexOf(null);
+  if (missingIndex === -1) return;
+
+  throw new Error(
+    `List children must have stable React keys for animations. Missing key at child index ${missingIndex}.`,
+  );
+}
+
+function getListRows({
+  children,
+  sortableIds,
+  sortableCount,
+  validateKeys,
+}: {
+  children: ReactNode;
+  sortableIds: string[];
+  sortableCount: number;
+  validateKeys: boolean;
+}) {
+  const { childArray, explicitKeys } = getExplicitKeyedChildren(children);
+
+  if (validateKeys) {
+    assertListChildrenHaveKeys(explicitKeys);
+  }
+
+  if (sortableCount > childArray.length) {
+    throw new Error("List received more sortable items than children.");
+  }
+
+  const rows = childArray.map<ListRow>((child, index) => {
+    const sortableId = index < sortableCount ? sortableIds[index] : undefined;
+    const explicitKey = explicitKeys[index] ?? String(index);
+
+    return {
+      key: sortableId ? `sortable:${sortableId}` : `static:${explicitKey}`,
+      child,
+      sortableId,
+    };
+  });
+
+  return rows;
+}
+
+function keysEqual(prevKeys: string[], nextKeys: string[]) {
+  return (
+    prevKeys.length === nextKeys.length && prevKeys.every((key, index) => key === nextKeys[index])
+  );
+}
+
+function classifyRowChanges({
+  previousKeys,
+  nextKeys,
+  skipMoveAnimations,
+}: {
+  previousKeys: string[];
+  nextKeys: string[];
+  skipMoveAnimations: boolean;
+}) {
+  const previousKeySet = new Set(previousKeys);
+  const nextKeySet = new Set(nextKeys);
+
+  const entering = new Set(nextKeys.filter((key) => !previousKeySet.has(key)));
+  const exiting = new Set(previousKeys.filter((key) => !nextKeySet.has(key)));
+  const moving = new Set<string>();
+
+  if (!skipMoveAnimations) {
+    const previousPersistentKeys = previousKeys.filter((key) => nextKeySet.has(key));
+    const nextPersistentKeys = nextKeys.filter((key) => previousKeySet.has(key));
+    const previousPersistentIndex = new Map(
+      previousPersistentKeys.map((key, index) => [key, index]),
+    );
+
+    nextPersistentKeys.forEach((key, index) => {
+      if (previousPersistentIndex.get(key) !== index) {
+        moving.add(key);
+      }
+    });
+  }
+
+  return { entering, exiting, moving };
+}
+
+function findExitInsertionIndex(exitingRow: ExitingListRow, output: RenderRow[]) {
+  const outputIndexByKey = new Map(output.map((row, index) => [row.key, index]));
+  const { previousIndex, previousKeys } = exitingRow;
+
+  let previousNeighborIndex: number | undefined;
+  for (let i = previousIndex - 1; i >= 0; i--) {
+    const outputIndex = outputIndexByKey.get(previousKeys[i]);
+    if (outputIndex !== undefined) {
+      previousNeighborIndex = outputIndex;
+      break;
+    }
+  }
+
+  let nextNeighborIndex: number | undefined;
+  for (let i = previousIndex + 1; i < previousKeys.length; i++) {
+    const outputIndex = outputIndexByKey.get(previousKeys[i]);
+    if (outputIndex !== undefined) {
+      nextNeighborIndex = outputIndex;
+      break;
+    }
+  }
+
+  if (
+    previousNeighborIndex !== undefined &&
+    nextNeighborIndex !== undefined &&
+    previousNeighborIndex < nextNeighborIndex
+  ) {
+    return previousNeighborIndex + 1;
+  }
+
+  if (nextNeighborIndex !== undefined) return nextNeighborIndex;
+  if (previousNeighborIndex !== undefined) return previousNeighborIndex + 1;
+  return Math.min(previousIndex, output.length);
+}
+
+function mergeRows(currentRows: ListRow[], exitingRows: ExitingListRow[]) {
+  const currentKeys = new Set(currentRows.map((row) => row.key));
+  const output: RenderRow[] = currentRows.map((row) => ({ ...row, phase: "present" }));
+
+  const sortedExitingRows = [...exitingRows]
+    .filter((row) => !currentKeys.has(row.key))
+    .sort((a, b) => a.previousIndex - b.previousIndex);
+
+  for (const exitingRow of sortedExitingRows) {
+    const insertionIndex = findExitInsertionIndex(exitingRow, output);
+    output.splice(insertionIndex, 0, { ...exitingRow, phase: "exiting" });
+  }
+
+  return output;
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 export interface SortableItem {
   id: string;
 }
 
 export interface ListProps {
+  /** Every non-loading child must have a stable React key so row animations can track identity. */
   children?: ReactNode;
   isLoading?: boolean;
   shimmerRows?: number;
@@ -127,16 +316,311 @@ export function List({
   removable = false,
   onRemove,
 }: ListProps) {
-  const childArray = Children.toArray(children);
   const sortableCount = sortable && items ? items.length : 0;
   const sortableIds = items?.map((item) => item.id) ?? [];
+  const currentRows = getListRows({
+    children,
+    sortableIds,
+    sortableCount,
+    validateKeys: !isLoading,
+  });
+  const [exitingRows, setExitingRows] = useState<ExitingListRow[]>([]);
+  const renderedRows = mergeRows(currentRows, exitingRows);
+
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  const previousRowsRef = useRef<ListRow[]>([]);
+  const previousRectsRef = useRef(new Map<string, RowRect>());
+  const pendingAnimationsRef = useRef<PendingAnimations | null>(null);
+  const activeAnimationsRef = useRef<Animation[]>([]);
+  const animatedKeysRef = useRef(new Set<string>());
+  const exitingAnimationKeysRef = useRef(new Set<string>());
+  const currentRowsRef = useRef(currentRows);
+  const mountedRef = useRef(false);
+  const animationRunRef = useRef(0);
+  const exitIdRef = useRef(0);
+  const skipNextMoveAnimationRef = useRef(false);
+  const isDraggingRef = useRef(false);
+
+  currentRowsRef.current = currentRows;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  function setRowRef(key: string, node: HTMLDivElement | null) {
+    if (node) {
+      rowRefs.current.set(key, node);
+    } else {
+      rowRefs.current.delete(key);
+    }
+  }
+
+  function measureRows(rows: ListRow[]) {
+    const rects = new Map<string, RowRect>();
+
+    for (const row of rows) {
+      const element = rowRefs.current.get(row.key);
+      if (!element) continue;
+      const rect = element.getBoundingClientRect();
+      rects.set(row.key, { top: rect.top, height: rect.height });
+    }
+
+    return rects;
+  }
+
+  function lockExitingRowsAtZero(keys: Iterable<string>) {
+    for (const key of keys) {
+      const element = rowRefs.current.get(key);
+      if (!element) continue;
+      element.style.height = "0px";
+      element.style.overflow = "hidden";
+      element.style.willChange = "";
+    }
+  }
+
+  function cleanupAnimatedStyles(keys: Iterable<string>, lockedKeys = new Set<string>()) {
+    for (const key of keys) {
+      if (lockedKeys.has(key)) continue;
+      const element = rowRefs.current.get(key);
+      if (!element) continue;
+      element.style.height = "";
+      element.style.overflow = "";
+      element.style.willChange = "";
+    }
+  }
+
+  function cancelActiveAnimations() {
+    const exitingKeys = exitingAnimationKeysRef.current;
+    lockExitingRowsAtZero(exitingKeys);
+    for (const animation of activeAnimationsRef.current) {
+      animation.cancel();
+    }
+    activeAnimationsRef.current = [];
+    cleanupAnimatedStyles(animatedKeysRef.current, exitingKeys);
+    animatedKeysRef.current.clear();
+    exitingAnimationKeysRef.current = new Set();
+  }
+
+  function finishAnimationRun(pending: PendingAnimations) {
+    if (animationRunRef.current !== pending.id) return;
+
+    lockExitingRowsAtZero(pending.exiting);
+    for (const animation of activeAnimationsRef.current) {
+      animation.cancel();
+    }
+    cleanupAnimatedStyles(animatedKeysRef.current, pending.exiting);
+    activeAnimationsRef.current = [];
+    animatedKeysRef.current.clear();
+    exitingAnimationKeysRef.current = new Set();
+
+    if (pending.exiting.size > 0) {
+      setExitingRows((rows) => rows.filter((row) => !pending.exiting.has(row.key)));
+    }
+
+    requestAnimationFrame(() => {
+      previousRectsRef.current = measureRows(currentRowsRef.current);
+    });
+  }
+
+  function startAnimations(pending: PendingAnimations) {
+    pendingAnimationsRef.current = null;
+    cancelActiveAnimations();
+
+    if (prefersReducedMotion() || isDraggingRef.current) {
+      if (pending.exiting.size > 0) {
+        setExitingRows((rows) => rows.filter((row) => !pending.exiting.has(row.key)));
+      }
+      previousRectsRef.current = measureRows(currentRowsRef.current);
+      return;
+    }
+
+    animationRunRef.current = pending.id;
+    const animations: Animation[] = [];
+    const animatedKeys = new Set<string>();
+
+    for (const key of pending.entering) {
+      const element = rowRefs.current.get(key);
+      if (!element) continue;
+
+      const height = element.getBoundingClientRect().height;
+      if (height === 0) continue;
+
+      element.style.overflow = "hidden";
+      element.style.willChange = "height";
+      animatedKeys.add(key);
+      animations.push(
+        element.animate([{ height: "0px" }, { height: `${height}px` }], {
+          duration: LIST_ANIMATION_MS,
+          easing: LIST_HEIGHT_EASING,
+        }),
+      );
+    }
+
+    for (const key of pending.exiting) {
+      const element = rowRefs.current.get(key);
+      if (!element) continue;
+
+      const height =
+        pending.previousRects.get(key)?.height ?? element.getBoundingClientRect().height;
+      if (height === 0) continue;
+
+      element.style.overflow = "hidden";
+      element.style.willChange = "height";
+      animatedKeys.add(key);
+      animations.push(
+        element.animate([{ height: `${height}px` }, { height: "0px" }], {
+          duration: LIST_ANIMATION_MS,
+          easing: LIST_HEIGHT_EASING,
+          fill: "forwards",
+        }),
+      );
+    }
+
+    for (const key of pending.moving) {
+      const element = rowRefs.current.get(key);
+      const previousRect = pending.previousRects.get(key);
+      if (!element || !previousRect) continue;
+
+      const rect = element.getBoundingClientRect();
+      const deltaY = previousRect.top - rect.top;
+      if (Math.abs(deltaY) < 0.5) continue;
+
+      element.style.willChange = "transform";
+      animatedKeys.add(key);
+      animations.push(
+        element.animate(
+          [{ transform: `translateY(${deltaY}px)` }, { transform: "translateY(0)" }],
+          {
+            duration: LIST_ANIMATION_MS,
+            easing: LIST_MOVE_EASING,
+          },
+        ),
+      );
+    }
+
+    if (animations.length === 0) {
+      finishAnimationRun(pending);
+      return;
+    }
+
+    activeAnimationsRef.current = animations;
+    animatedKeysRef.current = animatedKeys;
+    exitingAnimationKeysRef.current = pending.exiting;
+
+    void Promise.all(animations.map((animation) => animation.finished.catch(() => undefined))).then(
+      () => finishAnimationRun(pending),
+    );
+  }
+
+  function applyPendingAnimationsIfReady() {
+    const pending = pendingAnimationsRef.current;
+    if (!pending) return false;
+
+    for (const key of pending.exiting) {
+      if (!rowRefs.current.has(key)) return false;
+    }
+
+    startAnimations(pending);
+    return true;
+  }
+
+  useLayoutEffect(() => {
+    if (isLoading) {
+      pendingAnimationsRef.current = null;
+      cancelActiveAnimations();
+      setExitingRows((rows) => (rows.length === 0 ? rows : []));
+      previousRowsRef.current = [];
+      previousRectsRef.current = new Map();
+      mountedRef.current = false;
+      return;
+    }
+
+    if (applyPendingAnimationsIfReady()) return;
+
+    const previousRows = previousRowsRef.current;
+    const previousKeys = previousRows.map((row) => row.key);
+    const nextKeys = currentRows.map((row) => row.key);
+
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      previousRowsRef.current = currentRows;
+      previousRectsRef.current = measureRows(currentRows);
+      return;
+    }
+
+    if (keysEqual(previousKeys, nextKeys)) {
+      previousRowsRef.current = currentRows;
+      previousRectsRef.current = measureRows(currentRows);
+      return;
+    }
+
+    const skipMoveAnimations = skipNextMoveAnimationRef.current;
+    skipNextMoveAnimationRef.current = false;
+
+    const { entering, exiting, moving } = classifyRowChanges({
+      previousKeys,
+      nextKeys,
+      skipMoveAnimations,
+    });
+    const nextKeySet = new Set(nextKeys);
+    const exitingRowsToAdd = previousRows
+      .map((row, previousIndex) => ({ row, previousIndex }))
+      .filter(({ row }) => exiting.has(row.key))
+      .map<ExitingListRow>(({ row, previousIndex }) => ({
+        ...row,
+        exitId: ++exitIdRef.current,
+        previousIndex,
+        previousKeys,
+      }));
+
+    pendingAnimationsRef.current = {
+      id: animationRunRef.current + 1,
+      entering,
+      exiting,
+      moving,
+      previousRects: previousRectsRef.current,
+    };
+    previousRowsRef.current = currentRows;
+
+    if (exitingRowsToAdd.length > 0) {
+      setExitingRows((rows) => [
+        ...rows.filter((row) => !nextKeySet.has(row.key) && !exiting.has(row.key)),
+        ...exitingRowsToAdd,
+      ]);
+      return;
+    }
+
+    setExitingRows((rows) => rows.filter((row) => !nextKeySet.has(row.key)));
+    applyPendingAnimationsIfReady();
+  });
+
+  useLayoutEffect(
+    () => () => {
+      pendingAnimationsRef.current = null;
+      for (const animation of activeAnimationsRef.current) {
+        animation.cancel();
+      }
+      activeAnimationsRef.current = [];
+      for (const key of animatedKeysRef.current) {
+        const element = rowRefs.current.get(key);
+        if (!element) continue;
+        element.style.overflow = "";
+        element.style.willChange = "";
+      }
+      animatedKeysRef.current.clear();
+    },
+    [],
+  );
+
+  function handleDragStart() {
+    isDraggingRef.current = true;
+    pendingAnimationsRef.current = null;
+    cancelActiveAnimations();
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    isDraggingRef.current = false;
     const { active, over } = event;
     if (!over || !items || !onReorder || active.id === over.id) return;
 
@@ -147,10 +631,50 @@ export function List({
     const reordered = [...items];
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
+    skipNextMoveAnimationRef.current = true;
     onReorder(reordered);
   }
 
-  if (!isLoading && childArray.length === 0) {
+  function handleDragCancel() {
+    isDraggingRef.current = false;
+  }
+
+  function renderRow(row: RenderRow, index: number, totalCount: number) {
+    const isFirst = index === 0;
+    const isLast = index === totalCount - 1;
+    const className = rowClassName(isFirst, isLast);
+    const reactKey = row.phase === "exiting" ? `exit:${row.key}:${row.exitId}` : row.key;
+
+    return (
+      <div
+        key={reactKey}
+        ref={(node) => setRowRef(row.key, node)}
+        className="list-row-shell"
+        data-list-row-key={row.key}
+        data-list-row-phase={row.phase}
+      >
+        {index > 0 && <RowDivider />}
+        {row.phase === "present" && row.sortableId ? (
+          <SortableRow
+            id={row.sortableId}
+            className={className}
+            removable={removable}
+            onRemove={onRemove}
+          >
+            {row.child}
+          </SortableRow>
+        ) : (
+          <PlainRow className={className}>{row.child}</PlainRow>
+        )}
+      </div>
+    );
+  }
+
+  const renderRows = () =>
+    renderedRows.map((row, index) => renderRow(row, index, renderedRows.length));
+  const hasRows = currentRows.length > 0 || exitingRows.length > 0;
+
+  if (!isLoading && !hasRows) {
     if (!emptyMessage) return null;
     return (
       <div className="flex items-center justify-center py-8 text-sm text-text-secondary">
@@ -158,60 +682,6 @@ export function List({
       </div>
     );
   }
-
-  const sortableChildren = childArray.slice(0, sortableCount);
-  const staticChildren = childArray.slice(sortableCount);
-  const totalCount = childArray.length;
-
-  const renderSortableRows = () => (
-    <>
-      <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-        {sortableChildren.map((child, i) => {
-          const isFirst = i === 0;
-          const isLast = i === totalCount - 1;
-          const itemId = sortableIds[i];
-          return (
-            <div key={itemId}>
-              {i > 0 && <RowDivider />}
-              <SortableRow
-                id={itemId}
-                className={rowClassName(isFirst, isLast)}
-                removable={removable}
-                onRemove={onRemove}
-              >
-                {child}
-              </SortableRow>
-            </div>
-          );
-        })}
-      </SortableContext>
-      {staticChildren.map((child, i) => {
-        const globalIndex = sortableCount + i;
-        const isFirst = globalIndex === 0;
-        const isLast = globalIndex === totalCount - 1;
-        return (
-          // biome-ignore lint/suspicious/noArrayIndexKey: trailing static children never reorder
-          <div key={`static-${i}`}>
-            {globalIndex > 0 && <RowDivider />}
-            <div className={rowClassName(isFirst, isLast)}>{child}</div>
-          </div>
-        );
-      })}
-    </>
-  );
-
-  const renderPlainRows = () =>
-    childArray.map((child, i) => {
-      const isFirst = i === 0;
-      const isLast = i === childArray.length - 1;
-      return (
-        // biome-ignore lint/suspicious/noArrayIndexKey: children carry their own keys
-        <div key={i}>
-          {i > 0 && <RowDivider />}
-          <div className={rowClassName(isFirst, isLast)}>{child}</div>
-        </div>
-      );
-    });
 
   return (
     <div className="glass relative overflow-hidden rounded-2xl">
@@ -222,12 +692,16 @@ export function List({
           sensors={sensors}
           collisionDetection={closestCenter}
           modifiers={[restrictToVerticalAxis]}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
-          {renderSortableRows()}
+          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            {renderRows()}
+          </SortableContext>
         </DndContext>
       ) : (
-        renderPlainRows()
+        renderRows()
       )}
     </div>
   );

@@ -24,7 +24,7 @@ export function GamePlayers() {
         {players.map((player) => (
           <PlayerRow key={player.id} player={player} />
         ))}
-        <AddPlayerButton />
+        <AddPlayerButton key="add-player" />
       </List>
     </section>
   );

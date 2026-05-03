@@ -179,7 +179,7 @@ export function PlayerEditor({
 
           {/* Options */}
           <List>
-            <form.Field name="isFavorite">
+            <form.Field key="favorite" name="isFavorite">
               {(field) => (
                 <Field className="flex w-full items-center justify-between">
                   <Label className="cursor-pointer text-sm text-text-secondary">Favorite</Label>

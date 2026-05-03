@@ -8,6 +8,10 @@
   background-size: 200% 100%;
 }
 
+.list-row-shell {
+  transform-origin: center;
+}
+
 @media (prefers-color-scheme: light) {
   .list-shimmer {
     background: linear-gradient(

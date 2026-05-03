@@ -58,9 +58,9 @@ export function GamePhases({
 
   useEffect(() => {
     if (!externalReplacementPhases || externalReplacementPhases.length === 0) return;
-    handleReplacePhases(externalReplacementPhases);
+    setPhases(externalReplacementPhases);
     onExternalReplacementHandled?.();
-  }, [externalReplacementPhases, onExternalReplacementHandled]);
+  }, [externalReplacementPhases, onExternalReplacementHandled, setPhases]);
 
   const actionClasses = "gap-1.5 px-3 py-1.5 text-xs font-medium";
 
@@ -103,7 +103,7 @@ export function GamePhases({
         {phases.map((phase, index) => (
           <PhaseRow key={phase.id} phase={phase} index={index} />
         ))}
-        <AddPhaseButton />
+        <AddPhaseButton key="add-phase" />
       </List>
       <SwitchPhaseSetDialog
         open={switchOpen}

@@ -39,7 +39,9 @@ export function Players() {
       mainContent={
         <div className="content-container h-full">
           <PlayersSearch
-            renderRow={(player) => <PlayerListRow player={player} onEdit={handleEdit} />}
+            renderRow={(player) => (
+              <PlayerListRow key={player.id} player={player} onEdit={handleEdit} />
+            )}
             actions={(searchTerm) => (
               <Button
                 onClick={() => {
