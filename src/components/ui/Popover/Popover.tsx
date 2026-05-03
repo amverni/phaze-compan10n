@@ -31,7 +31,7 @@ export function PopoverButton<TTag extends ElementType = "button">(
 const panelClasses = "glass popover-glass rounded-2xl shadow-xl focus:outline-none overflow-hidden";
 
 const transitionClasses =
-  "transition duration-200 ease-out data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150";
+  "transition-opacity duration-200 ease-out data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150";
 
 export function PopoverPanel<TTag extends ElementType = "div">(
   props: PopoverPanelProps<TTag> & { children?: ReactNode },

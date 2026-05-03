@@ -62,7 +62,7 @@ export function ListboxButton({
       <span ref={contentRef} className="inline-flex items-center gap-1.5">
         {children}
       </span>
-      <span className="inline-flex shrink-0 transition-transform duration-300 ease-linear [[data-open]>&]:rotate-180">
+      <span className="inline-flex shrink-0">
         <ChevronDown className="size-3.5 text-text-secondary" aria-hidden />
       </span>
     </HeadlessListboxButton>
@@ -76,7 +76,6 @@ const panelClasses = [
   "absolute left-0 top-full z-50 mt-1 w-max",
   "p-1",
   "focus:outline-none",
-  "transition duration-200 ease-out data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150",
 ].join(" ");
 
 export function ListboxOptions({
@@ -87,18 +86,14 @@ export function ListboxOptions({
   className?: string;
 }) {
   const merged = [panelClasses, className].filter(Boolean).join(" ");
-  return (
-    <HeadlessListboxOptions transition className={merged}>
-      {children}
-    </HeadlessListboxOptions>
-  );
+  return <HeadlessListboxOptions className={merged}>{children}</HeadlessListboxOptions>;
 }
 
 /* ── Option ────────────────────────────────────────────────── */
 
 const optionClasses = [
   "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
-  "cursor-pointer select-none transition-colors duration-100",
+  "cursor-pointer select-none",
   "data-[focus]:bg-white/20 dark:data-[focus]:bg-white/10",
 ].join(" ");
 

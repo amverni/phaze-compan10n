@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { Phase } from "../../types";
 import { FavoritePhaseSets } from "./Phases/FavoritePhaseSets";
-import { FavoritePhases } from "./Phases/FavoritePhases";
 import { GamePhases } from "./Phases/GamePhases";
 
 export function Phases() {
@@ -14,7 +13,6 @@ export function Phases() {
         onExternalReplacementHandled={() => setExternalReplacementPhases(null)}
       />
       <FavoritePhaseSets onSelectPhases={setExternalReplacementPhases} />
-      <FavoritePhases />
     </div>
   );
 }

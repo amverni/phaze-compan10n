@@ -1,12 +1,13 @@
-import { Button } from "@headlessui/react";
+import { Button as HeadlessButton } from "@headlessui/react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useDeferredValue, useState } from "react";
+import { Plus, Star } from "lucide-react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { phaseSetListOptions } from "../../../data/hooks/usePhaseSets";
 import { phaseListOptions } from "../../../data/hooks/usePhases";
 import type { MeldType, PhaseSetId } from "../../../types";
 import { formatPhaseRequirements } from "../../../utils";
 import {
+  Button,
   Dialog,
   List,
   Listbox,
@@ -34,10 +35,16 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [meldType, setMeldType] = useState<MeldType[]>(ALL_MELD_TYPE_VALUES);
   const [phaseSetId, setPhaseSetId] = useState<PhaseSetId | null>(null);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const deferredSearch = useDeferredValue(searchTerm);
   const addPhase = useAddPhase();
   const gamePhases = useGamePhases();
   const gamePhaseIds = new Set(gamePhases.map((p) => p.id));
+
+  useEffect(() => {
+    if (!open) return;
+    setFavoritesOnly(false);
+  }, [open]);
 
   const setMeldTypes = (types: MeldType[]) => {
     setMeldType(types.length === 0 ? ALL_MELD_TYPE_VALUES : types);
@@ -49,6 +56,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
     ...(deferredSearch ? { name: deferredSearch } : {}),
     ...(!isAllTypes ? { meldTypes: meldType } : {}),
     ...(phaseSetId ? { phaseSetId } : {}),
+    ...(favoritesOnly ? { isFavorite: 1 as const } : {}),
   };
 
   const { data: phases = [], isLoading } = useQuery({
@@ -81,6 +89,20 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2 py-2">
+          <Button
+            className={[
+              "gap-1.5 px-3 py-2 text-sm font-medium",
+              favoritesOnly ? "text-amber-400" : "text-text-primary",
+            ].join(" ")}
+            onClick={() => setFavoritesOnly((current) => !current)}
+            aria-pressed={favoritesOnly}
+          >
+            <Star
+              className={favoritesOnly ? "h-4 w-4 shrink-0 fill-current" : "h-4 w-4 shrink-0"}
+            />
+            Favorites
+          </Button>
+
           <Listbox value={meldType} onChange={setMeldTypes} multiple>
             <ListboxButton>
               <span className="text-text-secondary">Type:</span> {meldTypeLabel}
@@ -115,7 +137,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
         <div className="min-h-0 flex-1 overflow-y-auto -mx-4 px-4 py-2">
           <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
             {phases.map((phase) => (
-              <Button
+              <HeadlessButton
                 key={phase.id}
                 className="-mx-3 flex h-full w-[calc(100%+1.5rem)] cursor-pointer items-center justify-between px-3 text-left text-sm hover:bg-black/5 dark:hover:bg-white/10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={() => addPhase(phase)}
@@ -123,7 +145,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
               >
                 <span className="truncate">{formatPhaseRequirements(phase.requirements)}</span>
                 <Plus className="h-5 w-5 shrink-0 text-text-secondary" />
-              </Button>
+              </HeadlessButton>
             ))}
           </List>
         </div>

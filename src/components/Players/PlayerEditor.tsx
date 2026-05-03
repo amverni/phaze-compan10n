@@ -45,10 +45,26 @@ export function PlayerEditor({
   function shakeNameInput() {
     const el = nameInputRef.current;
     if (!el) return;
-    el.classList.remove("shake");
-    // Force reflow so re-adding the class restarts the animation
-    void el.offsetWidth;
-    el.classList.add("shake");
+    // Cancel any in-flight shake so a rapid re-trigger always restarts
+    // cleanly. Using the Web Animations API (rather than toggling a CSS
+    // class) avoids two pitfalls: React's reconciler can't wipe the
+    // animation when it re-renders the element's `className`, and the
+    // browser won't no-op a "none → shake" style swap on a repeat call.
+    for (const anim of el.getAnimations()) {
+      if (anim.id === "shake") anim.cancel();
+    }
+    const animation = el.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-4px)", offset: 0.2 },
+        { transform: "translateX(4px)", offset: 0.4 },
+        { transform: "translateX(-3px)", offset: 0.6 },
+        { transform: "translateX(3px)", offset: 0.8 },
+        { transform: "translateX(0)" },
+      ],
+      { duration: 350, easing: "ease-in-out" },
+    );
+    animation.id = "shake";
   }
 
   const form = useForm({

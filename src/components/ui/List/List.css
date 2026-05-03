@@ -1,46 +1,3 @@
-/* ── Shimmer animation for loading rows ─────────────────────── */
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* ── Slide-in animation for newly added rows ────────────────── */
-
-@keyframes list-slide-in {
-  from {
-    height: 0;
-  }
-  to {
-    height: 2.5rem; /* matches ROW_HEIGHT h-10 */
-  }
-}
-
-.list-slide-in {
-  overflow: hidden;
-  animation: list-slide-in var(--list-transition-ms, 500ms) ease-out;
-}
-
-/* ── Slide-out animation for removed rows ───────────────────── */
-
-@keyframes list-slide-out {
-  from {
-    height: 2.5rem; /* matches ROW_HEIGHT h-10 */
-  }
-  to {
-    height: 0;
-  }
-}
-
-.list-slide-out {
-  overflow: hidden;
-  animation: list-slide-out var(--list-transition-ms, 500ms) ease forwards;
-}
-
 .list-shimmer {
   background: linear-gradient(
     90deg,
@@ -49,7 +6,6 @@
     rgba(255, 255, 255, 0.04) 75%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
 }
 
 @media (prefers-color-scheme: light) {

@@ -7,7 +7,7 @@ import { PhaseSetsList } from "./PhaseSetsList";
 import { PhasesList } from "./PhasesList";
 
 const tabClasses =
-  "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none transition-all duration-200 hover:brightness-110 data-selected:opacity-100";
+  "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none hover:brightness-110 data-selected:opacity-100";
 
 export function Phases() {
   return (

@@ -15,29 +15,16 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronsUpDown, Minus } from "lucide-react";
-import {
-  Children,
-  type CSSProperties,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import "./List.css";
 import { Button } from "@headlessui/react";
+import { ChevronsUpDown, Minus } from "lucide-react";
+import { Children, type ReactNode } from "react";
+import "./List.css";
 
-/** Height of a single row — keeps loading and loaded states identical. */
 const ROW_HEIGHT = "h-10";
-const DEFAULT_TRANSITION_MS = 500;
-
-/* ── Sub-components ────────────────────────────────────────── */
 
 function ShimmerRow() {
   return (
     <div className={`${ROW_HEIGHT} flex items-center px-3`}>
-      {/* text-shaped shimmer bar */}
       <div className="list-shimmer h-4 w-full rounded-md" />
     </div>
   );
@@ -54,19 +41,15 @@ function ShimmerRows({ count }: { count: number }) {
   );
 }
 
-/* ── Divider between rows ──────────────────────────────────── */
-
 function RowDivider() {
   return <div className="list-divider mx-3 border-t border-white/10 dark:border-white/5" />;
 }
-
-/* ── Sortable row wrapper ──────────────────────────────────── */
 
 function RemoveButton({ onClick }: { onClick: () => void }) {
   return (
     <Button
       type="button"
-      className="cursor-pointer rounded-full p-1 transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10"
+      className="cursor-pointer rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10"
       onClick={onClick}
     >
       <Minus className="h-5 w-5 shrink-0 text-text-secondary" />
@@ -74,23 +57,23 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function SortableRow({
-  id,
-  children,
-  className,
-  removable,
-  onRemove,
-}: {
+function rowClassName(isFirst: boolean, isLast: boolean) {
+  const radius =
+    isFirst && isLast ? "rounded-2xl" : isFirst ? "rounded-t-2xl" : isLast ? "rounded-b-2xl" : "";
+  return `${ROW_HEIGHT} ${radius} flex items-center px-3 text-sm`;
+}
+
+interface SortableRowProps {
   id: string;
   children: ReactNode;
   className: string;
   removable?: boolean;
   onRemove?: (id: string) => void;
-}) {
+}
+
+function SortableRow({ id, children, className, removable, onRemove }: SortableRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
-    // Reorder animation is orchestrated externally via FLIP; disable dnd-kit layout tweening.
-    transition: null,
   });
 
   const style = {
@@ -107,7 +90,7 @@ function SortableRow({
         {removable && onRemove && <RemoveButton onClick={() => onRemove(id)} />}
         <Button
           type="button"
-          className="touch-none cursor-grab rounded-full p-1 text-text-secondary transition-colors duration-150 hover:bg-black/5 active:cursor-grabbing dark:hover:bg-white/10"
+          className="touch-none cursor-grab rounded-full p-1 text-text-secondary hover:bg-black/5 active:cursor-grabbing dark:hover:bg-white/10"
           {...listeners}
         >
           <ChevronsUpDown className="h-5 w-5 shrink-0" />
@@ -117,51 +100,22 @@ function SortableRow({
   );
 }
 
-/* ── Public API ────────────────────────────────────────────── */
-
 export interface SortableItem {
   id: string;
 }
 
 export interface ListProps {
-  /** Row elements to render inside the list. */
   children?: ReactNode;
-  /** When true the shimmer loading UI is displayed instead of children. */
   isLoading?: boolean;
-  /** Number of shimmer rows to show while loading (default: 3). */
   shimmerRows?: number;
-  /** Content to render when the list is empty (not loading, no children). */
   emptyMessage?: ReactNode;
-  /** Enable drag-and-drop reordering. Requires `items` and `onReorder`. */
   sortable?: boolean;
-  /** Items corresponding 1:1 to children, providing the `id` for each sortable row. */
   items?: SortableItem[];
-  /** Called after a drag-and-drop reorder with the new item order. */
   onReorder?: (items: SortableItem[]) => void;
-  /** Animate newly added items with a slide-in effect. Requires `items`. */
-  animateNewItems?: boolean;
-  /** Show a remove button on each item row. Requires `items` and `onRemove`. */
   removable?: boolean;
-  /** Called when a row's remove button is clicked. */
   onRemove?: (id: string) => void;
-  /** Animate sortable row position changes (e.g. shuffle/reorder). */
-  animateReorderChanges?: boolean;
-  /** Transition duration used for list animations (reorder, height, slide in/out). */
-  transitionDurationMs?: number;
-  /** Animate container height changes. */
-  animateContainerHeight?: boolean;
-  /** Explicit per-item animation state, useful for external transition orchestration. */
-  itemAnimationStateById?: Record<string, "enter" | "exit">;
 }
 
-/**
- * A frosted-glass list container with a shimmer loading state.
- *
- * - **Loading** → shows `shimmerRows` placeholder rows.
- * - **Empty** → renders nothing.
- * - **Data** → renders each child separated by an inset divider.
- * - **Sortable** → opt-in drag-and-drop reordering via dnd-kit.
- */
 export function List({
   children,
   isLoading = false,
@@ -170,187 +124,17 @@ export function List({
   sortable = false,
   items,
   onReorder,
-  animateNewItems = false,
   removable = false,
   onRemove,
-  animateReorderChanges = true,
-  transitionDurationMs = DEFAULT_TRANSITION_MS,
-  animateContainerHeight = true,
-  itemAnimationStateById,
 }: ListProps) {
   const childArray = Children.toArray(children);
-  const itemCount = items?.length ?? childArray.length;
   const sortableCount = sortable && items ? items.length : 0;
   const sortableIds = items?.map((item) => item.id) ?? [];
-
-  // Track newly added items for slide-in animation
-  const prevItemIdsRef = useRef<Set<string> | null>(null);
-  const [animatingId, setAnimatingId] = useState<string | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const prevContentHeightRef = useRef<number | null>(null);
-  const heightAnimationFrameRef = useRef<number | null>(null);
-  const rowRefsRef = useRef<Map<string, HTMLDivElement>>(new Map());
-  const previousRowTopsRef = useRef<Map<string, number>>(new Map());
-  const previousSortableIdsRef = useRef<string[] | null>(null);
-  const reorderAnimationFramesRef = useRef<number[]>([]);
-  const [containerHeight, setContainerHeight] = useState<number | null>(null);
-
-  // useLayoutEffect runs after DOM mutation but before paint — no flash
-  useLayoutEffect(() => {
-    if (!animateNewItems || !items) return;
-
-    const currentIds = new Set(items.map((item) => item.id));
-
-    if (prevItemIdsRef.current !== null) {
-      const prevIds = prevItemIdsRef.current;
-      const newIds = items.filter((item) => !prevIds.has(item.id)).map((item) => item.id);
-      if (newIds.length > 0 && items.length > prevIds.size) {
-        setAnimatingIds(new Set(newIds));
-        setAnimatingId(newIds[0]);
-      }
-    }
-
-    prevItemIdsRef.current = currentIds;
-  }, [animateNewItems, items]);
-
-  useLayoutEffect(() => {
-    if (!animateContainerHeight) {
-      setContainerHeight(null);
-      prevContentHeightRef.current = null;
-      return;
-    }
-    if (isLoading) return;
-    const content = contentRef.current;
-    if (!content) return;
-
-    const nextHeight = content.getBoundingClientRect().height;
-    if (itemCount === 0) {
-      prevContentHeightRef.current = nextHeight;
-      return;
-    }
-    const prevHeight = prevContentHeightRef.current;
-    prevContentHeightRef.current = nextHeight;
-
-    if (prevHeight === null || Math.abs(prevHeight - nextHeight) < 1) return;
-
-    setContainerHeight(prevHeight);
-    if (heightAnimationFrameRef.current !== null) {
-      window.cancelAnimationFrame(heightAnimationFrameRef.current);
-    }
-
-    heightAnimationFrameRef.current = window.requestAnimationFrame(() => {
-      setContainerHeight(nextHeight);
-      heightAnimationFrameRef.current = null;
-    });
-  }, [animateContainerHeight, isLoading, itemCount]);
-
-  useEffect(
-    () => () => {
-      if (heightAnimationFrameRef.current !== null) {
-        window.cancelAnimationFrame(heightAnimationFrameRef.current);
-      }
-      for (const frame of reorderAnimationFramesRef.current) {
-        window.cancelAnimationFrame(frame);
-      }
-      reorderAnimationFramesRef.current = [];
-    },
-    [],
-  );
-
-  useLayoutEffect(() => {
-    if (!sortable) {
-      previousRowTopsRef.current = new Map();
-      previousSortableIdsRef.current = null;
-      return;
-    }
-    for (const frame of reorderAnimationFramesRef.current) {
-      window.cancelAnimationFrame(frame);
-    }
-    reorderAnimationFramesRef.current = [];
-
-    const nextTops = new Map<string, number>();
-    for (const id of sortableIds) {
-      const row = rowRefsRef.current.get(id);
-      if (row) {
-        nextTops.set(id, row.getBoundingClientRect().top);
-      }
-    }
-
-    if (!animateReorderChanges) {
-      for (const id of sortableIds) {
-        const row = rowRefsRef.current.get(id);
-        if (!row) continue;
-        row.style.transition = "";
-        row.style.transform = "";
-      }
-      previousRowTopsRef.current = nextTops;
-      previousSortableIdsRef.current = sortableIds;
-      return;
-    }
-
-    const previousSortableIds = previousSortableIdsRef.current;
-    const hasReorderChange =
-      previousSortableIds !== null &&
-      sortableIds.some((id, index) => {
-        const previousIndex = previousSortableIds.indexOf(id);
-        return previousIndex !== -1 && previousIndex !== index;
-      });
-
-    if (!hasReorderChange || sortableIds.length < 2) {
-      previousRowTopsRef.current = nextTops;
-      previousSortableIdsRef.current = sortableIds;
-      return;
-    }
-
-    const previousTops = previousRowTopsRef.current;
-    for (const [id, nextTop] of nextTops) {
-      const previousTop = previousTops.get(id);
-      const row = rowRefsRef.current.get(id);
-      if (previousTop === undefined || !row) continue;
-
-      const deltaY = previousTop - nextTop;
-      if (Math.abs(deltaY) < 1) continue;
-
-      row.style.transition = "none";
-      row.style.transform = `translateY(${deltaY}px)`;
-
-      const frameId = window.requestAnimationFrame(() => {
-        row.style.transition = `transform ${transitionDurationMs}ms linear`;
-        row.style.transform = "";
-      });
-      reorderAnimationFramesRef.current.push(frameId);
-    }
-
-    previousRowTopsRef.current = nextTops;
-    previousSortableIdsRef.current = sortableIds;
-  }, [animateReorderChanges, sortable, sortableIds, transitionDurationMs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-
-  if (!isLoading && childArray.length === 0) {
-    if (!emptyMessage) return null;
-    return (
-      <div className="flex items-center justify-center py-8 text-sm text-text-secondary">
-        {emptyMessage}
-      </div>
-    );
-  }
-
-  function handleRemove(id: string) {
-    setRemovingId(id);
-  }
-
-  function handleRemoveAnimationEnd() {
-    if (removingId !== null && onRemove) {
-      onRemove(removingId);
-      setRemovingId(null);
-    }
-  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -366,78 +150,48 @@ export function List({
     onReorder(reordered);
   }
 
-  const rowClassName = (isFirst: boolean, isLast: boolean) => {
-    const radius =
-      isFirst && isLast ? "rounded-2xl" : isFirst ? "rounded-t-2xl" : isLast ? "rounded-b-2xl" : "";
-    return `${ROW_HEIGHT} ${radius} flex items-center px-3 text-sm transition-colors duration-150`;
-  };
+  if (!isLoading && childArray.length === 0) {
+    if (!emptyMessage) return null;
+    return (
+      <div className="flex items-center justify-center py-8 text-sm text-text-secondary">
+        {emptyMessage}
+      </div>
+    );
+  }
 
-  // Split children: sortable items use `items` length, rest are static (e.g. AddPlayerButton)
   const sortableChildren = childArray.slice(0, sortableCount);
   const staticChildren = childArray.slice(sortableCount);
   const totalCount = childArray.length;
 
-  const renderRows = () => (
+  const renderSortableRows = () => (
     <>
-      {sortable && items ? (
-        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-          {sortableChildren.map((child, i) => {
-            const isFirst = i === 0;
-            const isLast = i === totalCount - 1;
-            const itemId = sortableIds[i];
-            const isAnimating = animatingIds.has(itemId) || animatingId === itemId;
-            const isRemoving = removingId === itemId;
-            const explicitAnimation = itemAnimationStateById?.[itemId];
-            const isEntering = explicitAnimation === "enter" || isAnimating;
-            const isExiting = explicitAnimation === "exit" || isRemoving;
-            const animClass = isExiting ? "list-slide-out" : isEntering ? "list-slide-in" : "";
-            return (
-              <div
-                key={itemId}
-                ref={(node) => {
-                  if (node) {
-                    rowRefsRef.current.set(itemId, node);
-                    return;
-                  }
-                  rowRefsRef.current.delete(itemId);
-                }}
-                className={animClass}
-                onAnimationEnd={
-                  isRemoving
-                    ? handleRemoveAnimationEnd
-                    : isAnimating
-                      ? () => {
-                          setAnimatingId((current) => (current === itemId ? null : current));
-                          setAnimatingIds((current) => {
-                            if (!current.has(itemId)) return current;
-                            const next = new Set(current);
-                            next.delete(itemId);
-                            return next;
-                          });
-                        }
-                      : undefined
-                }
+      <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+        {sortableChildren.map((child, i) => {
+          const isFirst = i === 0;
+          const isLast = i === totalCount - 1;
+          const itemId = sortableIds[i];
+          return (
+            <div key={itemId}>
+              {i > 0 && <RowDivider />}
+              <SortableRow
+                id={itemId}
+                className={rowClassName(isFirst, isLast)}
+                removable={removable}
+                onRemove={onRemove}
               >
-                {i > 0 && <RowDivider />}
-                <SortableRow
-                  id={itemId}
-                  className={rowClassName(isFirst, isLast)}
-                  removable={removable}
-                  onRemove={handleRemove}
-                >
-                  {child}
-                </SortableRow>
-              </div>
-            );
-          })}
-        </SortableContext>
-      ) : null}
+                {child}
+              </SortableRow>
+            </div>
+          );
+        })}
+      </SortableContext>
       {staticChildren.map((child, i) => {
         const globalIndex = sortableCount + i;
         const isFirst = globalIndex === 0;
         const isLast = globalIndex === totalCount - 1;
         return (
-          <div key={globalIndex}>
+          // biome-ignore lint/suspicious/noArrayIndexKey: trailing static children never reorder
+          <div key={`static-${i}`}>
             {globalIndex > 0 && <RowDivider />}
             <div className={rowClassName(isFirst, isLast)}>{child}</div>
           </div>
@@ -446,12 +200,12 @@ export function List({
     </>
   );
 
-  const nonSortableRows = () =>
+  const renderPlainRows = () =>
     childArray.map((child, i) => {
       const isFirst = i === 0;
       const isLast = i === childArray.length - 1;
       return (
-        /* biome-ignore lint/suspicious/noArrayIndexKey: children already have their own keys */
+        // biome-ignore lint/suspicious/noArrayIndexKey: children carry their own keys
         <div key={i}>
           {i > 0 && <RowDivider />}
           <div className={rowClassName(isFirst, isLast)}>{child}</div>
@@ -460,39 +214,21 @@ export function List({
     });
 
   return (
-    <div
-      className={`glass relative overflow-hidden rounded-2xl ${animateContainerHeight ? "transition-[height] ease-out" : ""}`}
-      style={
-        {
-          ...(animateContainerHeight && containerHeight !== null
-            ? { height: `${containerHeight}px` }
-            : {}),
-          ...(animateContainerHeight ? { transitionDuration: `${transitionDurationMs}ms` } : {}),
-          "--list-transition-ms": `${transitionDurationMs}ms`,
-        } as CSSProperties
-      }
-      onTransitionEnd={(event) => {
-        if (!animateContainerHeight) return;
-        if (event.propertyName !== "height") return;
-        setContainerHeight(null);
-      }}
-    >
-      <div ref={contentRef}>
-        {isLoading ? (
-          <ShimmerRows count={shimmerRows} />
-        ) : sortable && items ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-          >
-            {renderRows()}
-          </DndContext>
-        ) : (
-          nonSortableRows()
-        )}
-      </div>
+    <div className="glass relative overflow-hidden rounded-2xl">
+      {isLoading ? (
+        <ShimmerRows count={shimmerRows} />
+      ) : sortable && items ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={handleDragEnd}
+        >
+          {renderSortableRows()}
+        </DndContext>
+      ) : (
+        renderPlainRows()
+      )}
     </div>
   );
 }

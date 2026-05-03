@@ -20,14 +20,7 @@ export function GamePlayers() {
 
   return (
     <section>
-      <List
-        sortable
-        removable
-        items={items}
-        onReorder={handleReorder}
-        onRemove={removePlayer}
-        animateNewItems
-      >
+      <List sortable removable items={items} onReorder={handleReorder} onRemove={removePlayer}>
         {players.map((player) => (
           <PlayerRow key={player.id} player={player} />
         ))}
