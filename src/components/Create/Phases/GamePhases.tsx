@@ -1,12 +1,11 @@
-import { ArrowRightLeft, Dices, RotateCcw, Shuffle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { phaseSetsApi } from "../../../data/api/phaseSets";
 import { phasesApi } from "../../../data/api/phases";
 import { originalPhaseSet } from "../../../data/constants/phaseSets";
 import type { Phase } from "../../../types";
 import { shuffle } from "../../../utils";
 import type { SortableItem } from "../../ui";
-import { Button, List } from "../../ui";
+import { List } from "../../ui";
 import {
   useGamePhases,
   useRemovePhase,
@@ -14,8 +13,8 @@ import {
   useSetPhases,
 } from "../CreateGameContext";
 import { AddPhaseButton } from "./AddPhaseButton";
+import { PhaseButtonRow } from "./PhaseButtonRow";
 import { PhaseRow } from "./PhaseRow";
-import { SwitchPhaseSetDialog } from "./SwitchPhaseSetDialog";
 
 export interface GamePhasesProps {
   externalReplacementPhases?: Phase[] | null;
@@ -30,7 +29,6 @@ export function GamePhases({
   const removePhase = useRemovePhase();
   const reorderPhases = useReorderPhases();
   const setPhases = useSetPhases();
-  const [switchOpen, setSwitchOpen] = useState(false);
 
   function handleReorder(items: SortableItem[]) {
     const reordered = items
@@ -54,9 +52,9 @@ export function GamePhases({
     handleReplacePhases(originalPhases);
   }
 
-  async function handleRandom10() {
+  async function handleRandom(count: number) {
     try {
-      const picked = await phasesApi.getRandom(10);
+      const picked = await phasesApi.getRandom(count);
       if (picked.length > 0) handleReplacePhases(picked);
     } catch {
       // Silently fail
@@ -69,45 +67,15 @@ export function GamePhases({
     onExternalReplacementHandled?.();
   }, [externalReplacementPhases, onExternalReplacementHandled, setPhases]);
 
-  const actionClasses = "gap-1.5 px-3 py-1.5 text-xs font-medium";
-
   return (
     <section>
-      <div className="flex flex-wrap items-center gap-2 pb-2">
-        <Button
-          className={actionClasses}
-          onClick={() => setSwitchOpen(true)}
-          aria-label="Switch phase set"
-        >
-          <ArrowRightLeft className="size-3.5" />
-          <span>Phase Set</span>
-        </Button>
-        <Button
-          className={actionClasses}
-          onClick={handleOriginal10}
-          aria-label="Use original 10 phases"
-        >
-          <RotateCcw className="size-3.5" />
-          <span>Original 10</span>
-        </Button>
-        <Button
-          className={actionClasses}
-          onClick={handleShuffle}
-          disabled={phases.length < 2}
-          aria-label="Shuffle phase order"
-        >
-          <Shuffle className="size-3.5" />
-          <span>Shuffle</span>
-        </Button>
-        <Button
-          className={actionClasses}
-          onClick={handleRandom10}
-          aria-label="Pick 10 random phases"
-        >
-          <Dices className="size-3.5" />
-          <span>Random 10</span>
-        </Button>
-      </div>
+      <PhaseButtonRow
+        phaseCount={phases.length}
+        onReset={handleOriginal10}
+        onShuffle={handleShuffle}
+        onRandom={handleRandom}
+        onSelectPhaseSet={handleReplacePhases}
+      />
       <List
         sortable
         removable
@@ -120,11 +88,6 @@ export function GamePhases({
         ))}
         <AddPhaseButton key="add-phase" />
       </List>
-      <SwitchPhaseSetDialog
-        open={switchOpen}
-        onClose={() => setSwitchOpen(false)}
-        onSelectPhases={handleReplacePhases}
-      />
     </section>
   );
 }

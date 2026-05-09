@@ -3,6 +3,8 @@ export type { ColorPickerProps } from "./ColorPicker/ColorPicker";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
 export { Dialog } from "./Dialog/Dialog";
 export { FavoriteAccent } from "./FavoriteAccent/FavoriteAccent";
+export type { GlassSurfaceProps } from "./GlassSurface/GlassSurface";
+export { GlassSurface, GlassSurfaceButton } from "./GlassSurface/GlassSurface";
 export { Input } from "./Input/Input";
 export type { ListProps, SortableItem } from "./List/List";
 export { List } from "./List/List";
