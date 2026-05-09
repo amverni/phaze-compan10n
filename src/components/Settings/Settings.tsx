@@ -6,6 +6,7 @@ import { Logo } from "../Logo/Logo";
 import { Button, List } from "../ui";
 import { DefaultPhaseSetSetting } from "./DefaultPhaseSetSetting";
 import { DefaultTiebreakerSetting } from "./DefaultTiebreakerSetting";
+import { ResetSettingsButton } from "./ResetSettingsButton";
 
 export function Settings() {
   const { data: settings, isLoading } = useQuery(appSettingsOptions());
@@ -21,6 +22,9 @@ export function Settings() {
       }
       mainContent={
         <div className="content-container h-full py-4">
+          <div className="flex items-center justify-end pb-2">
+            <ResetSettingsButton disabled={isLoading} />
+          </div>
           <List allowOverflow isLoading={isLoading} shimmerRows={2}>
             {settings
               ? [

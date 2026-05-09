@@ -29,3 +29,11 @@ export function useSetDefaultPhaseSetId() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKeys.all }),
   });
 }
+
+export function useResetSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => settingsApi.reset(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKeys.all }),
+  });
+}

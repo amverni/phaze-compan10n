@@ -43,6 +43,13 @@ export const settingsApi = {
   setDefaultPhaseSetId(phaseSetId: PhaseSetId): Promise<AppSettings> {
     return this.updateGameDefaults({ phaseSetId });
   },
+
+  async reset(): Promise<AppSettings> {
+    const db = await getDB();
+    const defaults = await withSettingsDefaults(DEFAULT_APP_SETTINGS);
+    await db.put("settings", defaults);
+    return defaults;
+  },
 };
 
 async function withSettingsDefaults(settings?: LegacyAppSettings): Promise<AppSettings> {
