@@ -28,6 +28,7 @@ interface CreateGameContextValue {
   defaultPhaseSetId: PhaseSetId;
   settings: GameSettings;
   setTiebreaker: (tiebreaker: GameTiebreaker) => void;
+  resetSettings: () => void;
 }
 
 const CreateGameContext = createContext<CreateGameContextValue | null>(null);
@@ -39,6 +40,12 @@ function resolveDefaultPhases(): Phase[] {
     .filter((p): p is Phase => p !== undefined);
 }
 
+function resolveDefaultGameSettings(settings?: Partial<GameSettings>): GameSettings {
+  return {
+    tiebreaker: settings?.tiebreaker ?? DEFAULT_GAME_SETTINGS.tiebreaker,
+  };
+}
+
 export function CreateGameProvider({ children }: { children: ReactNode }) {
   const { data: appSettings } = useQuery(appSettingsOptions());
   const defaultPhaseSetId = appSettings?.gameDefaults.phaseSetId ?? originalPhaseSet.id;
@@ -48,7 +55,7 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
   });
   const [players, setPlayers] = useState<Player[]>([]);
   const [phases, setGamePhases] = useState<Phase[]>(resolveDefaultPhases);
-  const [settings, setSettings] = useState<GameSettings>(() => ({ ...DEFAULT_GAME_SETTINGS }));
+  const [settings, setSettings] = useState<GameSettings>(resolveDefaultGameSettings);
   const initializedSettingsRef = useRef(false);
   const initializedPhasesRef = useRef(false);
   const phasesDirtyRef = useRef(false);
@@ -57,7 +64,7 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!appSettings || initializedSettingsRef.current || settingsDirtyRef.current) return;
     initializedSettingsRef.current = true;
-    setSettings({ ...appSettings.gameDefaults });
+    setSettings(resolveDefaultGameSettings(appSettings.gameDefaults));
   }, [appSettings]);
 
   useEffect(() => {
@@ -95,6 +102,17 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
     setTiebreaker: (tiebreaker) => {
       settingsDirtyRef.current = true;
       setSettings((prev) => ({ ...prev, tiebreaker }));
+    },
+    resetSettings: () => {
+      if (!appSettings) {
+        settingsDirtyRef.current = false;
+        setSettings(resolveDefaultGameSettings());
+        return;
+      }
+
+      initializedSettingsRef.current = true;
+      settingsDirtyRef.current = true;
+      setSettings(resolveDefaultGameSettings(appSettings.gameDefaults));
     },
   };
 
@@ -165,4 +183,9 @@ export function useGameSettings(): GameSettings {
 export function useSetTiebreaker(): (tiebreaker: GameTiebreaker) => void {
   const { setTiebreaker } = useCreateGameContext();
   return setTiebreaker;
+}
+
+export function useResetGameSettings(): () => void {
+  const { resetSettings } = useCreateGameContext();
+  return resetSettings;
 }
