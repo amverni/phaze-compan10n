@@ -33,18 +33,31 @@ const buttonClasses = [
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
 ].join(" ");
 
+const plainButtonClasses = [
+  "relative inline-flex items-center justify-end gap-1.5 whitespace-nowrap rounded-lg px-2 py-1 text-sm font-medium",
+  "cursor-pointer text-text-primary outline-none",
+  "data-[focus]:bg-black/5 dark:data-[focus]:bg-white/10",
+  "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+].join(" ");
+
 export function ListboxButton({
   children,
   className,
+  variant = "default",
 }: {
   children: ReactNode;
   className?: string;
+  variant?: "default" | "plain";
 }) {
-  const merged = [buttonClasses, className].filter(Boolean).join(" ");
+  const merged = [variant === "plain" ? plainButtonClasses : buttonClasses, className]
+    .filter(Boolean)
+    .join(" ");
   const contentRef = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState<number | undefined>();
 
   useEffect(() => {
+    if (variant === "plain") return;
+
     const el = contentRef.current;
     if (!el) return;
     const observer = new ResizeObserver(([entry]) => {
@@ -52,12 +65,12 @@ export function ListboxButton({
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [variant]);
 
   return (
     <HeadlessListboxButton
       className={merged}
-      style={width !== undefined ? { width: width + 44 } : undefined}
+      style={variant === "default" && width !== undefined ? { width: width + 44 } : undefined}
     >
       <span ref={contentRef} className="inline-flex items-center gap-1.5">
         {children}

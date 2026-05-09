@@ -295,6 +295,8 @@ export interface SortableItem {
 export interface ListProps {
   /** Every non-loading child must have a stable React key so row animations can track identity. */
   children?: ReactNode;
+  /** Allow row content like dropdown panels to escape the rounded list container. */
+  allowOverflow?: boolean;
   isLoading?: boolean;
   shimmerRows?: number;
   emptyMessage?: ReactNode;
@@ -307,6 +309,7 @@ export interface ListProps {
 
 export function List({
   children,
+  allowOverflow = false,
   isLoading = false,
   shimmerRows = 0,
   emptyMessage,
@@ -683,8 +686,13 @@ export function List({
     );
   }
 
+  const className = [
+    "glass relative rounded-2xl",
+    allowOverflow ? "overflow-visible" : "overflow-hidden",
+  ].join(" ");
+
   return (
-    <div className="glass relative overflow-hidden rounded-2xl">
+    <div className={className}>
       {isLoading ? (
         <ShimmerRows count={shimmerRows} />
       ) : sortable && items ? (

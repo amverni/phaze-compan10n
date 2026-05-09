@@ -1,7 +1,8 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
+import { DEFAULT_GAME_SETTINGS } from "../../data/constants/gameSettings";
 import { originalPhaseSet } from "../../data/constants/phaseSets";
 import { builtInPhases } from "../../data/constants/phases";
-import type { Phase, PhaseId, Player, PlayerId } from "../../types";
+import type { GameSettings, GameTiebreaker, Phase, PhaseId, Player, PlayerId } from "../../types";
 
 interface CreateGameContextValue {
   players: Player[];
@@ -13,6 +14,8 @@ interface CreateGameContextValue {
   removePhase: (id: PhaseId) => void;
   reorderPhases: (phases: Phase[]) => void;
   setPhases: (phases: Phase[]) => void;
+  settings: GameSettings;
+  setTiebreaker: (tiebreaker: GameTiebreaker) => void;
 }
 
 const CreateGameContext = createContext<CreateGameContextValue | null>(null);
@@ -27,6 +30,7 @@ function resolveDefaultPhases(): Phase[] {
 export function CreateGameProvider({ children }: { children: ReactNode }) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [phases, setPhases] = useState<Phase[]>(resolveDefaultPhases);
+  const [settings, setSettings] = useState<GameSettings>(() => ({ ...DEFAULT_GAME_SETTINGS }));
 
   const value: CreateGameContextValue = {
     players,
@@ -40,6 +44,8 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
     removePhase: (id) => setPhases((prev) => prev.filter((p) => p.id !== id)),
     reorderPhases: setPhases,
     setPhases,
+    settings,
+    setTiebreaker: (tiebreaker) => setSettings((prev) => ({ ...prev, tiebreaker })),
   };
 
   return <CreateGameContext.Provider value={value}>{children}</CreateGameContext.Provider>;
@@ -94,4 +100,14 @@ export function useReorderPhases(): (phases: Phase[]) => void {
 export function useSetPhases(): (phases: Phase[]) => void {
   const { setPhases } = useCreateGameContext();
   return setPhases;
+}
+
+export function useGameSettings(): GameSettings {
+  const { settings } = useCreateGameContext();
+  return settings;
+}
+
+export function useSetTiebreaker(): (tiebreaker: GameTiebreaker) => void {
+  const { setTiebreaker } = useCreateGameContext();
+  return setTiebreaker;
 }

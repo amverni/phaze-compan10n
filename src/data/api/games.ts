@@ -4,10 +4,12 @@ import type {
   CompletedGame,
   Game,
   GameId,
+  GameSettings,
   PhaseId,
   PlayerId,
   TemporaryPhaseSet,
 } from "../../types";
+import { DEFAULT_GAME_SETTINGS } from "../constants/gameSettings";
 import { getDB } from "../db";
 import { phasesApi } from "./phases";
 import { roundsApi } from "./rounds";
@@ -20,7 +22,7 @@ export const gamesApi = {
   async getAll(): Promise<Game[]> {
     const db = await getDB();
     const games = await db.getAll("games");
-    return games.sort((a, b) => b.createdAt - a.createdAt);
+    return games.map(withGameDefaults).sort((a, b) => b.createdAt - a.createdAt);
   },
 
   /**
@@ -42,7 +44,8 @@ export const gamesApi = {
    */
   async getById(id: GameId): Promise<Game | undefined> {
     const db = await getDB();
-    return db.get("games", id);
+    const game = await db.get("games", id);
+    return game ? withGameDefaults(game) : undefined;
   },
 
   /**
@@ -135,7 +138,8 @@ export const gamesApi = {
    */
   async complete(id: GameId, winnerId: PlayerId): Promise<void> {
     const db = await getDB();
-    const existing = await db.get("games", id);
+    const existingGame = await db.get("games", id);
+    const existing = existingGame ? withGameDefaults(existingGame) : undefined;
     if (!existing) throw new Error("Game not found");
 
     const winnerName = await db.get("players", winnerId).then((p) => p?.name);
@@ -179,6 +183,10 @@ export const gamesApi = {
   },
 };
 
+type LegacyActiveGame = Omit<ActiveGame, "settings"> & { settings?: Partial<GameSettings> };
+type LegacyCompletedGame = Omit<CompletedGame, "settings"> & { settings?: Partial<GameSettings> };
+type LegacyGame = LegacyActiveGame | LegacyCompletedGame;
+
 /**
  * Get games filtered by their status.
  *
@@ -192,7 +200,20 @@ async function getByStatus<GameStatus extends Game["status"]>(
 ): Promise<Extract<Game, { status: GameStatus }>[]> {
   const db = await getDB();
   const games = await db.getAllFromIndex("games", "by-status", status);
-  return games.sort((a, b) => b.createdAt - a.createdAt) as Extract<Game, { status: GameStatus }>[];
+  return games.map(withGameDefaults).sort((a, b) => b.createdAt - a.createdAt) as Extract<
+    Game,
+    { status: GameStatus }
+  >[];
+}
+
+function withGameDefaults(game: LegacyGame): Game {
+  const settings: GameSettings = {
+    ...DEFAULT_GAME_SETTINGS,
+    ...game.settings,
+  };
+
+  if (game.status === "active") return { ...game, settings };
+  return { ...game, settings };
 }
 
 /**
@@ -211,7 +232,8 @@ async function update(
   updates: Partial<Omit<ActiveGame, "id" | "createdAt">>,
 ): Promise<void> {
   const db = await getDB();
-  const existing = await db.get("games", id);
+  const existingGame = await db.get("games", id);
+  const existing = existingGame ? withGameDefaults(existingGame) : undefined;
   if (!existing) throw new Error("Game not found");
 
   if (existing.status === "completed") throw new Error("Cannot update a completed game");

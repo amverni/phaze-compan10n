@@ -5,6 +5,17 @@ export type Game = ActiveGame | CompletedGame;
 
 export type GameId = string;
 
+export type GameTiebreaker =
+  | "lowestPoints"
+  | "highestPoints"
+  | "fewestSkips"
+  | "mostSkipped"
+  | "fewestWilds";
+
+export interface GameSettings {
+  tiebreaker: GameTiebreaker;
+}
+
 export interface ActiveGame extends BaseGame {
   status: "active";
   activePlayers: PlayerId[]; // Players actively playing, allows players to be added/removed mid-game
@@ -21,5 +32,6 @@ interface BaseGame {
   id: GameId;
   phaseSet: TemporaryPhaseSet;
   players: PlayerId[];
+  settings: GameSettings;
   createdAt: number;
 }
