@@ -9,6 +9,7 @@ export const phaseSetKeys = {
     [...phaseSetKeys.lists(), filters] as const,
   details: () => [...phaseSetKeys.all, "detail"] as const,
   detail: (id: PhaseSetId) => [...phaseSetKeys.details(), id] as const,
+  phases: (id: PhaseSetId) => [...phaseSetKeys.detail(id), "phases"] as const,
 };
 
 export function phaseSetListOptions(filters?: {
@@ -26,6 +27,14 @@ export function phaseSetDetailOptions(id: PhaseSetId) {
   return queryOptions({
     queryKey: phaseSetKeys.detail(id),
     queryFn: () => phaseSetsApi.getById(id),
+    enabled: !!id,
+  });
+}
+
+export function phaseSetPhasesOptions(id: PhaseSetId) {
+  return queryOptions({
+    queryKey: phaseSetKeys.phases(id),
+    queryFn: () => phaseSetsApi.getPhases(id),
     enabled: !!id,
   });
 }

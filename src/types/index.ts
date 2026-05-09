@@ -22,4 +22,5 @@ export type {
 } from "./phaseSet";
 export type { Player, PlayerId } from "./player";
 export type { PhaseStatus, Round, RoundScore } from "./round";
+export type { AppGameDefaults, AppSettings, AppSettingsId } from "./settings";
 export type { ArrayAtLeastOne, BuiltInT, SavedT, TemporaryT } from "./utils";

@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { phaseSetsApi } from "../../../data/api/phaseSets";
 import { phasesApi } from "../../../data/api/phases";
-import { originalPhaseSet } from "../../../data/constants/phaseSets";
 import type { Phase } from "../../../types";
 import { shuffle } from "../../../utils";
 import type { SortableItem } from "../../ui";
 import { List } from "../../ui";
 import {
+  useDefaultPhaseSetId,
   useGamePhases,
   useRemovePhase,
   useReorderPhases,
@@ -26,6 +26,7 @@ export function GamePhases({
   onExternalReplacementHandled,
 }: GamePhasesProps) {
   const phases = useGamePhases();
+  const defaultPhaseSetId = useDefaultPhaseSetId();
   const removePhase = useRemovePhase();
   const reorderPhases = useReorderPhases();
   const setPhases = useSetPhases();
@@ -47,9 +48,9 @@ export function GamePhases({
     setPhases(nextPhases);
   }
 
-  async function handleOriginal10() {
-    const originalPhases = await phaseSetsApi.getPhases(originalPhaseSet.id);
-    handleReplacePhases(originalPhases);
+  async function handleDefaultPhaseSet() {
+    const defaultPhases = await phaseSetsApi.getPhases(defaultPhaseSetId);
+    handleReplacePhases(defaultPhases);
   }
 
   async function handleRandom(count: number) {
@@ -71,7 +72,7 @@ export function GamePhases({
     <section>
       <PhaseButtonRow
         phaseCount={phases.length}
-        onReset={handleOriginal10}
+        onReset={handleDefaultPhaseSet}
         onShuffle={handleShuffle}
         onRandom={handleRandom}
         onSelectPhaseSet={handleReplacePhases}

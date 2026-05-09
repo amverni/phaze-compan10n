@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { phaseSetsApi } from "../../data/api/phaseSets";
 import { useToggleFavorite } from "../../data/hooks/useFavorites";
 import { phaseSetKeys } from "../../data/hooks/usePhaseSets";
+import { settingsKeys } from "../../data/hooks/useSettings";
 import type { BuiltInT, SavedT } from "../../types";
 import { FavoriteAccent } from "../ui";
 
@@ -28,6 +29,7 @@ export function PhaseSetListRow({
     mutationFn: (id: string) => phaseSetsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: phaseSetKeys.all });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all });
     },
   });
 

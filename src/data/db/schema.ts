@@ -1,5 +1,7 @@
 import type { DBSchema } from "idb";
 import type {
+  AppSettings,
+  AppSettingsId,
   Game,
   GameId,
   Phase,
@@ -58,5 +60,9 @@ export interface Phase10DB extends DBSchema {
     indexes: {
       "by-type": string;
     };
+  };
+  settings: {
+    key: AppSettingsId;
+    value: AppSettings;
   };
 }

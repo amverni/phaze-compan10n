@@ -6,7 +6,7 @@ let dbInstance: IDBPDatabase<Phase10DB> | null = null;
 export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
   if (dbInstance) return dbInstance;
 
-  dbInstance = await openDB<Phase10DB>("phase10-db", 3, {
+  dbInstance = await openDB<Phase10DB>("phase10-db", 4, {
     upgrade(
       db: IDBPDatabase<Phase10DB>,
       _oldVersion: number,
@@ -53,6 +53,11 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
           keyPath: ["entityType", "entityId"],
         });
         favoritesStore.createIndex("by-type", "entityType");
+      }
+
+      // Create settings store
+      if (!db.objectStoreNames.contains("settings")) {
+        db.createObjectStore("settings", { keyPath: "id" });
       }
     },
   });

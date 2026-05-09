@@ -1,8 +1,19 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { DEFAULT_GAME_SETTINGS } from "../../data/constants/gameSettings";
 import { originalPhaseSet } from "../../data/constants/phaseSets";
 import { builtInPhases } from "../../data/constants/phases";
-import type { GameSettings, GameTiebreaker, Phase, PhaseId, Player, PlayerId } from "../../types";
+import { phaseSetPhasesOptions } from "../../data/hooks/usePhaseSets";
+import { appSettingsOptions } from "../../data/hooks/useSettings";
+import type {
+  GameSettings,
+  GameTiebreaker,
+  Phase,
+  PhaseId,
+  PhaseSetId,
+  Player,
+  PlayerId,
+} from "../../types";
 
 interface CreateGameContextValue {
   players: Player[];
@@ -14,6 +25,7 @@ interface CreateGameContextValue {
   removePhase: (id: PhaseId) => void;
   reorderPhases: (phases: Phase[]) => void;
   setPhases: (phases: Phase[]) => void;
+  defaultPhaseSetId: PhaseSetId;
   settings: GameSettings;
   setTiebreaker: (tiebreaker: GameTiebreaker) => void;
 }
@@ -28,9 +40,32 @@ function resolveDefaultPhases(): Phase[] {
 }
 
 export function CreateGameProvider({ children }: { children: ReactNode }) {
+  const { data: appSettings } = useQuery(appSettingsOptions());
+  const defaultPhaseSetId = appSettings?.gameDefaults.phaseSetId ?? originalPhaseSet.id;
+  const { data: defaultPhases } = useQuery({
+    ...phaseSetPhasesOptions(defaultPhaseSetId),
+    enabled: appSettings !== undefined,
+  });
   const [players, setPlayers] = useState<Player[]>([]);
-  const [phases, setPhases] = useState<Phase[]>(resolveDefaultPhases);
+  const [phases, setGamePhases] = useState<Phase[]>(resolveDefaultPhases);
   const [settings, setSettings] = useState<GameSettings>(() => ({ ...DEFAULT_GAME_SETTINGS }));
+  const initializedSettingsRef = useRef(false);
+  const initializedPhasesRef = useRef(false);
+  const phasesDirtyRef = useRef(false);
+  const settingsDirtyRef = useRef(false);
+
+  useEffect(() => {
+    if (!appSettings || initializedSettingsRef.current || settingsDirtyRef.current) return;
+    initializedSettingsRef.current = true;
+    setSettings({ ...appSettings.gameDefaults });
+  }, [appSettings]);
+
+  useEffect(() => {
+    if (!defaultPhases || initializedPhasesRef.current || phasesDirtyRef.current) return;
+    if (defaultPhases.length === 0) return;
+    initializedPhasesRef.current = true;
+    setGamePhases(defaultPhases);
+  }, [defaultPhases]);
 
   const value: CreateGameContextValue = {
     players,
@@ -39,13 +74,28 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
     removePlayer: (id) => setPlayers((prev) => prev.filter((p) => p.id !== id)),
     reorderPlayers: setPlayers,
     phases,
-    addPhase: (phase) =>
-      setPhases((prev) => (prev.some((p) => p.id === phase.id) ? prev : [...prev, phase])),
-    removePhase: (id) => setPhases((prev) => prev.filter((p) => p.id !== id)),
-    reorderPhases: setPhases,
-    setPhases,
+    addPhase: (phase) => {
+      phasesDirtyRef.current = true;
+      setGamePhases((prev) => (prev.some((p) => p.id === phase.id) ? prev : [...prev, phase]));
+    },
+    removePhase: (id) => {
+      phasesDirtyRef.current = true;
+      setGamePhases((prev) => prev.filter((p) => p.id !== id));
+    },
+    reorderPhases: (phases) => {
+      phasesDirtyRef.current = true;
+      setGamePhases(phases);
+    },
+    setPhases: (phases) => {
+      phasesDirtyRef.current = true;
+      setGamePhases(phases);
+    },
+    defaultPhaseSetId,
     settings,
-    setTiebreaker: (tiebreaker) => setSettings((prev) => ({ ...prev, tiebreaker })),
+    setTiebreaker: (tiebreaker) => {
+      settingsDirtyRef.current = true;
+      setSettings((prev) => ({ ...prev, tiebreaker }));
+    },
   };
 
   return <CreateGameContext.Provider value={value}>{children}</CreateGameContext.Provider>;
@@ -100,6 +150,11 @@ export function useReorderPhases(): (phases: Phase[]) => void {
 export function useSetPhases(): (phases: Phase[]) => void {
   const { setPhases } = useCreateGameContext();
   return setPhases;
+}
+
+export function useDefaultPhaseSetId(): PhaseSetId {
+  const { defaultPhaseSetId } = useCreateGameContext();
+  return defaultPhaseSetId;
 }
 
 export function useGameSettings(): GameSettings {

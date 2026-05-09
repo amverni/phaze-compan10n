@@ -14,7 +14,7 @@ interface MenuItem {
 const items: MenuItem[] = [
   { label: "Players", icon: Users, to: "/players" },
   { label: "Phases", icon: ListChecks, to: "/phases" },
-  { label: "Settings", icon: Settings },
+  { label: "Settings", icon: Settings, to: "/settings" },
 ];
 
 const itemClassName =

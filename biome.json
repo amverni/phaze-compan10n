@@ -84,6 +84,13 @@
   },
 
   "files": {
-    "includes": ["**", "!**/*.css", "!src/routeTree.gen.ts"]
+    "includes": [
+      "**",
+      "!**/*.css",
+      "!dist",
+      "!dist-ssr",
+      "!src/routeTree.gen.ts",
+      "!src/routes/-router.ts"
+    ]
   }
 }
