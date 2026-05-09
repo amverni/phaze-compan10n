@@ -34,7 +34,7 @@ export function PhaseButtonRow({
           <ResetPhaseSetButton onClick={onReset} />
           <ShufflePhasesButton onClick={onShuffle} disabled={phaseCount < 2} />
           <RandomPhasesButton onRandom={onRandom} />
-          <SavePhaseSetButton />
+          <SavePhaseSetButton disabled={phaseCount === 0} />
         </div>
       </div>
       <SwitchPhaseSetDialog

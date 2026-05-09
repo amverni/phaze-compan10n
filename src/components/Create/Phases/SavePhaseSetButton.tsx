@@ -3,7 +3,11 @@ import { useState } from "react";
 import { Button, Dialog } from "../../ui";
 import { iconPhaseButtonClasses } from "./phaseButtonClasses";
 
-export function SavePhaseSetButton() {
+interface SavePhaseSetButtonProps {
+  disabled?: boolean;
+}
+
+export function SavePhaseSetButton({ disabled = false }: SavePhaseSetButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -11,6 +15,7 @@ export function SavePhaseSetButton() {
       <Button
         type="button"
         className={iconPhaseButtonClasses}
+        disabled={disabled}
         onClick={() => setOpen(true)}
         aria-label="Save phase set"
         title="Save phase set"
