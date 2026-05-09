@@ -6,6 +6,7 @@ import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { Button, ScrollFade, TabList } from "../ui";
+import { useGamePhases, useGamePlayers } from "./CreateGameContext";
 import { Phases } from "./Phases";
 import { Players } from "./Players";
 import { Settings } from "./Settings";
@@ -18,6 +19,9 @@ const TABS: { label: string; icon: LucideIcon }[] = [
 
 export function CreateGame() {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const players = useGamePlayers();
+  const phases = useGamePhases();
+  const canStartGame = players.length >= 2 && phases.length >= 1;
 
   return (
     <CardBackground
@@ -87,7 +91,7 @@ export function CreateGame() {
           </Button>
 
           {/* Start game */}
-          <Button aria-label="Start" className="size-14">
+          <Button aria-label="Start" className="size-14" disabled={!canStartGame}>
             <Play className="size-8 relative z-10" />
           </Button>
         </div>
