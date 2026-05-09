@@ -1,7 +1,7 @@
 import { Button } from "@headlessui/react";
 import { Plus } from "lucide-react";
 import type { Phase, VisiblePhase } from "../../../types";
-import { formatPhaseRequirements } from "../../../utils";
+import { formatPhaseDisplayName } from "../../../utils";
 
 export interface AddPhaseRowProps {
   phase: VisiblePhase;
@@ -16,7 +16,7 @@ export function AddPhaseRow({ phase, onSelect, disabled }: AddPhaseRowProps) {
       onClick={() => onSelect(phase)}
       disabled={disabled}
     >
-      <span className="truncate">{formatPhaseRequirements(phase.requirements)}</span>
+      <span className="truncate">{formatPhaseDisplayName(phase)}</span>
       <Plus className="h-5 w-5 shrink-0 text-text-secondary" />
     </Button>
   );

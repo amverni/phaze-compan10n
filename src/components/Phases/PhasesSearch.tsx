@@ -46,7 +46,7 @@ export function PhasesSearch({
   const isAllTypes = meldTypeFilter.length === ALL_MELD_TYPE_VALUES.length;
 
   const filters = {
-    ...(deferredSearch ? { name: deferredSearch } : {}),
+    ...(deferredSearch ? { search: deferredSearch } : {}),
     ...(!isAllTypes ? { meldTypes: meldTypeFilter } : {}),
     ...(phaseSetFilter ? { phaseSetId: phaseSetFilter } : {}),
   };

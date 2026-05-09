@@ -1,4 +1,4 @@
-import type { Meld } from "../types";
+import type { Meld, Phase } from "../types";
 
 /**
  * Format a single meld requirement into a human-readable string.
@@ -19,16 +19,16 @@ function formatMeld(meld: Meld): string {
 }
 
 /**
- * Format all meld requirements of a phase into a combined human-readable string.
+ * Format a phase's meld requirements into its displayed name.
  *
  * Joins melds with ", " and uses " and " before the last meld.
  *
- * @example formatPhaseRequirements([set3, run4]) → "1 set of 3 and 1 run of 4"
- * @example formatPhaseRequirements([set5, set3, run4]) → "1 set of 5, 1 set of 3, and 1 run of 4"
- * @example formatPhaseRequirements([set3]) → "2 sets of 3"
+ * @example formatPhaseDisplayName({ requirements: [set3, run4] }) → "1 set of 3 and 1 run of 4"
+ * @example formatPhaseDisplayName({ requirements: [set5, set3, run4] }) → "1 set of 5, 1 set of 3, and 1 run of 4"
+ * @example formatPhaseDisplayName({ requirements: [set3] }) → "2 sets of 3"
  */
-export function formatPhaseRequirements(requirements: Meld[]): string {
-  const parts = requirements.map(formatMeld);
+export function formatPhaseDisplayName(phase: Pick<Phase, "requirements">): string {
+  const parts = phase.requirements.map(formatMeld);
 
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0];

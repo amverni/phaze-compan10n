@@ -6,12 +6,10 @@ export type VisiblePhase = Exclude<Phase, TemporaryPhase>;
 
 export interface BuiltInPhase extends BasePhase {
   type: BuiltInT;
-  name: string;
 }
 
 export interface SavedPhase extends BasePhase {
   type: SavedT;
-  name: string;
 }
 
 export interface TemporaryPhase extends BasePhase {

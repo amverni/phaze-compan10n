@@ -6,7 +6,7 @@ import { phasesApi } from "../../data/api/phases";
 import { useToggleFavorite } from "../../data/hooks/useFavorites";
 import { phaseKeys } from "../../data/hooks/usePhases";
 import type { VisiblePhase } from "../../types";
-import { formatPhaseRequirements } from "../../utils";
+import { formatPhaseDisplayName } from "../../utils";
 import { FavoriteAccent } from "../ui";
 
 export interface PhaseListRowProps {
@@ -48,7 +48,7 @@ export function PhaseListRow({ phase, isFavorite: isFavoriteProp, onView }: Phas
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 h-full text-left"
         onClick={() => onView?.(phase)}
       >
-        <span className="flex-1 truncate">{formatPhaseRequirements(phase.requirements)}</span>
+        <span className="flex-1 truncate">{formatPhaseDisplayName(phase)}</span>
         {isBuiltIn ? (
           <Eye className="h-4 w-4 shrink-0 text-text-secondary group-hover/row:text-blue-500" />
         ) : (

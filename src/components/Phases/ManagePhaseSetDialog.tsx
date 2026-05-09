@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { phaseSetDetailOptions } from "../../data/hooks/usePhaseSets";
 import { phasesByIdsOptions } from "../../data/hooks/usePhases";
-import { formatPhaseRequirements } from "../../utils";
+import { formatPhaseDisplayName } from "../../utils";
 import { Button, Dialog, List } from "../ui";
 
 export interface ManagePhaseSetDialogProps {
@@ -50,12 +50,7 @@ export function ManagePhaseSetDialog({
                   <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-black/10 bg-black/5 text-xs font-semibold text-text-secondary tabular-nums dark:border-white/20 dark:bg-white/10">
                     {index + 1}
                   </span>
-                  <span className="flex-1 truncate">
-                    {"name" in phase ? phase.name : formatPhaseRequirements(phase.requirements)}
-                  </span>
-                  <span className="shrink-0 text-xs text-text-secondary">
-                    {formatPhaseRequirements(phase.requirements)}
-                  </span>
+                  <span className="flex-1 truncate">{formatPhaseDisplayName(phase)}</span>
                 </div>
               ))}
             </List>

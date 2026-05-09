@@ -1,5 +1,5 @@
 import type { Phase } from "../../../types";
-import { formatPhaseRequirements } from "../../../utils";
+import { formatPhaseDisplayName } from "../../../utils";
 
 export interface PhaseRowProps {
   phase: Phase;
@@ -13,7 +13,7 @@ export function PhaseRow({ phase, index }: PhaseRowProps) {
         {index + 1}
       </span>
       <div className="min-w-0 flex-1">
-        <span className="block w-full truncate">{formatPhaseRequirements(phase.requirements)}</span>
+        <span className="block w-full truncate">{formatPhaseDisplayName(phase)}</span>
       </div>
     </div>
   );

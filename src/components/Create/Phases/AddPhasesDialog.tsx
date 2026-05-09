@@ -5,7 +5,7 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { phaseSetListOptions } from "../../../data/hooks/usePhaseSets";
 import { phaseListOptions } from "../../../data/hooks/usePhases";
 import type { MeldType, PhaseSetId } from "../../../types";
-import { formatPhaseRequirements } from "../../../utils";
+import { formatPhaseDisplayName } from "../../../utils";
 import {
   Button,
   Dialog,
@@ -53,7 +53,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
   const isAllTypes = meldType.length === ALL_MELD_TYPE_VALUES.length;
 
   const filters = {
-    ...(deferredSearch ? { name: deferredSearch } : {}),
+    ...(deferredSearch ? { search: deferredSearch } : {}),
     ...(!isAllTypes ? { meldTypes: meldType } : {}),
     ...(phaseSetId ? { phaseSetId } : {}),
     ...(favoritesOnly ? { isFavorite: 1 as const } : {}),
@@ -143,7 +143,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
                 onClick={() => addPhase(phase)}
                 disabled={gamePhaseIds.has(phase.id)}
               >
-                <span className="truncate">{formatPhaseRequirements(phase.requirements)}</span>
+                <span className="truncate">{formatPhaseDisplayName(phase)}</span>
                 <Plus className="h-5 w-5 shrink-0 text-text-secondary" />
               </HeadlessButton>
             ))}

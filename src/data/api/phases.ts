@@ -8,7 +8,7 @@ import type {
   TemporaryPhase,
   VisiblePhase,
 } from "../../types";
-import { shuffle } from "../../utils";
+import { formatPhaseDisplayName, shuffle } from "../../utils";
 import { builtInPhaseSets, normalizePhaseSetId } from "../constants/phaseSets";
 import { builtInPhases } from "../constants/phases";
 import { getDB } from "../db";
@@ -17,7 +17,7 @@ import { nameMatchScore } from "./utils";
 
 export const phasesApi = {
   /**
-   * Get all phases, optionally filtered by type, name, favorite status,
+   * Get all phases, optionally filtered by type, search text, favorite status,
    * meld type, and/or phase set membership.
    *
    * Temporary phases are never returned by this method. Use `getById` or
@@ -28,15 +28,15 @@ export const phasesApi = {
    *
    * @param filters - Optional filters to narrow results.
    * @param filters.type - Filter by phase type: `"built-in"` or `"saved"`.
-   * @param filters.name - Filter by name substring match.
+   * @param filters.search - Filter by displayed phase name substring match.
    * @param filters.isFavorite - Filter to only favorited phases when `1`.
    * @param filters.meldTypes - Filter to phases containing a meld of any of these types.
    * @param filters.phaseSetId - Filter to phases belonging to this phase set.
-   * @returns The matching phases, sorted by name relevance when a name filter is provided.
+   * @returns The matching phases, sorted by display-name relevance when search is provided.
    */
   async getAll(filters?: {
     type?: BuiltInT | SavedT;
-    name?: string;
+    search?: string;
     isFavorite?: 0 | 1;
     meldTypes?: MeldType[];
     phaseSetId?: string;
@@ -86,11 +86,17 @@ export const phasesApi = {
       phases = phases.filter((p) => favoriteSet.has(p.id));
     }
 
-    if (filters?.name) {
-      const search = filters.name.toLowerCase();
+    if (filters?.search) {
+      const search = filters.search.toLowerCase();
       phases = phases
-        .filter((p) => p.name.toLowerCase().includes(search))
-        .sort((a, b) => nameMatchScore(b.name, search) - nameMatchScore(a.name, search));
+        .map((phase) => ({ phase, displayName: formatPhaseDisplayName(phase) }))
+        .filter(({ displayName }) => displayName.toLowerCase().includes(search))
+        .sort((a, b) => {
+          const scoreDiff =
+            nameMatchScore(b.displayName, search) - nameMatchScore(a.displayName, search);
+          return scoreDiff !== 0 ? scoreDiff : a.displayName.localeCompare(b.displayName);
+        })
+        .map(({ phase }) => phase);
     }
 
     return phases;
@@ -141,8 +147,8 @@ export const phasesApi = {
   /**
    * Create a new phase.
    *
-   * Supports creating both saved phases (with a name) and temporary phases
-   * (without a name). Automatically generates a unique ID (UUID v4).
+   * Supports creating both saved phases and temporary phases. Automatically
+   * generates a unique ID (UUID v4).
    *
    * @param data - The phase data, excluding `id` which is generated automatically.
    * @returns The newly created phase, including the generated `id`.

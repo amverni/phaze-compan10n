@@ -7,7 +7,7 @@ export const phaseKeys = {
   lists: () => [...phaseKeys.all, "list"] as const,
   list: (filters: {
     type?: BuiltInT | SavedT;
-    name?: string;
+    search?: string;
     isFavorite?: 0 | 1;
     meldTypes?: MeldType[];
     phaseSetId?: string;
@@ -19,7 +19,7 @@ export const phaseKeys = {
 
 export function phaseListOptions(filters?: {
   type?: BuiltInT | SavedT;
-  name?: string;
+  search?: string;
   isFavorite?: 0 | 1;
   meldTypes?: MeldType[];
   phaseSetId?: string;
