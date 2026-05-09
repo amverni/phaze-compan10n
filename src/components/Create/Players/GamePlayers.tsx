@@ -1,8 +1,10 @@
+import { shuffle } from "../../../utils";
 import type { SortableItem } from "../../ui";
 import { List } from "../../ui";
 import { useGamePlayers, useRemovePlayer, useReorderPlayers } from "../CreateGameContext";
 import { AddPlayerButton } from "./AddPlayerButton";
 import { PlayerRow } from "./PlayerRow";
+import { ShufflePlayersButton } from "./ShufflePlayersButton";
 
 export function GamePlayers() {
   const players = useGamePlayers();
@@ -16,10 +18,18 @@ export function GamePlayers() {
     reorderPlayers(reordered);
   }
 
+  function handleShuffle() {
+    if (players.length < 2) return;
+    reorderPlayers(shuffle(players));
+  }
+
   const items = players.map((p) => ({ id: p.id }));
 
   return (
     <section>
+      <div className="flex items-center justify-end pb-2">
+        <ShufflePlayersButton onClick={handleShuffle} disabled={players.length < 2} />
+      </div>
       <List sortable removable items={items} onReorder={handleReorder} onRemove={removePlayer}>
         {players.map((player) => (
           <PlayerRow key={player.id} player={player} />
