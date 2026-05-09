@@ -5,6 +5,70 @@
   --_g-filter: blur(24px) saturate(80%) brightness(1.5);
 }
 
+.listbox-options {
+  --listbox-enter-duration: 300ms;
+  --listbox-leave-duration: 200ms;
+
+  backface-visibility: hidden;
+  opacity: 1;
+  transition-property: opacity;
+  transition-timing-function: linear;
+  transition-duration: var(--listbox-enter-duration);
+  will-change: transform;
+}
+
+.listbox-options[data-closed] {
+  opacity: 0.99;
+}
+
+.listbox-options[data-enter] {
+  transition-duration: var(--listbox-enter-duration);
+  animation: listbox-grow-in var(--listbox-enter-duration) cubic-bezier(0.18, 0.9, 0.2, 1)
+    both;
+}
+
+.listbox-options[data-leave] {
+  transition-duration: var(--listbox-leave-duration);
+  animation: listbox-shrink-out var(--listbox-leave-duration) cubic-bezier(0.45, 0, 1, 0.6)
+    both;
+  pointer-events: none;
+}
+
+@keyframes listbox-grow-in {
+  0% {
+    transform: scale(0.08);
+  }
+
+  15% {
+    transform: scale(0.25);
+  }
+
+  30% {
+    transform: scale(0.5);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes listbox-shrink-out {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listbox-options[data-enter],
+  .listbox-options[data-leave] {
+    animation: none;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .listbox-glass {
     --_g-bg: rgba(30, 30, 30, 0.75);

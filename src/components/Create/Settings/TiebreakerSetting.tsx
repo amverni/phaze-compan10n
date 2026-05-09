@@ -13,7 +13,7 @@ export function TiebreakerSetting() {
         <ListboxButton variant="plain" className="shrink-0">
           {TIEBREAKER_LABELS[tiebreaker]}
         </ListboxButton>
-        <ListboxOptions className="right-0 left-auto">
+        <ListboxOptions className="right-0 left-auto origin-top-right">
           {TIEBREAKER_OPTIONS.map(({ value, label }) => (
             <ListboxOption key={value} value={value}>
               {label}

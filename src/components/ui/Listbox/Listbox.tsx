@@ -91,6 +91,8 @@ const panelClasses = [
   "focus:outline-none",
 ].join(" ");
 
+const panelAnimationClasses = "listbox-options origin-top-left";
+
 export function ListboxOptions({
   children,
   className,
@@ -98,8 +100,12 @@ export function ListboxOptions({
   children: ReactNode;
   className?: string;
 }) {
-  const merged = [panelClasses, className].filter(Boolean).join(" ");
-  return <HeadlessListboxOptions className={merged}>{children}</HeadlessListboxOptions>;
+  const merged = [panelClasses, panelAnimationClasses, className].filter(Boolean).join(" ");
+  return (
+    <HeadlessListboxOptions transition className={merged}>
+      {children}
+    </HeadlessListboxOptions>
+  );
 }
 
 /* ── Option ────────────────────────────────────────────────── */
