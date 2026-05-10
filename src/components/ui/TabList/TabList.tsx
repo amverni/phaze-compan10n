@@ -2,7 +2,7 @@ import { TabList as HeadlessTabList, type TabListProps } from "@headlessui/react
 import { Children, type ElementType, isValidElement, type ReactNode } from "react";
 import "./TabList.css";
 
-const baseClasses = "glass glass-tabs relative flex w-full max-w-md items-center rounded-full p-1";
+const baseClasses = "glass relative flex w-full max-w-md items-center rounded-full p-1";
 
 /**
  * A frosted-glass tab bar that wraps Headless UI's `TabList`.

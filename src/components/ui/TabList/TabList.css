@@ -1,12 +1,9 @@
 /* ── Glass Tabs ───────────────────────────────────────────────
-   iOS 26-style segmented tabs: a single pill container with a
-   frosted glass selected-tab indicator.
+   iOS 26-style segmented tabs: a frosted glass selected-tab
+   indicator that slides between tab positions. The tab container
+   itself uses the shared `.glass` surface so it matches other
+   glass elements; only the indicator overrides the surface.
    Always pair variant classes with .glass for the shared surface. */
-
-.glass-tabs {
-  --_g-bg: rgba(255, 255, 255, 0.1);
-  --_g-filter: blur(12px) saturate(120%);
-}
 
 .glass-tab-indicator {
   --_g-bg: rgba(255, 255, 255, 0.35);
@@ -25,11 +22,6 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .glass-tabs {
-    --_g-bg: rgba(255, 255, 255, 0.05);
-    --_g-filter: blur(12px) saturate(140%) brightness(0.85);
-  }
-
   .glass-tab-indicator {
     --_g-bg: rgba(0, 0, 0, 0.15);
     --_g-border: rgba(255, 255, 255, 0.1);
@@ -46,11 +38,6 @@
 }
 
 @media (prefers-color-scheme: light) {
-  .glass-tabs {
-    --_g-bg: rgba(0, 0, 0, 0.04);
-    --_g-border: rgba(0, 0, 0, 0.08);
-  }
-
   .glass-tab-indicator {
     --_g-bg: rgba(255, 255, 255, 0.75);
     --_g-border: rgba(0, 0, 0, 0.10);
