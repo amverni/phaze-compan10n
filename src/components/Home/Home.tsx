@@ -2,6 +2,7 @@ import type React from "react";
 import "./home.css";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
+import { ActiveGames } from "./ActiveGames";
 import { CreateButton } from "./CreateButton";
 import { Disclaimer } from "./Disclaimer";
 import { HomeMenu } from "./HomeMenu";
@@ -14,7 +15,16 @@ export const Home: React.FC = () => {
           <HomeMenu />
         </div>
       }
-      mainContent={<Logo height={160} width="100%" />}
+      mainContent={
+        <div className="flex h-full min-h-0 flex-col">
+          <Logo height={160} width="100%" />
+          <div className="min-h-0 flex-1">
+            <div className="content-container h-full">
+              <ActiveGames />
+            </div>
+          </div>
+        </div>
+      }
       footerContent={
         <>
           <div className="content-container flex h-full justify-end">

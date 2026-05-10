@@ -304,6 +304,16 @@ export interface ListProps {
   children?: ReactNode;
   /** Allow row content like dropdown panels to escape the rounded list container. */
   allowOverflow?: boolean;
+  /**
+   * Make the list scroll internally instead of overflowing its parent.
+   * The list's `.glass` wrapper becomes the scroll container so its
+   * drop shadow is preserved (it would otherwise be clipped by a
+   * surrounding `overflow: auto` ancestor). Pair with sizing classes
+   * via `className` (e.g. `min-h-0 flex-1`).
+   */
+  scrollable?: boolean;
+  /** Extra classes appended to the list's outer `.glass` wrapper. */
+  className?: string;
   isLoading?: boolean;
   shimmerRows?: number;
   emptyMessage?: ReactNode;
@@ -317,6 +327,8 @@ export interface ListProps {
 export function List({
   children,
   allowOverflow = false,
+  scrollable = false,
+  className: classNameProp,
   isLoading = false,
   shimmerRows = 0,
   emptyMessage,
@@ -696,8 +708,11 @@ export function List({
 
   const className = [
     "glass relative rounded-2xl",
-    allowOverflow ? "overflow-visible" : "overflow-hidden",
-  ].join(" ");
+    scrollable ? "overflow-y-auto" : allowOverflow ? "overflow-visible" : "overflow-hidden",
+    classNameProp,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={className}>
