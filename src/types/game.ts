@@ -5,7 +5,13 @@ export type Game = ActiveGame | CompletedGame;
 
 export type GameId = string;
 
-export type GameTiebreaker = "lowestPoints" | "highestPoints" | "fewestSkips" | "mostSkipped";
+export type GameTiebreaker =
+  | "lowestPoints"
+  | "highestPoints"
+  | "fewestSkips"
+  | "mostSkipped"
+  | "fewestWilds"
+  | "roundsWon";
 
 export interface GameSettings {
   tiebreaker: GameTiebreaker;

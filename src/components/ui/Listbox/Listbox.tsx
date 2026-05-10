@@ -7,6 +7,7 @@ import {
 } from "@headlessui/react";
 import { Check, ChevronDown } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { mergeClassName } from "../mergeClassName";
 import { interactiveClasses } from "../sharedClasses";
 import "./Listbox.css";
 
@@ -15,11 +16,7 @@ import "./Listbox.css";
 export function Listbox<TType = string, TActualType = TType extends (infer U)[] ? U : TType>(
   props: ListboxProps<"div", TType, TActualType>,
 ) {
-  return (
-    <div className="relative">
-      <HeadlessListbox {...props} />
-    </div>
-  );
+  return <HeadlessListbox {...props} as="div" className={mergeClassName("relative", props)} />;
 }
 
 /* ── Trigger ───────────────────────────────────────────────── */
