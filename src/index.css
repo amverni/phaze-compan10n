@@ -118,6 +118,7 @@ body {
 
 .content-container {
   @apply mx-auto max-w-lg px-4;
+  min-height: fit-content;
 }
 
 /* ── Glass variants ───────────────────────────────────────
@@ -155,10 +156,12 @@ body {
     100% calc(100% - var(--slant)),
     0% 100%
   );
+  min-height: fit-content;
 }
 
 .card-panel-bottom {
   clip-path: polygon(0 var(--slant), 100% 0, 100% 100%, 0% 100%);
+  min-height: fit-content;
 }
 
 .card-panel-top-content {

@@ -16,14 +16,16 @@ export const Home: React.FC = () => {
       }
       mainContent={<Logo height={160} width="100%" />}
       footerContent={
-        <div className="content-container flex h-full flex-col">
-          <div className="flex flex-1 items-center justify-end">
+        <>
+          <div className="content-container flex h-full justify-end">
             <CreateButton />
           </div>
-          <div className="flex justify-center">
+          {/* Absolutely positioned so it never pushes the button up.
+              The card-panel-bottom-content (parent) is `relative`. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4">
             <Disclaimer />
           </div>
-        </div>
+        </>
       }
     />
   );
