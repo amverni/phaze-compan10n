@@ -2,23 +2,9 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 
 const FADE_PX = 20;
 
-function getMaskStyle(up: boolean, down: boolean): React.CSSProperties | undefined {
-  let gradient: string;
-  if (up && down) {
-    gradient = `linear-gradient(to bottom, transparent, black ${FADE_PX}px, black calc(100% - ${FADE_PX}px), transparent)`;
-  } else if (up) {
-    gradient = `linear-gradient(to bottom, transparent, black ${FADE_PX}px)`;
-  } else if (down) {
-    gradient = `linear-gradient(to bottom, black calc(100% - ${FADE_PX}px), transparent)`;
-  } else {
-    return undefined;
-  }
-
-  return {
-    maskImage: gradient,
-    WebkitMaskImage: gradient,
-  } as React.CSSProperties;
-}
+const fadeBase = "pointer-events-none sticky inset-x-0 z-10 transition-opacity duration-150";
+const fadeTopClasses = `${fadeBase} top-0 bg-linear-to-b from-white to-transparent dark:from-neutral-900`;
+const fadeBottomClasses = `${fadeBase} bottom-0 bg-linear-to-t from-white to-transparent dark:from-neutral-900`;
 
 /**
  * Scrollable container with dynamic edge fades.
@@ -26,8 +12,14 @@ function getMaskStyle(up: boolean, down: boolean): React.CSSProperties | undefin
  * Fades appear only when there is more content to scroll in that
  * direction — when fully scrolled to the top or bottom, the
  * corresponding edge is fully opaque so content is never obscured.
+ *
+ * Implemented with sticky-positioned gradient overlays rather than a
+ * CSS `mask-image` on the scroll element: a `mask` would establish a
+ * stacking context that isolates `backdrop-filter` on descendant glass
+ * surfaces (causing them to render lighter than glass elsewhere on
+ * the page).
  */
-export function ScrollFade({ style, className, ...props }: ComponentProps<"div">) {
+export function ScrollFade({ style, className, children, ...props }: ComponentProps<"div">) {
   const ref = useRef<HTMLDivElement>(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
@@ -58,14 +50,24 @@ export function ScrollFade({ style, className, ...props }: ComponentProps<"div">
     };
   }, []);
 
-  const maskStyle = getMaskStyle(canScrollUp, canScrollDown);
-
   return (
     <div
       ref={ref}
       className={["overflow-y-auto", className].filter(Boolean).join(" ")}
-      style={{ ...style, ...maskStyle }}
+      style={style}
       {...props}
-    />
+    >
+      <div
+        aria-hidden
+        className={fadeTopClasses}
+        style={{ height: FADE_PX, marginBottom: -FADE_PX, opacity: canScrollUp ? 1 : 0 }}
+      />
+      {children}
+      <div
+        aria-hidden
+        className={fadeBottomClasses}
+        style={{ height: FADE_PX, marginTop: -FADE_PX, opacity: canScrollDown ? 1 : 0 }}
+      />
+    </div>
   );
 }
