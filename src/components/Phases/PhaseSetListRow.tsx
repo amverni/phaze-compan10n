@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { phaseSetsApi } from "../../data/api/phaseSets";
 import { useToggleFavorite } from "../../data/hooks/useFavorites";
 import { phaseSetKeys } from "../../data/hooks/usePhaseSets";
+import { phaseKeys } from "../../data/hooks/usePhases";
 import { settingsKeys } from "../../data/hooks/useSettings";
 import type { BuiltInT, SavedT } from "../../types";
 import { FavoriteAccent } from "../ui";
@@ -29,6 +30,7 @@ export function PhaseSetListRow({
     mutationFn: (id: string) => phaseSetsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: phaseSetKeys.all });
+      queryClient.invalidateQueries({ queryKey: phaseKeys.lists() });
       queryClient.invalidateQueries({ queryKey: settingsKeys.all });
     },
   });
@@ -44,6 +46,11 @@ export function PhaseSetListRow({
       { entityType: "phaseSet", entityId: phaseSet.id },
       { onError: () => setIsFavorite(previous) },
     );
+  }
+
+  function handleDelete() {
+    if (!window.confirm(`Delete ${phaseSet.name}?`)) return;
+    deletePhaseSet.mutate(phaseSet.id);
   }
 
   return (
@@ -63,13 +70,18 @@ export function PhaseSetListRow({
       <Button
         className="favorite-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-amber-400! hover:bg-black/5 dark:hover:bg-white/20"
         onClick={handleToggleFavorite}
+        aria-label={`${isFavorite ? "Remove" : "Add"} ${phaseSet.name} ${
+          isFavorite ? "from" : "to"
+        } favorites`}
+        aria-pressed={isFavorite}
       >
         <Star className={isFavorite ? "h-4 w-4 shrink-0 fill-current" : "h-4 w-4 shrink-0"} />
       </Button>
       {!isBuiltIn && (
         <Button
           className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
-          onClick={() => deletePhaseSet.mutate(phaseSet.id)}
+          onClick={handleDelete}
+          aria-label={`Delete ${phaseSet.name}`}
         >
           <Trash className="h-4 w-4 shrink-0 fill-none group-hover/trash:fill-current" />
         </Button>

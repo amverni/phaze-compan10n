@@ -34,6 +34,15 @@
   transform: translateY(0);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dialog-backdrop-enter,
+  .dialog-backdrop-leave,
+  .dialog-panel-enter,
+  .dialog-panel-leave {
+    transition: none;
+  }
+}
+
 /* ── Dialog glass brightness boost ────────────────────────── */
 /* Counteracts the darkening caused by the backdrop-filter
    picking up the dark overlay behind the panel. */

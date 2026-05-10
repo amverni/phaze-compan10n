@@ -7,6 +7,7 @@ import {
   type PopoverProps,
 } from "@headlessui/react";
 import type { ElementType, ReactNode } from "react";
+import { mergeClassName } from "../mergeClassName";
 import { interactiveClasses } from "../sharedClasses";
 import "./Popover.css";
 
@@ -21,9 +22,8 @@ export function Popover<TTag extends ElementType = "div">(props: PopoverProps<TT
 export function PopoverButton<TTag extends ElementType = "button">(
   props: PopoverButtonProps<TTag>,
 ) {
-  const { className, ...rest } = props as PopoverButtonProps<"button"> & { className?: string };
-  const merged = [interactiveClasses, className].filter(Boolean).join(" ");
-  return <HeadlessPopoverButton {...(rest as PopoverButtonProps<"button">)} className={merged} />;
+  const merged = mergeClassName(interactiveClasses, props as Record<string, unknown>);
+  return <HeadlessPopoverButton {...(props as PopoverButtonProps<"button">)} className={merged} />;
 }
 
 /* ── Panel ─────────────────────────────────────────────────── */
@@ -36,10 +36,13 @@ const transitionClasses =
 export function PopoverPanel<TTag extends ElementType = "div">(
   props: PopoverPanelProps<TTag> & { children?: ReactNode },
 ) {
-  const { children, className, ...rest } = props as PopoverPanelProps<"div"> & {
+  const { children, ...rest } = props as PopoverPanelProps<"div"> & {
     children?: ReactNode;
   };
-  const merged = [panelClasses, transitionClasses, className].filter(Boolean).join(" ");
+  const merged = mergeClassName(
+    [panelClasses, transitionClasses].join(" "),
+    props as Record<string, unknown>,
+  );
 
   return (
     <HeadlessPopoverPanel transition {...(rest as PopoverPanelProps<"div">)} className={merged}>

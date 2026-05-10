@@ -9,6 +9,7 @@ import { formatPhaseDisplayName } from "../../../utils";
 import {
   Button,
   Dialog,
+  InlineError,
   List,
   Listbox,
   ListboxButton,
@@ -59,7 +60,12 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
     ...(favoritesOnly ? { isFavorite: 1 as const } : {}),
   };
 
-  const { data: phases = [], isLoading } = useQuery({
+  const {
+    data: phases = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     ...phaseListOptions(Object.keys(filters).length > 0 ? filters : undefined),
     placeholderData: keepPreviousData,
   });
@@ -78,7 +84,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
   const phaseSetLabel = allPhaseSets.find((ps) => ps.id === phaseSetId)?.name ?? "All sets";
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} aria-label="Add phases">
       <div className="flex h-full flex-col px-4 pb-4">
         <SearchBar
           value={searchTerm}
@@ -135,19 +141,23 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
 
         {/* Phase list */}
         <div className="min-h-0 flex-1 overflow-y-auto -mx-4 px-4 py-2">
-          <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
-            {phases.map((phase) => (
-              <HeadlessButton
-                key={phase.id}
-                className="-mx-3 flex h-full w-[calc(100%+1.5rem)] cursor-pointer items-center justify-between px-3 text-left text-sm hover:bg-black/5 dark:hover:bg-white/10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
-                onClick={() => addPhase(phase)}
-                disabled={gamePhaseIds.has(phase.id)}
-              >
-                <span className="truncate">{formatPhaseDisplayName(phase)}</span>
-                <Plus className="h-5 w-5 shrink-0 text-text-secondary" />
-              </HeadlessButton>
-            ))}
-          </List>
+          {isError ? (
+            <InlineError message="Unable to load phases." onRetry={() => refetch()} />
+          ) : (
+            <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
+              {phases.map((phase) => (
+                <HeadlessButton
+                  key={phase.id}
+                  className="-mx-3 flex h-full w-[calc(100%+1.5rem)] cursor-pointer items-center justify-between px-3 text-left text-sm hover:bg-black/5 dark:hover:bg-white/10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={() => addPhase(phase)}
+                  disabled={gamePhaseIds.has(phase.id)}
+                >
+                  <span className="truncate">{formatPhaseDisplayName(phase)}</span>
+                  <Plus className="h-5 w-5 shrink-0 text-text-secondary" />
+                </HeadlessButton>
+              ))}
+            </List>
+          )}
         </div>
       </div>
     </Dialog>

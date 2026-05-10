@@ -102,3 +102,16 @@
     transform: translateY(-8px);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: none;
+  }
+
+  .toast-bounce,
+  .toast-enter,
+  .toast-exit,
+  .toast-swipe-exit {
+    animation: none !important;
+  }
+}

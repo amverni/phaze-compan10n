@@ -1,4 +1,5 @@
 import { Tab, TabGroup, TabPanel, TabPanels } from "@headlessui/react";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Layers, ListChecks } from "lucide-react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
@@ -7,7 +8,7 @@ import { PhaseSetsList } from "./PhaseSetsList";
 import { PhasesList } from "./PhasesList";
 
 const tabClasses =
-  "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none hover:brightness-110 data-selected:opacity-100";
+  "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none hover:brightness-110 data-focus:outline-2 data-focus:outline-white/60 data-selected:opacity-100";
 
 export function Phases() {
   return (
@@ -51,11 +52,7 @@ export function Phases() {
       }
       footerContent={
         <div className="content-container flex h-full">
-          <Button
-            onClick={() => window.history.back()}
-            className="size-14 p-0"
-            aria-label="Go back"
-          >
+          <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
             <ArrowLeft className="size-8" />
           </Button>
         </div>

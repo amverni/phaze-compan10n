@@ -58,6 +58,12 @@ export const Toast = forwardRef<ToastHandle, ToastProps>(function Toast({ durati
     ref,
     () => ({
       show(text: string) {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+        setSwipeY(0);
+        swipeYRef.current = 0;
+        setSwiping(false);
+        setPhase("enter");
         if (display) {
           setDisplay(text);
           setBounce(false);
@@ -143,8 +149,9 @@ export const Toast = forwardRef<ToastHandle, ToastProps>(function Toast({ durati
           : "";
 
   return (
-    <div
+    <output
       className={`toast glass toast-glass ${animClass} ${bounce ? "toast-bounce" : ""} ${swiping ? "is-swiping" : ""}`}
+      aria-live="polite"
       style={
         swiping
           ? { transform: `translateY(${swipeY}px)`, opacity: swipeY < 0 ? 1 + swipeY / 60 : 1 }
@@ -165,6 +172,6 @@ export const Toast = forwardRef<ToastHandle, ToastProps>(function Toast({ durati
       <Button type="button" onClick={dismiss} className="toast-dismiss" aria-label="Dismiss">
         <X className="h-5 w-5" />
       </Button>
-    </div>
+    </output>
   );
 });

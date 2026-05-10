@@ -101,7 +101,7 @@ export const phaseSetsApi = {
    * @param data - The phase set data, excluding `id` which is generated automatically.
    * @returns The newly created phase set, including the generated `id`.
    */
-  async create(data: Omit<SavedPhaseSet, "id">): Promise<PhaseSet> {
+  async create(data: Omit<SavedPhaseSet, "id">): Promise<SavedPhaseSet> {
     const db = await getDB();
     const id: PhaseSetId = crypto.randomUUID();
     const newPhaseSet: SavedPhaseSet = { ...data, id };

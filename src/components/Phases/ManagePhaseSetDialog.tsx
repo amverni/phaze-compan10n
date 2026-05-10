@@ -29,7 +29,12 @@ export function ManagePhaseSetDialog({
   });
 
   return (
-    <Dialog open={open} onClose={onClose} afterLeave={afterLeave}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      afterLeave={afterLeave}
+      aria-label={phaseSet?.name ?? "Phase set"}
+    >
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-3">
           <Button onClick={onClose} className="size-9 shrink-0 p-0" aria-label="Go back">

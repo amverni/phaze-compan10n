@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { phaseSetsApi } from "../../../data/api/phaseSets";
 import { phasesApi } from "../../../data/api/phases";
 import type { Phase } from "../../../types";
-import { shuffle } from "../../../utils";
+import { formatPhaseDisplayName, shuffle } from "../../../utils";
 import type { SortableItem } from "../../ui";
 import { List } from "../../ui";
 import {
@@ -30,11 +30,11 @@ export function GamePhases({
   const removePhase = useRemovePhase();
   const reorderPhases = useReorderPhases();
   const setPhases = useSetPhases();
+  const [actionError, setActionError] = useState<string | null>(null);
 
   function handleReorder(items: SortableItem[]) {
-    const reordered = items
-      .map((item) => phases.find((p) => p.id === item.id))
-      .filter((p) => p !== undefined);
+    const phasesById = new Map(phases.map((phase) => [phase.id, phase]));
+    const reordered = items.map((item) => phasesById.get(item.id)).filter((p) => p !== undefined);
     reorderPhases(reordered);
   }
 
@@ -49,16 +49,24 @@ export function GamePhases({
   }
 
   async function handleDefaultPhaseSet() {
-    const defaultPhases = await phaseSetsApi.getPhases(defaultPhaseSetId);
-    handleReplacePhases(defaultPhases);
+    try {
+      setActionError(null);
+      const defaultPhases = await phaseSetsApi.getPhases(defaultPhaseSetId);
+      handleReplacePhases(defaultPhases);
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Unable to load the default phase set",
+      );
+    }
   }
 
   async function handleRandom(count: number) {
     try {
+      setActionError(null);
       const picked = await phasesApi.getRandom(count);
       if (picked.length > 0) handleReplacePhases(picked);
-    } catch {
-      // Silently fail
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to choose random phases");
     }
   }
 
@@ -77,10 +85,18 @@ export function GamePhases({
         onRandom={handleRandom}
         onSelectPhaseSet={handleReplacePhases}
       />
+      {actionError && (
+        <p
+          className="mb-2 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+          role="alert"
+        >
+          {actionError}
+        </p>
+      )}
       <List
         sortable
         removable
-        items={phases.map((phase) => ({ id: phase.id }))}
+        items={phases.map((phase) => ({ id: phase.id, label: formatPhaseDisplayName(phase) }))}
         onReorder={handleReorder}
         onRemove={removePhase}
       >

@@ -8,3 +8,9 @@
 .add-player-slider[data-view="create"] {
   transform: translateX(-100%);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .add-player-slider {
+    transition: none;
+  }
+}

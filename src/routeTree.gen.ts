@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as PhasesRouteImport } from './routes/phases'
+import { Route as GameRouteImport } from './routes/game'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CreateIndexRouteImport } from './routes/create/index'
@@ -29,6 +30,11 @@ const PlayersRoute = PlayersRouteImport.update({
 const PhasesRoute = PhasesRouteImport.update({
   id: '/phases',
   path: '/phases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GameRoute = GameRouteImport.update({
+  id: '/game',
+  path: '/game',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -50,6 +56,7 @@ const CreateIndexRoute = CreateIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRouteWithChildren
+  '/game': typeof GameRoute
   '/phases': typeof PhasesRoute
   '/players': typeof PlayersRoute
   '/settings': typeof SettingsRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/game': typeof GameRoute
   '/phases': typeof PhasesRoute
   '/players': typeof PlayersRoute
   '/settings': typeof SettingsRoute
@@ -66,6 +74,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRouteWithChildren
+  '/game': typeof GameRoute
   '/phases': typeof PhasesRoute
   '/players': typeof PlayersRoute
   '/settings': typeof SettingsRoute
@@ -73,13 +82,21 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/create' | '/phases' | '/players' | '/settings' | '/create/'
+  fullPaths:
+    | '/'
+    | '/create'
+    | '/game'
+    | '/phases'
+    | '/players'
+    | '/settings'
+    | '/create/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/phases' | '/players' | '/settings' | '/create'
+  to: '/' | '/game' | '/phases' | '/players' | '/settings' | '/create'
   id:
     | '__root__'
     | '/'
     | '/create'
+    | '/game'
     | '/phases'
     | '/players'
     | '/settings'
@@ -89,6 +106,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRouteWithChildren
+  GameRoute: typeof GameRoute
   PhasesRoute: typeof PhasesRoute
   PlayersRoute: typeof PlayersRoute
   SettingsRoute: typeof SettingsRoute
@@ -115,6 +133,13 @@ declare module '@tanstack/react-router' {
       path: '/phases'
       fullPath: '/phases'
       preLoaderRoute: typeof PhasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/game': {
+      id: '/game'
+      path: '/game'
+      fullPath: '/game'
+      preLoaderRoute: typeof GameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -155,6 +180,7 @@ const CreateRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRouteWithChildren,
+  GameRoute: GameRoute,
   PhasesRoute: PhasesRoute,
   PlayersRoute: PlayersRoute,
   SettingsRoute: SettingsRoute,

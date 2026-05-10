@@ -12,9 +12,8 @@ export function GamePlayers() {
   const reorderPlayers = useReorderPlayers();
 
   function handleReorder(items: SortableItem[]) {
-    const reordered = items
-      .map((item) => players.find((p) => p.id === item.id))
-      .filter((p) => p !== undefined);
+    const playersById = new Map(players.map((player) => [player.id, player]));
+    const reordered = items.map((item) => playersById.get(item.id)).filter((p) => p !== undefined);
     reorderPlayers(reordered);
   }
 
@@ -23,7 +22,7 @@ export function GamePlayers() {
     reorderPlayers(shuffle(players));
   }
 
-  const items = players.map((p) => ({ id: p.id }));
+  const items = players.map((p) => ({ id: p.id, label: p.name }));
 
   return (
     <section>

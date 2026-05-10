@@ -36,6 +36,11 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
     );
   }
 
+  function handleDelete() {
+    if (!window.confirm(`Delete ${player.name}?`)) return;
+    deletePlayer.mutate(player.id);
+  }
+
   return (
     <div className="group/row relative -mx-3 flex h-full w-[calc(100%+1.5rem)] items-center text-sm [&:hover:not(:has(.trash-btn:hover,.favorite-btn:hover))]:bg-black/5 dark:[&:hover:not(:has(.trash-btn:hover,.favorite-btn:hover))]:bg-white/10">
       <FavoriteAccent active={isFavorite === 1} />
@@ -53,12 +58,13 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
         aria-label={`${isFavorite ? "Remove" : "Add"} ${player.name} ${
           isFavorite ? "from" : "to"
         } favorites`}
+        aria-pressed={isFavorite === 1}
       >
         <Star className={isFavorite ? "h-4 w-4 shrink-0 fill-current" : "h-4 w-4 shrink-0"} />
       </Button>
       <Button
         className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
-        onClick={() => deletePlayer.mutate(player.id)}
+        onClick={handleDelete}
         aria-label={`Delete ${player.name}`}
       >
         <Trash className="h-4 w-4 shrink-0 fill-none group-hover/trash:fill-current" />

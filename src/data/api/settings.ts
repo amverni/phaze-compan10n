@@ -6,6 +6,7 @@ import type {
   PhaseSetId,
 } from "../../types";
 import { APP_SETTINGS_ID, DEFAULT_APP_SETTINGS } from "../constants/appSettings";
+import { normalizeGameSettings } from "../constants/gameSettings";
 import { getDB } from "../db";
 import { phaseSetsApi } from "./phaseSets";
 
@@ -57,9 +58,11 @@ async function withSettingsDefaults(settings?: LegacyAppSettings): Promise<AppSe
     ...settings?.game,
     ...settings?.gameDefaults,
   };
+  const normalizedGameSettings = normalizeGameSettings(legacyGameSettings);
   const gameDefaults: AppGameDefaults = {
     ...DEFAULT_APP_SETTINGS.gameDefaults,
     ...legacyGameSettings,
+    ...normalizedGameSettings,
   };
   const phaseSet = await phaseSetsApi.getById(gameDefaults.phaseSetId);
 

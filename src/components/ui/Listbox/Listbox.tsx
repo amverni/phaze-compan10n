@@ -113,7 +113,7 @@ export function ListboxOptions({
 const optionClasses = [
   "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
   "cursor-pointer select-none",
-  "data-[focus]:bg-white/20 dark:data-[focus]:bg-white/10",
+  "data-[focus]:bg-black/5 dark:data-[focus]:bg-white/10",
 ].join(" ");
 
 export function ListboxOption<TValue>({

@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { type ReactNode, type RefObject, useDeferredValue, useRef, useState } from "react";
 import { phaseSetListOptions } from "../../data/hooks/usePhaseSets";
 import type { BuiltInT, SavedT } from "../../types";
-import { List, ScrollFade, SearchBar } from "../ui";
+import { InlineError, List, ScrollFade, SearchBar } from "../ui";
 
 export interface PhaseSetSearchProps {
   inputRef?: RefObject<HTMLInputElement | null>;
@@ -20,7 +20,12 @@ export function PhaseSetSearch({
   const inputRef = externalInputRef ?? internalInputRef;
   const deferredSearch = useDeferredValue(searchTerm);
 
-  const { data: phaseSets, isLoading } = useQuery({
+  const {
+    data: phaseSets,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     ...phaseSetListOptions(deferredSearch ? { name: deferredSearch } : undefined),
     placeholderData: keepPreviousData,
   });
@@ -41,9 +46,13 @@ export function PhaseSetSearch({
         {actions?.(searchTerm)}
       </SearchBar>
       <ScrollFade className="min-h-0 flex-1 -mx-6 px-6 pt-2 pb-[calc(0.5rem+var(--slant))]">
-        <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
-          {phaseSets?.map((phaseSet) => renderRow(phaseSet))}
-        </List>
+        {isError ? (
+          <InlineError message="Unable to load phase sets." onRetry={() => refetch()} />
+        ) : (
+          <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
+            {phaseSets?.map((phaseSet) => renderRow(phaseSet))}
+          </List>
+        )}
       </ScrollFade>
     </div>
   );

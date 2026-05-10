@@ -61,10 +61,11 @@ export const favoritesApi = {
    */
   async remove(entityType: FavoriteEntityType, entityId: string): Promise<void> {
     const db = await getDB();
+    const tx = db.transaction("favorites", "readwrite");
     await Promise.all(
-      getFavoriteEntityIdVariants(entityType, entityId).map((id) =>
-        db.delete("favorites", [entityType, id]),
-      ),
+      getFavoriteEntityIdVariants(entityType, entityId)
+        .map((id) => tx.store.delete([entityType, id]))
+        .concat(tx.done),
     );
   },
 

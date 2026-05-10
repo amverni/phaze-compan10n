@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { DEFAULT_GAME_SETTINGS } from "../../data/constants/gameSettings";
-import { originalPhaseSet } from "../../data/constants/phaseSets";
-import { builtInPhases } from "../../data/constants/phases";
 import { phaseSetPhasesOptions } from "../../data/hooks/usePhaseSets";
 import { appSettingsOptions } from "../../data/hooks/useSettings";
 import type {
@@ -33,13 +31,6 @@ interface CreateGameContextValue {
 
 const CreateGameContext = createContext<CreateGameContextValue | null>(null);
 
-function resolveDefaultPhases(): Phase[] {
-  const phaseMap = new Map<string, Phase>(builtInPhases.map((p) => [p.id, p]));
-  return originalPhaseSet.phases
-    .map((id) => phaseMap.get(id))
-    .filter((p): p is Phase => p !== undefined);
-}
-
 function resolveDefaultGameSettings(settings?: Partial<GameSettings>): GameSettings {
   return {
     tiebreaker: settings?.tiebreaker ?? DEFAULT_GAME_SETTINGS.tiebreaker,
@@ -48,13 +39,13 @@ function resolveDefaultGameSettings(settings?: Partial<GameSettings>): GameSetti
 
 export function CreateGameProvider({ children }: { children: ReactNode }) {
   const { data: appSettings } = useQuery(appSettingsOptions());
-  const defaultPhaseSetId = appSettings?.gameDefaults.phaseSetId ?? originalPhaseSet.id;
+  const defaultPhaseSetId = appSettings?.gameDefaults.phaseSetId ?? "";
   const { data: defaultPhases } = useQuery({
     ...phaseSetPhasesOptions(defaultPhaseSetId),
     enabled: appSettings !== undefined,
   });
   const [players, setPlayers] = useState<Player[]>([]);
-  const [phases, setGamePhases] = useState<Phase[]>(resolveDefaultPhases);
+  const [phases, setGamePhases] = useState<Phase[]>([]);
   const [settings, setSettings] = useState<GameSettings>(resolveDefaultGameSettings);
   const initializedSettingsRef = useRef(false);
   const initializedPhasesRef = useRef(false);

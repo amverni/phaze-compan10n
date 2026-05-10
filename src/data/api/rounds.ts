@@ -34,6 +34,12 @@ export const roundsApi = {
     return rounds.sort((a, b) => a.roundNumber - b.roundNumber);
   },
 
+  async hasRounds(gameId: GameId): Promise<boolean> {
+    const db = await getDB();
+    const rounds = await db.getAllFromIndex("rounds", "by-game", gameId);
+    return rounds.length > 0;
+  },
+
   /**
    * Add a new round to a game.
    *
@@ -107,7 +113,9 @@ export const roundsApi = {
     updates: Partial<Omit<RoundScore, "playerId" | "currentPhase">>,
   ): Promise<Round> {
     const db = await getDB();
-    const round = await db.get("rounds", [gameId, roundNumber]);
+    const tx = db.transaction(["games", "rounds"], "readwrite");
+    const roundsStore = tx.objectStore("rounds");
+    const round = await roundsStore.get([gameId, roundNumber]);
     if (!round) throw new Error("Round not found");
 
     const scoreIndex = round.scores.findIndex((s) => s.playerId === playerId);
@@ -118,21 +126,21 @@ export const roundsApi = {
     updatedScores[scoreIndex] = { ...updatedScores[scoreIndex], ...updates };
 
     const updatedRound: Round = { ...round, scores: updatedScores };
-    await db.put("rounds", updatedRound);
+    const game =
+      updates.phaseStatus !== undefined ? await tx.objectStore("games").get(gameId) : undefined;
+    if (updates.phaseStatus !== undefined && !game) throw new Error("Game not found");
+
+    await roundsStore.put(updatedRound);
 
     // If phaseStatus changed, cascade-update currentPhase in subsequent rounds
-    if (updates.phaseStatus !== undefined) {
-      const game = await db.get("games", gameId);
-      if (!game) throw new Error("Game not found");
-
+    if (updates.phaseStatus !== undefined && game) {
       const totalPhases = game.phaseSet.phases.length;
-      const allRounds = await db.getAllFromIndex("rounds", "by-game", gameId);
+      const allRounds = await roundsStore.index("by-game").getAll(gameId);
       const sorted = allRounds
         .map((r) => (r.roundNumber === roundNumber ? updatedRound : r))
         .sort((a, b) => a.roundNumber - b.roundNumber);
 
       const laterRounds = sorted.filter((r) => r.roundNumber > roundNumber);
-      const tx = db.transaction("rounds", "readwrite");
 
       let prevRound = updatedRound;
       for (const laterRound of laterRounds) {
@@ -153,16 +161,15 @@ export const roundsApi = {
             currentPhase: newCurrentPhase,
           };
           const fixedRound: Round = { ...laterRound, scores: newScores };
-          await tx.store.put(fixedRound);
+          await roundsStore.put(fixedRound);
           prevRound = fixedRound;
         } else {
           prevRound = laterRound;
         }
       }
-
-      await tx.done;
     }
 
+    await tx.done;
     return updatedRound;
   },
 
@@ -176,6 +183,15 @@ export const roundsApi = {
    */
   async delete(gameId: GameId, roundNumber: number): Promise<void> {
     const db = await getDB();
+    const rounds = await db.getAllFromIndex("rounds", "by-game", gameId);
+    const round = rounds.find((candidate) => candidate.roundNumber === roundNumber);
+    if (!round) return;
+
+    const latestRoundNumber = Math.max(...rounds.map((candidate) => candidate.roundNumber));
+    if (roundNumber !== latestRoundNumber) {
+      throw new Error("Only the latest round can be deleted");
+    }
+
     await db.delete("rounds", [gameId, roundNumber]);
   },
 

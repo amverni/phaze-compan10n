@@ -3,6 +3,7 @@ import type {
   MeldType,
   Phase,
   PhaseId,
+  PhaseSetId,
   SavedPhase,
   SavedT,
   TemporaryPhase,
@@ -39,7 +40,7 @@ export const phasesApi = {
     search?: string;
     isFavorite?: 0 | 1;
     meldTypes?: MeldType[];
-    phaseSetId?: string;
+    phaseSetId?: PhaseSetId;
   }): Promise<VisiblePhase[]> {
     let phases: VisiblePhase[] = [];
 
@@ -153,7 +154,9 @@ export const phasesApi = {
    * @param data - The phase data, excluding `id` which is generated automatically.
    * @returns The newly created phase, including the generated `id`.
    */
-  async create(data: Omit<SavedPhase, "id"> | Omit<TemporaryPhase, "id">): Promise<Phase> {
+  async create(
+    data: Omit<SavedPhase, "id"> | Omit<TemporaryPhase, "id">,
+  ): Promise<SavedPhase | TemporaryPhase> {
     const db = await getDB();
     const id: PhaseId = crypto.randomUUID();
     const newPhase: SavedPhase | TemporaryPhase = { ...data, id };

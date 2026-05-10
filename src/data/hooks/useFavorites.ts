@@ -18,9 +18,9 @@ export function useToggleFavorite() {
       queryClient.invalidateQueries({ queryKey: favoriteKeys.all });
       // Invalidate the entity list queries since isFavorite filters may be active
       if (entityType === "phase") {
-        queryClient.invalidateQueries({ queryKey: phaseKeys.all });
+        queryClient.invalidateQueries({ queryKey: phaseKeys.lists() });
       } else {
-        queryClient.invalidateQueries({ queryKey: phaseSetKeys.all });
+        queryClient.invalidateQueries({ queryKey: phaseSetKeys.lists() });
       }
     },
   });

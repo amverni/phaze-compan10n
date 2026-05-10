@@ -1,7 +1,7 @@
 import { Field, Fieldset, Label, Legend } from "@headlessui/react";
 import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, Trash } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useState } from "react";
 import { playersApi } from "../../data/api/players";
 import { getRandomColorName } from "../../data/constants/colors";
 import { useCreatePlayer, useDeletePlayer, useUpdatePlayer } from "../../data/hooks/usePlayers";
@@ -11,7 +11,6 @@ import { ColorPicker } from "../ui/ColorPicker/ColorPicker";
 import { Input } from "../ui/Input/Input";
 import { List } from "../ui/List/List";
 import { Switch } from "../ui/Switch/Switch";
-import { Toast, type ToastHandle } from "../ui/Toast/Toast";
 
 export interface PlayerEditorProps {
   /** Pre-filled player name (e.g. from the search box). */
@@ -37,41 +36,33 @@ export function PlayerEditor({
   const createPlayer = useCreatePlayer();
   const updatePlayer = useUpdatePlayer();
   const deletePlayer = useDeletePlayer();
-  const [nameError, setNameError] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const toastRef = useRef<ToastHandle>(null);
-
-  /** Trigger a shake animation on the name input. */
-  function shakeNameInput() {
-    const el = nameInputRef.current;
-    if (!el) return;
-    // Cancel any in-flight shake so a rapid re-trigger always restarts
-    // cleanly. Using the Web Animations API (rather than toggling a CSS
-    // class) avoids two pitfalls: React's reconciler can't wipe the
-    // animation when it re-renders the element's `className`, and the
-    // browser won't no-op a "none → shake" style swap on a repeat call.
-    for (const anim of el.getAnimations()) {
-      if (anim.id === "shake") anim.cancel();
-    }
-    const animation = el.animate(
-      [
-        { transform: "translateX(0)" },
-        { transform: "translateX(-4px)", offset: 0.2 },
-        { transform: "translateX(4px)", offset: 0.4 },
-        { transform: "translateX(-3px)", offset: 0.6 },
-        { transform: "translateX(3px)", offset: 0.8 },
-        { transform: "translateX(0)" },
-      ],
-      { duration: 350, easing: "ease-in-out" },
-    );
-    animation.id = "shake";
-  }
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const nameErrorId = useId();
+  const submitErrorId = useId();
 
   const form = useForm({
     defaultValues: {
       name: player?.name ?? defaultName ?? "",
       color: player?.color ?? getRandomColorName(),
       isFavorite: (player?.isFavorite ?? 0) as 0 | 1,
+    },
+    validators: {
+      onSubmitAsync: async ({ value }) => {
+        const errors = await playersApi.validate(
+          {
+            name: value.name.trim(),
+            color: value.color,
+            wins: player?.wins ?? 0,
+            isFavorite: value.isFavorite,
+          },
+          player?.id,
+        );
+
+        if (errors?.name) {
+          return { fields: { name: errors.name } };
+        }
+        return undefined;
+      },
     },
     onSubmit: async ({ value }) => {
       const data = {
@@ -80,16 +71,6 @@ export function PlayerEditor({
         wins: player?.wins ?? 0,
         isFavorite: value.isFavorite,
       };
-
-      const errors = await playersApi.validate(data, player?.id);
-      if (errors) {
-        if (errors.name) {
-          toastRef.current?.show(errors.name);
-          setNameError(true);
-          shakeNameInput();
-        }
-        return;
-      }
 
       if (isEditing) {
         const updated = await updatePlayer.mutateAsync({ id: player.id, updates: data });
@@ -104,6 +85,7 @@ export function PlayerEditor({
 
   async function handleDelete() {
     if (!player) return;
+    if (!window.confirm(`Delete ${player.name}?`)) return;
     await deletePlayer.mutateAsync(player.id);
     onDeleted?.();
     onBack();
@@ -111,8 +93,6 @@ export function PlayerEditor({
 
   return (
     <div className="relative flex h-full flex-col">
-      <Toast ref={toastRef} />
-
       {/* Header */}
       <div className="flex items-center gap-2 p-3 pb-0">
         <Button onClick={onBack} className="h-9 w-9 shrink-0 p-0" aria-label="Back to search">
@@ -129,7 +109,10 @@ export function PlayerEditor({
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          form.handleSubmit();
+          setSubmitError(null);
+          form.handleSubmit().catch((error: unknown) => {
+            setSubmitError(error instanceof Error ? error.message : "Unable to save player");
+          });
         }}
       >
         <Fieldset className="flex flex-1 flex-col gap-4">
@@ -143,26 +126,35 @@ export function PlayerEditor({
             }}
           >
             {(field) => {
-              const hasError = field.state.meta.errors.length > 0 || nameError;
+              const nameError = field.state.meta.errors[0];
+              const hasError = nameError !== undefined;
               return (
                 <Field className="flex flex-col gap-1">
                   <Label className="text-sm font-medium text-text-secondary">Name</Label>
                   <Input
-                    ref={nameInputRef}
                     type="text"
+                    autoFocus
                     value={field.state.value}
-                    onChange={(e) => {
-                      setNameError(false);
-                      field.handleChange(e.target.value);
-                    }}
+                    onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
                     placeholder="Player name"
                     invalid={hasError}
+                    aria-invalid={hasError}
+                    aria-describedby={hasError ? nameErrorId : undefined}
                     className={[
                       "glass rounded-xl px-3 py-2 transition-colors",
                       hasError ? "glass-error" : "",
                     ].join(" ")}
                   />
+                  {hasError && (
+                    <p
+                      id={nameErrorId}
+                      className="text-sm text-red-700 dark:text-red-300"
+                      role="alert"
+                    >
+                      {String(nameError)}
+                    </p>
+                  )}
                 </Field>
               );
             }}
@@ -197,30 +189,45 @@ export function PlayerEditor({
           <div className="flex-1" />
 
           {/* Actions */}
-          <div className="flex gap-2">
-            {isEditing && (
-              <Button
-                type="button"
-                onClick={handleDelete}
-                className="glass-danger px-4 py-2 text-sm text-white"
-                aria-label="Delete player"
+          <div className="flex flex-col gap-2">
+            {submitError && (
+              <p
+                id={submitErrorId}
+                className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+                role="alert"
               >
-                <Trash className="h-4 w-4" />
-              </Button>
+                {submitError}
+              </p>
             )}
-            <form.Subscribe
-              selector={(state) => [state.canSubmit && !!state.values.name.trim() && !nameError]}
-            >
-              {([canSubmit]) => (
+            <div className="flex gap-2">
+              {isEditing && (
                 <Button
-                  type="submit"
-                  disabled={!canSubmit}
-                  className="w-full px-4 py-2 text-sm active:scale-102!"
+                  type="button"
+                  onClick={handleDelete}
+                  className="glass-danger px-4 py-2 text-sm text-white"
+                  aria-label="Delete player"
                 >
-                  Save
+                  <Trash className="h-4 w-4" />
                 </Button>
               )}
-            </form.Subscribe>
+              <form.Subscribe
+                selector={(state) => [
+                  state.canSubmit && !!state.values.name.trim(),
+                  state.isSubmitting,
+                ]}
+              >
+                {([canSubmit, isSubmitting]) => (
+                  <Button
+                    type="submit"
+                    disabled={!canSubmit || isSubmitting}
+                    className="w-full px-4 py-2 text-sm active:scale-102!"
+                    aria-describedby={submitError ? submitErrorId : undefined}
+                  >
+                    {isSubmitting ? "Saving..." : "Save"}
+                  </Button>
+                )}
+              </form.Subscribe>
+            </div>
           </div>
         </Fieldset>
       </form>

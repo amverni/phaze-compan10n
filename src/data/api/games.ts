@@ -9,7 +9,7 @@ import type {
   PlayerId,
   TemporaryPhaseSet,
 } from "../../types";
-import { DEFAULT_GAME_SETTINGS } from "../constants/gameSettings";
+import { normalizeGameSettings } from "../constants/gameSettings";
 import { getDB } from "../db";
 import { phasesApi } from "./phases";
 import { roundsApi } from "./rounds";
@@ -59,9 +59,9 @@ export const gamesApi = {
    */
   async create(
     data: Omit<ActiveGame, "id" | "createdAt" | "status" | "activePlayers">,
-  ): Promise<Game> {
+  ): Promise<ActiveGame> {
     const db = await getDB();
-    const newGame: Game = {
+    const newGame: ActiveGame = {
       ...data,
       id: crypto.randomUUID(),
       status: "active",
@@ -109,17 +109,24 @@ export const gamesApi = {
     const db = await getDB();
     const game = await db.get("games", gameId);
     if (!game) throw new Error("Game not found");
+    if (game.status === "completed") throw new Error("Cannot update a completed game");
 
     const phases = game.phaseSet.phases;
     if (!phases.includes(phaseId)) throw new Error("Phase not found in game");
 
     if (phases.length === 1) throw new Error("Cannot remove the last phase from a game");
 
-    /** @todo: verify that the phase hasn't been completed */
+    if (await roundsApi.hasRounds(gameId)) {
+      throw new Error("Cannot remove phases after rounds have been recorded");
+    }
+
+    const nextPhases = [...phases] as PhaseId[];
+    const phaseIndex = nextPhases.indexOf(phaseId);
+    nextPhases.splice(phaseIndex, 1);
 
     const updatedPhaseSet: TemporaryPhaseSet = {
       ...game.phaseSet,
-      phases: game.phaseSet.phases.filter((id) => id !== phaseId) as ArrayAtLeastOne<PhaseId>,
+      phases: nextPhases as ArrayAtLeastOne<PhaseId>,
     };
 
     await update(gameId, { phaseSet: updatedPhaseSet });
@@ -141,6 +148,10 @@ export const gamesApi = {
     const existingGame = await db.get("games", id);
     const existing = existingGame ? withGameDefaults(existingGame) : undefined;
     if (!existing) throw new Error("Game not found");
+    if (!existing.players.includes(winnerId)) throw new Error("Winner is not in this game");
+    if (existing.status === "active" && !existing.activePlayers.includes(winnerId)) {
+      throw new Error("Winner is not an active player in this game");
+    }
 
     const winnerName = await db.get("players", winnerId).then((p) => p?.name);
     if (!winnerName) throw new Error("Winner player not found");
@@ -168,18 +179,21 @@ export const gamesApi = {
   async delete(id: GameId): Promise<void> {
     const db = await getDB();
     const game = await db.get("games", id);
+    const temporaryPhaseIds: PhaseId[] = [];
 
     if (game) {
       const phases = await phasesApi.getByIds(game.phaseSet.phases);
-      const temporaryPhaseIds = phases.filter((p) => p.type === "temporary").map((p) => p.id);
-
-      if (temporaryPhaseIds.length > 0) {
-        await phasesApi.deleteByIds(temporaryPhaseIds);
-      }
+      temporaryPhaseIds.push(...phases.filter((p) => p.type === "temporary").map((p) => p.id));
     }
 
-    await db.delete("games", id);
-    await roundsApi.deleteByGameId(id);
+    const rounds = await db.getAllFromIndex("rounds", "by-game", id);
+    const tx = db.transaction(["customPhases", "games", "rounds"], "readwrite");
+    await Promise.all([
+      ...temporaryPhaseIds.map((phaseId) => tx.objectStore("customPhases").delete(phaseId)),
+      ...rounds.map((round) => tx.objectStore("rounds").delete([round.gameId, round.roundNumber])),
+      tx.objectStore("games").delete(id),
+      tx.done,
+    ]);
   },
 };
 
@@ -207,10 +221,7 @@ async function getByStatus<GameStatus extends Game["status"]>(
 }
 
 function withGameDefaults(game: LegacyGame): Game {
-  const settings: GameSettings = {
-    ...DEFAULT_GAME_SETTINGS,
-    ...game.settings,
-  };
+  const settings = normalizeGameSettings(game.settings);
 
   if (game.status === "active") return { ...game, settings };
   return { ...game, settings };

@@ -17,22 +17,25 @@ export function DefaultPhaseSetSetting({ value }: DefaultPhaseSetSettingProps) {
 
   return (
     <SettingListRow label="Default Phase Set">
-      <Listbox
-        value={value}
-        onChange={(phaseSetId) => setDefaultPhaseSetId.mutate(phaseSetId)}
-        disabled={isLoading || setDefaultPhaseSetId.isPending}
-      >
-        <ListboxButton variant="plain" className="shrink-0">
-          {selectedLabel}
-        </ListboxButton>
-        <ListboxOptions className="right-0 left-auto origin-top-right">
-          {phaseSets.map(({ id, name }) => (
-            <ListboxOption key={id} value={id}>
-              {name}
-            </ListboxOption>
-          ))}
-        </ListboxOptions>
-      </Listbox>
+      {(labelId) => (
+        <Listbox
+          value={value}
+          onChange={(phaseSetId) => setDefaultPhaseSetId.mutate(phaseSetId)}
+          disabled={isLoading || setDefaultPhaseSetId.isPending}
+          aria-labelledby={labelId}
+        >
+          <ListboxButton variant="plain" className="shrink-0">
+            {selectedLabel}
+          </ListboxButton>
+          <ListboxOptions className="right-0 left-auto origin-top-right">
+            {phaseSets.map(({ id, name }) => (
+              <ListboxOption key={id} value={id}>
+                {name}
+              </ListboxOption>
+            ))}
+          </ListboxOptions>
+        </Listbox>
+      )}
     </SettingListRow>
   );
 }

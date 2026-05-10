@@ -12,7 +12,12 @@ export interface ManagePhaseDialogProps {
 
 export function ManagePhaseDialog({ phase, open, onClose, afterLeave }: ManagePhaseDialogProps) {
   return (
-    <Dialog open={open} onClose={onClose} afterLeave={afterLeave}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      afterLeave={afterLeave}
+      aria-label={phase ? formatPhaseDisplayName(phase) : "Phase"}
+    >
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-3">
           <Button onClick={onClose} className="size-9 shrink-0 p-0" aria-label="Go back">

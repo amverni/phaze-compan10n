@@ -1,15 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { appSettingsOptions } from "../../data/hooks/useSettings";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button, List } from "../ui";
+import { Button, InlineError, List } from "../ui";
 import { DefaultPhaseSetSetting } from "./DefaultPhaseSetSetting";
 import { DefaultTiebreakerSetting } from "./DefaultTiebreakerSetting";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 
 export function Settings() {
-  const { data: settings, isLoading } = useQuery(appSettingsOptions());
+  const { data: settings, isLoading, isError, refetch } = useQuery(appSettingsOptions());
 
   return (
     <CardBackground
@@ -25,29 +26,29 @@ export function Settings() {
           <div className="flex items-center justify-end pb-2">
             <ResetSettingsButton disabled={isLoading} />
           </div>
-          <List allowOverflow isLoading={isLoading} shimmerRows={2}>
-            {settings
-              ? [
-                  <DefaultTiebreakerSetting
-                    key="default-tiebreaker"
-                    value={settings.gameDefaults.tiebreaker}
-                  />,
-                  <DefaultPhaseSetSetting
-                    key="default-phase-set"
-                    value={settings.gameDefaults.phaseSetId}
-                  />,
-                ]
-              : null}
-          </List>
+          {isError ? (
+            <InlineError message="Unable to load settings." onRetry={() => refetch()} />
+          ) : (
+            <List allowOverflow isLoading={isLoading} shimmerRows={2}>
+              {settings
+                ? [
+                    <DefaultTiebreakerSetting
+                      key="default-tiebreaker"
+                      value={settings.gameDefaults.tiebreaker}
+                    />,
+                    <DefaultPhaseSetSetting
+                      key="default-phase-set"
+                      value={settings.gameDefaults.phaseSetId}
+                    />,
+                  ]
+                : null}
+            </List>
+          )}
         </div>
       }
       footerContent={
         <div className="content-container flex h-full">
-          <Button
-            onClick={() => window.history.back()}
-            className="size-14 p-0"
-            aria-label="Go back"
-          >
+          <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
             <ArrowLeft className="size-8" />
           </Button>
         </div>

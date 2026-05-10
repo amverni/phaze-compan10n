@@ -38,18 +38,23 @@ export function ScrollFade({ style, className, ...props }: ComponentProps<"div">
 
     function update() {
       if (!el) return;
-      setCanScrollUp(el.scrollTop > 1);
-      setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+      const nextCanScrollUp = el.scrollTop > 1;
+      const nextCanScrollDown = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+      setCanScrollUp((current) => (current === nextCanScrollUp ? current : nextCanScrollUp));
+      setCanScrollDown((current) => (current === nextCanScrollDown ? current : nextCanScrollDown));
     }
 
     update();
     el.addEventListener("scroll", update, { passive: true });
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
+    const resizeObserver = new ResizeObserver(update);
+    resizeObserver.observe(el);
+    const mutationObserver = new MutationObserver(update);
+    mutationObserver.observe(el, { childList: true, subtree: true });
 
     return () => {
       el.removeEventListener("scroll", update);
-      ro.disconnect();
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
     };
   }, []);
 

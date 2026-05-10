@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Player } from "../../types";
@@ -55,7 +56,12 @@ export function Players() {
               </Button>
             )}
           />
-          <Dialog open={dialogOpen} onClose={handleClose} afterLeave={handleAfterLeave}>
+          <Dialog
+            open={dialogOpen}
+            onClose={handleClose}
+            afterLeave={handleAfterLeave}
+            aria-label={editingPlayer ? "Edit player" : "Create player"}
+          >
             <PlayerEditor
               defaultName={defaultName}
               player={editingPlayer}
@@ -67,11 +73,7 @@ export function Players() {
       }
       footerContent={
         <div className="content-container flex h-full">
-          <Button
-            onClick={() => window.history.back()}
-            className="size-14 p-0"
-            aria-label="Go back"
-          >
+          <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
             <ArrowLeft className="size-8" />
           </Button>
         </div>

@@ -18,18 +18,20 @@ export function TiebreakerSettingRow({
 }: TiebreakerSettingRowProps) {
   return (
     <SettingListRow label={label}>
-      <Listbox value={value} onChange={onChange} disabled={disabled}>
-        <ListboxButton variant="plain" className="shrink-0">
-          {TIEBREAKER_LABELS[value]}
-        </ListboxButton>
-        <ListboxOptions className="right-0 left-auto origin-top-right">
-          {TIEBREAKER_OPTIONS.map(({ value, label }) => (
-            <ListboxOption key={value} value={value}>
-              {label}
-            </ListboxOption>
-          ))}
-        </ListboxOptions>
-      </Listbox>
+      {(labelId) => (
+        <Listbox value={value} onChange={onChange} disabled={disabled} aria-labelledby={labelId}>
+          <ListboxButton variant="plain" className="shrink-0">
+            {TIEBREAKER_LABELS[value]}
+          </ListboxButton>
+          <ListboxOptions className="right-0 left-auto origin-top-right">
+            {TIEBREAKER_OPTIONS.map(({ value, label }) => (
+              <ListboxOption key={value} value={value}>
+                {label}
+              </ListboxOption>
+            ))}
+          </ListboxOptions>
+        </Listbox>
+      )}
     </SettingListRow>
   );
 }

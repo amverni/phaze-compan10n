@@ -75,12 +75,13 @@ function RowDivider() {
   return <div className="list-divider mx-3 border-t border-white/10 dark:border-white/5" />;
 }
 
-function RemoveButton({ onClick }: { onClick: () => void }) {
+function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <Button
       type="button"
       className="cursor-pointer rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10"
       onClick={onClick}
+      aria-label={label}
     >
       <Minus className="h-5 w-5 shrink-0 text-text-secondary" />
     </Button>
@@ -99,9 +100,10 @@ interface SortableRowProps {
   className: string;
   removable?: boolean;
   onRemove?: (id: string) => void;
+  label: string;
 }
 
-function SortableRow({ id, children, className, removable, onRemove }: SortableRowProps) {
+function SortableRow({ id, children, className, removable, onRemove, label }: SortableRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -114,13 +116,17 @@ function SortableRow({ id, children, className, removable, onRemove }: SortableR
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style}>
       <div className={className}>
         <div className="flex min-w-0 flex-1 items-center">{children}</div>
-        {removable && onRemove && <RemoveButton onClick={() => onRemove(id)} />}
+        {removable && onRemove && (
+          <RemoveButton label={`Remove ${label}`} onClick={() => onRemove(id)} />
+        )}
         <Button
           type="button"
           className="touch-none cursor-grab rounded-full p-1 text-text-secondary hover:bg-black/5 active:cursor-grabbing dark:hover:bg-white/10"
+          aria-label={`Reorder ${label}`}
+          {...attributes}
           {...listeners}
         >
           <ChevronsUpDown className="h-5 w-5 shrink-0" />
@@ -290,6 +296,7 @@ function prefersReducedMotion() {
 
 export interface SortableItem {
   id: string;
+  label?: string;
 }
 
 export interface ListProps {
@@ -554,7 +561,6 @@ export function List({
 
     if (keysEqual(previousKeys, nextKeys)) {
       previousRowsRef.current = currentRows;
-      previousRectsRef.current = measureRows(currentRows);
       return;
     }
 
@@ -600,6 +606,7 @@ export function List({
 
   useLayoutEffect(
     () => () => {
+      animationRunRef.current += 1;
       pendingAnimationsRef.current = null;
       for (const animation of activeAnimationsRef.current) {
         animation.cancel();
@@ -663,6 +670,7 @@ export function List({
             className={className}
             removable={removable}
             onRemove={onRemove}
+            label={items?.find((item) => item.id === row.sortableId)?.label ?? "item"}
           >
             {row.child}
           </SortableRow>

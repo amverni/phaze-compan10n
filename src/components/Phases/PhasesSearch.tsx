@@ -4,6 +4,7 @@ import { phaseSetListOptions } from "../../data/hooks/usePhaseSets";
 import { phaseListOptions } from "../../data/hooks/usePhases";
 import type { MeldType, VisiblePhase } from "../../types";
 import {
+  InlineError,
   List,
   Listbox,
   ListboxButton,
@@ -51,7 +52,12 @@ export function PhasesSearch({
     ...(phaseSetFilter ? { phaseSetId: phaseSetFilter } : {}),
   };
 
-  const { data: phases, isLoading } = useQuery({
+  const {
+    data: phases,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     ...phaseListOptions(Object.keys(filters).length > 0 ? filters : undefined),
     placeholderData: keepPreviousData,
   });
@@ -112,9 +118,13 @@ export function PhasesSearch({
       </div>
 
       <ScrollFade className="min-h-0 flex-1 -mx-6 px-6 pt-2 pb-[calc(0.5rem+var(--slant))]">
-        <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
-          {phases?.map((phase) => renderRow(phase))}
-        </List>
+        {isError ? (
+          <InlineError message="Unable to load phases." onRetry={() => refetch()} />
+        ) : (
+          <List isLoading={isLoading} shimmerRows={4} emptyMessage={emptyMessage}>
+            {phases?.map((phase) => renderRow(phase))}
+          </List>
+        )}
       </ScrollFade>
     </div>
   );

@@ -4,6 +4,7 @@ import { Eye, Pencil, Star, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { phasesApi } from "../../data/api/phases";
 import { useToggleFavorite } from "../../data/hooks/useFavorites";
+import { phaseSetKeys } from "../../data/hooks/usePhaseSets";
 import { phaseKeys } from "../../data/hooks/usePhases";
 import type { VisiblePhase } from "../../types";
 import { formatPhaseDisplayName } from "../../utils";
@@ -25,6 +26,7 @@ export function PhaseListRow({ phase, isFavorite: isFavoriteProp, onView }: Phas
     mutationFn: (id: string) => phasesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: phaseKeys.all });
+      queryClient.invalidateQueries({ queryKey: phaseSetKeys.all });
     },
   });
 
@@ -39,6 +41,11 @@ export function PhaseListRow({ phase, isFavorite: isFavoriteProp, onView }: Phas
       { entityType: "phase", entityId: phase.id },
       { onError: () => setIsFavorite(previous) },
     );
+  }
+
+  function handleDelete() {
+    if (!window.confirm(`Delete ${formatPhaseDisplayName(phase)}?`)) return;
+    deletePhase.mutate(phase.id);
   }
 
   return (
@@ -58,13 +65,18 @@ export function PhaseListRow({ phase, isFavorite: isFavoriteProp, onView }: Phas
       <Button
         className="favorite-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-amber-400! hover:bg-black/5 dark:hover:bg-white/20"
         onClick={handleToggleFavorite}
+        aria-label={`${isFavorite ? "Remove" : "Add"} ${formatPhaseDisplayName(phase)} ${
+          isFavorite ? "from" : "to"
+        } favorites`}
+        aria-pressed={isFavorite}
       >
         <Star className={isFavorite ? "h-4 w-4 shrink-0 fill-current" : "h-4 w-4 shrink-0"} />
       </Button>
       {!isBuiltIn && (
         <Button
           className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
-          onClick={() => deletePhase.mutate(phase.id)}
+          onClick={handleDelete}
+          aria-label={`Delete ${formatPhaseDisplayName(phase)}`}
         >
           <Trash className="h-4 w-4 shrink-0 fill-none group-hover/trash:fill-current" />
         </Button>

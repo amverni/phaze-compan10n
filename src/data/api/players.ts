@@ -143,6 +143,11 @@ export const playersApi = {
     if (!existing) throw new Error("Player not found");
 
     const updated: Player = { ...existing, ...updates };
+    const errors = await this.validate(updated, id);
+    if (errors) {
+      throw new Error(Object.values(errors).join(", "));
+    }
+
     await db.put("players", updated);
     return updated;
   },

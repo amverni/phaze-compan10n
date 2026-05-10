@@ -1,4 +1,5 @@
 import { type IDBPDatabase, type IDBPTransaction, openDB, type StoreNames } from "idb";
+import type { Meld, Phase, PhaseStatus, Round, RoundScore } from "../../types";
 import type { Phase10DB } from "./schema";
 
 let dbInstance: IDBPDatabase<Phase10DB> | null = null;
@@ -6,13 +7,13 @@ let dbInstance: IDBPDatabase<Phase10DB> | null = null;
 export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
   if (dbInstance) return dbInstance;
 
-  dbInstance = await openDB<Phase10DB>("phase10-db", 4, {
-    upgrade(
+  dbInstance = await openDB<Phase10DB>("phase10-db", 5, {
+    async upgrade(
       db: IDBPDatabase<Phase10DB>,
-      _oldVersion: number,
+      oldVersion: number,
       _newVersion: number | null,
       transaction: IDBPTransaction<Phase10DB, StoreNames<Phase10DB>[], "versionchange">,
-    ): void {
+    ): Promise<void> {
       // Create players store
       if (!db.objectStoreNames.contains("players")) {
         const playerStore = db.createObjectStore("players", { keyPath: "id" });
@@ -26,13 +27,7 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
         gameStore.createIndex("by-status", "status");
       }
 
-      // Create rounds store
-      if (!db.objectStoreNames.contains("rounds")) {
-        const roundStore = db.createObjectStore("rounds", {
-          keyPath: ["gameId", "roundNumber"],
-        });
-        roundStore.createIndex("by-game", "gameId");
-      }
+      await migrateRoundsStore(db, transaction);
 
       // Create customPhases store
       if (!db.objectStoreNames.contains("customPhases")) {
@@ -40,6 +35,9 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
         customPhasesStore.createIndex("by-type", "type");
       } else if (!transaction.objectStore("customPhases").indexNames.contains("by-type")) {
         transaction.objectStore("customPhases").createIndex("by-type", "type");
+      }
+      if (oldVersion < 5 && db.objectStoreNames.contains("customPhases")) {
+        await migrateLegacyCustomPhaseMelds(transaction);
       }
 
       // Create customPhaseSets store
@@ -71,4 +69,96 @@ export function closeDB(): void {
     dbInstance.close();
     dbInstance = null;
   }
+}
+
+type LegacyRoundScore = Omit<RoundScore, "phaseStatus"> & {
+  phaseStatus?: PhaseStatus;
+  completedPhase?: boolean;
+};
+
+type LegacyRound = Omit<Round, "scores"> & {
+  scores: [LegacyRoundScore, ...LegacyRoundScore[]];
+};
+
+type LegacyColorMeld = Omit<Extract<Meld, { type: "colorGroup" }>, "type"> & {
+  type: "group" | "colorGroup";
+};
+
+type LegacyMeld = Exclude<Meld, { type: "colorGroup" }> | LegacyColorMeld;
+
+type LegacyPhase = Omit<Phase, "requirements"> & {
+  requirements: [LegacyMeld, ...LegacyMeld[]];
+};
+
+async function migrateRoundsStore(
+  db: IDBPDatabase<Phase10DB>,
+  transaction: IDBPTransaction<Phase10DB, StoreNames<Phase10DB>[], "versionchange">,
+): Promise<void> {
+  if (!db.objectStoreNames.contains("rounds")) {
+    const roundStore = db.createObjectStore("rounds", {
+      keyPath: ["gameId", "roundNumber"],
+    });
+    roundStore.createIndex("by-game", "gameId");
+    return;
+  }
+
+  const existingStore = transaction.objectStore("rounds");
+  const hasCompositeKey =
+    Array.isArray(existingStore.keyPath) &&
+    existingStore.keyPath.length === 2 &&
+    existingStore.keyPath[0] === "gameId" &&
+    existingStore.keyPath[1] === "roundNumber";
+
+  const legacyRounds = (await existingStore.getAll()) as unknown as LegacyRound[];
+  const migratedRounds = legacyRounds.map(migrateLegacyRound);
+
+  if (hasCompositeKey) {
+    if (!existingStore.indexNames.contains("by-game")) {
+      existingStore.createIndex("by-game", "gameId");
+    }
+    await Promise.all(migratedRounds.map((round) => existingStore.put(round)));
+    return;
+  }
+
+  db.deleteObjectStore("rounds");
+  const roundStore = db.createObjectStore("rounds", {
+    keyPath: ["gameId", "roundNumber"],
+  });
+  roundStore.createIndex("by-game", "gameId");
+  await Promise.all(migratedRounds.map((round) => roundStore.add(round)));
+}
+
+function migrateLegacyRound(round: LegacyRound): Round {
+  const scores = round.scores.map((score) => ({
+    playerId: score.playerId,
+    score: score.score,
+    currentPhase: score.currentPhase,
+    phaseStatus: score.phaseStatus ?? (score.completedPhase ? "completed" : "failed"),
+  })) as Round["scores"];
+
+  return {
+    gameId: round.gameId,
+    roundNumber: round.roundNumber,
+    scores,
+  };
+}
+
+async function migrateLegacyCustomPhaseMelds(
+  transaction: IDBPTransaction<Phase10DB, StoreNames<Phase10DB>[], "versionchange">,
+): Promise<void> {
+  const store = transaction.objectStore("customPhases");
+  const phases = (await store.getAll()) as unknown as LegacyPhase[];
+  await Promise.all(
+    phases.map((phase) => {
+      const migrated = {
+        ...phase,
+        requirements: phase.requirements.map((requirement) =>
+          requirement.type === "group"
+            ? { ...requirement, type: "colorGroup" as const }
+            : requirement,
+        ) as Phase["requirements"],
+      };
+      return store.put(migrated);
+    }),
+  );
 }

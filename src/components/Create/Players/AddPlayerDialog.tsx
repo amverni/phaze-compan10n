@@ -41,11 +41,16 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
       afterLeave={handleAfterLeave}
       initialFocus={inputRef}
       className="overflow-hidden"
+      aria-label={view === "create" ? "Create player" : "Add player"}
     >
       <div className="h-full w-full overflow-hidden">
         <div className="add-player-slider h-full" data-view={view}>
           {/* ── Page 1: Search ───────────────────────────── */}
-          <div className="h-full w-full shrink-0 px-4">
+          <div
+            className="h-full w-full shrink-0 px-4"
+            inert={view !== "search" ? true : undefined}
+            aria-hidden={view !== "search"}
+          >
             <PlayersSearch
               inputRef={inputRef}
               renderRow={(player) => (
@@ -71,7 +76,11 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
           </div>
 
           {/* ── Page 2: Create Player ────────────────────── */}
-          <div className="h-full w-full shrink-0">
+          <div
+            className="h-full w-full shrink-0"
+            inert={view !== "create" ? true : undefined}
+            aria-hidden={view !== "create"}
+          >
             {view === "create" && (
               <PlayerEditor defaultName={defaultName} onBack={handleBack} onCreated={addPlayer} />
             )}

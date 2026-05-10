@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { BuiltInT, MeldType, PhaseId, SavedT } from "../../types";
+import type { BuiltInT, MeldType, PhaseId, PhaseSetId, SavedT } from "../../types";
 import { phasesApi } from "../api/phases";
 
 export const phaseKeys = {
@@ -10,7 +10,7 @@ export const phaseKeys = {
     search?: string;
     isFavorite?: 0 | 1;
     meldTypes?: MeldType[];
-    phaseSetId?: string;
+    phaseSetId?: PhaseSetId;
   }) => [...phaseKeys.lists(), filters] as const,
   details: () => [...phaseKeys.all, "detail"] as const,
   detail: (id: PhaseId) => [...phaseKeys.details(), id] as const,
@@ -22,7 +22,7 @@ export function phaseListOptions(filters?: {
   search?: string;
   isFavorite?: 0 | 1;
   meldTypes?: MeldType[];
-  phaseSetId?: string;
+  phaseSetId?: PhaseSetId;
 }) {
   return queryOptions({
     queryKey: phaseKeys.list(filters ?? {}),
