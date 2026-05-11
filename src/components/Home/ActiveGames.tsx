@@ -1,13 +1,12 @@
+import { Button } from "@headlessui/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
-import { activeGamesOptions } from "../../data/hooks/useGames";
+import { Play, Trash } from "lucide-react";
+import { activeGamesOptions, useDeleteGame } from "../../data/hooks/useGames";
 import { playerListOptions } from "../../data/hooks/usePlayers";
 import type { ActiveGame, Player, PlayerId } from "../../types";
-import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
+import { PlayerAvatarStack } from "../PlayerAvatarStack/PlayerAvatarStack";
 import { InlineError, List } from "../ui";
-
-const MAX_AVATARS = 4;
 
 function formatRelativeTime(timestamp: number): string {
   const diff = Date.now() - timestamp;
@@ -29,40 +28,38 @@ interface ActiveGameRowProps {
 }
 
 function ActiveGameRow({ game, playersById }: ActiveGameRowProps) {
+  const deleteGame = useDeleteGame();
   const players = game.activePlayers
     .map((id) => playersById.get(id))
     .filter((p): p is Player => p !== undefined);
-  const visible = players.slice(0, MAX_AVATARS);
-  const hiddenCount = players.length - visible.length;
   const playerSummary = players.map((p) => p.name).join(", ") || "no players";
 
+  function handleDelete() {
+    deleteGame.mutate(game.id);
+  }
+
   return (
-    <Link
-      to="/game"
-      search={{ gameId: game.id }}
-      aria-label={`Continue game with ${playerSummary}`}
-      className="relative -mx-3 flex h-full w-[calc(100%+1.5rem)] items-center gap-3 px-3 outline-none hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
-    >
-      <div className="flex shrink-0 -space-x-2">
-        {visible.map((player) => (
-          <span
-            key={player.id}
-            className="ring-2 ring-white dark:ring-neutral-900 rounded-full inline-flex"
-          >
-            <PlayerAvatar color={player.color} size={16} />
-          </span>
-        ))}
-        {hiddenCount > 0 && (
-          <span className="ring-2 ring-white dark:ring-neutral-900 inline-flex size-6.5 items-center justify-center rounded-full bg-black/10 text-[10px] font-semibold text-text-secondary dark:bg-white/15">
-            +{hiddenCount}
-          </span>
-        )}
-      </div>
-      <span className="min-w-0 flex-1 truncate text-text-secondary">
-        {formatRelativeTime(game.createdAt)}
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-text-secondary" />
-    </Link>
+    <div className="group/row relative -mx-3 flex h-full w-[calc(100%+1.5rem)] items-center text-sm [&:hover:not(:has(.trash-btn:hover))]:bg-black/5 dark:[&:hover:not(:has(.trash-btn:hover))]:bg-white/10">
+      <Link
+        to="/game"
+        search={{ gameId: game.id }}
+        aria-label={`Continue game with ${playerSummary}`}
+        className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 pl-3 pr-2 text-left"
+      >
+        <PlayerAvatarStack players={players} />
+        <span className="ml-1 shrink-0 whitespace-nowrap text-text-secondary">
+          {formatRelativeTime(game.createdAt)}
+        </span>
+        <Play className="ml-2 h-4 w-4 shrink-0 fill-none text-text-secondary group-hover/row:fill-blue-500 group-hover/row:text-blue-500 group-has-[.trash-btn:hover]/row:fill-none group-has-[.trash-btn:hover]/row:text-text-secondary" />
+      </Link>
+      <Button
+        className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:bg-black/5 hover:text-red-500! dark:hover:bg-white/10"
+        onClick={handleDelete}
+        aria-label={`Delete game with ${playerSummary}`}
+      >
+        <Trash className="h-4 w-4 shrink-0 fill-none group-hover/trash:fill-current" />
+      </Button>
+    </div>
   );
 }
 

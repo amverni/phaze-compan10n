@@ -26,7 +26,7 @@ export function AddPlayerRow({
     >
       {showFavoriteAccent && <FavoriteAccent active={player.isFavorite === 1} />}
       <span className="flex items-center gap-2">
-        <PlayerAvatar color={player.color} />
+        <PlayerAvatar player={player} />
         <span>{player.name}</span>
       </span>
       <Plus className="h-5 w-5 shrink-0 text-text-secondary" />

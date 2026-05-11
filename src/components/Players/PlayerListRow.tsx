@@ -48,7 +48,7 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 h-full text-left"
         onClick={() => onEdit?.(player)}
       >
-        <PlayerAvatar color={player.color} />
+        <PlayerAvatar player={player} />
         <span className="flex-1 truncate">{player.name}</span>
         <Pencil className="h-4 w-4 shrink-0 fill-none text-text-secondary group-hover/row:fill-blue-500 group-hover/row:text-blue-500 group-has-[.trash-btn:hover]/row:fill-none group-has-[.trash-btn:hover]/row:text-text-secondary group-has-[.favorite-btn:hover]/row:fill-none group-has-[.favorite-btn:hover]/row:text-text-secondary" />
       </Button>

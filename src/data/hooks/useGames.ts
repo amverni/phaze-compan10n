@@ -36,3 +36,11 @@ export function useCreateGame() {
     },
   });
 }
+
+export function useDeleteGame() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: GameId) => gamesApi.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+  });
+}

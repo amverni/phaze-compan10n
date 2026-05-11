@@ -1,22 +1,73 @@
 import { TriangleAlert } from "lucide-react";
 import { getColorEntry } from "../../data/constants/colors";
+import type { ColorEntry, Player } from "../../types";
 import { getContrastColor } from "../../utils";
 
+export type PlayerAvatarVariant = "icon" | "initials" | "icon-initials";
+
 export interface PlayerAvatarProps {
-  color: string;
+  player: Pick<Player, "color" | "name">;
   size?: number;
+  /** What to render inside the badge. Defaults to `"icon"`. */
+  variant?: PlayerAvatarVariant;
 }
 
-export function PlayerAvatar({ color, size = 20 }: PlayerAvatarProps) {
-  const entry = getColorEntry(color);
+const FALLBACK_ENTRY: ColorEntry = {
+  hex: "#525252",
+  name: "Unknown",
+  icon: TriangleAlert,
+};
 
-  if (!entry) {
-    return <TriangleAlert size={size} strokeWidth={1.5} color="#9CA3AF" />;
-  }
+function getInitials(name: string | undefined): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return (parts[0][0] ?? "?").toUpperCase();
+  return ((parts[0][0] ?? "") + (parts[parts.length - 1][0] ?? "")).toUpperCase();
+}
 
+export function PlayerAvatar({ player, size = 20, variant = "icon" }: PlayerAvatarProps) {
+  const entry = getColorEntry(player.color) ?? FALLBACK_ENTRY;
   const Icon = entry.icon;
   const pad = size + 10;
   const fg = getContrastColor(entry.hex);
+  const initials = variant === "icon" ? null : getInitials(player.name);
+  const fontSize = Math.round(size * 0.65);
+
+  if (variant === "initials") {
+    return (
+      <span
+        className="inline-flex shrink-0 items-center justify-center rounded-full font-semibold leading-none"
+        style={{
+          width: pad,
+          height: pad,
+          backgroundColor: entry.hex,
+          color: fg,
+          fontSize,
+        }}
+      >
+        {initials}
+      </span>
+    );
+  }
+
+  if (variant === "icon-initials") {
+    return (
+      <span
+        className="inline-flex shrink-0 items-center gap-1 rounded-full font-semibold leading-none"
+        style={{
+          height: pad,
+          paddingInline: Math.round(pad * 0.35),
+          backgroundColor: entry.hex,
+          color: fg,
+          fontSize,
+        }}
+      >
+        <Icon size={size} strokeWidth={1.5} color={fg} />
+        <span>{initials}</span>
+      </span>
+    );
+  }
 
   return (
     <span

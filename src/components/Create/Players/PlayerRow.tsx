@@ -5,7 +5,7 @@ import { PlayerAvatar } from "../../PlayerAvatar/PlayerAvatar";
 export function PlayerRow({ player }: { player: Player }) {
   return (
     <span className="flex items-center gap-2">
-      <PlayerAvatar color={player.color} />
+      <PlayerAvatar player={player} />
       {player.name}
     </span>
   );
