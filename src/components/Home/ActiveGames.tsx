@@ -41,8 +41,8 @@ function ActiveGameRow({ game, playersById }: ActiveGameRowProps) {
   return (
     <div className="group/row relative -mx-3 flex h-full w-[calc(100%+1.5rem)] items-center text-sm [&:hover:not(:has(.trash-btn:hover))]:bg-black/5 dark:[&:hover:not(:has(.trash-btn:hover))]:bg-white/10">
       <Link
-        to="/game"
-        search={{ gameId: game.id }}
+        to="/game/$gameId"
+        params={{ gameId: game.id }}
         aria-label={`Continue game with ${playerSummary}`}
         className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 pl-3 pr-2 text-left"
       >

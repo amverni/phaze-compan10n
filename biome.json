@@ -92,5 +92,18 @@
       "!src/routeTree.gen.ts",
       "!src/routes/-router.ts"
     ]
-  }
+  },
+
+  "overrides": [
+    {
+      "includes": ["src/routes/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
+          }
+        }
+      }
+    }
+  ]
 }

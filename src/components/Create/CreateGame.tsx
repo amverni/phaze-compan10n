@@ -47,7 +47,7 @@ export function CreateGame() {
         phaseSet,
         settings,
       });
-      await navigate({ to: "/game", search: { gameId: game.id } });
+      await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
     } catch (error) {
       setStartError(error instanceof Error ? error.message : "Unable to start game");
     }
