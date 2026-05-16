@@ -70,6 +70,16 @@
   z-index: 3;
 }
 
+/* Body-row cells anchor their content to the top so that expanding a
+   round (revealing extras under the phase number) doesn't shift the
+   phase number upward. padding-top: 14px matches where centered
+   content sat in a non-expanded 44px cell, so non-expanded rows
+   visually stay in place. */
+.scoreboard-cell--anchor-top {
+  justify-content: flex-start;
+  padding-top: 14px;
+}
+
 /* Dashed border treatment for the ghost row. Only styles the borders
    that should exist inside the grid — the top edge (separates ghost
    from the row above) and the between-cell right edges. The bottom

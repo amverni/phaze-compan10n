@@ -42,7 +42,7 @@ export function RoundRow({
         onClick={onToggle}
         aria-expanded={isExpanded}
         aria-label={`Round ${round.roundNumber}${isExpanded ? ", expanded" : ""}`}
-        className={`scoreboard-cell scoreboard-cell--sticky-left text-left ${lastRowClass}`}
+        className={`scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--anchor-top text-left ${lastRowClass}`}
       >
         <span className="text-xs font-medium leading-none tabular-nums text-text-secondary">
           {round.roundNumber}
@@ -61,7 +61,13 @@ export function RoundRow({
         );
 
         return (
-          <div key={player.id} className={`scoreboard-cell ${lastColClass(idx)} ${lastRowClass}`}>
+          // biome-ignore lint/a11y/noStaticElementInteractions: keyboard users toggle via the sibling round-number <button> with aria-expanded; this cell is a mouse/touch-only enlarged click target.
+          <div
+            key={player.id}
+            onClick={onToggle}
+            role="presentation"
+            className={`scoreboard-cell scoreboard-cell--anchor-top cursor-pointer ${lastColClass(idx)} ${lastRowClass}`}
+          >
             <PlayerResultCell
               score={score}
               phaseNumber={phaseNumber}
