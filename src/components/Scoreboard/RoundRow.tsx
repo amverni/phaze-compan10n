@@ -71,11 +71,12 @@ export function RoundRow({
               extras={
                 <div className={`scoreboard-extras ${isExpanded ? "scoreboard-extras--open" : ""}`}>
                   <div>
-                    <span className="text-[11px] leading-none text-text-secondary tabular-nums">
+                    <span className="text-[14px] leading-none text-text-secondary tabular-nums">
                       {formatTiebreaker(tbValue, tiebreaker)}
                     </span>
-                    <span className="text-[11px] leading-none text-text-secondary/70 tabular-nums">
-                      Σ {formatTiebreaker(runningTotal, tiebreaker)}
+                    <span aria-hidden className="my-[2px] h-px w-3/4 bg-text-secondary/40" />
+                    <span className="text-[12px] leading-none text-text-secondary/70 tabular-nums">
+                      {formatTiebreaker(runningTotal, tiebreaker)}
                     </span>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+import { Check, CornerUpRight, type LucideIcon, Minus, X } from "lucide-react";
 import type { PhaseStatus, RoundScore } from "../../types";
 
 interface PlayerResultCellProps {
@@ -29,11 +30,11 @@ const ICON_CLASS: Record<PhaseStatus, string> = {
   satOut: "text-text-secondary",
 };
 
-const ICON_CHAR: Record<PhaseStatus, string> = {
-  completed: "✓",
-  failed: "✕",
-  skipped: "⤴",
-  satOut: "—",
+const STATUS_ICON: Record<PhaseStatus, LucideIcon> = {
+  completed: Check,
+  failed: X,
+  skipped: CornerUpRight,
+  satOut: Minus,
 };
 
 export function PlayerResultCell({
@@ -46,6 +47,7 @@ export function PlayerResultCell({
 }: PlayerResultCellProps) {
   const status = score?.phaseStatus;
   const isGhost = variant === "ghost";
+  const StatusIcon = status ? STATUS_ICON[status] : null;
 
   const phaseColor = isGhost
     ? "text-text-secondary"
@@ -78,9 +80,9 @@ export function PlayerResultCell({
           )}
           {phaseNumber}
         </span>
-        {!isGhost && status && (
-          <span aria-hidden className={`absolute right-[5px] text-xs leading-none ${iconColor}`}>
-            {ICON_CHAR[status]}
+        {!isGhost && StatusIcon && (
+          <span aria-hidden className={`absolute right-[5px] leading-none ${iconColor}`}>
+            <StatusIcon size={14} strokeWidth={2.5} />
           </span>
         )}
       </div>
