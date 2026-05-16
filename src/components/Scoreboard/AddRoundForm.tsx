@@ -147,14 +147,40 @@ export function AddRoundForm({ gameId, players, onSubmitted, onCancel }: AddRoun
         </p>
       )}
 
-      <div className="flex gap-2">
-        <button type="submit" className="border border-current px-3 py-1">
-          Save round
-        </button>
-        <button type="button" onClick={onCancel} className="border border-current px-3 py-1">
-          Cancel
-        </button>
-      </div>
+      <form.Subscribe selector={(s) => s.values}>
+        {(values) => {
+          const completedIds = values.scores
+            .filter((s) => s.phaseStatus === "completed")
+            .map((s) => s.playerId);
+          const winnerValid =
+            values.roundWinnerId !== "" && completedIds.includes(values.roundWinnerId);
+          return (
+            <>
+              {!winnerValid && (
+                <p className="text-text-secondary text-xs">
+                  Pick a winner from the players whose phase is marked completed.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={!winnerValid}
+                  className="border border-current px-3 py-1 disabled:opacity-50"
+                >
+                  Save round
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="border border-current px-3 py-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          );
+        }}
+      </form.Subscribe>
     </form>
   );
 }

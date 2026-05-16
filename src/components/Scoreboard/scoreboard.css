@@ -107,13 +107,3 @@
   gap: 2px;
   padding-top: 6px;
 }
-
-/* Whole-row clickable wrapper. cells use display: contents so they
-   participate in the parent grid directly. */
-.scoreboard-row {
-  display: contents;
-}
-.scoreboard-row-button {
-  display: contents;
-  cursor: pointer;
-}

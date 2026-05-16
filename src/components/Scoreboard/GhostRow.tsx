@@ -14,19 +14,11 @@ export function GhostRow({ game, rounds, players, totalPhases, onOpenAddRound }:
   const nextRoundNumber = rounds.length + 1;
   const dealerId = getDealerId(nextRoundNumber, game.activePlayers);
 
-  const onKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onOpenAddRound();
-    }
-  };
-
   return (
     <>
       <button
         type="button"
         onClick={onOpenAddRound}
-        onKeyDown={onKeyDown}
         aria-label={`Add round ${nextRoundNumber}`}
         className="scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--dashed scoreboard-cell--last-row text-left"
       >

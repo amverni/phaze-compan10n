@@ -45,14 +45,13 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
     .filter((p): p is Player => p !== undefined);
 
   const showGhost = isActive;
-  const lastBodyRowIsLast = !showGhost; // when no ghost row, last completed row gets no bottom border
 
   return (
     <div className="w-full">
-      <div
+      <section
         ref={rootRef}
+        aria-label="Scoreboard"
         className="overflow-auto rounded-xl"
-        // Bound the scrollable area to the available main-content height
         style={{ maxHeight: "100%" }}
       >
         <div
@@ -72,7 +71,7 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
           />
 
           {sortedRounds.map((round, idx) => {
-            const isLastRow = lastBodyRowIsLast && idx === sortedRounds.length - 1;
+            const isLastRow = idx === sortedRounds.length - 1;
             return (
               <RoundRow
                 key={round.roundNumber}
@@ -102,7 +101,7 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
             />
           )}
         </div>
-      </div>
+      </section>
 
       {isActive && (
         <AddRoundDialog

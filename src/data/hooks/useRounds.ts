@@ -1,7 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ArrayAtLeastOne, GameId, PlayerId, Round, RoundScore } from "../../types";
+import type { ArrayAtLeastOne, GameId, PlayerId, RoundScore } from "../../types";
 import { roundsApi } from "../api/rounds";
-import { gameKeys } from "./useGames";
 
 type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
 
@@ -24,9 +23,8 @@ export function useAddRound(gameId: GameId) {
   return useMutation({
     mutationFn: (data: { scores: ArrayAtLeastOne<AddRoundScoreInput>; roundWinnerId: PlayerId }) =>
       roundsApi.add({ gameId, ...data }),
-    onSuccess: (round: Round) => {
-      queryClient.invalidateQueries({ queryKey: roundKeys.list(round.gameId) });
-      queryClient.invalidateQueries({ queryKey: gameKeys.detail(round.gameId) });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: roundKeys.lists() });
     },
   });
 }

@@ -35,20 +35,11 @@ export function RoundRow({
     idx === players.length - 1 ? "scoreboard-cell--last-col" : "";
   const lastRowClass = isLastRow ? "scoreboard-cell--last-row" : "";
 
-  const onKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onToggle();
-    }
-  };
-
   return (
     <>
-      {/* Round-# cell (also serves as keyboard focus target) */}
       <button
         type="button"
         onClick={onToggle}
-        onKeyDown={onKeyDown}
         aria-expanded={isExpanded}
         aria-label={`Round ${round.roundNumber}${isExpanded ? ", expanded" : ""}`}
         className={`scoreboard-cell scoreboard-cell--sticky-left text-left ${lastRowClass}`}
