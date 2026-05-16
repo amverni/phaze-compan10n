@@ -103,29 +103,24 @@
 }
 
 /* Expandable extras inside a body cell.
-   Two transition declarations stagger the animation in each direction:
-   - Closing (removing --open): opacity fades fast (140ms) so the
-     content disappears before the row starts collapsing at 100ms.
-     This avoids the "content gets clipped from the bottom" feel
-     caused by `overflow: hidden` on the inner div as the parent
-     collapses.
-   - Opening (adding --open): the row expands first (220ms), then
-     content fades in at 120ms. Reveals the chrome before the text.
-   Uses max-height (not grid-template-rows) for broader browser
-   support. max-height: 80px is a safe ceiling above the natural
-   content height (~41px); we rely on overflow: hidden + the
-   transition for the height animation. */
+   All three properties (max-height, opacity, transform) animate
+   simultaneously with no delay. The inner content translates upward
+   while the container collapses, so the disappearance reads as
+   "sliding out the top" rather than "being clipped from the bottom."
+   Combined with the opacity fade, the running total (anchored at
+   the bottom of the inner div) stays visible longest as it slides up.
+   Open uses a small opacity delay so the chrome reveals before text. */
 .scoreboard-extras {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
   width: 100%;
-  transition: max-height 220ms ease 100ms, opacity 140ms ease;
+  transition: max-height 240ms ease, opacity 200ms ease;
 }
 .scoreboard-extras--open {
-  max-height: 80px;
+  max-height: 50px;
   opacity: 1;
-  transition: max-height 220ms ease, opacity 160ms ease 120ms;
+  transition: max-height 240ms ease, opacity 200ms ease 60ms;
 }
 .scoreboard-extras > div {
   display: flex;
@@ -133,4 +128,9 @@
   align-items: center;
   gap: 2px;
   padding-top: 6px;
+  transform: translateY(-100%);
+  transition: transform 240ms ease;
+}
+.scoreboard-extras--open > div {
+  transform: translateY(0);
 }
