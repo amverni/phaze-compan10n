@@ -18,14 +18,14 @@ interface PlayerResultCellProps {
 const PHASE_TEXT_CLASS: Record<PhaseStatus, string> = {
   completed: "text-[#27500A] dark:text-[#7DD86A]",
   failed: "text-[#A32D2D] dark:text-[#FF8585]",
-  skipped: "text-[#B45309] dark:text-[#FACC15]",
+  skipped: "text-[#CA8A04] dark:text-[#FACC15]",
   satOut: "text-text-secondary",
 };
 
 const ICON_CLASS: Record<PhaseStatus, string> = {
   completed: "text-[#3B6D11] dark:text-[#9CE07F]",
   failed: "text-[#A32D2D] dark:text-[#FF8585]",
-  skipped: "text-[#B45309] dark:text-[#FACC15]",
+  skipped: "text-[#CA8A04] dark:text-[#FACC15]",
   satOut: "text-text-secondary",
 };
 

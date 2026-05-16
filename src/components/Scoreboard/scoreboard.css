@@ -1,22 +1,21 @@
 /* ── Scoreboard grid + sticky cells ─────────────────────────
    The scoreboard is a single CSS Grid with sticky header (top)
    and sticky round-number column (left). The top-left corner
-   cell stacks both. */
+   cell stacks both. The outer scroll container is a `.glass`
+   surface (matches List); the inner grid stays a solid color
+   so sticky cells can `background: inherit` to obscure the
+   content that scrolls under them. */
 
 .scoreboard {
   display: grid;
   grid-template-columns:
     36px repeat(var(--player-count, 1), minmax(70px, 1fr));
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
-  overflow: hidden;
   background: white;
   min-width: max-content;
 }
 
 @media (prefers-color-scheme: dark) {
   .scoreboard {
-    border-color: rgba(255, 255, 255, 0.15);
     background: #171717;
   }
 }
@@ -71,13 +70,20 @@
   z-index: 3;
 }
 
-/* Dashed border treatment for the ghost row. */
+/* Dashed border treatment for the ghost row. Only styles the borders
+   that should exist inside the grid — the top edge (separates ghost
+   from the row above) and the between-cell right edges. The bottom
+   edge is left to `--last-row` (none), and the right edge of the
+   last column is explicitly removed so the outer container border
+   isn't doubled with a dashed stroke. */
 .scoreboard-cell--dashed {
   border-top: 1.5px dashed rgba(0, 0, 0, 0.25);
   border-right-style: dashed;
-  border-bottom-style: dashed;
   border-right-width: 1.5px;
-  border-bottom-width: 1.5px;
+}
+
+.scoreboard-cell--dashed.scoreboard-cell--last-col {
+  border-right: none;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -51,7 +51,7 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
       <section
         ref={rootRef}
         aria-label="Scoreboard"
-        className="overflow-auto rounded-xl"
+        className="glass relative overflow-auto rounded-2xl"
         style={{ maxHeight: "100%" }}
       >
         <div

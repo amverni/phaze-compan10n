@@ -89,6 +89,7 @@
       "!**/*.css",
       "!dist",
       "!dist-ssr",
+      "!.playwright-artifacts",
       "!src/routeTree.gen.ts",
       "!src/routes/-router.ts"
     ]
