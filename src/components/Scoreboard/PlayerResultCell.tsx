@@ -1,4 +1,4 @@
-import { Check, CornerUpRight, type LucideIcon, Minus, X } from "lucide-react";
+import { Check, type LucideIcon, Minus, Redo, X } from "lucide-react";
 import type { PhaseStatus, RoundScore } from "../../types";
 
 interface PlayerResultCellProps {
@@ -16,15 +16,8 @@ interface PlayerResultCellProps {
   extras?: React.ReactNode;
 }
 
-const PHASE_TEXT_CLASS: Record<PhaseStatus, string> = {
+const STATUS_COLOR_CLASS: Record<PhaseStatus, string> = {
   completed: "text-[#27500A] dark:text-[#7DD86A]",
-  failed: "text-[#A32D2D] dark:text-[#FF8585]",
-  skipped: "text-[#CA8A04] dark:text-[#FACC15]",
-  satOut: "text-text-secondary",
-};
-
-const ICON_CLASS: Record<PhaseStatus, string> = {
-  completed: "text-[#3B6D11] dark:text-[#9CE07F]",
   failed: "text-[#A32D2D] dark:text-[#FF8585]",
   skipped: "text-[#CA8A04] dark:text-[#FACC15]",
   satOut: "text-text-secondary",
@@ -33,7 +26,7 @@ const ICON_CLASS: Record<PhaseStatus, string> = {
 const STATUS_ICON: Record<PhaseStatus, LucideIcon> = {
   completed: Check,
   failed: X,
-  skipped: CornerUpRight,
+  skipped: Redo,
   satOut: Minus,
 };
 
@@ -51,11 +44,11 @@ export function PlayerResultCell({
 
   const phaseColor = isGhost
     ? "text-text-secondary"
-    : (status && PHASE_TEXT_CLASS[status]) || "text-text-primary";
+    : (status && STATUS_COLOR_CLASS[status]) || "text-text-primary";
 
   const iconColor = isGhost
     ? "text-text-secondary"
-    : (status && ICON_CLASS[status]) || "text-text-secondary";
+    : (status && STATUS_COLOR_CLASS[status]) || "text-text-secondary";
 
   return (
     <div className={`relative flex w-full flex-col items-center ${isGhost ? "opacity-55" : ""}`}>
