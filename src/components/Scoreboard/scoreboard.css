@@ -103,20 +103,31 @@
 }
 
 /* Expandable extras inside a body cell.
-   Use grid-template-rows: 0fr -> 1fr trick to animate height from zero. */
+   Two transition declarations stagger the animation in each direction:
+   - Closing (removing --open): opacity fades fast (140ms) so the
+     content disappears before the row starts collapsing at 100ms.
+     This avoids the "content gets clipped from the bottom" feel
+     caused by `overflow: hidden` on the inner div as the parent
+     collapses.
+   - Opening (adding --open): the row expands first (220ms), then
+     content fades in at 120ms. Reveals the chrome before the text.
+   Uses max-height (not grid-template-rows) for broader browser
+   support. max-height: 80px is a safe ceiling above the natural
+   content height (~41px); we rely on overflow: hidden + the
+   transition for the height animation. */
 .scoreboard-extras {
-  display: grid;
-  grid-template-rows: 0fr;
+  max-height: 0;
   opacity: 0;
-  transition: grid-template-rows 200ms ease, opacity 200ms ease;
+  overflow: hidden;
   width: 100%;
+  transition: max-height 220ms ease 100ms, opacity 140ms ease;
 }
 .scoreboard-extras--open {
-  grid-template-rows: 1fr;
+  max-height: 80px;
   opacity: 1;
+  transition: max-height 220ms ease, opacity 160ms ease 120ms;
 }
 .scoreboard-extras > div {
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;

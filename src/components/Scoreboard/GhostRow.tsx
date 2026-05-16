@@ -20,7 +20,7 @@ export function GhostRow({ game, rounds, players, totalPhases, onOpenAddRound }:
         type="button"
         onClick={onOpenAddRound}
         aria-label={`Add round ${nextRoundNumber}`}
-        className="scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--dashed scoreboard-cell--last-row text-left"
+        className="scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--dashed scoreboard-cell--last-row cursor-pointer text-left"
       >
         <span
           className="inline-flex size-5 items-center justify-center rounded-full border-[1.5px] border-text-secondary/60 text-text-secondary"

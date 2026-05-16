@@ -42,7 +42,7 @@ export function RoundRow({
         onClick={onToggle}
         aria-expanded={isExpanded}
         aria-label={`Round ${round.roundNumber}${isExpanded ? ", expanded" : ""}`}
-        className={`scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--anchor-top text-left ${lastRowClass}`}
+        className={`scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--anchor-top cursor-pointer text-left ${lastRowClass}`}
       >
         <span className="text-xs font-medium leading-none tabular-nums text-text-secondary">
           {round.roundNumber}
