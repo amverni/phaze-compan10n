@@ -1,15 +1,25 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { gameDetailOptions } from "../../data/hooks/useGames";
+import { playersByIdsOptions } from "../../data/hooks/usePlayers";
+import { roundsListOptions } from "../../data/hooks/useRounds";
 import type { GameId } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
+import { Scoreboard } from "../Scoreboard";
 import { Button } from "../ui";
 
 interface GameProps {
   gameId: GameId;
 }
 
-export function Game(_props: GameProps) {
+export function Game({ gameId }: GameProps) {
+  const { data: game } = useQuery(gameDetailOptions(gameId));
+  const playerIds = game?.players ?? [];
+  const { data: players } = useQuery(playersByIdsOptions(playerIds));
+  const { data: rounds } = useQuery(roundsListOptions(gameId));
+
   return (
     <CardBackground
       headerContent={
@@ -20,8 +30,12 @@ export function Game(_props: GameProps) {
         </div>
       }
       mainContent={
-        <div className="content-container flex h-full items-center justify-center py-4">
-          <p className="text-text-secondary">Game page coming soon</p>
+        <div className="content-container flex h-full flex-col py-4">
+          {game && players && rounds ? (
+            <Scoreboard game={game} rounds={rounds} players={players} />
+          ) : (
+            <p className="text-text-secondary text-center">Loading…</p>
+          )}
         </div>
       }
       footerContent={

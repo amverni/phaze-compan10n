@@ -44,7 +44,7 @@ export function PlayerEditor({
     defaultValues: {
       name: player?.name ?? defaultName ?? "",
       color: player?.color ?? getRandomColorName(),
-      isFavorite: (player?.isFavorite ?? 0),
+      isFavorite: player?.isFavorite ?? 0,
     },
     validators: {
       onSubmitAsync: async ({ value }) => {

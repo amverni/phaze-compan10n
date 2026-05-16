@@ -48,10 +48,15 @@ export const roundsApi = {
    * phase status in the previous round — callers do not provide it.
    *
    * @param data - The round data. Scores should omit `currentPhase` (it is computed).
+   *   `roundWinnerId` is required and identifies the player who went out.
    * @returns The newly created round.
    * @throws {Error} If the game does not exist.
    */
-  async add(data: { gameId: GameId; scores: ArrayAtLeastOne<AddRoundScoreInput> }): Promise<Round> {
+  async add(data: {
+    gameId: GameId;
+    scores: ArrayAtLeastOne<AddRoundScoreInput>;
+    roundWinnerId: PlayerId;
+  }): Promise<Round> {
     const db = await getDB();
 
     const game = await db.get("games", data.gameId);
@@ -82,6 +87,7 @@ export const roundsApi = {
       gameId: data.gameId,
       roundNumber: nextRoundNumber,
       scores,
+      roundWinnerId: data.roundWinnerId,
     };
     await db.add("rounds", round);
     return round;

@@ -1,0 +1,119 @@
+/* ── Scoreboard grid + sticky cells ─────────────────────────
+   The scoreboard is a single CSS Grid with sticky header (top)
+   and sticky round-number column (left). The top-left corner
+   cell stacks both. */
+
+.scoreboard {
+  display: grid;
+  grid-template-columns:
+    36px repeat(var(--player-count, 1), minmax(70px, 1fr));
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  min-width: max-content;
+}
+
+@media (prefers-color-scheme: dark) {
+  .scoreboard {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: #171717;
+  }
+}
+
+.scoreboard-cell {
+  background: inherit;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 10px 2px;
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .scoreboard-cell {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* No right border on the last column / no bottom border on the last row. */
+.scoreboard-cell--last-col {
+  border-right: none;
+}
+.scoreboard-cell--last-row {
+  border-bottom: none;
+}
+
+/* Sticky header row. */
+.scoreboard-cell--sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 10px 3px;
+}
+
+/* Sticky first column (round numbers). */
+.scoreboard-cell--sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+/* Intersection of sticky header + sticky first column. */
+.scoreboard-cell--sticky-corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 3;
+}
+
+/* Dashed border treatment for the ghost row. */
+.scoreboard-cell--dashed {
+  border-top: 1.5px dashed rgba(0, 0, 0, 0.25);
+  border-right-style: dashed;
+  border-bottom-style: dashed;
+  border-right-width: 1.5px;
+  border-bottom-width: 1.5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .scoreboard-cell--dashed {
+    border-top-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Expandable extras inside a body cell.
+   Use grid-template-rows: 0fr -> 1fr trick to animate height from zero. */
+.scoreboard-extras {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 200ms ease, opacity 200ms ease;
+  width: 100%;
+}
+.scoreboard-extras--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.scoreboard-extras > div {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 6px;
+}
+
+/* Whole-row clickable wrapper. cells use display: contents so they
+   participate in the parent grid directly. */
+.scoreboard-row {
+  display: contents;
+}
+.scoreboard-row-button {
+  display: contents;
+  cursor: pointer;
+}
