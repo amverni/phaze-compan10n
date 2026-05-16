@@ -15,6 +15,9 @@ dist-ssr
 # TanStack Router generator scratch files
 .tanstack
 
+# Playwright artifacts (screenshots, traces, etc.)
+.playwright-artifacts/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

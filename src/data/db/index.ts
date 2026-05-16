@@ -7,7 +7,7 @@ let dbInstance: IDBPDatabase<Phase10DB> | null = null;
 export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
   if (dbInstance) return dbInstance;
 
-  dbInstance = await openDB<Phase10DB>("phase10-db", 5, {
+  dbInstance = await openDB<Phase10DB>("phase10-db", 6, {
     async upgrade(
       db: IDBPDatabase<Phase10DB>,
       oldVersion: number,
@@ -76,8 +76,9 @@ type LegacyRoundScore = Omit<RoundScore, "phaseStatus"> & {
   completedPhase?: boolean;
 };
 
-type LegacyRound = Omit<Round, "scores"> & {
+type LegacyRound = Omit<Round, "scores" | "roundWinnerId"> & {
   scores: [LegacyRoundScore, ...LegacyRoundScore[]];
+  roundWinnerId?: string;
 };
 
 type LegacyColorMeld = Omit<Extract<Meld, { type: "colorGroup" }>, "type"> & {
@@ -140,7 +141,24 @@ function migrateLegacyRound(round: LegacyRound): Round {
     gameId: round.gameId,
     roundNumber: round.roundNumber,
     scores,
+    roundWinnerId: round.roundWinnerId ?? inferRoundWinnerId(scores),
   };
+}
+
+/**
+ * Heuristic used when migrating legacy rounds that predate `roundWinnerId`:
+ * the player whose `phaseStatus === "completed"` has the unique minimum
+ * `score` (Phase 10 convention: the player who goes out scores 0). Falls
+ * back to the first score's `playerId` so the field is never empty.
+ */
+function inferRoundWinnerId(scores: Round["scores"]): string {
+  const completed = scores.filter((s) => s.phaseStatus === "completed");
+  if (completed.length > 0) {
+    const minScore = Math.min(...completed.map((s) => s.score));
+    const atMin = completed.filter((s) => s.score === minScore);
+    if (atMin.length === 1) return atMin[0].playerId;
+  }
+  return scores[0].playerId;
 }
 
 async function migrateLegacyCustomPhaseMelds(

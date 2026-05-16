@@ -6,6 +6,7 @@ export interface Round {
   gameId: GameId;
   roundNumber: number;
   scores: ArrayAtLeastOne<RoundScore>;
+  roundWinnerId: PlayerId;
 }
 
 export type PhaseStatus = "failed" | "completed" | "skipped" | "satOut";
