@@ -34,7 +34,7 @@ export function ScoreboardHeader({
             }`}
           >
             <div className="flex flex-col items-center gap-1">
-              <PlayerAvatar player={player} variant="icon-initials" size={14} />
+              <PlayerAvatar player={player} variant="icon-initials" />
               <span className="text-2xl font-medium leading-none tabular-nums text-text-primary">
                 {phase}
               </span>

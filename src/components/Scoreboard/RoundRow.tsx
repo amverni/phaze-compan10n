@@ -80,7 +80,7 @@ export function RoundRow({
                     <span className="text-[14px] leading-none text-text-secondary tabular-nums">
                       {formatTiebreaker(tbValue, tiebreaker)}
                     </span>
-                    <span aria-hidden className="my-[2px] h-px w-3/4 bg-text-secondary/40" />
+                    <span aria-hidden className="my-0.5 h-px w-3/4 shrink-0 bg-text-secondary/70" />
                     <span className="text-[12px] leading-none text-text-secondary/70 tabular-nums">
                       {formatTiebreaker(runningTotal, tiebreaker)}
                     </span>

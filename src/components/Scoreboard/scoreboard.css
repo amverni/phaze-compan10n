@@ -102,26 +102,16 @@
   }
 }
 
-/* Expandable extras inside a body cell.
-   Both directions: max-height + opacity start at t=0 with no delay,
-   but opacity is much faster (80ms) than the height collapse (240ms).
-   By the time the row has meaningfully shrunk, the content is fully
-   invisible, so the bottom-clip caused by overflow:hidden happens to
-   already-faded pixels and isn't perceptible.
-   Open mirrors: height expands over 240ms while opacity stays at 0
-   for 160ms, then fades in over the final 80ms — chrome reveals
-   before text. */
 .scoreboard-extras {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
   width: 100%;
-  transition: grid-template-rows 240ms ease, opacity 80ms ease;
+  transition: grid-template-rows 400ms ease, opacity 400ms ease;
 }
 .scoreboard-extras--open {
   grid-template-rows: 1fr;
   opacity: 1;
-  transition: grid-template-rows 240ms ease, opacity 80ms ease 160ms;
 }
 .scoreboard-extras > div {
   overflow: hidden;

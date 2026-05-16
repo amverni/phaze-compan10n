@@ -56,7 +56,7 @@ export function PlayerResultCell({
         {isDealer && (
           <span
             aria-hidden
-            className={`absolute left-[3px] inline-flex size-[15px] items-center justify-center rounded-full text-[9px] font-medium leading-none ${
+            className={`absolute left-0.75 inline-flex size-3.75 items-center justify-center rounded-full text-[9px] font-medium leading-none ${
               isGhost ? "opacity-60" : ""
             }`}
             style={{ backgroundColor: "#FAC775", color: "#412402" }}
@@ -68,13 +68,13 @@ export function PlayerResultCell({
           {isRoundWinner && (
             <span
               aria-hidden
-              className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute top-1/2 left-1/2 size-6 rounded-full border border-current"
+              className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute top-1/2 left-1/2 size-5 rounded-full border border-current"
             />
           )}
           {phaseNumber}
         </span>
         {!isGhost && StatusIcon && (
-          <span aria-hidden className={`absolute right-[5px] leading-none ${iconColor}`}>
+          <span aria-hidden className={`absolute right-1.25 leading-none ${iconColor}`}>
             <StatusIcon size={14} strokeWidth={2.5} />
           </span>
         )}
