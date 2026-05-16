@@ -103,34 +103,25 @@
 }
 
 /* Expandable extras inside a body cell.
-   All three properties (max-height, opacity, transform) animate
-   simultaneously with no delay. The inner content translates upward
-   while the container collapses, so the disappearance reads as
-   "sliding out the top" rather than "being clipped from the bottom."
-   Combined with the opacity fade, the running total (anchored at
-   the bottom of the inner div) stays visible longest as it slides up.
-   Open uses a small opacity delay so the chrome reveals before text. */
+   PLACEHOLDER: this is the original simple version; we are discussing
+   which approach to take to polish the close animation. See options
+   A-E in the open conversation thread. */
 .scoreboard-extras {
-  max-height: 0;
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
-  overflow: hidden;
+  transition: grid-template-rows 200ms ease, opacity 200ms ease;
   width: 100%;
-  transition: max-height 240ms ease, opacity 200ms ease;
 }
 .scoreboard-extras--open {
-  max-height: 50px;
+  grid-template-rows: 1fr;
   opacity: 1;
-  transition: max-height 240ms ease, opacity 200ms ease 60ms;
 }
 .scoreboard-extras > div {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   padding-top: 6px;
-  transform: translateY(-100%);
-  transition: transform 240ms ease;
-}
-.scoreboard-extras--open > div {
-  transform: translateY(0);
 }
