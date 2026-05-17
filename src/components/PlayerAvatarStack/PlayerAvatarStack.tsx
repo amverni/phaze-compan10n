@@ -20,7 +20,7 @@ export interface PlayerAvatarStackProps {
 export function PlayerAvatarStack({
   players,
   maxVisible,
-  size = 20,
+  size = 16,
   variant = "initials",
 }: PlayerAvatarStackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,7 +81,7 @@ export function PlayerAvatarStack({
           style={{
             width: itemSize,
             height: itemSize,
-            fontSize: Math.round(size * 0.625),
+            fontSize: size,
           }}
         >
           +{hiddenCount}

@@ -26,13 +26,12 @@ function getInitials(name: string | undefined): string {
   return ((parts[0][0] ?? "") + (parts[parts.length - 1][0] ?? "")).toUpperCase();
 }
 
-export function PlayerAvatar({ player, size = 20, variant = "icon" }: PlayerAvatarProps) {
+export function PlayerAvatar({ player, size = 16, variant = "icon" }: PlayerAvatarProps) {
   const entry = getColorEntry(player.color) ?? FALLBACK_ENTRY;
   const Icon = entry.icon;
   const pad = size + 10;
   const fg = getContrastColor(entry.hex);
   const initials = variant === "icon" ? null : getInitials(player.name);
-  const fontSize = Math.round(size * 0.65);
 
   if (variant === "initials") {
     return (
@@ -43,7 +42,7 @@ export function PlayerAvatar({ player, size = 20, variant = "icon" }: PlayerAvat
           height: pad,
           backgroundColor: entry.hex,
           color: fg,
-          fontSize,
+          fontSize: size,
         }}
       >
         {initials}
@@ -60,10 +59,10 @@ export function PlayerAvatar({ player, size = 20, variant = "icon" }: PlayerAvat
           paddingInline: Math.round(pad * 0.35),
           backgroundColor: entry.hex,
           color: fg,
-          fontSize,
+          fontSize: size,
         }}
       >
-        <Icon size={size} strokeWidth={1.5} color={fg} />
+        <Icon size={size} strokeWidth={1.75} color={fg} />
         <span>{initials}</span>
       </span>
     );
