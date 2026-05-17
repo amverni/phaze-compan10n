@@ -59,12 +59,16 @@ export const roundsApi = {
   }): Promise<Round> {
     const db = await getDB();
 
-    const game = await db.get("games", data.gameId);
+    const tx = db.transaction(["games", "rounds"], "readwrite");
+    const gamesStore = tx.objectStore("games");
+    const roundsStore = tx.objectStore("rounds");
+
+    const game = await gamesStore.get(data.gameId);
     if (!game) throw new Error("Game not found");
 
     const totalPhases = game.phaseSet.phases.length;
 
-    const existingRounds = await db.getAllFromIndex("rounds", "by-game", data.gameId);
+    const existingRounds = await roundsStore.index("by-game").getAll(data.gameId);
     const nextRoundNumber =
       existingRounds.length > 0 ? Math.max(...existingRounds.map((r) => r.roundNumber)) + 1 : 1;
 
@@ -89,7 +93,13 @@ export const roundsApi = {
       scores,
       roundWinnerId: data.roundWinnerId,
     };
-    await db.add("rounds", round);
+
+    await Promise.all([
+      roundsStore.add(round),
+      gamesStore.put({ ...game, lastActivityAt: Date.now() }),
+      tx.done,
+    ]);
+
     return round;
   },
 

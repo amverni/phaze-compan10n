@@ -28,8 +28,9 @@ export function activeGamesOptions() {
 export function useCreateGame() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Omit<ActiveGame, "id" | "createdAt" | "status" | "activePlayers">) =>
-      gamesApi.create(data),
+    mutationFn: (
+      data: Omit<ActiveGame, "id" | "createdAt" | "lastActivityAt" | "status" | "activePlayers">,
+    ) => gamesApi.create(data),
     onSuccess: (game) => {
       queryClient.invalidateQueries({ queryKey: gameKeys.lists() });
       queryClient.setQueryData(gameKeys.detail(game.id), game);

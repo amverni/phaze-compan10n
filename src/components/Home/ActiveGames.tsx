@@ -48,7 +48,7 @@ function ActiveGameRow({ game, playersById }: ActiveGameRowProps) {
       >
         <PlayerAvatarStack players={players} />
         <span className="ml-1 shrink-0 whitespace-nowrap text-text-secondary">
-          {formatRelativeTime(game.createdAt)}
+          {formatRelativeTime(game.lastActivityAt)}
         </span>
         <Play className="ml-2 h-4 w-4 shrink-0 fill-none text-text-secondary group-hover/row:fill-blue-500 group-hover/row:text-blue-500 group-has-[.trash-btn:hover]/row:fill-none group-has-[.trash-btn:hover]/row:text-text-secondary" />
       </Link>

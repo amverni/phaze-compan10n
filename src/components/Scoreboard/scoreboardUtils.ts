@@ -98,7 +98,7 @@ export function formatTiebreaker(value: number, tiebreaker: GameTiebreaker): str
     case "mostSkipped":
       return `${value} ${value === 1 ? "skip" : "skips"}`;
     case "roundsWon":
-      return `${value} won`;
+      return `${value} ${value === 1 ? "win" : "wins"}`;
     case "lowestPoints":
     case "highestPoints":
     case "fewestWilds":

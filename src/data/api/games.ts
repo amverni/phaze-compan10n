@@ -17,18 +17,18 @@ import { roundsApi } from "./rounds";
 export const gamesApi = {
   /**
    * Get all games.
-   * Results are sorted by creation date, newest first.
+   * Results are sorted by last activity (most recent first); ties fall back to creation date.
    */
   async getAll(): Promise<Game[]> {
     const db = await getDB();
     const games = await db.getAll("games");
-    return games.map(withGameDefaults).sort((a, b) => b.createdAt - a.createdAt);
+    return games.map(withGameDefaults).sort(byLastActivityDesc);
   },
 
   /**
    * Get active (in-progress) games only.
    *
-   * Results are sorted by creation date, newest first.
+   * Results are sorted by last activity (most recent first); ties fall back to creation date.
    *
    * @returns An array of games with status `"active"`.
    */
@@ -58,14 +58,16 @@ export const gamesApi = {
    * @returns The newly created game.
    */
   async create(
-    data: Omit<ActiveGame, "id" | "createdAt" | "status" | "activePlayers">,
+    data: Omit<ActiveGame, "id" | "createdAt" | "lastActivityAt" | "status" | "activePlayers">,
   ): Promise<ActiveGame> {
     const db = await getDB();
+    const now = Date.now();
     const newGame: ActiveGame = {
       ...data,
       id: crypto.randomUUID(),
       status: "active",
-      createdAt: Date.now(),
+      createdAt: now,
+      lastActivityAt: now,
       activePlayers: data.players,
     };
     await db.add("games", newGame);
@@ -197,14 +199,20 @@ export const gamesApi = {
   },
 };
 
-type LegacyActiveGame = Omit<ActiveGame, "settings"> & { settings?: Partial<GameSettings> };
-type LegacyCompletedGame = Omit<CompletedGame, "settings"> & { settings?: Partial<GameSettings> };
+type LegacyActiveGame = Omit<ActiveGame, "settings" | "lastActivityAt"> & {
+  settings?: Partial<GameSettings>;
+  lastActivityAt?: number;
+};
+type LegacyCompletedGame = Omit<CompletedGame, "settings" | "lastActivityAt"> & {
+  settings?: Partial<GameSettings>;
+  lastActivityAt?: number;
+};
 type LegacyGame = LegacyActiveGame | LegacyCompletedGame;
 
 /**
  * Get games filtered by their status.
  *
- * Results are sorted by creation date, newest first.
+ * Results are sorted by last activity (most recent first); ties fall back to creation date.
  *
  * @param status - The game status to filter by (e.g. `"active"`, `"completed"`).
  * @returns An array of games matching the given status, narrowed to the appropriate Game union member.
@@ -214,17 +222,23 @@ async function getByStatus<GameStatus extends Game["status"]>(
 ): Promise<Extract<Game, { status: GameStatus }>[]> {
   const db = await getDB();
   const games = await db.getAllFromIndex("games", "by-status", status);
-  return games.map(withGameDefaults).sort((a, b) => b.createdAt - a.createdAt) as Extract<
+  return games.map(withGameDefaults).sort(byLastActivityDesc) as Extract<
     Game,
     { status: GameStatus }
   >[];
 }
 
+function byLastActivityDesc(a: Game, b: Game): number {
+  if (b.lastActivityAt !== a.lastActivityAt) return b.lastActivityAt - a.lastActivityAt;
+  return b.createdAt - a.createdAt;
+}
+
 function withGameDefaults(game: LegacyGame): Game {
   const settings = normalizeGameSettings(game.settings);
+  const lastActivityAt = game.lastActivityAt ?? game.createdAt;
 
-  if (game.status === "active") return { ...game, settings };
-  return { ...game, settings };
+  if (game.status === "active") return { ...game, settings, lastActivityAt };
+  return { ...game, settings, lastActivityAt };
 }
 
 /**

@@ -7,7 +7,7 @@ let dbInstance: IDBPDatabase<Phase10DB> | null = null;
 export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
   if (dbInstance) return dbInstance;
 
-  dbInstance = await openDB<Phase10DB>("phase10-db", 6, {
+  dbInstance = await openDB<Phase10DB>("phase10-db", 7, {
     async upgrade(
       db: IDBPDatabase<Phase10DB>,
       oldVersion: number,
@@ -56,6 +56,10 @@ export async function getDB(): Promise<IDBPDatabase<Phase10DB>> {
       // Create settings store
       if (!db.objectStoreNames.contains("settings")) {
         db.createObjectStore("settings", { keyPath: "id" });
+      }
+
+      if (oldVersion < 7 && db.objectStoreNames.contains("games")) {
+        await backfillGameLastActivity(transaction);
       }
     },
   });
@@ -178,5 +182,24 @@ async function migrateLegacyCustomPhaseMelds(
       };
       return store.put(migrated);
     }),
+  );
+}
+
+/**
+ * Backfill `lastActivityAt` on existing games. We never stored round-add
+ * timestamps before v7, so we fall back to `createdAt` — going forward,
+ * `rounds.add()` keeps it up to date.
+ */
+async function backfillGameLastActivity(
+  transaction: IDBPTransaction<Phase10DB, StoreNames<Phase10DB>[], "versionchange">,
+): Promise<void> {
+  const store = transaction.objectStore("games");
+  const games = (await store.getAll()) as unknown as Array<
+    Phase10DB["games"]["value"] & { lastActivityAt?: number }
+  >;
+  await Promise.all(
+    games
+      .filter((game) => typeof game.lastActivityAt !== "number")
+      .map((game) => store.put({ ...game, lastActivityAt: game.createdAt })),
   );
 }

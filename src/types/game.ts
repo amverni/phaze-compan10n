@@ -35,4 +35,5 @@ interface BaseGame {
   players: PlayerId[];
   settings: GameSettings;
   createdAt: number;
+  lastActivityAt: number;
 }
