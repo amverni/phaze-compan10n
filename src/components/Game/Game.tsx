@@ -30,11 +30,15 @@ export function Game({ gameId }: GameProps) {
         </div>
       }
       mainContent={
-        <div className="content-container flex h-full flex-col py-4">
+        <div className="content-container flex h-full min-h-0 flex-col py-4 pb-[calc(0.5rem+var(--slant))]">
           {game && players && rounds ? (
-            <Scoreboard game={game} rounds={rounds} players={players} />
+            <div className="min-h-0 flex-1">
+              <Scoreboard game={game} rounds={rounds} players={players} />
+            </div>
           ) : (
-            <p className="text-text-secondary text-center">Loading…</p>
+            <p className="text-text-secondary flex flex-1 items-center justify-center text-center">
+              Loading…
+            </p>
           )}
         </div>
       }

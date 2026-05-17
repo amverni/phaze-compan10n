@@ -47,12 +47,11 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
   const showGhost = isActive;
 
   return (
-    <div className="w-full">
+    <div className="flex h-full min-h-0 w-full flex-col">
       <section
         ref={rootRef}
         aria-label="Scoreboard"
-        className="glass relative overflow-auto rounded-2xl"
-        style={{ maxHeight: "100%" }}
+        className="glass relative min-h-0 flex-1 overflow-auto rounded-2xl"
       >
         <div
           className="scoreboard"
