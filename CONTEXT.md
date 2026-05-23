@@ -1,0 +1,127 @@
+# Phase 10 Scoreboard
+
+This context defines the shared language for recording and comparing Phase 10 games, rounds, phase progress, and winners. It exists to keep game setup, scoring, and outcome discussions precise.
+
+## Language
+
+### Core gameplay
+
+**Game**:
+A full play session that runs through an ordered Phase Set until a Game Winner is determined.
+_Avoid_: Match
+
+**Active Game**:
+A game currently in progress and still accepting new rounds.
+_Avoid_: Open game, live game
+
+**Completed Game**:
+A game whose winner has been finalized and whose competitive result is closed.
+_Avoid_: Archived game, old game
+
+**Player**:
+A person participating in a game.
+_Avoid_: User, participant
+
+**Active Player**:
+A player currently participating in an active game; this may differ from everyone ever added to that game.
+_Avoid_: Current player, enabled player
+
+**Dealer**:
+The player assigned to deal for a specific round, rotating by active-player order each round.
+_Avoid_: Host, starter
+
+### Progress and outcomes
+
+**Phase**:
+A required card objective that must be satisfied to progress through the game.
+_Avoid_: Level, challenge
+
+**Current Phase**:
+The phase number a player is attempting in their next round.
+_Avoid_: Stage, tier
+
+**Phase Set**:
+The ordered list of phases used by a game.
+_Avoid_: Preset, playlist
+
+**Round**:
+One scoring cycle in which each active player records a score and phase outcome.
+_Avoid_: Hand, turn cycle
+
+**Round Winner**:
+The player who completed their phase in that round and went out first.
+_Avoid_: Round leader
+
+**Game Winner**:
+The player who first completes the final phase; ties are resolved by the selected Tiebreaker.
+_Avoid_: Champion
+
+**Tiebreaker**:
+The rule used to resolve winner comparisons when multiple players are otherwise tied.
+_Avoid_: Secondary score, fallback rule
+
+**Fewest Wilds**:
+A tiebreaker that compares players by the number of wild cards used, where fewer is better.
+_Avoid_: Low points (for this rule)
+
+### Round status vocabulary
+
+**Completed**:
+The player met the phase objective for that round.
+_Avoid_: Cleared, passed
+
+**Failed**:
+The player did not meet the phase objective for that round.
+_Avoid_: Lost phase
+
+**Round Skip**:
+The player skips the full round, may take a Round Skip Penalty, and advances to the next phase.
+_Avoid_: Skip (ambiguous)
+
+**Sit Out**:
+The player skips the full round and retries the same phase in the next round.
+_Avoid_: Skip (ambiguous)
+
+**Turn Skip**:
+The player misses a turn within a round without skipping the entire round.
+_Avoid_: Skip (ambiguous)
+
+**Round Skip Penalty**:
+Optional points added when a player takes a Round Skip.
+_Avoid_: Auto-fail points
+
+### Catalog and preferences
+
+**Saved Phase**:
+A reusable phase definition kept for future games.
+_Avoid_: Permanent phase
+
+**Temporary Phase**:
+A phase definition scoped to one game session.
+_Avoid_: Draft phase
+
+**Saved Phase Set**:
+A reusable phase-set definition kept for future games.
+_Avoid_: Permanent phase set
+
+**Temporary Phase Set**:
+A phase-set definition scoped to one game session.
+_Avoid_: Draft phase set
+
+**Favorite**:
+A user-pinned Player, Phase, or Phase Set prioritized for quick selection.
+_Avoid_: Bookmark
+
+## Flagged ambiguities
+
+- **"Skip" is overloaded.**  
+  **Resolution:** Use **Turn Skip** for in-round skipped turns, **Round Skip** for full-round skips that advance phase, and **Sit Out** for full-round skips that do not advance phase.
+
+## Example dialogue
+
+**Developer:** "If Maya takes a Round Skip this round, does she move to the next phase?"  
+**Domain expert:** "Yes, a Round Skip advances phase, and she may take a Round Skip Penalty."  
+**Developer:** "If she instead chooses Sit Out?"  
+**Domain expert:** "Then she retries the same Current Phase next round."  
+**Developer:** "And if two players finish the final phase together?"  
+**Domain expert:** "Use the configured Tiebreaker; for Fewest Wilds, compare wild-card counts."
