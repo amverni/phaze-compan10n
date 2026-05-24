@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import type { Player } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Popover, PopoverButton, PopoverPanel } from "../ui/Popover/Popover";
@@ -17,7 +18,7 @@ export function AddRoundProgressPopover({
 }: AddRoundProgressPopoverProps) {
   const total = players.length;
   const completed = players.filter((p) => completedPlayerIds.has(p.id));
-  const incomplete = players.filter((p) => !completedPlayerIds.has(p.id));
+  const completedIds = new Set(completed.map((p) => p.id));
   const fraction = total === 0 ? 0 : completed.length / total;
   const allComplete = completed.length === total && total > 0;
 
@@ -39,18 +40,33 @@ export function AddRoundProgressPopover({
           {completed.length} of {total}
         </p>
 
-        {!allComplete && incomplete.length > 0 && (
-          <>
-            <p className="mt-2 text-xs text-text-secondary">Waiting on:</p>
-            <ul className="mt-1 flex flex-col gap-1.5">
-              {incomplete.map((p) => (
-                <li key={p.id} className="flex items-center gap-2 text-sm">
-                  <PlayerAvatar player={p} size={14} />
-                  <span>{p.name}</span>
+        {players.length > 0 && (
+          <ul className="mt-2 flex min-w-44 flex-col gap-1.5">
+            {players.map((p) => {
+              const isComplete = completedIds.has(p.id);
+              return (
+                <li
+                  key={p.id}
+                  data-progress-player-row
+                  className="grid grid-cols-[auto_1fr_1rem] items-center gap-2 text-sm"
+                >
+                  <span data-player-avatar>
+                    <PlayerAvatar player={p} size={14} />
+                  </span>
+                  <span className="truncate">{p.name}</span>
+                  <span className="inline-flex justify-end">
+                    {isComplete && (
+                      <Check
+                        data-progress-player-check
+                        className="size-4 text-pt-green-500"
+                        aria-hidden
+                      />
+                    )}
+                  </span>
                 </li>
-              ))}
-            </ul>
-          </>
+              );
+            })}
+          </ul>
         )}
 
         {allComplete && !hasRoundWinner && (

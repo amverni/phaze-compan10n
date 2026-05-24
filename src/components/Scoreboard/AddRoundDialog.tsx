@@ -359,7 +359,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
             {addRound.isPending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
             ) : (
-              <Check className="size-4 text-emerald-500" aria-hidden />
+              <Check className="size-4 text-pt-green-500" aria-hidden />
             )}
           </button>
         </div>
