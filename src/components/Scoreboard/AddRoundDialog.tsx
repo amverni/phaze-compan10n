@@ -176,7 +176,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                         {isWinner ? (
                           <Trophy className="size-3.5 text-yellow-500" aria-hidden />
                         ) : isComplete ? (
-                          <Check className="size-3.5 text-emerald-500" aria-hidden />
+                          <Check className="size-3.5 text-pt-green-500" aria-hidden />
                         ) : null}
                       </span>
                     </Tab>
@@ -262,9 +262,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                 if (!playerDraft) return null;
                 const isWinner = draft.draft.roundWinnerId === player.id;
-                const showAutoPromoteNote =
-                  draft.recentAutoPromotedPlayerId === player.id &&
-                  playerDraft.result === "completed";
 
                 return (
                   <TabPanel key={player.id} className="flex flex-col py-1">
@@ -274,7 +271,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                         onChange={(next) => draft.setResult(player.id, next)}
                         expanded={playerDraft.expandedSecondary}
                         onToggleExpand={(next) => draft.setExpandedSecondary(player.id, next)}
-                        autoPromoted={showAutoPromoteNote}
                       />
 
                       <div

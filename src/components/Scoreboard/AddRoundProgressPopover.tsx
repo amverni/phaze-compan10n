@@ -30,7 +30,7 @@ export function AddRoundProgressPopover({
       >
         <span
           aria-hidden
-          className="absolute inset-y-0 left-0 bg-emerald-500/70 dark:bg-emerald-400/70 transition-[width] duration-300 ease-out"
+          className="absolute inset-y-0 left-0 bg-pt-green-500 transition-[width] duration-300 ease-out"
           style={{ width: `${fraction * 100}%` }}
         />
       </PopoverButton>

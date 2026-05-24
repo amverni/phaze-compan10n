@@ -197,27 +197,23 @@ export function applyExpandedSecondary(
 /**
  * Set the Round Winner. If the target player's result is not "completed", auto-promote them
  * (set result to "completed" + restore lastManualScore) BEFORE recording the winner.
- * Returns the new draft AND a side-channel flag `autoPromoted: boolean` so the UI can render the inline note.
  */
 export function applyRoundWinner(
   draft: AddRoundDraft,
   playerId: PlayerId,
   settings: PenaltySettings,
-): { draft: AddRoundDraft; autoPromoted: boolean } {
+): AddRoundDraft {
   const player = draft.players.find((candidate) => candidate.playerId === playerId);
   if (!player) {
-    return { draft, autoPromoted: false };
+    return draft;
   }
 
   const autoPromoted = player.result !== "completed";
   const promotedDraft = autoPromoted ? applyResult(draft, playerId, "completed", settings) : draft;
 
   return {
-    draft: {
-      ...promotedDraft,
-      roundWinnerId: playerId,
-    },
-    autoPromoted,
+    ...promotedDraft,
+    roundWinnerId: playerId,
   };
 }
 

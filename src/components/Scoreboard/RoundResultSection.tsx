@@ -7,7 +7,6 @@ interface RoundResultSectionProps {
   expanded: boolean;
   onToggleExpand: (next: boolean) => void;
   disabled?: boolean;
-  autoPromoted?: boolean;
 }
 
 interface ResultOption {
@@ -25,14 +24,21 @@ const SECONDARY_OPTIONS: ResultOption[] = [
   { value: "satOut", label: "Sat Out" },
 ];
 
-function resultButtonClasses(selected: boolean, disabled: boolean): string {
+const SELECTED_RESULT_CLASSES = {
+  failed: "bg-pt-red-500 text-white shadow-sm",
+  completed: "bg-pt-green-500 text-white shadow-sm",
+  skipped: "bg-pt-yellow-500 text-neutral-900 shadow-sm",
+  satOut: "bg-pt-blue-500 text-white shadow-sm",
+} satisfies Record<PhaseStatus, string>;
+
+function resultButtonClasses(status: PhaseStatus, selected: boolean, disabled: boolean): string {
   return [
     "relative flex-1 rounded-full px-3 py-2 text-sm font-semibold",
     "transition-[filter,transform,opacity,background-color] duration-150 ease-out",
     "active:scale-95",
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
     selected
-      ? "bg-pt-blue-500 text-white shadow-sm"
+      ? SELECTED_RESULT_CLASSES[status]
       : "glass opacity-70 hover:brightness-110 hover:opacity-100",
     disabled ? "" : "cursor-pointer",
   ]
@@ -46,7 +52,6 @@ export function RoundResultSection({
   expanded,
   onToggleExpand,
   disabled = false,
-  autoPromoted = false,
 }: RoundResultSectionProps) {
   return (
     <div className="flex w-full flex-col gap-2" role="radiogroup" aria-label="Round Result">
@@ -80,7 +85,7 @@ export function RoundResultSection({
               aria-pressed={selected}
               disabled={disabled}
               onClick={() => onChange(option.value)}
-              className={resultButtonClasses(selected, disabled)}
+              className={resultButtonClasses(option.value, selected, disabled)}
             >
               {option.label}
             </button>
@@ -104,7 +109,7 @@ export function RoundResultSection({
                   aria-pressed={selected}
                   disabled={disabled}
                   onClick={() => onChange(option.value)}
-                  className={resultButtonClasses(selected, disabled)}
+                  className={resultButtonClasses(option.value, selected, disabled)}
                 >
                   {option.label}
                 </button>
@@ -112,12 +117,6 @@ export function RoundResultSection({
             })}
           </div>
         </>
-      )}
-
-      {autoPromoted && (
-        <output className="text-xs text-text-secondary">
-          Auto-promoted to Passed because they were marked Round Winner.
-        </output>
       )}
     </div>
   );
