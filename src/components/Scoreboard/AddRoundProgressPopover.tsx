@@ -34,7 +34,7 @@ export function AddRoundProgressPopover({
           style={{ width: `${fraction * 100}%` }}
         />
       </PopoverButton>
-      <PopoverPanel anchor={{ to: "top", gap: 8 }} className="p-3 max-w-[18rem] w-max">
+      <PopoverPanel portal anchor={{ to: "top", gap: 8 }} className="z-50 p-3 max-w-[18rem] w-max">
         <p className="text-sm font-semibold text-text-primary">
           {completed.length} of {total}
         </p>
