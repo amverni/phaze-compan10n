@@ -257,14 +257,14 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               </div>
             </div>
 
-            <TabPanels className="flex min-h-0 flex-1 flex-col overflow-y-auto px-9">
+            <TabPanels className="-my-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-9 py-3">
               {players.map((player) => {
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                 if (!playerDraft) return null;
                 const isWinner = draft.draft.roundWinnerId === player.id;
 
                 return (
-                  <TabPanel key={player.id} className="flex flex-col py-1">
+                  <TabPanel key={player.id} className="flex flex-col">
                     <div className="glass flex flex-col gap-4 rounded-2xl p-4">
                       <RoundResultSection
                         value={playerDraft.result}
