@@ -54,6 +54,7 @@ export function AddRoundProgressPopover({
                     <PlayerAvatar player={p} size={14} />
                   </span>
                   <span className="truncate">{p.name}</span>
+                  <span className="sr-only">{isComplete ? " score entered" : " score needed"}</span>
                   <span className="inline-flex justify-end">
                     {isComplete && (
                       <Check
