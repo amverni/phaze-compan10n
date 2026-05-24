@@ -30,6 +30,22 @@ export function useSetDefaultPhaseSetId() {
   });
 }
 
+export function useSetDefaultRoundSkipPenalty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (value: number) => settingsApi.setDefaultRoundSkipPenalty(value),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKeys.all }),
+  });
+}
+
+export function useSetDefaultSitOutPenalty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (value: number) => settingsApi.setDefaultSitOutPenalty(value),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKeys.all }),
+  });
+}
+
 export function useResetSettings() {
   const queryClient = useQueryClient();
   return useMutation({

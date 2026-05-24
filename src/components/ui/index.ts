@@ -16,3 +16,4 @@ export { SearchBar } from "./SearchBar/SearchBar";
 export { Switch } from "./Switch/Switch";
 export { TabList } from "./TabList/TabList";
 export { Toast } from "./Toast/Toast";
+export { WheelSelector } from "./WheelSelector/WheelSelector";

@@ -45,10 +45,11 @@ export function getCurrentPhase(
  *
  * | tiebreaker                  | value                                  |
  * | --------------------------- | -------------------------------------- |
- * | lowestPoints / highestPoints| score.score                            |
- * | fewestSkips / mostSkipped   | score.phaseStatus === "skipped" ? 1 : 0|
+ * | lowestPoints / highestPoints| score.score (points)                   |
+ * | fewestWilds                 | score.score (wilds used)               |
+ * | fewestSkips                 | score.score (skip cards played)        |
+ * | mostSkipped                 | score.score (skip cards played against)|
  * | roundsWon                   | round.roundWinnerId === playerId ? 1:0 |
- * | fewestWilds                 | score.score (fallback — no wilds data) |
  *
  * Returns 0 if the player has no score entry for the round.
  */
@@ -63,12 +64,11 @@ export function getTiebreakerValue(
   const score: RoundScore | undefined = round.scores.find((s) => s.playerId === playerId);
   if (!score) return 0;
   switch (tiebreaker) {
-    case "fewestSkips":
-    case "mostSkipped":
-      return score.phaseStatus === "skipped" ? 1 : 0;
     case "lowestPoints":
     case "highestPoints":
     case "fewestWilds":
+    case "fewestSkips":
+    case "mostSkipped":
       return score.score;
   }
 }

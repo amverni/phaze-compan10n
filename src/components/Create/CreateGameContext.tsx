@@ -4,6 +4,7 @@ import { DEFAULT_GAME_SETTINGS } from "../../data/constants/gameSettings";
 import { phaseSetPhasesOptions } from "../../data/hooks/usePhaseSets";
 import { appSettingsOptions } from "../../data/hooks/useSettings";
 import type {
+  AppGameDefaults,
   GameSettings,
   GameTiebreaker,
   Phase,
@@ -26,15 +27,17 @@ interface CreateGameContextValue {
   defaultPhaseSetId: PhaseSetId;
   settings: GameSettings;
   setTiebreaker: (tiebreaker: GameTiebreaker) => void;
+  setRoundSkipPenalty: (value: number) => void;
+  setSitOutPenalty: (value: number) => void;
   resetSettings: () => void;
 }
 
 const CreateGameContext = createContext<CreateGameContextValue | null>(null);
 
-function resolveDefaultGameSettings(settings?: Partial<GameSettings>): GameSettings {
-  return {
-    tiebreaker: settings?.tiebreaker ?? DEFAULT_GAME_SETTINGS.tiebreaker,
-  };
+function resolveDefaultGameSettings(settings?: AppGameDefaults): GameSettings {
+  if (!settings) return DEFAULT_GAME_SETTINGS;
+  const { tiebreaker, roundSkipPenalty, sitOutPenalty } = settings;
+  return { tiebreaker, roundSkipPenalty, sitOutPenalty };
 }
 
 export function CreateGameProvider({ children }: { children: ReactNode }) {
@@ -93,6 +96,14 @@ export function CreateGameProvider({ children }: { children: ReactNode }) {
     setTiebreaker: (tiebreaker) => {
       settingsDirtyRef.current = true;
       setSettings((prev) => ({ ...prev, tiebreaker }));
+    },
+    setRoundSkipPenalty: (roundSkipPenalty) => {
+      settingsDirtyRef.current = true;
+      setSettings((prev) => ({ ...prev, roundSkipPenalty }));
+    },
+    setSitOutPenalty: (sitOutPenalty) => {
+      settingsDirtyRef.current = true;
+      setSettings((prev) => ({ ...prev, sitOutPenalty }));
     },
     resetSettings: () => {
       if (!appSettings) {
@@ -174,6 +185,16 @@ export function useGameSettings(): GameSettings {
 export function useSetTiebreaker(): (tiebreaker: GameTiebreaker) => void {
   const { setTiebreaker } = useCreateGameContext();
   return setTiebreaker;
+}
+
+export function useSetRoundSkipPenalty(): (value: number) => void {
+  const { setRoundSkipPenalty } = useCreateGameContext();
+  return setRoundSkipPenalty;
+}
+
+export function useSetSitOutPenalty(): (value: number) => void {
+  const { setSitOutPenalty } = useCreateGameContext();
+  return setSitOutPenalty;
 }
 
 export function useResetGameSettings(): () => void {

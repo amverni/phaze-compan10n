@@ -36,6 +36,15 @@ body {
   color: var(--color-text-primary);
 }
 
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Glass ────────────────────────────────────────────────────
    Adapted from https://dev.to/kevinbism/recreating-apples-liquid-glass-effect-with-pure-css-3gpl
    Single .glass class provides the frosted surface + shine overlay.

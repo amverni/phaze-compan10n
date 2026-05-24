@@ -6,7 +6,11 @@ import type {
   PhaseSetId,
 } from "../../types";
 import { APP_SETTINGS_ID, DEFAULT_APP_SETTINGS } from "../constants/appSettings";
-import { normalizeGameSettings } from "../constants/gameSettings";
+import {
+  DEFAULT_GAME_SETTINGS,
+  normalizeGamePenalty,
+  normalizeGameSettings,
+} from "../constants/gameSettings";
 import { getDB } from "../db";
 import { phaseSetsApi } from "./phaseSets";
 
@@ -45,6 +49,14 @@ export const settingsApi = {
     return this.updateGameDefaults({ phaseSetId });
   },
 
+  setDefaultRoundSkipPenalty(value: number): Promise<AppSettings> {
+    return this.updateGameDefaults({ roundSkipPenalty: value });
+  },
+
+  setDefaultSitOutPenalty(value: number): Promise<AppSettings> {
+    return this.updateGameDefaults({ sitOutPenalty: value });
+  },
+
   async reset(): Promise<AppSettings> {
     const db = await getDB();
     const defaults = await withSettingsDefaults(DEFAULT_APP_SETTINGS);
@@ -61,8 +73,8 @@ async function withSettingsDefaults(settings?: LegacyAppSettings): Promise<AppSe
   const normalizedGameSettings = normalizeGameSettings(legacyGameSettings);
   const gameDefaults: AppGameDefaults = {
     ...DEFAULT_APP_SETTINGS.gameDefaults,
-    ...legacyGameSettings,
     ...normalizedGameSettings,
+    phaseSetId: settings?.gameDefaults?.phaseSetId ?? DEFAULT_APP_SETTINGS.gameDefaults.phaseSetId,
   };
   const phaseSet = await phaseSetsApi.getById(gameDefaults.phaseSetId);
 
@@ -78,13 +90,31 @@ async function withSettingsDefaults(settings?: LegacyAppSettings): Promise<AppSe
 async function withValidGameDefaultUpdates(
   updates: Partial<AppGameDefaults>,
 ): Promise<Partial<AppGameDefaults>> {
-  if (updates.phaseSetId === undefined) return updates;
+  const nextUpdates: Partial<AppGameDefaults> = {
+    ...updates,
+  };
+
+  if (updates.roundSkipPenalty !== undefined) {
+    nextUpdates.roundSkipPenalty = normalizeGamePenalty(
+      updates.roundSkipPenalty,
+      DEFAULT_GAME_SETTINGS.roundSkipPenalty,
+    );
+  }
+
+  if (updates.sitOutPenalty !== undefined) {
+    nextUpdates.sitOutPenalty = normalizeGamePenalty(
+      updates.sitOutPenalty,
+      DEFAULT_GAME_SETTINGS.sitOutPenalty,
+    );
+  }
+
+  if (updates.phaseSetId === undefined) return nextUpdates;
 
   const phaseSet = await phaseSetsApi.getById(updates.phaseSetId);
   if (!phaseSet) throw new Error("Phase set not found");
 
   return {
-    ...updates,
+    ...nextUpdates,
     phaseSetId: phaseSet.id,
   };
 }

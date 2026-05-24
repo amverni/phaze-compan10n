@@ -11,7 +11,15 @@ export const TIEBREAKER_VALUES = [
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   tiebreaker: "lowestPoints",
+  roundSkipPenalty: 100,
+  sitOutPenalty: 50,
 };
+
+export const GAME_PENALTY_RANGE = {
+  min: 0,
+  max: 250,
+  step: 5,
+} as const;
 
 export const TIEBREAKER_LABELS = {
   lowestPoints: "Lowest Points",
@@ -34,5 +42,23 @@ export function normalizeGameSettings(settings?: Partial<GameSettings>): GameSet
     tiebreaker: isGameTiebreaker(settings?.tiebreaker)
       ? settings.tiebreaker
       : DEFAULT_GAME_SETTINGS.tiebreaker,
+    roundSkipPenalty: normalizeGamePenalty(
+      settings?.roundSkipPenalty,
+      DEFAULT_GAME_SETTINGS.roundSkipPenalty,
+    ),
+    sitOutPenalty: normalizeGamePenalty(
+      settings?.sitOutPenalty,
+      DEFAULT_GAME_SETTINGS.sitOutPenalty,
+    ),
   };
+}
+
+export function normalizeGamePenalty(value: unknown, defaultValue: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < GAME_PENALTY_RANGE.min) {
+    return defaultValue;
+  }
+
+  const clampedValue = Math.min(GAME_PENALTY_RANGE.max, value);
+  const roundedValue = Math.round(clampedValue / GAME_PENALTY_RANGE.step) * GAME_PENALTY_RANGE.step;
+  return Math.min(GAME_PENALTY_RANGE.max, Math.max(GAME_PENALTY_RANGE.min, roundedValue));
 }

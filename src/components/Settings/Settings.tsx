@@ -6,6 +6,8 @@ import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { Button, InlineError, List } from "../ui";
 import { DefaultPhaseSetSetting } from "./DefaultPhaseSetSetting";
+import { DefaultRoundSkipPenaltySetting } from "./DefaultRoundSkipPenaltySetting";
+import { DefaultSitOutPenaltySetting } from "./DefaultSitOutPenaltySetting";
 import { DefaultTiebreakerSetting } from "./DefaultTiebreakerSetting";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 
@@ -35,6 +37,14 @@ export function Settings() {
                     <DefaultTiebreakerSetting
                       key="default-tiebreaker"
                       value={settings.gameDefaults.tiebreaker}
+                    />,
+                    <DefaultRoundSkipPenaltySetting
+                      key="default-round-skip-penalty"
+                      value={settings.gameDefaults.roundSkipPenalty}
+                    />,
+                    <DefaultSitOutPenaltySetting
+                      key="default-sit-out-penalty"
+                      value={settings.gameDefaults.sitOutPenalty}
                     />,
                     <DefaultPhaseSetSetting
                       key="default-phase-set"

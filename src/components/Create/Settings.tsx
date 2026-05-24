@@ -1,5 +1,7 @@
 import { List } from "../ui";
 import { ResetSettingsButton } from "./Settings/ResetSettingsButton";
+import { RoundSkipPenaltySetting } from "./Settings/RoundSkipPenaltySetting";
+import { SitOutPenaltySetting } from "./Settings/SitOutPenaltySetting";
 import { TiebreakerSetting } from "./Settings/TiebreakerSetting";
 
 export function Settings() {
@@ -10,6 +12,8 @@ export function Settings() {
       </div>
       <List allowOverflow>
         <TiebreakerSetting key="tiebreaker" />
+        <RoundSkipPenaltySetting key="roundSkipPenalty" />
+        <SitOutPenaltySetting key="sitOutPenalty" />
       </List>
     </div>
   );

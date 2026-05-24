@@ -4,6 +4,7 @@ import { AddRoundDialog } from "./AddRoundDialog";
 import { GhostRow } from "./GhostRow";
 import { RoundRow } from "./RoundRow";
 import { ScoreboardHeader } from "./ScoreboardHeader";
+import { useAddRoundDraft } from "./useAddRoundDraft";
 import "./scoreboard.css";
 
 interface ScoreboardProps {
@@ -45,6 +46,7 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
     .filter((p): p is Player => p !== undefined);
 
   const showGhost = isActive;
+  const draft = useAddRoundDraft(orderedPlayers, game.settings);
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
@@ -106,8 +108,9 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
         <AddRoundDialog
           open={dialogOpen}
           onClose={setDialogOpen}
-          gameId={game.id}
+          game={game}
           players={orderedPlayers}
+          draft={draft}
         />
       )}
     </div>

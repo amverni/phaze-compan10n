@@ -15,6 +15,8 @@ export type GameTiebreaker =
 
 export interface GameSettings {
   tiebreaker: GameTiebreaker;
+  roundSkipPenalty: number; // Default 100. Points added when player takes a Round Skip.
+  sitOutPenalty: number; // Default 50. Points added when player Sits Out.
 }
 
 export interface ActiveGame extends BaseGame {
