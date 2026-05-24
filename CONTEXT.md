@@ -67,8 +67,8 @@ _Avoid_: Low points (for this rule)
 ### Round status vocabulary
 
 **Completed**:
-The player met the phase objective for that round.
-_Avoid_: Cleared, passed
+The player met the phase objective for that round. Displayed in the score-entry UI as the past-tense label **Passed** for grammatical consistency with the other Round Result options (Failed, Skipped, Sat Out).
+_Avoid_: Cleared. ("Passed" is permitted only as the UI label for `phaseStatus = "completed"` in the Add Round dialog.)
 
 **Failed**:
 The player did not meet the phase objective for that round.
@@ -87,8 +87,12 @@ The player misses a turn within a round without skipping the entire round.
 _Avoid_: Skip (ambiguous)
 
 **Round Skip Penalty**:
-Optional points added when a player takes a Round Skip.
+Points added to a player's Round Score when they take a Round Skip. Stored on `gameSettings.roundSkipPenalty` (per-game) with an app-wide default in `appSettings.gameDefaults.roundSkipPenalty`. Default: 100 points.
 _Avoid_: Auto-fail points
+
+**Sit Out Penalty**:
+Points added to a player's Round Score when they Sit Out a round. Stored on `gameSettings.sitOutPenalty` (per-game) with an app-wide default in `appSettings.gameDefaults.sitOutPenalty`. Default: 50 points.
+_Avoid_: Sit-out cost
 
 ### Catalog and preferences
 

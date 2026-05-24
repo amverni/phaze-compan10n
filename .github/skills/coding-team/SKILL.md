@@ -117,10 +117,10 @@ When dispatching sub-agents with the `task` tool, set explicit model overrides.
 | Task type | Preferred | Fallback 1 | Fallback 2 |
 |---|---|---|---|
 | Quick discovery and lightweight synthesis | claude-sonnet-4.6 | gpt-5.4-mini | gpt-5.4 |
-| Deep architecture critique / domain pressure-testing | claude-opus-4.7-xhigh | claude-opus-4.7 | gpt-5.5 |
-| Task slicing, dependency mapping, sequencing | gpt-5.5 | gpt-5.4 | claude-sonnet-4.6 |
-| Implementation-heavy coding and patch generation | gpt-5.5 | gpt-5.4 | claude-sonnet-4.6 |
-| Broad review and verification narration | claude-opus-4.7-xhigh | claude-opus-4.7 | gpt-5.5 |
+| Deep architecture critique / domain pressure-testing | claude-opus-4.7-xhigh | claude-opus-4.7 | gpt-5.5-xhigh-1.1m |
+| Task slicing, dependency mapping, sequencing | gpt-5.5-xhigh-1.1m | gpt-5.4 | claude-sonnet-4.6 |
+| Implementation-heavy coding and patch generation | gpt-5.5-xhigh-1.1m | gpt-5.4 | claude-sonnet-4.6 |
+| Broad review and verification narration | claude-opus-4.7-xhigh | claude-opus-4.7 | gpt-5.5-xhigh-1.1m |
 
 If a phase requires a sub-skill, still run that sub-skill. Model routing applies to additional parallel agents and direct `task` dispatches this orchestrator controls.
 
@@ -253,7 +253,7 @@ For `standard-build` and high-impact `bug-incident`, run two independent plannin
 1. **Domain challenger** (`model: claude-opus-4.7-xhigh`): run grill-with-docs against `CONTEXT.md` and `docs/adr/` (or preflight fallback sources) to pressure-test terminology, constraints, and tradeoffs.
    - Collaborative: keep user-interactive grilling even if autopilot is enabled.
    - Autonomous: ask only blocking questions; log assumptions.
-2. **Delivery planner** (`model: gpt-5.5`): produce execution slices, dependencies, risks, and sequencing.
+2. **Delivery planner** (`model: gpt-5.5-xhigh-1.1m`): produce execution slices, dependencies, risks, and sequencing.
 
 Reconcile both outputs into one coherent plan.
 
