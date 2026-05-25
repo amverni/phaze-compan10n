@@ -266,6 +266,7 @@ export function WheelSelector({
     .filter(Boolean)
     .join(" ");
 
+  // Parent swipe-navigation surfaces read this to ignore wheel drags.
   return (
     <div
       className={rootClasses}

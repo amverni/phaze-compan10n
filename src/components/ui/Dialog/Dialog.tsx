@@ -171,6 +171,8 @@ export function Dialog(props: AppDialogProps) {
 
         if (!d.decided) {
           if (Math.abs(delta) < 8) return;
+          // Horizontally-dominant gestures should yield here so nested horizontal
+          // interactions can opt out of swipe-to-dismiss and handle the drag.
           if (delta > 0 && Math.abs(delta) > Math.abs(deltaX) && node.scrollTop <= 0) {
             d.decided = true;
             d.active = true;
