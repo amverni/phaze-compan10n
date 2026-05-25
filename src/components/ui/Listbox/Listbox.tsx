@@ -1,6 +1,7 @@
 import {
   Listbox as HeadlessListbox,
   ListboxButton as HeadlessListboxButton,
+  ListboxLabel as HeadlessListboxLabel,
   ListboxOption as HeadlessListboxOption,
   ListboxOptions as HeadlessListboxOptions,
   type ListboxProps,
@@ -69,7 +70,7 @@ export function ListboxButton({
       className={merged}
       style={variant === "default" && width !== undefined ? { width: width + 44 } : undefined}
     >
-      <span ref={contentRef} className="inline-flex items-center gap-1.5">
+      <span ref={contentRef} className="inline-flex min-w-0 items-center gap-1.5">
         {children}
       </span>
       <span className="inline-flex shrink-0">
@@ -79,25 +80,57 @@ export function ListboxButton({
   );
 }
 
+export function ListboxLabel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <HeadlessListboxLabel as="span" className={className}>
+      {children}
+    </HeadlessListboxLabel>
+  );
+}
+
 /* ── Options panel ─────────────────────────────────────────── */
 
 const panelClasses = [
   "glass listbox-glass rounded-xl shadow-xl",
-  "absolute left-0 top-full z-50 mt-1 w-max",
+  "absolute top-full z-50 mt-1 w-max",
   "p-1",
   "focus:outline-none",
 ].join(" ");
 
-const panelAnimationClasses = "listbox-options origin-top-left";
+type ListboxOptionsAlign = "left" | "right";
+type ListboxOptionsTransformOrigin = "top-left" | "top-right" | "top";
+
+const panelAnimationClasses = "listbox-options";
+const panelAlignClasses = {
+  left: "left-0",
+  right: "right-0",
+} satisfies Record<ListboxOptionsAlign, string>;
+const panelTransformOriginClasses = {
+  "top-left": "origin-top-left",
+  "top-right": "origin-top-right",
+  top: "origin-top",
+} satisfies Record<ListboxOptionsTransformOrigin, string>;
 
 export function ListboxOptions({
   children,
   className,
+  align = "left",
+  transformOrigin = "top-left",
 }: {
   children: ReactNode;
   className?: string;
+  align?: ListboxOptionsAlign;
+  transformOrigin?: ListboxOptionsTransformOrigin;
 }) {
-  const merged = [panelClasses, panelAnimationClasses, className].filter(Boolean).join(" ");
+  const merged = [
+    panelClasses,
+    panelAnimationClasses,
+    panelAlignClasses[align],
+    panelTransformOriginClasses[transformOrigin],
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <HeadlessListboxOptions transition className={merged}>
       {children}

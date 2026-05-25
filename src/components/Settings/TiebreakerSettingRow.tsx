@@ -1,7 +1,13 @@
 import { TIEBREAKER_LABELS, TIEBREAKER_OPTIONS } from "../../data/constants/gameSettings";
 import type { GameTiebreaker } from "../../types";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "../ui";
-import { SettingListRow } from "./SettingListRow";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
+  SettingListRow,
+} from "../ui";
 
 interface TiebreakerSettingRowProps {
   label: string;
@@ -17,21 +23,19 @@ export function TiebreakerSettingRow({
   disabled = false,
 }: TiebreakerSettingRowProps) {
   return (
-    <SettingListRow label={label}>
-      {(labelId) => (
-        <Listbox value={value} onChange={onChange} disabled={disabled} aria-labelledby={labelId}>
-          <ListboxButton variant="plain" className="shrink-0">
-            {TIEBREAKER_LABELS[value]}
-          </ListboxButton>
-          <ListboxOptions className="right-0 left-auto origin-top-right">
-            {TIEBREAKER_OPTIONS.map(({ value, label }) => (
-              <ListboxOption key={value} value={value}>
-                {label}
-              </ListboxOption>
-            ))}
-          </ListboxOptions>
-        </Listbox>
-      )}
-    </SettingListRow>
+    <Listbox value={value} onChange={onChange} disabled={disabled} className="w-full min-w-0">
+      <SettingListRow label={<ListboxLabel>{label}</ListboxLabel>}>
+        <ListboxButton variant="plain" className="shrink-0">
+          {TIEBREAKER_LABELS[value]}
+        </ListboxButton>
+        <ListboxOptions align="right" transformOrigin="top-right">
+          {TIEBREAKER_OPTIONS.map(({ value, label }) => (
+            <ListboxOption key={value} value={value}>
+              {label}
+            </ListboxOption>
+          ))}
+        </ListboxOptions>
+      </SettingListRow>
+    </Listbox>
   );
 }

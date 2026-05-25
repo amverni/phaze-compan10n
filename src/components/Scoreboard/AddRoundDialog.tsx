@@ -4,10 +4,19 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useAddRound } from "../../data/hooks/useRounds";
 import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import { Dialog } from "../ui/Dialog/Dialog";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "../ui/Listbox/Listbox";
-import { TabList } from "../ui/TabList/TabList";
-import { Toast, type ToastHandle } from "../ui/Toast/Toast";
+import {
+  Dialog,
+  List,
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
+  SettingListRow,
+  TabList,
+  Toast,
+  type ToastHandle,
+} from "../ui";
 import { AddRoundProgressPopover } from "./AddRoundProgressPopover";
 import { isDraftComplete, toRoundScores } from "./addRoundDraft";
 import { RoundResultSection } from "./RoundResultSection";
@@ -204,35 +213,49 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
             />
           </div>
 
-          {/* Round Winner select (centered, shared across all tabs) */}
-          <div className="flex items-center justify-center">
-            <Listbox value={winnerValue} onChange={handleWinnerSelect}>
-              <ListboxButton variant="default" className="min-w-[12rem] justify-center">
-                {winnerPlayer ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Trophy className="size-4 text-yellow-500" aria-hidden />
-                    <span className="truncate">{winnerPlayer.name}</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 text-text-secondary">
-                    <Trophy className="size-4 opacity-60" aria-hidden />
-                    Round winner
-                  </span>
-                )}
-              </ListboxButton>
-              <ListboxOptions className="left-1/2 -translate-x-1/2 origin-top">
-                <ListboxOption value={NO_WINNER_VALUE}>Choose round winner</ListboxOption>
-                {players.map((player) => (
-                  <ListboxOption key={player.id} value={player.id}>
-                    <span className="inline-flex items-center gap-2">
+          {/* Round Winner select (shared across all tabs) */}
+          <List allowOverflow className="z-30">
+            <Listbox
+              key="round-winner"
+              value={winnerValue}
+              onChange={handleWinnerSelect}
+              className="w-full min-w-0"
+            >
+              <SettingListRow label={<ListboxLabel>Round Winner</ListboxLabel>}>
+                <ListboxButton variant="plain" className="min-h-10 max-w-full min-w-0">
+                  {winnerPlayer ? (
+                    <>
+                      <Trophy className="size-4 shrink-0 text-yellow-500" aria-hidden />
+                      <span className="min-w-0 truncate text-right">{winnerPlayer.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trophy
+                        className="size-4 shrink-0 text-text-secondary opacity-60"
+                        aria-hidden
+                      />
+                      <span className="min-w-0 truncate text-right text-text-secondary">
+                        Choose winner
+                      </span>
+                    </>
+                  )}
+                </ListboxButton>
+                <ListboxOptions
+                  align="right"
+                  transformOrigin="top-right"
+                  className="max-w-[min(20rem,calc(100vw-2rem))]"
+                >
+                  <ListboxOption value={NO_WINNER_VALUE}>No round winner yet</ListboxOption>
+                  {players.map((player) => (
+                    <ListboxOption key={player.id} value={player.id}>
                       <PlayerAvatar player={player} size={14} />
-                      {player.name}
-                    </span>
-                  </ListboxOption>
-                ))}
-              </ListboxOptions>
+                      <span className="min-w-0 truncate">{player.name}</span>
+                    </ListboxOption>
+                  ))}
+                </ListboxOptions>
+              </SettingListRow>
             </Listbox>
-          </div>
+          </List>
 
           {/* Body with prev/next chevrons flanking in the gutter */}
           <div className="relative flex min-h-0 flex-1">

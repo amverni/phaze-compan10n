@@ -2,8 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { phaseSetListOptions } from "../../data/hooks/usePhaseSets";
 import { useSetDefaultPhaseSetId } from "../../data/hooks/useSettings";
 import type { PhaseSetId } from "../../types";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "../ui";
-import { SettingListRow } from "./SettingListRow";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
+  SettingListRow,
+} from "../ui";
 
 interface DefaultPhaseSetSettingProps {
   value: PhaseSetId;
@@ -16,26 +22,24 @@ export function DefaultPhaseSetSetting({ value }: DefaultPhaseSetSettingProps) {
   const selectedLabel = selectedPhaseSet?.name ?? (isLoading ? "Loading..." : value);
 
   return (
-    <SettingListRow label="Default Phase Set">
-      {(labelId) => (
-        <Listbox
-          value={value}
-          onChange={(phaseSetId) => setDefaultPhaseSetId.mutate(phaseSetId)}
-          disabled={isLoading || setDefaultPhaseSetId.isPending}
-          aria-labelledby={labelId}
-        >
-          <ListboxButton variant="plain" className="shrink-0">
-            {selectedLabel}
-          </ListboxButton>
-          <ListboxOptions className="right-0 left-auto origin-top-right">
-            {phaseSets.map(({ id, name }) => (
-              <ListboxOption key={id} value={id}>
-                {name}
-              </ListboxOption>
-            ))}
-          </ListboxOptions>
-        </Listbox>
-      )}
-    </SettingListRow>
+    <Listbox
+      value={value}
+      onChange={(phaseSetId) => setDefaultPhaseSetId.mutate(phaseSetId)}
+      disabled={isLoading || setDefaultPhaseSetId.isPending}
+      className="w-full min-w-0"
+    >
+      <SettingListRow label={<ListboxLabel>Default Phase Set</ListboxLabel>}>
+        <ListboxButton variant="plain" className="shrink-0">
+          {selectedLabel}
+        </ListboxButton>
+        <ListboxOptions align="right" transformOrigin="top-right">
+          {phaseSets.map(({ id, name }) => (
+            <ListboxOption key={id} value={id}>
+              {name}
+            </ListboxOption>
+          ))}
+        </ListboxOptions>
+      </SettingListRow>
+    </Listbox>
   );
 }

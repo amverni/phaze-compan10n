@@ -1,7 +1,7 @@
 import { type ReactNode, useId } from "react";
 
 interface SettingListRowProps {
-  label: string;
+  label: ReactNode;
   children: ReactNode | ((labelId: string) => ReactNode);
 }
 
