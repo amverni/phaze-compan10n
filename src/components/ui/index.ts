@@ -20,6 +20,7 @@ export { Popover, PopoverButton, PopoverPanel } from "./Popover/Popover";
 export { ScrollFade } from "./ScrollFade/ScrollFade";
 export { SearchBar } from "./SearchBar/SearchBar";
 export { SettingListRow } from "./SettingListRow/SettingListRow";
+export { SwipeableTabPanels } from "./SwipeableTabPanels/SwipeableTabPanels";
 export { Switch } from "./Switch/Switch";
 export { TabList } from "./TabList/TabList";
 export type { ToastHandle, ToastProps } from "./Toast/Toast";
