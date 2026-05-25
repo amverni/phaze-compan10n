@@ -62,6 +62,16 @@ interface SwipeableTabPanelsProps extends ComponentPropsWithoutRef<"div"> {
   onChange: (nextIndex: number) => void;
   children: ReactNode;
 }
+
+export function SwipeableTabPanels({
+  selectedIndex,
+  onChange,
+  children,
+  className,
+  ...props
+}: SwipeableTabPanelsProps) {
+  // Implementation steps below fill in this body.
+}
 ```
 
 Expected: the file compiles once the component is completed in later steps.
@@ -134,6 +144,11 @@ const [dragOffset, setDragOffset] = useState(0);
 const [transitionEnabled, setTransitionEnabled] = useState(false);
 const gestureRef = useRef<GestureState | null>(null);
 const swipeCommitTargetRef = useRef<number | null>(null);
+const selectedIndexRef = useRef(selectedIndex);
+const onChangeRef = useRef(onChange);
+
+selectedIndexRef.current = selectedIndex;
+onChangeRef.current = onChange;
 
 useEffect(() => {
   if (swipeCommitTargetRef.current === selectedIndex) {
@@ -155,22 +170,30 @@ Expected: tab taps and programmatic multi-tab jumps show the selected panel imme
 Attach listeners in an effect on `containerElement`:
 
 ```tsx
+const panels = Children.toArray(children);
+const panelCountRef = useRef(panels.length);
+const prefersReducedMotionRef = useRef(prefersReducedMotion);
+
+panelCountRef.current = panels.length;
+prefersReducedMotionRef.current = prefersReducedMotion;
+
 useEffect(() => {
   if (!containerElement) return;
-  const panelCount = Children.count(children);
 
   const shouldIgnoreTarget = (target: EventTarget | null) =>
     target instanceof Element &&
     target.closest(SWIPE_NAVIGATION_IGNORE_SELECTOR) !== null;
 
   const finishSwipe = (deltaX: number) => {
+    const selectedIndex = selectedIndexRef.current;
+    const panelCount = panelCountRef.current;
     gestureRef.current = null;
     const direction = deltaX < 0 ? 1 : -1;
     const nextIndex = selectedIndex + direction;
     const canMove = nextIndex >= 0 && nextIndex < panelCount;
     const shouldCommit = Math.abs(deltaX) >= SWIPE_COMMIT_DISTANCE_PX && canMove;
 
-    setTransitionEnabled(!prefersReducedMotion);
+    setTransitionEnabled(!prefersReducedMotionRef.current);
     setDragOffset(0);
 
     if (!shouldCommit) {
@@ -180,10 +203,11 @@ useEffect(() => {
 
     swipeCommitTargetRef.current = nextIndex;
     setVisualIndex(nextIndex);
-    onChange(nextIndex);
+    onChangeRef.current(nextIndex);
   };
 
   const onTouchStart = (event: TouchEvent) => {
+    const panelCount = panelCountRef.current;
     if (panelCount <= 1 || event.touches.length !== 1 || shouldIgnoreTarget(event.target)) {
       gestureRef.current = null;
       return;
@@ -204,6 +228,7 @@ useEffect(() => {
     if (!gesture) return;
     if (event.touches.length !== 1) {
       gesture.mode = "cancelled";
+      setTransitionEnabled(!prefersReducedMotionRef.current);
       setDragOffset(0);
       return;
     }
@@ -228,6 +253,8 @@ useEffect(() => {
     if (gesture.mode !== "dragging") return;
 
     event.preventDefault();
+    const selectedIndex = selectedIndexRef.current;
+    const panelCount = panelCountRef.current;
     const atFirst = selectedIndex <= 0 && deltaX > 0;
     const atLast = selectedIndex >= panelCount - 1 && deltaX < 0;
     setDragOffset(atFirst || atLast ? deltaX / EDGE_RESISTANCE : deltaX);
@@ -254,7 +281,8 @@ useEffect(() => {
 
   const onTouchCancel = () => {
     gestureRef.current = null;
-    setTransitionEnabled(!prefersReducedMotion);
+    const selectedIndex = selectedIndexRef.current;
+    setTransitionEnabled(!prefersReducedMotionRef.current);
     setDragOffset(0);
     setVisualIndex(selectedIndex);
   };
@@ -270,14 +298,14 @@ useEffect(() => {
     containerElement.removeEventListener("touchend", onTouchEnd);
     containerElement.removeEventListener("touchcancel", onTouchCancel);
   };
-}, [children, containerElement, onChange, prefersReducedMotion, selectedIndex]);
+}, [containerElement]);
 ```
 
 Expected: horizontal gestures are claimed only after clear horizontal intent; vertical gestures remain native; edge swipes resist; threshold is fixed at 50px.
 
 - [ ] **Step 6: Render mounted panel slots with accessibility isolation**
 
-Render:
+Render. `SwipeableTabPanels` is intentionally for Headless UI `TabPanel` children; the cast below only adds the supported `static` prop so panels stay mounted during the carousel gesture.
 
 ```tsx
 const panels = Children.toArray(children);
@@ -681,6 +709,7 @@ Expected:
 - The Round Winner selector and action buttons remain usable.
 - Dragging the score wheel does not change player tabs.
 - Vertical scrolling in the panel still works.
+- After scrolling one player panel and switching players, the selected player's controls remain reachable and the shared scroll container does not trap content off-screen.
 
 - [ ] **Step 6: Verify inactive panel focus isolation**
 
