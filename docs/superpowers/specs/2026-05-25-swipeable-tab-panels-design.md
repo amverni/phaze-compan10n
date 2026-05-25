@@ -25,7 +25,7 @@ No data model, IndexedDB, routing, game-rule, or persistence behavior changes ar
 - Swipes stop at the first and last panels and do not wrap.
 - Edge swipes use resistance so the user gets feedback without leaving the valid panel range.
 - Vertical scrolling remains native and does not change panels.
-- Mostly vertical or small accidental movements are ignored.
+- Mostly vertical or small accidental movements are ignored. Horizontal movement should be about twice the vertical movement before the component claims the gesture.
 - Multi-touch gestures cancel the swipe.
 - `touchcancel` resets the swipe state.
 - Controls that opt out with `data-swipe-navigation-ignore` remain isolated from tab swipes.
@@ -76,7 +76,7 @@ Snap-forward and snap-back animations should use a short ease-out transition of 
 
 ### Direct tab selection
 
-Direct tab taps continue to use Headless UI's normal tab selection. When `selectedIndex` changes from outside `SwipeableTabPanels`, the component should cancel any in-progress drag state and show the selected panel immediately instead of running a swipe-settle animation. Swipe-committed changes still animate the panel track to the adjacent panel and update `selectedIndex` so the existing `TabList` indicator animates through its current path.
+Direct tab taps continue to use Headless UI's normal tab selection. When `selectedIndex` changes from outside `SwipeableTabPanels`, including jumps across multiple tabs, the component should cancel any in-progress drag state and show the selected panel immediately instead of running a swipe-settle animation. Swipe-committed changes still animate the panel track to the adjacent panel and update `selectedIndex` so the existing `TabList` indicator animates through its current path.
 
 ### Add Round integration
 
@@ -92,7 +92,7 @@ Remove the overlaid previous/next chevrons from the Add Round body. The tab stri
 
 ## Edge Cases
 
-- One panel: swipes do nothing.
+- Zero or one panel: swipes do nothing.
 - First panel + right swipe: resistant drag, then snap back.
 - Last panel + left swipe: resistant drag, then snap back.
 - Mostly vertical drags: scroll normally and do not translate the track.
@@ -113,3 +113,4 @@ Remove the overlaid previous/next chevrons from the Add Round body. The tab stri
   - Vertical scrolling inside panel content still works.
   - Swiping at the first/last panel gives resistance and snaps back without wrapping.
   - Tapping tab-list tabs still selects tabs normally.
+  - Keyboard focus cannot move into inactive panel slots.
