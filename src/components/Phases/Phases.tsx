@@ -1,9 +1,10 @@
-import { Tab, TabGroup, TabPanel, TabPanels } from "@headlessui/react";
+import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Layers, ListChecks } from "lucide-react";
+import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button, TabList } from "../ui";
+import { Button, SwipeableTabPanels, TabList } from "../ui";
 import { PhaseSetsList } from "./PhaseSetsList";
 import { PhasesList } from "./PhasesList";
 
@@ -11,6 +12,8 @@ const tabClasses =
   "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none hover:brightness-110 data-focus:outline-2 data-focus:outline-white/60 data-selected:opacity-100";
 
 export function Phases() {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
   return (
     <CardBackground
       headerContent={
@@ -22,7 +25,11 @@ export function Phases() {
       }
       mainContent={
         <div className="content-container h-full">
-          <TabGroup className="flex h-full min-h-0 flex-col">
+          <TabGroup
+            selectedIndex={selectedIndex}
+            onChange={setSelectedIndex}
+            className="flex h-full min-h-0 flex-col"
+          >
             <div className="flex shrink-0 justify-center pt-2 pb-3">
               <TabList>
                 <Tab className={tabClasses}>
@@ -39,14 +46,18 @@ export function Phases() {
                 </Tab>
               </TabList>
             </div>
-            <TabPanels className="min-h-0 flex-1">
+            <SwipeableTabPanels
+              selectedIndex={selectedIndex}
+              onChange={setSelectedIndex}
+              className="min-h-0 flex-1"
+            >
               <TabPanel className="h-full flex flex-col">
                 <PhaseSetsList />
               </TabPanel>
               <TabPanel className="h-full flex flex-col">
                 <PhasesList />
               </TabPanel>
-            </TabPanels>
+            </SwipeableTabPanels>
           </TabGroup>
         </div>
       }

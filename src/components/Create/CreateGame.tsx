@@ -1,4 +1,4 @@
-import { Tab, TabGroup, TabPanel, TabPanels } from "@headlessui/react";
+import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Info, ListChecks, Play, Settings as SettingsIcon, Users, X } from "lucide-react";
@@ -7,7 +7,7 @@ import { useCreateGame } from "../../data/hooks/useGames";
 import type { ArrayAtLeastOne, PhaseId, TemporaryPhaseSet } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button, ScrollFade, TabList } from "../ui";
+import { Button, ScrollFade, SwipeableTabPanels, TabList } from "../ui";
 import { useGamePhases, useGamePlayers, useGameSettings } from "./CreateGameContext";
 import { Phases } from "./Phases";
 import { Players } from "./Players";
@@ -101,7 +101,11 @@ export function CreateGame() {
             </p>
           )}
 
-          <TabPanels className="content-container w-full min-h-0 flex-1">
+          <SwipeableTabPanels
+            selectedIndex={selectedIndex}
+            onChange={setSelectedIndex}
+            className="content-container w-full min-h-0 flex-1"
+          >
             <TabPanel className="h-full">
               <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
                 <Players />
@@ -119,7 +123,7 @@ export function CreateGame() {
                 <Settings />
               </ScrollFade>
             </TabPanel>
-          </TabPanels>
+          </SwipeableTabPanels>
         </TabGroup>
       }
       footerContent={

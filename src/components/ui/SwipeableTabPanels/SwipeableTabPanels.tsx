@@ -18,6 +18,7 @@ const INTENT_DISTANCE_PX = 8;
 const EDGE_RESISTANCE = 3;
 const SNAP_TRANSITION_MS = 200;
 const SWIPE_NAVIGATION_IGNORE_SELECTOR = "[data-swipe-navigation-ignore]";
+const SWIPE_NAVIGATION_ROOT_SELECTOR = "[data-swipe-navigation-root]";
 
 type GestureMode = "pending" | "dragging" | "cancelled";
 
@@ -161,11 +162,14 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
     };
 
     const handleTouchStart = (event: TouchEvent) => {
+      const targetElement = event.target instanceof Element ? event.target : null;
+      const nearestSwipeRoot = targetElement?.closest(SWIPE_NAVIGATION_ROOT_SELECTOR);
+
       if (
         panelCountRef.current <= 1 ||
         event.touches.length !== 1 ||
-        (event.target instanceof Element &&
-          event.target.closest(SWIPE_NAVIGATION_IGNORE_SELECTOR) !== null)
+        targetElement?.closest(SWIPE_NAVIGATION_IGNORE_SELECTOR) !== null ||
+        (nearestSwipeRoot !== null && nearestSwipeRoot !== containerElement)
       ) {
         gestureRef.current = null;
         return;
@@ -305,7 +309,12 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
   const mergedClassName = mergeClassName("overflow-x-hidden", tabPanelsProps);
 
   return (
-    <HeadlessTabPanels {...tabPanelsProps} ref={setContainerElement} className={mergedClassName}>
+    <HeadlessTabPanels
+      {...tabPanelsProps}
+      data-swipe-navigation-root=""
+      ref={setContainerElement}
+      className={mergedClassName}
+    >
       <div
         ref={trackElementRef}
         className="flex min-h-full will-change-transform"
