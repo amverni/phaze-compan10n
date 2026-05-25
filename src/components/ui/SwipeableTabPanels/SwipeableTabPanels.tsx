@@ -19,6 +19,23 @@ const EDGE_RESISTANCE = 3;
 const SNAP_TRANSITION_MS = 200;
 const SWIPE_NAVIGATION_IGNORE_SELECTOR = "[data-swipe-navigation-ignore]";
 const SWIPE_NAVIGATION_ROOT_SELECTOR = "[data-swipe-navigation-root]";
+const INTERACTIVE_CONTROL_SELECTOR = [
+  "button",
+  "a[href]",
+  "input",
+  "select",
+  "textarea",
+  "[contenteditable='true']",
+  "[role='button']",
+  "[role='checkbox']",
+  "[role='combobox']",
+  "[role='listbox']",
+  "[role='menuitem']",
+  "[role='option']",
+  "[role='radio']",
+  "[role='switch']",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
 
 type GestureMode = "pending" | "dragging" | "cancelled";
 
@@ -26,7 +43,14 @@ interface GestureState {
   id: number;
   startX: number;
   startY: number;
+  startedOnInteractiveControl: boolean;
+  interactiveControlElement: HTMLElement | null;
   mode: GestureMode;
+}
+
+interface SuppressedNativeClick {
+  target: HTMLElement;
+  expiresAt: number;
 }
 
 interface SwipeableTabPanelsProps extends Omit<TabPanelsProps<"div">, "children" | "onChange"> {
@@ -96,6 +120,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
   const swipeCommitTargetRef = useRef<number | null>(null);
   const rollbackFrameRef = useRef<number | null>(null);
   const trackElementRef = useRef<HTMLDivElement | null>(null);
+  const suppressedNativeClickRef = useRef<SuppressedNativeClick | null>(null);
   const selectedIndexRef = useRef(selectedIndex);
   const onChangeRef = useRef(onChange);
   const panelCountRef = useRef(panelCount);
@@ -162,8 +187,10 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
     };
 
     const handleTouchStart = (event: TouchEvent) => {
+      suppressedNativeClickRef.current = null;
       const targetElement = event.target instanceof Element ? event.target : null;
       const nearestSwipeRoot = targetElement?.closest(SWIPE_NAVIGATION_ROOT_SELECTOR);
+      const interactiveControlElement = targetElement?.closest(INTERACTIVE_CONTROL_SELECTOR);
 
       if (
         panelCountRef.current <= 1 ||
@@ -180,6 +207,9 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         id: touch.identifier,
         startX: touch.clientX,
         startY: touch.clientY,
+        startedOnInteractiveControl: interactiveControlElement !== null,
+        interactiveControlElement:
+          interactiveControlElement instanceof HTMLElement ? interactiveControlElement : null,
         mode: "pending",
       };
       if (trackElementRef.current) {
@@ -219,18 +249,25 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
           return;
         }
 
-        if (absX >= INTENT_DISTANCE_PX && absX >= absY * HORIZONTAL_DOMINANCE_RATIO) {
+        const dragStartDistance = gesture.startedOnInteractiveControl
+          ? SWIPE_COMMIT_DISTANCE_PX
+          : INTENT_DISTANCE_PX;
+
+        if (absX >= dragStartDistance && absX >= absY * HORIZONTAL_DOMINANCE_RATIO) {
           gestureRef.current = { ...gesture, mode: "dragging" };
         } else {
           return;
         }
       }
 
-      if (gestureRef.current?.mode !== "dragging") {
+      const activeGesture = gestureRef.current;
+      if (activeGesture?.mode !== "dragging") {
         return;
       }
 
-      event.preventDefault();
+      if (!activeGesture.startedOnInteractiveControl || absX >= SWIPE_COMMIT_DISTANCE_PX) {
+        event.preventDefault();
+      }
       const currentIndex = selectedIndexRef.current;
       const atFirstPanel = currentIndex === 0 && deltaX > 0;
       const atLastPanel = currentIndex === panelCountRef.current - 1 && deltaX < 0;
@@ -251,10 +288,27 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       }
 
       const deltaX = touch.clientX - gesture.startX;
+      const deltaY = touch.clientY - gesture.startY;
       const currentIndex = selectedIndexRef.current;
       let nextIndex = currentIndex;
 
-      if (gesture.mode === "dragging" && Math.abs(deltaX) >= SWIPE_COMMIT_DISTANCE_PX) {
+      if (gesture.mode !== "dragging") {
+        if (
+          gesture.mode === "pending" &&
+          gesture.startedOnInteractiveControl &&
+          gesture.interactiveControlElement &&
+          (Math.abs(deltaX) >= INTENT_DISTANCE_PX || Math.abs(deltaY) >= INTENT_DISTANCE_PX)
+        ) {
+          suppressedNativeClickRef.current = {
+            target: gesture.interactiveControlElement,
+            expiresAt: performance.now() + 400,
+          };
+          gesture.interactiveControlElement.click();
+        }
+        return;
+      }
+
+      if (Math.abs(deltaX) >= SWIPE_COMMIT_DISTANCE_PX) {
         const candidateIndex = deltaX < 0 ? currentIndex + 1 : currentIndex - 1;
         if (candidateIndex >= 0 && candidateIndex < panelCountRef.current) {
           nextIndex = candidateIndex;
@@ -263,7 +317,12 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
 
       setTransitionEnabled(!prefersReducedMotionRef.current);
       setVisualIndex(nextIndex);
-      if (prefersReducedMotionRef.current) {
+      if (prefersReducedMotionRef.current || nextIndex === currentIndex) {
+        if (trackElementRef.current) {
+          trackElementRef.current.style.transition = prefersReducedMotionRef.current
+            ? "none"
+            : `transform ${SNAP_TRANSITION_MS}ms ease-out`;
+        }
         applyTrackTransform(nextIndex);
       }
 
@@ -292,10 +351,31 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       snapToSelected();
     };
 
+    const handleClickCapture = (event: MouseEvent) => {
+      const suppressedClick = suppressedNativeClickRef.current;
+      if (!suppressedClick) return;
+
+      if (performance.now() > suppressedClick.expiresAt) {
+        suppressedNativeClickRef.current = null;
+        return;
+      }
+
+      if (
+        event.isTrusted &&
+        event.target instanceof Node &&
+        suppressedClick.target.contains(event.target)
+      ) {
+        suppressedNativeClickRef.current = null;
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
     containerElement.addEventListener("touchstart", handleTouchStart, { passive: true });
     containerElement.addEventListener("touchmove", handleTouchMove, { passive: false });
     containerElement.addEventListener("touchend", handleTouchEnd, { passive: true });
     containerElement.addEventListener("touchcancel", handleTouchCancel, { passive: true });
+    containerElement.addEventListener("click", handleClickCapture, true);
 
     return () => {
       cancelRollbackFrame();
@@ -303,6 +383,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       containerElement.removeEventListener("touchmove", handleTouchMove);
       containerElement.removeEventListener("touchend", handleTouchEnd);
       containerElement.removeEventListener("touchcancel", handleTouchCancel);
+      containerElement.removeEventListener("click", handleClickCapture, true);
     };
   }, [containerElement]);
 
