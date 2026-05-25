@@ -12,7 +12,8 @@ import {
 } from "react";
 import { mergeClassName } from "../mergeClassName";
 
-const SWIPE_COMMIT_DISTANCE_PX = 50;
+const SWIPE_COMMIT_DISTANCE_RATIO = 0.25;
+const MIN_SWIPE_COMMIT_DISTANCE_PX = 72;
 const HORIZONTAL_DOMINANCE_RATIO = 2;
 const INTENT_DISTANCE_PX = 8;
 const EDGE_RESISTANCE = 3;
@@ -72,6 +73,17 @@ function getTrackTransform(index: number, width: number, offset = 0) {
   return `translate3d(${-(index * width) + offset}px, 0, 0)`;
 }
 
+function getSwipeCommitDistance(width: number) {
+  return Math.max(MIN_SWIPE_COMMIT_DISTANCE_PX, Math.round(width * SWIPE_COMMIT_DISTANCE_RATIO));
+}
+
+function getDragOffset(deltaX: number, currentIndex: number, panelCount: number) {
+  const atFirstPanel = currentIndex === 0 && deltaX > 0;
+  const atLastPanel = currentIndex === panelCount - 1 && deltaX < 0;
+
+  return atFirstPanel || atLastPanel ? deltaX / EDGE_RESISTANCE : deltaX;
+}
+
 function renderStaticTabPanel(panel: ReactNode) {
   if (!isValidElement(panel)) {
     return panel;
@@ -115,10 +127,12 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
   const panels = Children.toArray(children);
   const panelCount = panels.length;
   const [visualIndex, setVisualIndex] = useState(selectedIndex);
+  const [visualOffset, setVisualOffset] = useState(0);
   const [transitionEnabled, setTransitionEnabled] = useState(false);
   const gestureRef = useRef<GestureState | null>(null);
   const swipeCommitTargetRef = useRef<number | null>(null);
   const rollbackFrameRef = useRef<number | null>(null);
+  const dragOffsetRef = useRef(0);
   const trackElementRef = useRef<HTMLDivElement | null>(null);
   const suppressedNativeClickRef = useRef<SuppressedNativeClick | null>(null);
   const selectedIndexRef = useRef(selectedIndex);
@@ -143,7 +157,6 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
 
     if (swipeCommitTargetRef.current === selectedIndex) {
       swipeCommitTargetRef.current = null;
-      cancelRollbackFrame();
       return;
     }
 
@@ -153,8 +166,10 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
     }
 
     gestureRef.current = null;
+    dragOffsetRef.current = 0;
     setTransitionEnabled(false);
     setVisualIndex(selectedIndex);
+    setVisualOffset(0);
   }, [selectedIndex]);
 
   useEffect(() => {
@@ -177,13 +192,38 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       );
     };
 
-    const snapToSelected = () => {
+    const scheduleSnap = (fromIndex: number, toIndex: number, offset: number) => {
       gestureRef.current = null;
+      dragOffsetRef.current = offset;
       if (prefersReducedMotionRef.current) {
-        applyTrackTransform(selectedIndexRef.current);
+        dragOffsetRef.current = 0;
+        setTransitionEnabled(false);
+        setVisualIndex(toIndex);
+        setVisualOffset(0);
+        applyTrackTransform(toIndex);
+        return;
       }
-      setVisualIndex(selectedIndexRef.current);
-      setTransitionEnabled(!prefersReducedMotionRef.current);
+
+      cancelRollbackFrame();
+      if (trackElementRef.current) {
+        trackElementRef.current.style.transition = "none";
+      }
+      applyTrackTransform(fromIndex, offset);
+      setTransitionEnabled(false);
+      setVisualIndex(fromIndex);
+      setVisualOffset(offset);
+
+      rollbackFrameRef.current = requestAnimationFrame(() => {
+        rollbackFrameRef.current = null;
+        dragOffsetRef.current = 0;
+        setTransitionEnabled(true);
+        setVisualIndex(toIndex);
+        setVisualOffset(0);
+      });
+    };
+
+    const snapToSelected = () => {
+      scheduleSnap(selectedIndexRef.current, selectedIndexRef.current, dragOffsetRef.current);
     };
 
     const handleTouchStart = (event: TouchEvent) => {
@@ -212,11 +252,13 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
           interactiveControlElement instanceof HTMLElement ? interactiveControlElement : null,
         mode: "pending",
       };
+      dragOffsetRef.current = 0;
       if (trackElementRef.current) {
         trackElementRef.current.style.transition = "none";
       }
       setTransitionEnabled(false);
       setVisualIndex(selectedIndexRef.current);
+      setVisualOffset(0);
     };
 
     const handleTouchMove = (event: TouchEvent) => {
@@ -238,6 +280,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       const deltaY = touch.clientY - gesture.startY;
       const absX = Math.abs(deltaX);
       const absY = Math.abs(deltaY);
+      const swipeCommitDistance = getSwipeCommitDistance(containerWidthRef.current);
 
       if (gesture.mode === "pending") {
         if (absX < INTENT_DISTANCE_PX && absY < INTENT_DISTANCE_PX) {
@@ -250,7 +293,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         }
 
         const dragStartDistance = gesture.startedOnInteractiveControl
-          ? SWIPE_COMMIT_DISTANCE_PX
+          ? swipeCommitDistance
           : INTENT_DISTANCE_PX;
 
         if (absX >= dragStartDistance && absX >= absY * HORIZONTAL_DOMINANCE_RATIO) {
@@ -265,14 +308,13 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         return;
       }
 
-      if (!activeGesture.startedOnInteractiveControl || absX >= SWIPE_COMMIT_DISTANCE_PX) {
+      if (!activeGesture.startedOnInteractiveControl || absX >= swipeCommitDistance) {
         event.preventDefault();
       }
       const currentIndex = selectedIndexRef.current;
-      const atFirstPanel = currentIndex === 0 && deltaX > 0;
-      const atLastPanel = currentIndex === panelCountRef.current - 1 && deltaX < 0;
-      const nextDragOffset = atFirstPanel || atLastPanel ? deltaX / EDGE_RESISTANCE : deltaX;
+      const nextDragOffset = getDragOffset(deltaX, currentIndex, panelCountRef.current);
 
+      dragOffsetRef.current = nextDragOffset;
       applyTrackTransform(currentIndex, nextDragOffset);
     };
 
@@ -290,6 +332,8 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       const deltaX = touch.clientX - gesture.startX;
       const deltaY = touch.clientY - gesture.startY;
       const currentIndex = selectedIndexRef.current;
+      const swipeCommitDistance = getSwipeCommitDistance(containerWidthRef.current);
+      const dragOffset = getDragOffset(deltaX, currentIndex, panelCountRef.current);
       let nextIndex = currentIndex;
 
       if (gesture.mode !== "dragging") {
@@ -308,42 +352,18 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         return;
       }
 
-      if (Math.abs(deltaX) >= SWIPE_COMMIT_DISTANCE_PX) {
+      if (Math.abs(deltaX) >= swipeCommitDistance) {
         const candidateIndex = deltaX < 0 ? currentIndex + 1 : currentIndex - 1;
         if (candidateIndex >= 0 && candidateIndex < panelCountRef.current) {
           nextIndex = candidateIndex;
         }
       }
 
-      setTransitionEnabled(!prefersReducedMotionRef.current);
-      setVisualIndex(nextIndex);
-      if (prefersReducedMotionRef.current || nextIndex === currentIndex) {
-        if (trackElementRef.current) {
-          trackElementRef.current.style.transition = prefersReducedMotionRef.current
-            ? "none"
-            : `transform ${SNAP_TRANSITION_MS}ms ease-out`;
-        }
-        applyTrackTransform(nextIndex);
-      }
+      scheduleSnap(currentIndex, nextIndex, dragOffset);
 
       if (nextIndex !== currentIndex) {
         swipeCommitTargetRef.current = nextIndex;
         onChangeRef.current(nextIndex);
-
-        cancelRollbackFrame();
-        rollbackFrameRef.current = requestAnimationFrame(() => {
-          rollbackFrameRef.current = null;
-          if (swipeCommitTargetRef.current !== nextIndex) {
-            return;
-          }
-
-          swipeCommitTargetRef.current = null;
-          setTransitionEnabled(!prefersReducedMotionRef.current);
-          setVisualIndex(selectedIndexRef.current);
-          if (prefersReducedMotionRef.current) {
-            applyTrackTransform(selectedIndexRef.current);
-          }
-        });
       }
     };
 
@@ -400,7 +420,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         ref={trackElementRef}
         className="flex min-h-full will-change-transform"
         style={{
-          transform: getTrackTransform(visualIndex, containerWidth),
+          transform: getTrackTransform(visualIndex, containerWidth, visualOffset),
           transition:
             transitionEnabled && !prefersReducedMotion
               ? `transform ${SNAP_TRANSITION_MS}ms ease-out`
