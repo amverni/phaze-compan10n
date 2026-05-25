@@ -21,7 +21,6 @@ const smallFontSize = fontSize * 0.75;
 const capHeight = fontSize * 0.72;
 const lineGap = 6;
 const strokeWidth = 12;
-const stripeOverhang = 2000; // stripes extend this far beyond text; width prop crops them
 
 // Baseline positions
 const phazeY = fontSize;
@@ -40,9 +39,7 @@ const stripeBandTop = stripeCenterY - totalStripeH / 2;
 
 // ViewBox
 const innerWidth = 420;
-const vbWidth = innerWidth + stripeOverhang * 2;
 const wordHeight = textBlockBottom + fontSize * 0.1 + 8; // just the text area
-const textCenterX = vbWidth / 2;
 
 // Shared SVG stroke props — stroke color set via Tailwind classes on <text>
 const textStrokeProps = {
@@ -62,7 +59,7 @@ interface LogoProps {
 /** Phaze Compan10n logo. */
 export const Logo: React.FC<LogoProps> = ({ height, width }) => {
   const scale = height / wordHeight;
-  const scaledWidth = vbWidth * scale;
+  const scaledInnerWidth = innerWidth * scale;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -78,22 +75,27 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
     return () => ro.disconnect();
   }, []);
 
-  // Half the total viewBox-unit drop so the visible slant equals SLANT_PX.
-  const dyHalf = containerWidth > 0 ? (SLANT_PX * vbWidth) / (2 * containerWidth) : 0;
+  const targetWidth = containerWidth || (typeof width === "number" ? width : scaledInnerWidth);
+  const viewBoxWidth = Math.max(innerWidth, targetWidth / scale);
+  const svgWidth = viewBoxWidth * scale;
+  const visibleWidth = Math.min(targetWidth, svgWidth);
+  // Half the total viewBox-unit drop so the clipped visible slant equals SLANT_PX.
+  const dyHalf = visibleWidth > 0 ? (SLANT_PX * viewBoxWidth) / (2 * visibleWidth) : 0;
+  const textCenterX = viewBoxWidth / 2;
 
   return (
     <div
       ref={containerRef}
       className="overflow-x-clip overflow-y-visible shrink-0 flex justify-center"
       style={{
-        width: width ?? scaledWidth,
+        width: width ?? scaledInnerWidth,
         height,
       }}
     >
       <svg
         className="block shrink-0 overflow-visible"
-        viewBox={`0 0 ${vbWidth} ${wordHeight}`}
-        width={scaledWidth}
+        viewBox={`0 0 ${viewBoxWidth} ${wordHeight}`}
+        width={svgWidth}
         height={height}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
@@ -104,8 +106,8 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
           const y = stripeBandTop + i * (stripeHeight + stripeGap);
           const points = [
             `0,${y + dyHalf}`, // top-left  (shifted down)
-            `${vbWidth},${y - dyHalf}`, // top-right (shifted up)
-            `${vbWidth},${y + stripeHeight - dyHalf}`, // bottom-right
+            `${viewBoxWidth},${y - dyHalf}`, // top-right (shifted up)
+            `${viewBoxWidth},${y + stripeHeight - dyHalf}`, // bottom-right
             `0,${y + stripeHeight + dyHalf}`, // bottom-left
           ].join(" ");
           return <polygon key={color} points={points} fill={`var(${color})`} />;
