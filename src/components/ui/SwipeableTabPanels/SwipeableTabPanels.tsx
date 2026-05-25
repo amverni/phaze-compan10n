@@ -1,7 +1,6 @@
-import { TabPanels as HeadlessTabPanels } from "@headlessui/react";
+import { TabPanels as HeadlessTabPanels, type TabPanelsProps } from "@headlessui/react";
 import {
   Children,
-  type ComponentPropsWithoutRef,
   cloneElement,
   isValidElement,
   type ReactElement,
@@ -29,8 +28,7 @@ interface GestureState {
   mode: GestureMode;
 }
 
-interface SwipeableTabPanelsProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "children" | "onChange"> {
+interface SwipeableTabPanelsProps extends Omit<TabPanelsProps<"div">, "children" | "onChange"> {
   selectedIndex: number;
   onChange: (nextIndex: number) => void;
   children: ReactNode;
@@ -81,7 +79,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
     return () => observer.disconnect();
   }, [containerElement]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setPrefersReducedMotion(query.matches);
     update();
@@ -193,8 +191,8 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         return;
       }
 
-      const touch = findTouchById(event.touches, gesture.id);
-      if (!touch) {
+      const touch = event.touches[0];
+      if (touch.identifier !== gesture.id) {
         snapToSelected();
         return;
       }
@@ -328,8 +326,8 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
           <div
             key={isValidElement(panel) ? panel.key : index}
             className="min-h-full w-full min-w-full shrink-0"
-            inert={index !== selectedIndex ? true : undefined}
-            aria-hidden={index !== selectedIndex ? true : undefined}
+            inert={index !== visualIndex ? true : undefined}
+            aria-hidden={index !== visualIndex ? true : undefined}
           >
             {renderStaticTabPanel(panel)}
           </div>
