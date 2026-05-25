@@ -35,7 +35,7 @@ No data model, IndexedDB, routing, game-rule, or persistence behavior changes ar
 
 ### Shared component
 
-Create `src/components/ui/SwipeableTabPanels/SwipeableTabPanels.tsx` and export it from `src/components/ui/index.ts`.
+Create `src/components/ui/SwipeableTabPanels/SwipeableTabPanels.tsx` and export it from `src/components/ui/index.ts`. This component replaces Headless UI's `TabPanels` at call sites and must be rendered inside a Headless UI `TabGroup`.
 
 The component wraps Headless UI tab panels and exposes a small controlled interface:
 
@@ -51,17 +51,17 @@ The component wraps Headless UI tab panels and exposes a small controlled interf
 
 `selectedIndex` is the current tab index from the parent `TabGroup`. `onChange` receives the adjacent index after a committed swipe. The component derives `tabCount` from its children, so callers do not need to pass redundant counts.
 
-Internally, the component renders a horizontal track where each panel occupies one viewport-width slot of the panel container. It keeps panels mounted while sliding so the previous/current/next content can be seen during the gesture. Inactive panels should be made inaccessible to keyboard and screen-reader navigation while they are not selected.
+Internally, the component renders a horizontal track where each panel occupies one viewport-width slot of the panel container. It keeps panels mounted while sliding so the previous/current/next content can be seen during the gesture. Inactive panels should be made inaccessible to keyboard and screen-reader navigation while they are not selected, using `inert` and `aria-hidden` on non-selected panel slots.
 
 ### Gesture behavior
 
-The component attaches touch listeners to the panel container. It records the starting touch identifier and coordinates when exactly one touch starts outside ignored controls.
+The component attaches touch listeners to the panel container. It records the starting touch identifier and coordinates when exactly one touch starts outside ignored controls. Ignore detection uses `closest("[data-swipe-navigation-ignore]")` from the `touchstart` target so descendants of ignored controls are covered.
 
 During movement:
 
 - If another touch appears, cancel the swipe.
 - If vertical motion wins before horizontal intent is clear, abandon the swipe and let native scrolling proceed.
-- Once horizontal motion is dominant, prevent native scrolling for that gesture, update the track offset in pixels, and apply edge resistance at the first/last panel.
+- Once horizontal motion is dominant, prevent native scrolling for that gesture, update the track offset in pixels, and apply edge resistance at the first/last panel. Edge resistance should visibly move the track but dampen beyond-edge movement to roughly one third of the finger travel.
 
 On touch end:
 
@@ -73,7 +73,7 @@ The component does not use velocity as a commit condition. This keeps accidental
 
 ### Direct tab selection
 
-Direct tab taps continue to use Headless UI's normal tab selection. When `selectedIndex` changes from outside `SwipeableTabPanels`, the component should reset any in-progress drag state and show the selected panel without requiring a swipe. The tab-list active indicator remains owned by the existing `TabList` component.
+Direct tab taps continue to use Headless UI's normal tab selection. When `selectedIndex` changes from outside `SwipeableTabPanels`, the component should cancel any in-progress drag state and show the selected panel immediately instead of running a swipe-settle animation. Swipe-committed changes still animate the panel track to the adjacent panel and update `selectedIndex` so the existing `TabList` indicator animates through its current path.
 
 ### Add Round integration
 
@@ -101,7 +101,7 @@ Remove the overlaid previous/next chevrons from the Add Round body. The tab stri
 
 - Run `npm run lint`.
 - Run `npm run build`.
-- Perform touch-capable UI verification:
+- Perform touch-capable UI verification, manually or with a browser automation script that drives touch events and inspects track transforms:
   - Add Round card follows the finger during horizontal swipe and commits only after 50px.
   - Add Round no longer shows previous/next chevrons.
   - Add Round score wheel remains isolated from panel swiping.
