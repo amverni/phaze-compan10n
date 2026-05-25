@@ -19,8 +19,9 @@ No data model, IndexedDB, routing, game-rule, or persistence behavior changes ar
 ## Requirements
 
 - One-finger horizontal touch drags on tab panel content visually translate the panel track as the finger moves.
-- A panel change commits only when the horizontal movement reaches at least 50px.
+- A panel change commits only when the horizontal movement reaches at least 50px. This is intentionally a fixed distance, not a percentage of panel width.
 - Velocity alone does not advance a panel.
+- Mouse and pointer dragging are intentionally out of scope; this remains touch-only.
 - Swipes stop at the first and last panels and do not wrap.
 - Edge swipes use resistance so the user gets feedback without leaving the valid panel range.
 - Vertical scrolling remains native and does not change panels.
@@ -51,7 +52,7 @@ The component wraps Headless UI tab panels and exposes a small controlled interf
 
 `selectedIndex` is the current tab index from the parent `TabGroup`. `onChange` receives the adjacent index after a committed swipe. The component derives `tabCount` from its children, so callers do not need to pass redundant counts.
 
-Internally, the component renders a horizontal track where each panel occupies one viewport-width slot of the panel container. It keeps panels mounted while sliding so the previous/current/next content can be seen during the gesture. Inactive panels should be made inaccessible to keyboard and screen-reader navigation while they are not selected, using `inert` and `aria-hidden` on non-selected panel slots.
+Internally, the component renders a horizontal track where each panel occupies one container-width slot. It keeps panels mounted while sliding so the previous/current/next content can be seen during the gesture. Inactive panels should be made inaccessible to keyboard and screen-reader navigation while they are not selected, using `inert` and `aria-hidden` on non-selected panel slots.
 
 ### Gesture behavior
 
@@ -70,6 +71,8 @@ On touch end:
 - If the user swipes beyond an edge, animate back to the current panel.
 
 The component does not use velocity as a commit condition. This keeps accidental flicks from advancing panels when the user did not drag far enough.
+
+Snap-forward and snap-back animations should use a short ease-out transition of about 200ms. When `prefers-reduced-motion: reduce` is active, direct dragging can still follow the finger, but snap animations should complete without animated settling.
 
 ### Direct tab selection
 
