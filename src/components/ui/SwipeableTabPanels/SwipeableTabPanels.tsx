@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { mergeClassName } from "../mergeClassName";
 
 const SWIPE_COMMIT_DISTANCE_PX = 50;
 const HORIZONTAL_DOMINANCE_RATIO = 2;
@@ -37,6 +38,16 @@ interface SwipeableTabPanelsProps
 
 function findTouchById(touchList: TouchList, id: number) {
   return Array.from(touchList).find((touch) => touch.identifier === id) ?? null;
+}
+
+function renderStaticTabPanel(panel: ReactNode) {
+  if (!isValidElement(panel)) {
+    return panel;
+  }
+
+  // SwipeableTabPanels is intentionally for Headless UI TabPanel children.
+  // This cast only adds Headless UI's supported `static` prop so panels stay mounted while swiping.
+  return cloneElement(panel as ReactElement<{ static?: boolean }>, { static: true });
 }
 
 export function SwipeableTabPanels({
@@ -181,8 +192,10 @@ export function SwipeableTabPanels({
       const atLastPanel = currentIndex === panelCountRef.current - 1 && deltaX < 0;
       const nextDragOffset = atFirstPanel || atLastPanel ? deltaX / EDGE_RESISTANCE : deltaX;
 
-      setTransitionEnabled(false);
-      setVisualIndex(currentIndex);
+      setTransitionEnabled((wasEnabled) => (wasEnabled ? false : wasEnabled));
+      setVisualIndex((currentVisualIndex) =>
+        currentVisualIndex === currentIndex ? currentVisualIndex : currentIndex,
+      );
       setDragOffset(nextDragOffset);
     };
 
@@ -215,6 +228,17 @@ export function SwipeableTabPanels({
       if (nextIndex !== currentIndex) {
         swipeCommitTargetRef.current = nextIndex;
         onChangeRef.current(nextIndex);
+
+        requestAnimationFrame(() => {
+          if (swipeCommitTargetRef.current !== nextIndex) {
+            return;
+          }
+
+          swipeCommitTargetRef.current = null;
+          setTransitionEnabled(!prefersReducedMotionRef.current);
+          setVisualIndex(selectedIndexRef.current);
+          setDragOffset(0);
+        });
       }
     };
 
@@ -236,7 +260,7 @@ export function SwipeableTabPanels({
   }, [containerElement]);
 
   const transformX = -(visualIndex * containerWidth) + dragOffset;
-  const mergedClassName = ["overflow-x-hidden", className].filter(Boolean).join(" ");
+  const mergedClassName = mergeClassName("overflow-x-hidden", { className });
 
   return (
     <HeadlessTabPanels {...props} ref={setContainerElement} className={mergedClassName}>
@@ -256,11 +280,9 @@ export function SwipeableTabPanels({
             key={isValidElement(panel) ? panel.key : index}
             className="min-h-full w-full min-w-full shrink-0"
             inert={index !== selectedIndex ? true : undefined}
-            aria-hidden={index !== selectedIndex}
+            aria-hidden={index !== selectedIndex ? true : undefined}
           >
-            {isValidElement(panel)
-              ? cloneElement(panel as ReactElement<{ static?: boolean }>, { static: true })
-              : panel}
+            {renderStaticTabPanel(panel)}
           </div>
         ))}
       </div>
