@@ -216,7 +216,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
           </div>
 
           {/* Round Winner select (shared across all tabs) */}
-          <List allowOverflow className="z-30 mx-8">
+          <List allowOverflow className="z-30">
             <Listbox
               key="round-winner"
               value={winnerValue}
@@ -265,7 +265,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
             <SwipeableTabPanels
               selectedIndex={selectedIndex}
               onChange={setSelectedIndex}
-              className="-my-3 flex min-h-0 flex-1 flex-col overflow-y-auto py-3"
+              className="-mx-3 -my-3 flex min-h-0 flex-1 flex-col overflow-y-auto py-3"
             >
               {players.map((player) => {
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
@@ -273,8 +273,8 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                 const isWinner = draft.draft.roundWinnerId === player.id;
 
                 return (
-                  <TabPanel key={player.id} className="flex flex-col px-8">
-                    <div className="glass flex flex-col gap-4 rounded-2xl p-4">
+                  <TabPanel key={player.id} className="flex flex-col px-3">
+                    <div className="glass relative flex flex-col gap-4 rounded-2xl p-4">
                       <RoundResultSection
                         value={playerDraft.result}
                         onChange={(next) => draft.setResult(player.id, next)}
