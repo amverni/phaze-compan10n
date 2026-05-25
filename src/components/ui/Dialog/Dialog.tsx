@@ -45,6 +45,7 @@ export function Dialog(props: AppDialogProps) {
   // Mutable drag state kept in a ref so React handlers can share it
   // without causing re-renders.
   const drag = useRef({
+    startX: 0,
     startY: 0,
     offset: 0,
     active: false,
@@ -154,6 +155,7 @@ export function Dialog(props: AppDialogProps) {
       const onTouchStart = (e: TouchEvent) => {
         const d = drag.current;
         if (d.source === "handle") return;
+        d.startX = e.touches[0].clientX;
         d.startY = e.touches[0].clientY;
         d.offset = 0;
         d.active = false;
@@ -164,11 +166,12 @@ export function Dialog(props: AppDialogProps) {
       const onTouchMove = (e: TouchEvent) => {
         const d = drag.current;
         if (d.source === "handle") return;
+        const deltaX = e.touches[0].clientX - d.startX;
         const delta = e.touches[0].clientY - d.startY;
 
         if (!d.decided) {
           if (Math.abs(delta) < 8) return;
-          if (delta > 0 && node.scrollTop <= 0) {
+          if (delta > 0 && Math.abs(delta) > Math.abs(deltaX) && node.scrollTop <= 0) {
             d.decided = true;
             d.active = true;
             d.source = "content";

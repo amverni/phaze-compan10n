@@ -269,6 +269,7 @@ export function WheelSelector({
   return (
     <div
       className={rootClasses}
+      data-swipe-navigation-ignore
       role="spinbutton"
       aria-valuemin={min}
       aria-valuemax={max}
