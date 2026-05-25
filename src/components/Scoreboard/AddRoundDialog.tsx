@@ -214,30 +214,31 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
           </div>
 
           {/* Round Winner select (shared across all tabs) */}
-          <List allowOverflow className="z-30">
+          <List allowOverflow className="z-30 mx-8">
             <Listbox
               key="round-winner"
               value={winnerValue}
               onChange={handleWinnerSelect}
               className="w-full min-w-0"
             >
-              <SettingListRow label={<ListboxLabel>Round Winner</ListboxLabel>}>
+              <SettingListRow
+                label={
+                  <ListboxLabel className="flex flex-row gap-2">
+                    <Trophy className="size-4 shrink-0 text-yellow-500" aria-hidden />
+                    Round Winner
+                  </ListboxLabel>
+                }
+              >
                 <ListboxButton variant="plain" className="min-h-10 max-w-full min-w-0">
                   {winnerPlayer ? (
                     <>
-                      <Trophy className="size-4 shrink-0 text-yellow-500" aria-hidden />
+                      <PlayerAvatar player={winnerPlayer} size={14} />
                       <span className="min-w-0 truncate text-right">{winnerPlayer.name}</span>
                     </>
                   ) : (
-                    <>
-                      <Trophy
-                        className="size-4 shrink-0 text-text-secondary opacity-60"
-                        aria-hidden
-                      />
-                      <span className="min-w-0 truncate text-right text-text-secondary">
-                        Choose winner
-                      </span>
-                    </>
+                    <span className="min-w-0 truncate text-right text-text-secondary">
+                      Choose winner
+                    </span>
                   )}
                 </ListboxButton>
                 <ListboxOptions
@@ -245,7 +246,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                   transformOrigin="top-right"
                   className="max-w-[min(20rem,calc(100vw-2rem))]"
                 >
-                  <ListboxOption value={NO_WINNER_VALUE}>No round winner yet</ListboxOption>
+                  <ListboxOption value={NO_WINNER_VALUE}>Choose winner</ListboxOption>
                   {players.map((player) => (
                     <ListboxOption key={player.id} value={player.id}>
                       <PlayerAvatar player={player} size={14} />
@@ -280,7 +281,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               </div>
             </div>
 
-            <TabPanels className="-my-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-9 py-3">
+            <TabPanels className="-my-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-3">
               {players.map((player) => {
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                 if (!playerDraft) return null;
