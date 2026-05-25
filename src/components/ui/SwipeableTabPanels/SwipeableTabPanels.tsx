@@ -79,7 +79,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
     return () => observer.disconnect();
   }, [containerElement]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setPrefersReducedMotion(query.matches);
     update();
@@ -107,7 +107,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
   containerWidthRef.current = containerWidth;
   prefersReducedMotionRef.current = prefersReducedMotion;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const cancelRollbackFrame = () => {
       if (rollbackFrameRef.current === null) return;
 
@@ -178,6 +178,9 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         startY: touch.clientY,
         mode: "pending",
       };
+      if (trackElementRef.current) {
+        trackElementRef.current.style.transition = "none";
+      }
       setTransitionEnabled(false);
       setVisualIndex(selectedIndexRef.current);
     };
@@ -229,9 +232,6 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       const atLastPanel = currentIndex === panelCountRef.current - 1 && deltaX < 0;
       const nextDragOffset = atFirstPanel || atLastPanel ? deltaX / EDGE_RESISTANCE : deltaX;
 
-      if (trackElementRef.current) {
-        trackElementRef.current.style.transition = "none";
-      }
       applyTrackTransform(currentIndex, nextDragOffset);
     };
 
