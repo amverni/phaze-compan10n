@@ -266,9 +266,11 @@ export function WheelSelector({
     .filter(Boolean)
     .join(" ");
 
+  // Parent swipe-navigation surfaces read this to ignore wheel drags.
   return (
     <div
       className={rootClasses}
+      data-swipe-navigation-ignore
       role="spinbutton"
       aria-valuemin={min}
       aria-valuemax={max}

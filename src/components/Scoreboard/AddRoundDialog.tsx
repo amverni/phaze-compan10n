@@ -1,6 +1,6 @@
 import { Tab, TabGroup, TabPanel, TabPanels } from "@headlessui/react";
 import { Check, ChevronRight, Loader2, Minus, Redo, Trophy, X } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type TouchEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAddRound } from "../../data/hooks/useRounds";
 import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
@@ -34,6 +34,15 @@ interface AddRoundDialogProps {
 const NO_WINNER_VALUE = "__none__";
 type WinnerSelectValue = typeof NO_WINNER_VALUE | string;
 const EMPTY_TAB_SCROLL_FADE = { left: false, right: false };
+const PANEL_SWIPE_MIN_DISTANCE_PX = 50;
+const PANEL_SWIPE_HORIZONTAL_DOMINANCE = 2;
+const SWIPE_NAVIGATION_IGNORE_SELECTOR = "[data-swipe-navigation-ignore]";
+
+interface PanelSwipeStart {
+  id: number;
+  x: number;
+  y: number;
+}
 
 export function AddRoundDialog({ open, onClose, game, players, draft }: AddRoundDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -42,6 +51,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
   const addRound = useAddRound(game.id);
   const toastRef = useRef<ToastHandle>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
+  const panelSwipeStartRef = useRef<PanelSwipeStart | null>(null);
   const setTabListRef = useCallback((node: HTMLDivElement | null) => {
     tabListRef.current = node;
     setTabScroller(node);
@@ -140,6 +150,68 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
       return;
     }
     draft.setRoundWinner(next);
+  };
+
+  const shouldIgnorePanelSwipeTarget = (target: EventTarget | null) =>
+    target instanceof Element && target.closest(SWIPE_NAVIGATION_IGNORE_SELECTOR) !== null;
+
+  const selectPanelSwipeTab = (direction: -1 | 1) => {
+    if (players.length <= 1) return;
+    const maxIndex = players.length - 1;
+    const nextIndex = Math.min(Math.max(selectedIndex + direction, 0), maxIndex);
+    if (nextIndex === selectedIndex) return;
+    setSelectedIndex(nextIndex);
+  };
+
+  const handlePanelTouchStart = (event: TouchEvent<HTMLElement>) => {
+    if (
+      players.length <= 1 ||
+      event.touches.length !== 1 ||
+      shouldIgnorePanelSwipeTarget(event.target)
+    ) {
+      panelSwipeStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    panelSwipeStartRef.current = {
+      id: touch.identifier,
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+  };
+
+  const handlePanelTouchMove = (event: TouchEvent<HTMLElement>) => {
+    if (!panelSwipeStartRef.current) return;
+    if (event.touches.length !== 1) {
+      panelSwipeStartRef.current = null;
+    }
+  };
+
+  const handlePanelTouchEnd = (event: TouchEvent<HTMLElement>) => {
+    const start = panelSwipeStartRef.current;
+    panelSwipeStartRef.current = null;
+    if (!start) return;
+
+    const touch = Array.from(event.changedTouches).find(
+      (changedTouch) => changedTouch.identifier === start.id,
+    );
+    if (!touch) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    if (absX < PANEL_SWIPE_MIN_DISTANCE_PX || absX < absY * PANEL_SWIPE_HORIZONTAL_DOMINANCE) {
+      return;
+    }
+
+    selectPanelSwipeTab(deltaX < 0 ? 1 : -1);
+  };
+
+  const handlePanelTouchCancel = () => {
+    panelSwipeStartRef.current = null;
   };
 
   const winnerValue: WinnerSelectValue = draft.draft.roundWinnerId ?? NO_WINNER_VALUE;
@@ -285,7 +357,13 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               </div>
             </div>
 
-            <TabPanels className="-my-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-3">
+            <TabPanels
+              className="-my-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-3"
+              onTouchStart={handlePanelTouchStart}
+              onTouchMove={handlePanelTouchMove}
+              onTouchEnd={handlePanelTouchEnd}
+              onTouchCancel={handlePanelTouchCancel}
+            >
               {players.map((player) => {
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                 if (!playerDraft) return null;
