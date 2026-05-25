@@ -1,5 +1,5 @@
 import { Tab, TabGroup, TabPanel, TabPanels } from "@headlessui/react";
-import { Check, ChevronRight, Loader2, Trophy, X } from "lucide-react";
+import { Check, ChevronRight, Loader2, Minus, Redo, Trophy, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAddRound } from "../../data/hooks/useRounds";
 import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
@@ -163,8 +163,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               <TabList setSelectedIndex={setSelectedIndex} className="w-max min-w-full max-w-none">
                 {players.map((player) => {
                   const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
-                  const isComplete =
-                    playerDraft?.result !== null && playerDraft?.result !== undefined;
                   const isWinner = draft.draft.roundWinnerId === player.id;
                   return (
                     <Tab
@@ -184,8 +182,14 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                       >
                         {isWinner ? (
                           <Trophy className="size-3.5 text-yellow-500" aria-hidden />
-                        ) : isComplete ? (
+                        ) : playerDraft?.result === "completed" ? (
                           <Check className="size-3.5 text-pt-green-500" aria-hidden />
+                        ) : playerDraft?.result === "failed" ? (
+                          <X className="size-3.5 text-pt-red-500" aria-hidden />
+                        ) : playerDraft?.result === "skipped" ? (
+                          <Redo className="size-3.5 text-pt-yellow-500" aria-hidden />
+                        ) : playerDraft?.result === "satOut" ? (
+                          <Minus className="size-3.5 text-pt-blue-500" aria-hidden />
                         ) : null}
                       </span>
                     </Tab>
