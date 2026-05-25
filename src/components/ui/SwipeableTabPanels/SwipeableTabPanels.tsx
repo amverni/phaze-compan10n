@@ -192,10 +192,17 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       );
     };
 
-    const scheduleSnap = (fromIndex: number, toIndex: number, offset: number) => {
+    const scheduleSnap = (
+      fromIndex: number,
+      toIndexOrResolver: number | (() => number),
+      offset: number,
+    ) => {
       gestureRef.current = null;
       dragOffsetRef.current = offset;
+      const resolveToIndex = () =>
+        typeof toIndexOrResolver === "function" ? toIndexOrResolver() : toIndexOrResolver;
       if (prefersReducedMotionRef.current) {
+        const toIndex = resolveToIndex();
         dragOffsetRef.current = 0;
         setTransitionEnabled(false);
         setVisualIndex(toIndex);
@@ -217,7 +224,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         rollbackFrameRef.current = null;
         dragOffsetRef.current = 0;
         setTransitionEnabled(true);
-        setVisualIndex(toIndex);
+        setVisualIndex(resolveToIndex());
         setVisualOffset(0);
       });
     };
@@ -359,12 +366,25 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
         }
       }
 
-      scheduleSnap(currentIndex, nextIndex, dragOffset);
-
       if (nextIndex !== currentIndex) {
         swipeCommitTargetRef.current = nextIndex;
         onChangeRef.current(nextIndex);
+        scheduleSnap(
+          currentIndex,
+          () => {
+            if (selectedIndexRef.current === nextIndex) {
+              return nextIndex;
+            }
+
+            swipeCommitTargetRef.current = null;
+            return selectedIndexRef.current;
+          },
+          dragOffset,
+        );
+        return;
       }
+
+      scheduleSnap(currentIndex, nextIndex, dragOffset);
     };
 
     const handleTouchCancel = () => {
