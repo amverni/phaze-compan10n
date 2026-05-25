@@ -113,9 +113,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
     };
   }, [open, tabScroller]);
 
-  const completedPlayerIds = new Set(
-    draft.draft.players.filter((p) => p.result !== null).map((p) => p.playerId),
-  );
   const hasWinner = draft.draft.roundWinnerId !== null;
   const canSave = isDraftComplete(draft.draft) && !addRound.isPending;
 
@@ -451,7 +448,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
 
           <AddRoundProgressPopover
             players={players}
-            completedPlayerIds={completedPlayerIds}
+            playerDrafts={draft.draft.players}
             hasRoundWinner={hasWinner}
           />
 

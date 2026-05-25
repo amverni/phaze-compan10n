@@ -1,24 +1,24 @@
-import { Check } from "lucide-react";
+import { Check, Minus, Redo, X } from "lucide-react";
 import type { Player } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Popover, PopoverButton, PopoverPanel } from "../ui/Popover/Popover";
+import type { PlayerDraft } from "./addRoundDraft";
 
 interface AddRoundProgressPopoverProps {
   players: Player[];
-  /** Player IDs whose round result has been entered. */
-  completedPlayerIds: Set<string>;
+  playerDrafts: PlayerDraft[];
   /** True if a Round Winner is currently selected. */
   hasRoundWinner: boolean;
 }
 
 export function AddRoundProgressPopover({
   players,
-  completedPlayerIds,
+  playerDrafts,
   hasRoundWinner,
 }: AddRoundProgressPopoverProps) {
   const total = players.length;
-  const completed = players.filter((p) => completedPlayerIds.has(p.id));
-  const completedIds = new Set(completed.map((p) => p.id));
+  const completed = playerDrafts.filter((p) => p.result != null);
+  // const completedIds = new Set(completed.map((p) => p.id));
   const fraction = total === 0 ? 0 : completed.length / total;
   const allComplete = completed.length === total && total > 0;
 
@@ -43,7 +43,7 @@ export function AddRoundProgressPopover({
         {players.length > 0 && (
           <ul className="mt-2 flex min-w-44 flex-col gap-1.5">
             {players.map((p) => {
-              const isComplete = completedIds.has(p.id);
+              const result = playerDrafts.find((ps) => ps.playerId === p.id)?.result;
               return (
                 <li
                   key={p.id}
@@ -54,12 +54,35 @@ export function AddRoundProgressPopover({
                     <PlayerAvatar player={p} size={14} />
                   </span>
                   <span className="truncate">{p.name}</span>
-                  <span className="sr-only">{isComplete ? " score entered" : " score needed"}</span>
+                  <span className="sr-only">
+                    {result != null ? " score entered" : " score needed"}
+                  </span>
                   <span className="inline-flex justify-end">
-                    {isComplete && (
+                    {result === "completed" && (
                       <Check
                         data-progress-player-check
                         className="size-4 text-pt-green-500"
+                        aria-hidden
+                      />
+                    )}
+                    {result === "failed" && (
+                      <X
+                        data-progress-player-check
+                        className="size-4 text-pt-red-500"
+                        aria-hidden
+                      />
+                    )}
+                    {result === "skipped" && (
+                      <Redo
+                        data-progress-player-check
+                        className="size-4 text-pt-yellow-500"
+                        aria-hidden
+                      />
+                    )}
+                    {result === "satOut" && (
+                      <Minus
+                        data-progress-player-check
+                        className="size-4 text-pt-blue-500 rotate-180"
                         aria-hidden
                       />
                     )}
