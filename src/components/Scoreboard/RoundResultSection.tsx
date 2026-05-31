@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, type LucideIcon, Minus, Redo, X } from "lucide-react";
 import type { PhaseStatus } from "../../types";
 
 interface RoundResultSectionProps {
@@ -12,38 +12,63 @@ interface RoundResultSectionProps {
 interface ResultOption {
   value: PhaseStatus;
   label: string;
+  icon: LucideIcon;
 }
 
 const PRIMARY_OPTIONS: ResultOption[] = [
-  { value: "failed", label: "Failed" },
-  { value: "completed", label: "Passed" },
+  { value: "failed", label: "Failed", icon: X },
+  { value: "completed", label: "Passed", icon: Check },
 ];
 
 const SECONDARY_OPTIONS: ResultOption[] = [
-  { value: "skipped", label: "Skipped" },
-  { value: "satOut", label: "Sat Out" },
+  { value: "skipped", label: "Skipped", icon: Redo },
+  { value: "satOut", label: "Sat Out", icon: Minus },
 ];
 
 const SELECTED_RESULT_CLASSES = {
-  failed: "bg-pt-red-500 text-white shadow-sm",
-  completed: "bg-pt-green-500 text-white shadow-sm",
-  skipped: "bg-pt-yellow-500 text-neutral-900 shadow-sm",
-  satOut: "bg-pt-blue-500 text-white shadow-sm",
+  failed: "glass-result bg-pt-red-500! text-white",
+  completed: "glass-result bg-pt-green-500! text-white",
+  skipped: "glass-result bg-pt-yellow-500! text-neutral-900",
+  satOut: "glass-result bg-pt-blue-500! text-white",
 } satisfies Record<PhaseStatus, string>;
 
 function resultButtonClasses(status: PhaseStatus, selected: boolean, disabled: boolean): string {
   return [
-    "relative flex-1 rounded-full px-3 py-2 text-sm font-semibold",
+    "glass relative flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold",
     "transition-[filter,transform,opacity,background-color] duration-150 ease-out",
     "active:scale-95",
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
     selected
       ? SELECTED_RESULT_CLASSES[status]
-      : "glass opacity-70 hover:brightness-110 hover:opacity-100",
+      : "opacity-70 hover:brightness-110 hover:opacity-100",
     disabled ? "" : "cursor-pointer",
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+interface ResultButtonProps {
+  option: ResultOption;
+  selected: boolean;
+  disabled: boolean;
+  onChange: (next: PhaseStatus) => void;
+}
+
+function ResultButton({ option, selected, disabled, onChange }: ResultButtonProps) {
+  const Icon = option.icon;
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={() => onChange(option.value)}
+      className={resultButtonClasses(option.value, selected, disabled)}
+    >
+      <Icon className="size-4 shrink-0" aria-hidden />
+      <span>{option.label}</span>
+    </button>
+  );
 }
 
 export function RoundResultSection({
@@ -76,40 +101,28 @@ export function RoundResultSection({
       </div>
 
       <div className="flex w-full gap-2">
-        {PRIMARY_OPTIONS.map((option) => {
-          const selected = value === option.value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={selected}
-              disabled={disabled}
-              onClick={() => onChange(option.value)}
-              className={resultButtonClasses(option.value, selected, disabled)}
-            >
-              {option.label}
-            </button>
-          );
-        })}
+        {PRIMARY_OPTIONS.map((option) => (
+          <ResultButton
+            key={option.value}
+            option={option}
+            selected={value === option.value}
+            disabled={disabled}
+            onChange={onChange}
+          />
+        ))}
       </div>
 
       {expanded && (
         <div className="flex w-full gap-2">
-          {SECONDARY_OPTIONS.map((option) => {
-            const selected = value === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={selected}
-                disabled={disabled}
-                onClick={() => onChange(option.value)}
-                className={resultButtonClasses(option.value, selected, disabled)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+          {SECONDARY_OPTIONS.map((option) => (
+            <ResultButton
+              key={option.value}
+              option={option}
+              selected={value === option.value}
+              disabled={disabled}
+              onChange={onChange}
+            />
+          ))}
         </div>
       )}
     </div>

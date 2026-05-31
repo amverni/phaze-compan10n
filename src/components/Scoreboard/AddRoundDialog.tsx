@@ -246,6 +246,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                 </ListboxButton>
                 <ListboxOptions
                   align="right"
+                  anchor={{ to: "bottom end", gap: "0.25rem", padding: "1rem" }}
                   transformOrigin="top-right"
                   className="max-w-[min(20rem,calc(100vw-2rem))]"
                 >

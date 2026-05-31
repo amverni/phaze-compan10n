@@ -1,9 +1,10 @@
 import {
   Listbox as HeadlessListbox,
   ListboxButton as HeadlessListboxButton,
-  ListboxLabel as HeadlessListboxLabel,
+  Label as HeadlessListboxLabel,
   ListboxOption as HeadlessListboxOption,
   ListboxOptions as HeadlessListboxOptions,
+  type ListboxOptionsProps as HeadlessListboxOptionsProps,
   type ListboxProps,
 } from "@headlessui/react";
 import { Check, ChevronDown } from "lucide-react";
@@ -92,7 +93,7 @@ export function ListboxLabel({ children, className }: { children: ReactNode; cla
 
 const panelClasses = [
   "glass listbox-glass rounded-xl shadow-xl",
-  "absolute top-full z-50 mt-1 w-max",
+  "z-50 w-max overscroll-contain",
   "p-1",
   "focus:outline-none",
 ].join(" ");
@@ -101,6 +102,7 @@ type ListboxOptionsAlign = "left" | "right";
 type ListboxOptionsTransformOrigin = "top-left" | "top-right" | "top";
 
 const panelAnimationClasses = "listbox-options";
+const panelPositionClasses = "absolute top-full mt-1";
 const panelAlignClasses = {
   left: "left-0",
   right: "right-0",
@@ -116,23 +118,36 @@ export function ListboxOptions({
   className,
   align = "left",
   transformOrigin = "top-left",
+  anchor,
+  modal,
+  portal,
 }: {
   children: ReactNode;
   className?: string;
   align?: ListboxOptionsAlign;
   transformOrigin?: ListboxOptionsTransformOrigin;
+  anchor?: HeadlessListboxOptionsProps["anchor"];
+  modal?: HeadlessListboxOptionsProps["modal"];
+  portal?: HeadlessListboxOptionsProps["portal"];
 }) {
   const merged = [
     panelClasses,
     panelAnimationClasses,
-    panelAlignClasses[align],
+    anchor ? "" : panelPositionClasses,
+    anchor ? "" : panelAlignClasses[align],
     panelTransformOriginClasses[transformOrigin],
     className,
   ]
     .filter(Boolean)
     .join(" ");
   return (
-    <HeadlessListboxOptions transition className={merged}>
+    <HeadlessListboxOptions
+      transition
+      anchor={anchor}
+      modal={modal}
+      portal={portal}
+      className={merged}
+    >
       {children}
     </HeadlessListboxOptions>
   );
