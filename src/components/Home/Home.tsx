@@ -17,7 +17,7 @@ export const Home: React.FC = () => {
       }
       mainContent={
         <div className="flex h-full min-h-0 flex-col">
-          <Logo height={160} width="100%" />
+          <Logo height={120} width="100%" />
           <div className="min-h-0 flex-1">
             <div className="content-container h-full">
               <ActiveGames />
