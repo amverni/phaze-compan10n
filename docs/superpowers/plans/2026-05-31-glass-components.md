@@ -72,8 +72,6 @@ In `src/index.css`, replace the existing base `.glass::after` block so the shine
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
   background: var(--_gs-bg);
   box-shadow: var(--_gs-shadow);
   opacity: var(--_gs-opacity);
