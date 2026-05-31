@@ -36,6 +36,11 @@ interface AddRoundDialogProps {
 const NO_WINNER_VALUE = "__none__";
 type WinnerSelectValue = typeof NO_WINNER_VALUE | string;
 const EMPTY_TAB_SCROLL_FADE = { left: false, right: false };
+const PLAYER_TAB_NAME_LIMIT = 30;
+
+function getPlayerTabName(name: string) {
+  return name.length > PLAYER_TAB_NAME_LIMIT ? `${name.slice(0, PLAYER_TAB_NAME_LIMIT)}…` : name;
+}
 
 export function AddRoundDialog({ open, onClose, game, players, draft }: AddRoundDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -108,6 +113,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
   const hasWinner = draft.draft.roundWinnerId !== null;
   const canSave = isDraftComplete(draft.draft) && !addRound.isPending;
   const showTiebreakerEntry = game.settings.tiebreaker !== "roundsWon";
+  const playerTabColumnCount = Math.max(players.length, 1);
 
   const handleSave = () => {
     if (!canSave) return;
@@ -154,28 +160,35 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
           className="flex min-h-0 flex-1 flex-col gap-3"
         >
           {/* Player tabs — horizontal scroll on overflow */}
-          <div className="relative -mx-3 -my-2">
-            <div
-              ref={setTabListRef}
-              data-add-round-tab-scroll
-              className="overflow-x-auto px-3 py-5"
-            >
-              <TabList setSelectedIndex={setSelectedIndex} className="w-max min-w-full max-w-none">
+          <div className="relative -mx-3 -my-2 px-3">
+            <div ref={setTabListRef} data-add-round-tab-scroll className="overflow-x-auto py-5">
+              <TabList
+                setSelectedIndex={setSelectedIndex}
+                className={["grid!", "w-full max-w-none"].join(" ")}
+                style={{
+                  gridTemplateColumns: `repeat(${playerTabColumnCount}, minmax(max-content, 1fr))`,
+                }}
+              >
                 {players.map((player) => {
                   const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                   const isWinner = draft.draft.roundWinnerId === player.id;
+                  const playerTabName = getPlayerTabName(player.name);
                   return (
                     <Tab
                       key={player.id}
+                      aria-label={player.name}
+                      title={player.name}
                       className={[
-                        "relative z-10 inline-flex min-w-12 max-w-[24ch] flex-[1_0_96px] cursor-pointer items-center gap-2 overflow-hidden",
+                        "relative z-10 inline-flex w-full min-w-12 cursor-pointer items-center gap-2 overflow-hidden",
                         "rounded-full px-3 py-1.5 text-sm font-semibold outline-none",
                         "opacity-60 hover:brightness-110 data-focus:outline-2",
                         "data-focus:outline-white/60 data-selected:opacity-100",
                       ].join(" ")}
                     >
                       <PlayerAvatar player={player} size={12} />
-                      <span className="min-w-0 flex-1 truncate text-center">{player.name}</span>
+                      <span className="min-w-0 flex-1 text-center whitespace-nowrap">
+                        {playerTabName}
+                      </span>
                       <span
                         aria-hidden
                         className="inline-flex h-4 w-4 shrink-0 items-center justify-center"
@@ -201,7 +214,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               data-tab-scroll-fade="left"
               aria-hidden
               className={[
-                "pointer-events-none absolute inset-y-0 left-0 z-20 w-2.5 bg-linear-to-r from-white to-transparent",
+                "pointer-events-none absolute inset-y-0 left-3 z-20 w-2.5 bg-linear-to-r from-white to-transparent",
                 "transition-opacity duration-150 dark:from-neutral-900",
                 tabScrollFade.left ? "opacity-100" : "opacity-0",
               ].join(" ")}
@@ -210,7 +223,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               data-tab-scroll-fade="right"
               aria-hidden
               className={[
-                "pointer-events-none absolute inset-y-0 right-0 z-20 w-2.5 bg-linear-to-l from-white to-transparent",
+                "pointer-events-none absolute inset-y-0 right-3 z-20 w-2.5 bg-linear-to-l from-white to-transparent",
                 "transition-opacity duration-150 dark:from-neutral-900",
                 tabScrollFade.right ? "opacity-100" : "opacity-0",
               ].join(" ")}
