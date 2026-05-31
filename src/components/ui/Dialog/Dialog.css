@@ -48,26 +48,26 @@
    picking up the dark overlay behind the panel. */
 
 .dialog-glass {
-  --_g-bg: rgba(255, 255, 255, 0.24);
-  --_g-filter: blur(48px) saturate(170%) brightness(110%);
-  --_gs-bg: rgba(255, 255, 255, 0.04);
-  --_gs-opacity: 0.16;
+  --_g-bg: var(--glass-dialog-bg);
+  --_g-filter: var(--glass-dialog-filter);
+  --_gs-bg: var(--glass-dialog-shine-bg);
+  --_gs-opacity: var(--glass-dialog-shine-opacity);
   --_gs-filter: blur(0.5px) brightness(100%);
   border-bottom: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .dialog-glass {
-    --_g-bg: rgba(18, 18, 18, 0.30);
-    --_g-filter: blur(48px) saturate(155%) brightness(70%);
-    --_gs-bg: rgba(255, 255, 255, 0.03);
-    --_gs-opacity: 0.12;
+    --_g-bg: var(--glass-dialog-bg);
+    --_g-filter: var(--glass-dialog-filter);
+    --_gs-bg: var(--glass-dialog-shine-bg);
+    --_gs-opacity: var(--glass-dialog-shine-opacity);
   }
 }
 
 @media (prefers-color-scheme: light) {
   .dialog-glass {
-    --_g-bg: rgba(255, 255, 255, 0.24);
+    --_g-bg: var(--glass-dialog-bg);
     --_g-border: rgba(0, 0, 0, 0.08);
     --_g-shadow: 0 8px 22px rgba(0, 0, 0, 0.14),
       0 1px 3px rgba(0, 0, 0, 0.06),

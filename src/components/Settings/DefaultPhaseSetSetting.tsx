@@ -32,7 +32,11 @@ export function DefaultPhaseSetSetting({ value }: DefaultPhaseSetSettingProps) {
         <ListboxButton variant="plain" className="shrink-0">
           {selectedLabel}
         </ListboxButton>
-        <ListboxOptions align="right" transformOrigin="top-right">
+        <ListboxOptions
+          align="right"
+          anchor={{ to: "bottom end", gap: "0.25rem", padding: "1rem" }}
+          transformOrigin="top-right"
+        >
           {phaseSets.map(({ id, name }) => (
             <ListboxOption key={id} value={id}>
               {name}

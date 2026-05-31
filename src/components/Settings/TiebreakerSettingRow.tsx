@@ -28,7 +28,11 @@ export function TiebreakerSettingRow({
         <ListboxButton variant="plain" className="shrink-0">
           {TIEBREAKER_LABELS[value]}
         </ListboxButton>
-        <ListboxOptions align="right" transformOrigin="top-right">
+        <ListboxOptions
+          align="right"
+          anchor={{ to: "bottom end", gap: "0.25rem", padding: "1rem" }}
+          transformOrigin="top-right"
+        >
           {TIEBREAKER_OPTIONS.map(({ value, label }) => (
             <ListboxOption key={value} value={value}>
               {label}

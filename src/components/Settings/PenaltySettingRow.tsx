@@ -35,7 +35,12 @@ export function PenaltySettingRow({
         <ListboxButton variant="plain" className="shrink-0">
           {value} pts
         </ListboxButton>
-        <ListboxOptions align="right" transformOrigin="top-right">
+        <ListboxOptions
+          align="right"
+          anchor={{ to: "bottom end", gap: "0.25rem", padding: "1rem" }}
+          className="max-h-80!"
+          transformOrigin="top-right"
+        >
           {PENALTY_OPTIONS.map((option) => (
             <ListboxOption key={option} value={option}>
               {option} pts

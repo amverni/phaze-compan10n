@@ -20,6 +20,21 @@
 :root {
   --card-shadow-lg: rgba(0, 0, 0, 0.95);
   --card-shadow-sm: rgba(0, 0, 0, 0.70);
+  --glass-base-opacity: 0.10;
+  --glass-base-bg: rgba(255, 255, 255, var(--glass-base-opacity));
+  --glass-base-filter: blur(40px) saturate(170%) brightness(112%);
+  --glass-control-opacity: 0.30;
+  --glass-control-bg: rgba(255, 255, 255, var(--glass-control-opacity));
+  --glass-floating-opacity: 0.15;
+  --glass-floating-bg: rgba(255, 255, 255, var(--glass-floating-opacity));
+  --glass-floating-filter: blur(30px) saturate(100%) brightness(120%);
+  --glass-floating-shine-bg: rgba(255, 255, 255, 0.06);
+  --glass-floating-shine-opacity: 0.18;
+  --glass-dialog-opacity: 0.20;
+  --glass-dialog-bg: rgba(255, 255, 255, var(--glass-dialog-opacity));
+  --glass-dialog-filter: var(--glass-floating-filter);
+  --glass-dialog-shine-bg: rgba(255, 255, 255, 0.04);
+  --glass-dialog-shine-opacity: 0.16;
 }
 
 @media (prefers-color-scheme: light) {
@@ -61,8 +76,8 @@ body,
    with .glass in markup. */
 
 .glass {
-  --_g-bg: rgba(255, 255, 255, 0.10);
-  --_g-filter: blur(40px) saturate(170%) brightness(112%);
+  --_g-bg: var(--glass-base-bg);
+  --_g-filter: var(--glass-base-filter);
   --_g-border: rgba(255, 255, 255, 0.28);
   --_g-shadow: 0 6px 18px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
@@ -94,9 +109,25 @@ body,
 }
 
 @media (prefers-color-scheme: dark) {
+  :root {
+    --glass-base-opacity: 0.03;
+    --glass-base-bg: rgba(255, 255, 255, var(--glass-base-opacity));
+    --glass-base-filter: blur(40px) saturate(180%) brightness(58%);
+    --glass-floating-opacity: 0.28;
+    --glass-floating-bg: rgba(18, 18, 18, var(--glass-floating-opacity));
+    --glass-floating-filter: blur(56px) saturate(155%) brightness(58%);
+    --glass-floating-shine-bg: rgba(255, 255, 255, 0.03);
+    --glass-floating-shine-opacity: 0.12;
+    --glass-dialog-opacity: 0.26;
+    --glass-dialog-bg: rgba(18, 18, 18, var(--glass-dialog-opacity));
+    --glass-dialog-filter: blur(56px) saturate(155%) brightness(70%);
+    --glass-dialog-shine-bg: rgba(255, 255, 255, 0.03);
+    --glass-dialog-shine-opacity: 0.12;
+  }
+
   .glass {
-    --_g-bg: rgba(255, 255, 255, 0.03);
-    --_g-filter: blur(40px) saturate(180%) brightness(58%);
+    --_g-bg: var(--glass-base-bg);
+    --_g-filter: var(--glass-base-filter);
     --_g-border: rgba(255, 255, 255, 0.18);
     --_g-shadow: 0 8px 28px rgba(0, 0, 0, 0.48),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -142,8 +173,8 @@ body,
   [role="radio"].glass:not(.glass-danger):not(.glass-error),
   [role="switch"].glass:not(.glass-danger):not(.glass-error),
   [role="tab"].glass:not(.glass-danger):not(.glass-error) {
-    --_g-bg: rgba(255, 255, 255, 0.30);
-    --_g-filter: blur(40px) saturate(170%) brightness(112%);
+    --_g-bg: var(--glass-control-bg);
+    --_g-filter: var(--glass-base-filter);
     --_g-border: rgba(0, 0, 0, 0.16);
     --_g-shadow: 0 2px 10px rgba(0, 0, 0, 0.14),
       inset 0 1px 0 rgba(255, 255, 255, 0.22);
