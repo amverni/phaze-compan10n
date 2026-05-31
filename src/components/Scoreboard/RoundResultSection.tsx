@@ -94,29 +94,23 @@ export function RoundResultSection({
       </div>
 
       {expanded && (
-        <>
-          <div
-            aria-hidden
-            className="my-1 border-t border-dashed border-black/20 dark:border-white/15"
-          />
-          <div className="flex w-full gap-2">
-            {SECONDARY_OPTIONS.map((option) => {
-              const selected = value === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={disabled}
-                  onClick={() => onChange(option.value)}
-                  className={resultButtonClasses(option.value, selected, disabled)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </>
+        <div className="flex w-full gap-2">
+          {SECONDARY_OPTIONS.map((option) => {
+            const selected = value === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                disabled={disabled}
+                onClick={() => onChange(option.value)}
+                className={resultButtonClasses(option.value, selected, disabled)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       )}
     </div>
   );

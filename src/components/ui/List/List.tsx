@@ -20,10 +20,11 @@ import { ChevronsUpDown, Minus } from "lucide-react";
 import { Children, isValidElement, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import "./List.css";
 
-const ROW_HEIGHT = "h-10";
+const COMPACT_ROW_HEIGHT = "h-10";
 const LIST_ANIMATION_MS = 220;
 const LIST_MOVE_EASING = "cubic-bezier(0.2, 0, 0, 1)";
 const LIST_HEIGHT_EASING = "linear";
+export type ListRowVariant = "compact" | "content";
 
 interface RowRect {
   top: number;
@@ -54,7 +55,7 @@ interface PendingAnimations {
 
 function ShimmerRow() {
   return (
-    <div className={`${ROW_HEIGHT} flex items-center px-3`}>
+    <div className={`${COMPACT_ROW_HEIGHT} flex items-center px-3`}>
       <div className="list-shimmer h-4 w-full rounded-md" />
     </div>
   );
@@ -88,10 +89,14 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
   );
 }
 
-function rowClassName(isFirst: boolean, isLast: boolean) {
+function rowClassName(isFirst: boolean, isLast: boolean, rowVariant: ListRowVariant) {
   const radius =
     isFirst && isLast ? "rounded-2xl" : isFirst ? "rounded-t-2xl" : isLast ? "rounded-b-2xl" : "";
-  return `${ROW_HEIGHT} ${radius} flex items-center px-3 text-sm`;
+  const sizing =
+    rowVariant === "content"
+      ? "min-h-10 flex items-center px-4 py-4 text-sm"
+      : `${COMPACT_ROW_HEIGHT} flex items-center px-3 text-sm`;
+  return `${sizing} ${radius}`;
 }
 
 interface SortableRowProps {
@@ -316,6 +321,8 @@ export interface ListProps {
   className?: string;
   isLoading?: boolean;
   shimmerRows?: number;
+  /** Use `content` for variable-height rows that contain controls or sections. */
+  rowVariant?: ListRowVariant;
   emptyMessage?: ReactNode;
   sortable?: boolean;
   items?: SortableItem[];
@@ -331,6 +338,7 @@ export function List({
   className: classNameProp,
   isLoading = false,
   shimmerRows = 0,
+  rowVariant = "compact",
   emptyMessage,
   sortable = false,
   items,
@@ -664,7 +672,7 @@ export function List({
   function renderRow(row: RenderRow, index: number, totalCount: number) {
     const isFirst = index === 0;
     const isLast = index === totalCount - 1;
-    const className = rowClassName(isFirst, isLast);
+    const className = rowClassName(isFirst, isLast, rowVariant);
     const reactKey = row.phase === "exiting" ? `exit:${row.key}:${row.exitId}` : row.key;
 
     return (

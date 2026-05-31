@@ -106,6 +106,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
 
   const hasWinner = draft.draft.roundWinnerId !== null;
   const canSave = isDraftComplete(draft.draft) && !addRound.isPending;
+  const showTiebreakerEntry = game.settings.tiebreaker !== "roundsWon";
 
   const handleSave = () => {
     if (!canSave) return;
@@ -274,34 +275,29 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
 
                 return (
                   <TabPanel key={player.id} className="flex flex-col px-3">
-                    <div className="glass relative flex flex-col gap-4 rounded-2xl p-4">
+                    <List rowVariant="content">
                       <RoundResultSection
+                        key="round-result"
                         value={playerDraft.result}
                         onChange={(next) => draft.setResult(player.id, next)}
                         expanded={playerDraft.expandedSecondary}
                         onToggleExpand={(next) => draft.setExpandedSecondary(player.id, next)}
                       />
 
-                      <div
-                        aria-hidden
-                        className="border-t border-dashed border-black/15 dark:border-white/15"
-                      />
-
-                      <TiebreakerEntrySection
-                        tiebreaker={game.settings.tiebreaker}
-                        value={playerDraft.score}
-                        onChange={(next) => draft.setScore(player.id, next)}
-                        onQuickIncrement={(button) => draft.incrementQuick(player.id, button)}
-                        quickCounts={playerDraft.quickCounts}
-                        result={playerDraft.result}
-                      />
-
-                      <div
-                        aria-hidden
-                        className="border-t border-dashed border-black/15 dark:border-white/15"
-                      />
+                      {showTiebreakerEntry && (
+                        <TiebreakerEntrySection
+                          key="tiebreaker-entry"
+                          tiebreaker={game.settings.tiebreaker}
+                          value={playerDraft.score}
+                          onChange={(next) => draft.setScore(player.id, next)}
+                          onQuickIncrement={(button) => draft.incrementQuick(player.id, button)}
+                          quickCounts={playerDraft.quickCounts}
+                          result={playerDraft.result}
+                        />
+                      )}
 
                       <button
+                        key="won-round"
                         type="button"
                         onClick={() => draft.setRoundWinner(player.id)}
                         aria-pressed={isWinner}
@@ -332,7 +328,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                           aria-hidden
                         />
                       </button>
-                    </div>
+                    </List>
                   </TabPanel>
                 );
               })}
