@@ -104,21 +104,21 @@ export function CreateGame() {
           <SwipeableTabPanels
             selectedIndex={selectedIndex}
             onChange={setSelectedIndex}
-            className="content-container w-full min-h-0 flex-1"
+            className="mx-auto w-full max-w-lg min-h-0 flex-1"
           >
-            <TabPanel className="h-full">
+            <TabPanel className="h-full px-4">
               <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
                 <Players />
               </ScrollFade>
             </TabPanel>
 
-            <TabPanel className="h-full">
+            <TabPanel className="h-full px-4">
               <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
                 <Phases />
               </ScrollFade>
             </TabPanel>
 
-            <TabPanel className="h-full">
+            <TabPanel className="h-full px-4">
               <ScrollFade className="h-full -mx-6 px-6 pb-(--slant)">
                 <Settings />
               </ScrollFade>
