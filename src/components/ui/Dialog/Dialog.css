@@ -48,31 +48,35 @@
    picking up the dark overlay behind the panel. */
 
 .dialog-glass {
-  --_g-bg: rgba(255, 255, 255, 0.35);
-  --_g-filter: blur(24px) saturate(80%) brightness(1.5);
+  --_g-bg: rgba(255, 255, 255, 0.24);
+  --_g-filter: blur(48px) saturate(170%) brightness(110%);
+  --_gs-bg: rgba(255, 255, 255, 0.04);
+  --_gs-opacity: 0.16;
+  --_gs-filter: blur(0.5px) brightness(100%);
   border-bottom: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .dialog-glass {
-    --_g-bg: rgba(30, 30, 30, 0.75);
-    --_g-filter: blur(24px) saturate(120%) brightness(1.1);
+    --_g-bg: rgba(18, 18, 18, 0.30);
+    --_g-filter: blur(48px) saturate(155%) brightness(70%);
+    --_gs-bg: rgba(255, 255, 255, 0.03);
+    --_gs-opacity: 0.12;
   }
 }
 
 @media (prefers-color-scheme: light) {
   .dialog-glass {
-    --_g-bg: rgba(255, 255, 255, 0.92);
-    --_g-filter: blur(24px) saturate(80%) brightness(1);
+    --_g-bg: rgba(255, 255, 255, 0.24);
     --_g-border: rgba(0, 0, 0, 0.08);
-    --_g-shadow: 0 8px 32px rgba(0, 0, 0, 0.10),
+    --_g-shadow: 0 8px 22px rgba(0, 0, 0, 0.14),
       0 1px 3px rgba(0, 0, 0, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      inset 0 1px 0 rgba(255, 255, 255, 0.24);
   }
 
   .dialog-glass .glass {
     --_g-border: rgba(0, 0, 0, 0.14);
-    --_g-shadow: 0 4px 20px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    --_g-shadow: 0 4px 10px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
   }
 }
