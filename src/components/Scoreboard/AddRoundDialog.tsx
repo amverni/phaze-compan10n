@@ -1,6 +1,6 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Check, ChevronRight, Loader2, Minus, Redo, Trophy, X } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAddRound } from "../../data/hooks/useRounds";
 import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
@@ -35,7 +35,6 @@ interface AddRoundDialogProps {
 
 const NO_WINNER_VALUE = "__none__";
 type WinnerSelectValue = typeof NO_WINNER_VALUE | string;
-const EMPTY_TAB_SCROLL_FADE = { left: false, right: false };
 const PLAYER_TAB_NAME_LIMIT = 30;
 
 function getPlayerTabName(name: string) {
@@ -44,15 +43,9 @@ function getPlayerTabName(name: string) {
 
 export function AddRoundDialog({ open, onClose, game, players, draft }: AddRoundDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [tabScroller, setTabScroller] = useState<HTMLDivElement | null>(null);
-  const [tabScrollFade, setTabScrollFade] = useState(EMPTY_TAB_SCROLL_FADE);
   const addRound = useAddRound(game.id);
   const toastRef = useRef<ToastHandle>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
-  const setTabListRef = useCallback((node: HTMLDivElement | null) => {
-    tabListRef.current = node;
-    setTabScroller(node);
-  }, []);
 
   // Keep the selected player visible in the horizontal tab strip.
   useEffect(() => {
@@ -62,53 +55,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
     const target = tabs[selectedIndex];
     target?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [selectedIndex]);
-
-  useLayoutEffect(() => {
-    if (!open || !tabScroller) {
-      setTabScrollFade(EMPTY_TAB_SCROLL_FADE);
-      return;
-    }
-
-    let frame = 0;
-
-    const updateFades = () => {
-      const maxScrollLeft = tabScroller.scrollWidth - tabScroller.clientWidth;
-      const next = {
-        left: tabScroller.scrollLeft > 1,
-        right: tabScroller.scrollLeft < maxScrollLeft - 1,
-      };
-
-      setTabScrollFade((previous) =>
-        previous.left === next.left && previous.right === next.right ? previous : next,
-      );
-    };
-
-    const scheduleUpdate = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(updateFades);
-    };
-
-    updateFades();
-    scheduleUpdate();
-    tabScroller.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(scheduleUpdate);
-      resizeObserver.observe(tabScroller);
-      if (tabScroller.firstElementChild instanceof HTMLElement) {
-        resizeObserver.observe(tabScroller.firstElementChild);
-      }
-    }
-
-    return () => {
-      cancelAnimationFrame(frame);
-      tabScroller.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-      resizeObserver?.disconnect();
-    };
-  }, [open, tabScroller]);
 
   const hasWinner = draft.draft.roundWinnerId !== null;
   const canSave = isDraftComplete(draft.draft) && !addRound.isPending;
@@ -160,11 +106,11 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
           className="flex min-h-0 flex-1 flex-col gap-3"
         >
           {/* Player tabs — horizontal scroll on overflow */}
-          <div className="relative -mx-3 -my-2 px-3">
-            <div ref={setTabListRef} data-add-round-tab-scroll className="overflow-x-auto py-5">
+          <div className="relative -mx-3 -my-2">
+            <div ref={tabListRef} data-add-round-tab-scroll className="overflow-x-auto px-3 py-5">
               <TabList
                 setSelectedIndex={setSelectedIndex}
-                className={["grid!", "w-full max-w-none"].join(" ")}
+                className={["grid!", "w-fit! min-w-[calc(100%-2px)] max-w-none"].join(" ")}
                 style={{
                   gridTemplateColumns: `repeat(${playerTabColumnCount}, minmax(max-content, 1fr))`,
                 }}
@@ -210,24 +156,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                 })}
               </TabList>
             </div>
-            <span
-              data-tab-scroll-fade="left"
-              aria-hidden
-              className={[
-                "pointer-events-none absolute inset-y-0 left-3 z-20 w-2.5 bg-linear-to-r from-white to-transparent",
-                "transition-opacity duration-150 dark:from-neutral-900",
-                tabScrollFade.left ? "opacity-100" : "opacity-0",
-              ].join(" ")}
-            />
-            <span
-              data-tab-scroll-fade="right"
-              aria-hidden
-              className={[
-                "pointer-events-none absolute inset-y-0 right-3 z-20 w-2.5 bg-linear-to-l from-white to-transparent",
-                "transition-opacity duration-150 dark:from-neutral-900",
-                tabScrollFade.right ? "opacity-100" : "opacity-0",
-              ].join(" ")}
-            />
           </div>
 
           {/* Round Winner select (shared across all tabs) */}
