@@ -1,5 +1,6 @@
 import { Check, ChevronDown, type LucideIcon, Minus, Redo, X } from "lucide-react";
 import type { PhaseStatus } from "../../types";
+import { Button } from "../ui";
 
 interface RoundResultSectionProps {
   value: PhaseStatus | null;
@@ -84,7 +85,7 @@ export function RoundResultSection({
         <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
           Round Result
         </p>
-        <button
+        <Button
           type="button"
           aria-label={expanded ? "Hide extra options" : "Show extra options"}
           aria-expanded={expanded}
@@ -97,7 +98,7 @@ export function RoundResultSection({
               .join(" ")}
             aria-hidden
           />
-        </button>
+        </Button>
       </div>
 
       <div className="flex w-full gap-2">

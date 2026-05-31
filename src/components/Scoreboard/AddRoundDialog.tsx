@@ -5,6 +5,7 @@ import { useAddRound } from "../../data/hooks/useRounds";
 import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import {
+  Button,
   Dialog,
   List,
   Listbox,
@@ -339,7 +340,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
 
         {/* Bottom action bar */}
         <div className="flex shrink-0 items-center gap-3 pt-1">
-          <button
+          <Button
             type="button"
             aria-label="Cancel"
             onClick={() => onClose(false)}
@@ -347,7 +348,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
             className="glass relative inline-flex size-10 cursor-pointer items-center justify-center rounded-full hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
           >
             <X className="size-4" aria-hidden />
-          </button>
+          </Button>
 
           <AddRoundProgressPopover
             players={players}
@@ -355,7 +356,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
             hasRoundWinner={hasWinner}
           />
 
-          <button
+          <Button
             type="button"
             aria-label="Save round"
             onClick={handleSave}
@@ -367,7 +368,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
             ) : (
               <Check className="size-4 text-pt-green-500" aria-hidden />
             )}
-          </button>
+          </Button>
         </div>
 
         <Toast ref={toastRef} />
