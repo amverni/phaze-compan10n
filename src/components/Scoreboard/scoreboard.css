@@ -153,6 +153,10 @@
   overflow: hidden;
 }
 
+.round-result-secondary--open .round-result-secondary__content {
+  overflow: visible;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .round-result-secondary {
     transform: none;
