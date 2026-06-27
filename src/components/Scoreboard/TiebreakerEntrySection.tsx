@@ -81,11 +81,11 @@ function clampToMax(value: number, max: number): number {
 }
 
 const quickButtonRowClasses = [
-  "-mx-1 flex min-w-0 flex-nowrap gap-2 overflow-x-auto px-1 py-1",
+  "-mx-1 flex min-w-0 flex-nowrap gap-1.5 overflow-x-auto px-1 py-1",
 ].join(" ");
 
 const quickCardButtonBaseClasses = [
-  "glass tiebreaker-quick-card relative inline-flex h-[4.5rem] min-w-[3.75rem] shrink-0 items-center justify-center overflow-hidden rounded-2xl px-3 text-sm font-bold leading-none",
+  "glass tiebreaker-quick-card relative inline-flex h-14 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold leading-none",
   interactiveClasses,
   "transition-[filter,transform,opacity,background-color] duration-150 ease-out",
   "hover:brightness-110 active:scale-95",
@@ -112,7 +112,7 @@ function getQuickCardButtonClasses({
     quickCardButtonBaseClasses,
     quickCardAccentClasses[accent],
     selected
-      ? "tiebreaker-quick-card--selected bg-white/25! ring-2 ring-pt-blue-500/50 dark:bg-white/10!"
+      ? "tiebreaker-quick-card--selected bg-white/15! ring-1 ring-pt-blue-500/50 dark:bg-white/10!"
       : "",
   ]
     .filter(Boolean)
@@ -165,13 +165,13 @@ export function TiebreakerEntrySection({
       </p>
 
       {variant.kind === "points" && (
-        <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex w-full items-start justify-between gap-2">
           <div className={quickButtonRowClasses}>
             {POINTS_QUICK_BUTTONS.map((btn) => {
               const count = quickCounts[btn.id];
               const counterId = `${counterIdBase}-${btn.id}`;
               return (
-                <div key={btn.id} className="flex shrink-0 flex-col items-center gap-1.5">
+                <div key={btn.id} className="flex shrink-0 flex-col items-center gap-1">
                   <button
                     type="button"
                     disabled={disabled}
@@ -197,20 +197,22 @@ export function TiebreakerEntrySection({
               );
             })}
           </div>
-          <WheelSelector
-            value={value}
-            onChange={onChange}
-            min={variant.min}
-            max={variant.max}
-            step={variant.step}
-            label={variant.label}
-            disabled={disabled}
-          />
+          <div className="shrink-0 -mt-2">
+            <WheelSelector
+              value={value}
+              onChange={onChange}
+              min={variant.min}
+              max={variant.max}
+              step={variant.step}
+              label={variant.label}
+              disabled={disabled}
+            />
+          </div>
         </div>
       )}
 
       {variant.kind === "count" && (
-        <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex w-full items-start justify-between gap-2">
           <div className={quickButtonRowClasses}>
             {COUNT_QUICK_BUTTONS.map((n) => {
               const selected = value === n;
@@ -233,15 +235,17 @@ export function TiebreakerEntrySection({
               );
             })}
           </div>
-          <WheelSelector
-            value={value}
-            onChange={onChange}
-            min={variant.min}
-            max={variant.max}
-            step={variant.step}
-            label={variant.label}
-            disabled={disabled}
-          />
+          <div className="shrink-0 -mt-2">
+            <WheelSelector
+              value={value}
+              onChange={onChange}
+              min={variant.min}
+              max={variant.max}
+              step={variant.step}
+              label={variant.label}
+              disabled={disabled}
+            />
+          </div>
         </div>
       )}
     </div>

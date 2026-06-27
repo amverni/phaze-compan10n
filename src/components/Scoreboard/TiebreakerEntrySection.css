@@ -1,10 +1,10 @@
 .tiebreaker-quick-card {
   --tiebreaker-card-accent: var(--color-text-secondary);
-  --tiebreaker-card-cap-opacity: 0.16;
-  --tiebreaker-card-slant: 0.85rem;
-  --tiebreaker-card-inset-x: 0.28rem;
-  --tiebreaker-card-inset-y: 0.28rem;
-  --tiebreaker-card-cap-height: 30%;
+  --tiebreaker-card-cap-opacity: 0.12;
+  --tiebreaker-card-slant: 0.55rem;
+  --tiebreaker-card-inset-x: 0.2rem;
+  --tiebreaker-card-inset-y: 0.2rem;
+  --tiebreaker-card-cap-height: 28%;
 
   isolation: isolate;
 }
@@ -26,7 +26,7 @@
 }
 
 .tiebreaker-quick-card--selected {
-  --tiebreaker-card-cap-opacity: 0.28;
+  --tiebreaker-card-cap-opacity: 0.24;
 }
 
 .tiebreaker-quick-card__cap {
@@ -35,7 +35,7 @@
   right: var(--tiebreaker-card-inset-x);
   z-index: 0;
   height: var(--tiebreaker-card-cap-height);
-  border: 1px solid var(--tiebreaker-card-accent);
+  border: 1px solid color-mix(in oklab, var(--tiebreaker-card-accent) 55%, transparent);
   background: var(--tiebreaker-card-accent);
   opacity: var(--tiebreaker-card-cap-opacity);
   pointer-events: none;
@@ -43,12 +43,12 @@
 
 .tiebreaker-quick-card__cap--top {
   top: var(--tiebreaker-card-inset-y);
-  border-radius: 0.85rem 0.85rem 0.3rem 0.3rem;
+  border-radius: 0.5rem 0.5rem 0.15rem 0.15rem;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--tiebreaker-card-slant)), 0 100%);
 }
 
 .tiebreaker-quick-card__cap--bottom {
   bottom: var(--tiebreaker-card-inset-y);
-  border-radius: 0.3rem 0.3rem 0.85rem 0.85rem;
+  border-radius: 0.15rem 0.15rem 0.5rem 0.5rem;
   clip-path: polygon(0 var(--tiebreaker-card-slant), 100% 0, 100% 100%, 0 100%);
 }
