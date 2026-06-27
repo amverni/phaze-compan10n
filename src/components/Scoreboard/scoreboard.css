@@ -80,16 +80,10 @@
   padding-top: 14px;
 }
 
-/* Dashed border treatment for the ghost row. Only styles the borders
-   that should exist inside the grid — the top edge (separates ghost
-   from the row above) and the between-cell right edges. The bottom
-   edge is left to `--last-row` (none), and the right edge of the
-   last column is explicitly removed so the outer container border
-   isn't doubled with a dashed stroke. */
+/* Dashed top treatment for the ghost row. Vertical dividers keep the
+   base solid grid borders so they remain visible in responsive Safari. */
 .scoreboard-cell--dashed {
   border-top: 1px dashed rgba(0, 0, 0, 0.25);
-  border-right-style: dashed;
-  border-right-width: 1.5px;
 }
 
 .scoreboard-cell--dashed.scoreboard-cell--last-col {
