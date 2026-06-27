@@ -12,7 +12,7 @@ export const TIEBREAKER_VALUES = [
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   tiebreaker: "lowestPoints",
   roundSkipPenalty: 100,
-  sitOutPenalty: 50,
+  sitOutPenalty: 0,
 };
 
 export const GAME_PENALTY_RANGE = {
