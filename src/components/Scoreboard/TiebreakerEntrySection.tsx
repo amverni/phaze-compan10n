@@ -1,6 +1,9 @@
+import { useId } from "react";
 import type { GameTiebreaker, PhaseStatus } from "../../types";
+import { interactiveClasses } from "../ui/sharedClasses";
 import { WheelSelector } from "../ui/WheelSelector/WheelSelector";
 import type { PointsQuickButtonId, QuickCounts } from "./addRoundDraft";
+import "./TiebreakerEntrySection.css";
 
 interface TiebreakerEntrySectionProps {
   tiebreaker: GameTiebreaker;
@@ -12,17 +15,27 @@ interface TiebreakerEntrySectionProps {
   result: PhaseStatus | null;
 }
 
+type QuickButtonAccent = "blue" | "green" | "yellow" | "red";
+
 interface PointsQuickButton {
   id: PointsQuickButtonId;
   label: string;
   delta: number;
+  accent: QuickButtonAccent;
+  counterClassName: string;
 }
 
 const POINTS_QUICK_BUTTONS: PointsQuickButton[] = [
-  { id: "p5", label: "+5", delta: 5 },
-  { id: "p10", label: "+10", delta: 10 },
-  { id: "skipCard", label: "Skip", delta: 15 },
-  { id: "wild", label: "Wild", delta: 25 },
+  { id: "p5", label: "+5", delta: 5, accent: "blue", counterClassName: "text-pt-blue-500" },
+  { id: "p10", label: "+10", delta: 10, accent: "green", counterClassName: "text-pt-green-500" },
+  {
+    id: "skipCard",
+    label: "Skip",
+    delta: 15,
+    accent: "yellow",
+    counterClassName: "text-pt-yellow-500",
+  },
+  { id: "wild", label: "Wild", delta: 25, accent: "red", counterClassName: "text-pt-red-500" },
 ];
 
 const COUNT_QUICK_BUTTONS: number[] = [1, 2, 3, 4, 5];
@@ -67,21 +80,57 @@ function clampToMax(value: number, max: number): number {
   return Math.min(max, value);
 }
 
-const quickButtonBaseClasses = [
-  "glass inline-flex h-11 w-11 flex-col items-center justify-center rounded-full text-sm font-semibold leading-none",
-  "transition-[filter,transform] duration-150 ease-out",
-  "hover:brightness-110 active:scale-95",
-  "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-  "cursor-pointer",
+const quickButtonRowClasses = [
+  "-mx-1 flex min-w-0 flex-nowrap gap-2 overflow-x-auto px-1 py-1",
 ].join(" ");
 
-const countButtonClasses = [
-  "glass inline-flex h-10 min-w-10 items-center justify-center rounded-full px-3 text-sm font-semibold",
-  "transition-[filter,transform] duration-150 ease-out",
+const quickCardButtonBaseClasses = [
+  "glass tiebreaker-quick-card relative inline-flex h-[4.5rem] min-w-[3.75rem] shrink-0 items-center justify-center overflow-hidden rounded-2xl px-3 text-sm font-bold leading-none",
+  interactiveClasses,
+  "transition-[filter,transform,opacity,background-color] duration-150 ease-out",
   "hover:brightness-110 active:scale-95",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60",
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-  "cursor-pointer",
 ].join(" ");
+
+const quickCardAccentClasses: Record<QuickButtonAccent | "neutral", string> = {
+  blue: "tiebreaker-quick-card--blue",
+  green: "tiebreaker-quick-card--green",
+  yellow: "tiebreaker-quick-card--yellow",
+  red: "tiebreaker-quick-card--red",
+  neutral: "",
+};
+
+function getQuickCardButtonClasses({
+  accent,
+  selected = false,
+}: {
+  accent: QuickButtonAccent | "neutral";
+  selected?: boolean;
+}): string {
+  return [
+    quickCardButtonBaseClasses,
+    quickCardAccentClasses[accent],
+    selected
+      ? "tiebreaker-quick-card--selected bg-white/25! ring-2 ring-pt-blue-500/50 dark:bg-white/10!"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function getCounterDescription(count: number): string {
+  return `Used ${count} ${count === 1 ? "time" : "times"}`;
+}
+
+function QuickCardCaps() {
+  return (
+    <>
+      <span aria-hidden className="tiebreaker-quick-card__cap tiebreaker-quick-card__cap--top" />
+      <span aria-hidden className="tiebreaker-quick-card__cap tiebreaker-quick-card__cap--bottom" />
+    </>
+  );
+}
 
 export function TiebreakerEntrySection({
   tiebreaker,
@@ -92,6 +141,7 @@ export function TiebreakerEntrySection({
   result,
 }: TiebreakerEntrySectionProps) {
   const variant = resolveVariant(tiebreaker);
+  const counterIdBase = useId();
   if (variant.kind === "hidden") {
     return null;
   }
@@ -116,28 +166,34 @@ export function TiebreakerEntrySection({
 
       {variant.kind === "points" && (
         <div className="flex w-full items-center justify-between gap-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div className={quickButtonRowClasses}>
             {POINTS_QUICK_BUTTONS.map((btn) => {
               const count = quickCounts[btn.id];
+              const counterId = `${counterIdBase}-${btn.id}`;
               return (
-                <button
-                  key={btn.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onQuickIncrement(btn.id)}
-                  className={quickButtonBaseClasses}
-                  aria-label={`Add ${btn.delta} points (${btn.label})`}
-                >
-                  <span>{btn.label}</span>
+                <div key={btn.id} className="flex shrink-0 flex-col items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onQuickIncrement(btn.id)}
+                    className={getQuickCardButtonClasses({ accent: btn.accent })}
+                    aria-label={`Add ${btn.delta} points (${btn.label})`}
+                    aria-describedby={counterId}
+                  >
+                    <QuickCardCaps />
+                    <span className="relative z-10 text-text-primary">{btn.label}</span>
+                  </button>
                   <span
+                    id={counterId}
                     className={[
-                      "mt-0.5 text-[0.625rem] font-bold leading-none tabular-nums",
-                      count > 0 ? "text-pt-blue-500" : "text-text-secondary opacity-60",
+                      "text-xs font-bold leading-none tabular-nums",
+                      count > 0 ? btn.counterClassName : "text-text-secondary opacity-60",
                     ].join(" ")}
                   >
-                    {count}
+                    <span aria-hidden>{count}</span>
+                    <span className="sr-only">{getCounterDescription(count)}</span>
                   </span>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -155,20 +211,27 @@ export function TiebreakerEntrySection({
 
       {variant.kind === "count" && (
         <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            {COUNT_QUICK_BUTTONS.map((n) => (
-              <button
-                key={n}
-                type="button"
-                disabled={disabled}
-                onClick={() => onQuickSet(n)}
-                className={countButtonClasses}
-                aria-label={`Set to ${n}`}
-                aria-pressed={value === n}
-              >
-                {n}
-              </button>
-            ))}
+          <div className={quickButtonRowClasses}>
+            {COUNT_QUICK_BUTTONS.map((n) => {
+              const selected = value === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onQuickSet(n)}
+                  className={getQuickCardButtonClasses({
+                    accent: selected ? "blue" : "neutral",
+                    selected,
+                  })}
+                  aria-label={`Set to ${n}`}
+                  aria-pressed={selected}
+                >
+                  <QuickCardCaps />
+                  <span className="relative z-10 text-text-primary">{n}</span>
+                </button>
+              );
+            })}
           </div>
           <WheelSelector
             value={value}

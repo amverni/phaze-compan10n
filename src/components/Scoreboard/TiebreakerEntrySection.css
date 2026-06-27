@@ -1,0 +1,54 @@
+.tiebreaker-quick-card {
+  --tiebreaker-card-accent: var(--color-text-secondary);
+  --tiebreaker-card-cap-opacity: 0.16;
+  --tiebreaker-card-slant: 0.85rem;
+  --tiebreaker-card-inset-x: 0.28rem;
+  --tiebreaker-card-inset-y: 0.28rem;
+  --tiebreaker-card-cap-height: 30%;
+
+  isolation: isolate;
+}
+
+.tiebreaker-quick-card--blue {
+  --tiebreaker-card-accent: var(--color-pt-blue-500);
+}
+
+.tiebreaker-quick-card--green {
+  --tiebreaker-card-accent: var(--color-pt-green-500);
+}
+
+.tiebreaker-quick-card--yellow {
+  --tiebreaker-card-accent: var(--color-pt-yellow-500);
+}
+
+.tiebreaker-quick-card--red {
+  --tiebreaker-card-accent: var(--color-pt-red-500);
+}
+
+.tiebreaker-quick-card--selected {
+  --tiebreaker-card-cap-opacity: 0.28;
+}
+
+.tiebreaker-quick-card__cap {
+  position: absolute;
+  left: var(--tiebreaker-card-inset-x);
+  right: var(--tiebreaker-card-inset-x);
+  z-index: 0;
+  height: var(--tiebreaker-card-cap-height);
+  border: 1px solid var(--tiebreaker-card-accent);
+  background: var(--tiebreaker-card-accent);
+  opacity: var(--tiebreaker-card-cap-opacity);
+  pointer-events: none;
+}
+
+.tiebreaker-quick-card__cap--top {
+  top: var(--tiebreaker-card-inset-y);
+  border-radius: 0.85rem 0.85rem 0.3rem 0.3rem;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--tiebreaker-card-slant)), 0 100%);
+}
+
+.tiebreaker-quick-card__cap--bottom {
+  bottom: var(--tiebreaker-card-inset-y);
+  border-radius: 0.3rem 0.3rem 0.85rem 0.85rem;
+  clip-path: polygon(0 var(--tiebreaker-card-slant), 100% 0, 100% 100%, 0 100%);
+}
