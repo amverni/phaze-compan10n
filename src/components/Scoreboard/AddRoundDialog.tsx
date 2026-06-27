@@ -117,7 +117,6 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
               >
                 {players.map((player) => {
                   const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
-                  const isWinner = draft.draft.roundWinnerId === player.id;
                   const playerTabName = getPlayerTabName(player.name);
                   return (
                     <Tab
