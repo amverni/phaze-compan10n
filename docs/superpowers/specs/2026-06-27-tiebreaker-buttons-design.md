@@ -35,6 +35,8 @@ Use the throwaway prototype's **Mini Phase 10 card** treatment as the basis for 
 
 Each quick button is a vertical rounded rectangle with inset top and bottom slanted fills. The slants angle upward from left to right, echoing the app's Phase 10 card-panel motif. The fill should be subtle enough to preserve the glass UI language, but visible enough that the buttons do not look like plain rounded rectangles.
 
+The approved refinement is a compact-fit version of that treatment: cards should be thinner, less rounded, and less bordered so the Points row normally fits without horizontal scrolling while still reading as mini Phase 10 cards.
+
 ## Layout
 
 Points Tiebreaker controls keep the current high-level structure:
@@ -43,7 +45,9 @@ Points Tiebreaker controls keep the current high-level structure:
 - quick-button group on the left,
 - wheel selector on the right.
 
-The quick-button group becomes a no-wrap horizontal row. It may scroll horizontally if the available width is too small, but the normal Add Round layout should show all four Points buttons without wrapping. The wheel selector remains visible and does not scroll with the quick-button group.
+The quick-button group becomes a no-wrap horizontal row. It may scroll horizontally if the available width is unusually small, but the normal Add Round layout should show all four Points buttons without wrapping. The wheel selector remains visible and does not scroll with the quick-button group.
+
+The quick-button row and the wheel selector should read as one fluid control row. Align the wheel selector to the visual center of the card buttons, not the full card-plus-counter stack, so the wheel does not feel vertically detached from the cards.
 
 Count Tiebreakers use the same row model: count quick-set cards on the left and the wheel selector on the right. The `1`-`5` cards stay in one row and may horizontally overflow if needed.
 
@@ -52,11 +56,13 @@ Count Tiebreakers use the same row model: count quick-set cards on the left and 
 All tiebreaker quick buttons use the same base shape:
 
 - glass surface,
-- vertical rounded rectangle,
+- slim vertical rounded rectangle,
 - inset slanted cap near the top,
 - inset slanted cap near the bottom,
 - centered label text,
 - press/hover/disabled states consistent with the current buttons.
+
+Compared with the first Mini Phase 10 card implementation, the refinement should reduce card width, card padding, card border radius, row gap, and cap border prominence. Keep the slanted fills present but lighter so the row feels tighter and less boxy.
 
 Points Tiebreaker cards use per-button accent colors:
 
@@ -97,10 +103,11 @@ The horizontal overflow container should include enough padding that focus rings
 - Run `npm run build`.
 - Verify the Add Round dialog with a Points Tiebreaker:
   - the four quick buttons are in one row,
-  - each button looks like a vertical mini Phase 10 card,
+  - each button looks like a slim vertical mini Phase 10 card,
   - counters appear below the cards,
   - zero counters are muted and non-zero counters are accented,
-  - the wheel selector remains beside the button group.
+  - the wheel selector remains beside the button group and aligns visually with the card bodies,
+  - the normal Add Round layout does not require horizontal card scrolling.
 - Verify the Add Round dialog with Count Tiebreakers:
   - count cards use the same card shape,
   - cards stay in one row,
