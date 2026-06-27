@@ -1,4 +1,5 @@
 import { Check, ChevronDown, type LucideIcon, Minus, Redo, X } from "lucide-react";
+import { useId } from "react";
 import type { PhaseStatus } from "../../types";
 import { Button } from "../ui";
 
@@ -79,8 +80,10 @@ export function RoundResultSection({
   onToggleExpand,
   disabled = false,
 }: RoundResultSectionProps) {
+  const secondaryOptionsId = useId();
+
   return (
-    <div className="flex w-full flex-col gap-2" role="radiogroup" aria-label="Round Result">
+    <div className="flex w-full flex-col" role="radiogroup" aria-label="Round Result">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
           Round Result
@@ -89,6 +92,7 @@ export function RoundResultSection({
           type="button"
           aria-label={expanded ? "Hide extra options" : "Show extra options"}
           aria-expanded={expanded}
+          aria-controls={secondaryOptionsId}
           onClick={() => onToggleExpand(!expanded)}
           className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:bg-black/5 dark:hover:bg-white/10"
         >
@@ -101,7 +105,7 @@ export function RoundResultSection({
         </Button>
       </div>
 
-      <div className="flex w-full gap-2">
+      <div className="mt-2 flex w-full gap-2">
         {PRIMARY_OPTIONS.map((option) => (
           <ResultButton
             key={option.value}
@@ -113,19 +117,28 @@ export function RoundResultSection({
         ))}
       </div>
 
-      {expanded && (
-        <div className="flex w-full gap-2">
-          {SECONDARY_OPTIONS.map((option) => (
-            <ResultButton
-              key={option.value}
-              option={option}
-              selected={value === option.value}
-              disabled={disabled}
-              onChange={onChange}
-            />
-          ))}
+      <div
+        id={secondaryOptionsId}
+        className={["round-result-secondary", expanded ? "round-result-secondary--open" : ""]
+          .filter(Boolean)
+          .join(" ")}
+        aria-hidden={!expanded}
+        inert={!expanded}
+      >
+        <div className="round-result-secondary__content">
+          <div className="flex w-full gap-2">
+            {SECONDARY_OPTIONS.map((option) => (
+              <ResultButton
+                key={option.value}
+                option={option}
+                selected={value === option.value}
+                disabled={disabled}
+                onChange={onChange}
+              />
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
