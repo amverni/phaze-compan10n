@@ -1,6 +1,5 @@
 .tiebreaker-quick-card {
   --tiebreaker-card-accent: var(--color-text-secondary);
-  --tiebreaker-card-cap-opacity: 0.12;
   --tiebreaker-card-slant: 0.55rem;
   --tiebreaker-card-inset-x: 0.2rem;
   --tiebreaker-card-inset-y: 0.2rem;
@@ -25,10 +24,6 @@
   --tiebreaker-card-accent: var(--color-pt-red-500);
 }
 
-.tiebreaker-quick-card--selected {
-  --tiebreaker-card-cap-opacity: 0.24;
-}
-
 .tiebreaker-quick-card__cap {
   position: absolute;
   left: var(--tiebreaker-card-inset-x);
@@ -37,7 +32,6 @@
   height: var(--tiebreaker-card-cap-height);
   border: 1px solid color-mix(in oklab, var(--tiebreaker-card-accent) 55%, transparent);
   background: var(--tiebreaker-card-accent);
-  opacity: var(--tiebreaker-card-cap-opacity);
   pointer-events: none;
 }
 
