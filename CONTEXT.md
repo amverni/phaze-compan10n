@@ -60,6 +60,14 @@ _Avoid_: Champion
 The rule used to resolve winner comparisons when multiple players are otherwise tied.
 _Avoid_: Secondary score, fallback rule
 
+**Points Tiebreaker**:
+A tiebreaker that compares players by a recorded point total, where the selected rule determines whether higher or lower points win.
+_Avoid_: Score tiebreaker
+
+**Count Tiebreaker**:
+A tiebreaker that compares players by a counted gameplay event, such as wild cards or skip cards.
+_Avoid_: Non-points tiebreaker
+
 **Fewest Wilds**:
 A tiebreaker that compares players by the number of wild cards used, where fewer is better.
 _Avoid_: Low points (for this rule)
@@ -85,6 +93,10 @@ _Avoid_: Skip (ambiguous)
 **Turn Skip**:
 The player misses a turn within a round without skipping the entire round.
 _Avoid_: Skip (ambiguous)
+
+**Skip Card**:
+A card that causes another player to take a Turn Skip. The compact label **Skip** is permitted where the surrounding score-entry controls make the card meaning unambiguous.
+_Avoid_: Round Skip, Sit Out
 
 **Round Skip Penalty**:
 Points added to a player's Round Score when they take a Round Skip. Stored on `gameSettings.roundSkipPenalty` (per-game) with an app-wide default in `appSettings.gameDefaults.roundSkipPenalty`. Default: 100 points.
@@ -119,7 +131,7 @@ _Avoid_: Bookmark
 ## Flagged ambiguities
 
 - **"Skip" is overloaded.**  
-  **Resolution:** Use **Turn Skip** for in-round skipped turns, **Round Skip** for full-round skips that advance phase, and **Sit Out** for full-round skips that do not advance phase.
+  **Resolution:** Use **Skip Card** for the card that causes a Turn Skip, **Turn Skip** for the missed turn, **Round Skip** for full-round skips that advance phase, and **Sit Out** for full-round skips that do not advance phase. The compact label **Skip** is acceptable only when surrounding card-entry controls make **Skip Card** unambiguous.
 
 ## Example dialogue
 
@@ -128,4 +140,6 @@ _Avoid_: Bookmark
 **Developer:** "If she instead chooses Sit Out?"  
 **Domain expert:** "Then she retries the same Current Phase next round."  
 **Developer:** "And if two players finish the final phase together?"  
-**Domain expert:** "Use the configured Tiebreaker; for Fewest Wilds, compare wild-card counts."
+**Domain expert:** "Use the configured Tiebreaker; for Fewest Wilds, compare wild-card counts."  
+**Developer:** "In a Points Tiebreaker, does the quick button labeled Skip mean a Round Skip?"  
+**Domain expert:** "No, that compact label means Skip Card in that score-entry context."
