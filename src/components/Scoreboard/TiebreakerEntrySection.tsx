@@ -11,7 +11,7 @@ interface TiebreakerEntrySectionProps {
   onChange: (next: number) => void;
   onQuickIncrement: (button: PointsQuickButtonId) => void;
   quickCounts: QuickCounts;
-  /** Current round result. Skipped / Sat Out disable the section. Null = not yet picked. */
+  /** Current round result. Null / Skipped / Sat Out disable the section. */
   result: PhaseStatus | null;
 }
 
@@ -38,7 +38,7 @@ const POINTS_QUICK_BUTTONS: PointsQuickButton[] = [
   { id: "wild", label: "Wild", delta: 25, accent: "red", counterClassName: "text-pt-red-500" },
 ];
 
-const COUNT_QUICK_BUTTONS: number[] = [1, 2, 3, 4, 5];
+const COUNT_QUICK_BUTTONS: number[] = [1, 2, 3, 4];
 
 interface VariantConfig {
   kind: "points" | "count" | "hidden";
@@ -146,7 +146,7 @@ export function TiebreakerEntrySection({
     return null;
   }
 
-  const disabled = result === "skipped" || result === "satOut";
+  const disabled = result === null || result === "skipped" || result === "satOut";
 
   const onQuickSet = (next: number) => {
     if (disabled) return;
