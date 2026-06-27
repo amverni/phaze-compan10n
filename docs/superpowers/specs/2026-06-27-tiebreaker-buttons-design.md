@@ -62,7 +62,7 @@ All tiebreaker quick buttons use the same base shape:
 - centered label text,
 - press/hover/disabled states consistent with the current buttons.
 
-Compared with the first Mini Phase 10 card implementation, the refinement should reduce card width, card padding, card border radius, row gap, and cap border prominence. Keep the slanted fills present but lighter so the row feels tighter and less boxy.
+Compared with the first Mini Phase 10 card implementation, the refinement should reduce card width, card padding, card border radius, row gap, and cap border prominence. Target a `0.5rem` outer card radius. Keep the slanted fills present but lighter so the row feels tighter and less boxy.
 
 Points Tiebreaker cards use per-button accent colors:
 
