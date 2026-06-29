@@ -1,12 +1,14 @@
 import { Check, Minus, Redo, X } from "lucide-react";
-import type { Player } from "../../types";
+import type { GameTiebreaker, Player, PlayerId } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Popover, PopoverButton, PopoverPanel } from "../ui/Popover/Popover";
-import type { PlayerDraft } from "./addRoundDraft";
+import { getScoreEntryCompletion, type PlayerDraft } from "./addRoundDraft";
 
 interface AddRoundProgressPopoverProps {
   players: Player[];
   playerDrafts: PlayerDraft[];
+  tiebreaker: GameTiebreaker;
+  roundWinnerId: PlayerId | null;
   /** True if a Round Winner is currently selected. */
   hasRoundWinner: boolean;
 }
@@ -14,10 +16,14 @@ interface AddRoundProgressPopoverProps {
 export function AddRoundProgressPopover({
   players,
   playerDrafts,
+  tiebreaker,
+  roundWinnerId,
   hasRoundWinner,
 }: AddRoundProgressPopoverProps) {
   const total = players.length;
-  const completed = playerDrafts.filter((p) => p.result != null);
+  const completed = playerDrafts.filter(
+    (player) => getScoreEntryCompletion({ player, tiebreaker, roundWinnerId }).complete,
+  );
   // const completedIds = new Set(completed.map((p) => p.id));
   const fraction = total === 0 ? 0 : completed.length / total;
   const allComplete = completed.length === total && total > 0;
@@ -43,7 +49,11 @@ export function AddRoundProgressPopover({
         {players.length > 0 && (
           <ul className="mt-2 flex min-w-44 flex-col gap-1.5">
             {players.map((p) => {
-              const result = playerDrafts.find((ps) => ps.playerId === p.id)?.result;
+              const playerDraft = playerDrafts.find((ps) => ps.playerId === p.id);
+              const result = playerDraft?.result;
+              const completion = playerDraft
+                ? getScoreEntryCompletion({ player: playerDraft, tiebreaker, roundWinnerId })
+                : { complete: false, reason: "Select a Round Result." };
               return (
                 <li
                   key={p.id}
@@ -53,33 +63,40 @@ export function AddRoundProgressPopover({
                   <span data-player-avatar>
                     <PlayerAvatar player={p} size={14} />
                   </span>
-                  <span className="truncate">{p.name}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate">{p.name}</span>
+                    {!completion.complete && completion.reason && (
+                      <span className="block truncate text-xs text-text-secondary">
+                        {completion.reason}
+                      </span>
+                    )}
+                  </span>
                   <span className="sr-only">
-                    {result != null ? " score entered" : " score needed"}
+                    {completion.complete ? " score entered" : " score needed"}
                   </span>
                   <span className="inline-flex justify-end">
-                    {result === "completed" && (
+                    {completion.complete && result === "completed" && (
                       <Check
                         data-progress-player-check
                         className="size-4 text-pt-green-500"
                         aria-hidden
                       />
                     )}
-                    {result === "failed" && (
+                    {completion.complete && result === "failed" && (
                       <X
                         data-progress-player-check
                         className="size-4 text-pt-red-500"
                         aria-hidden
                       />
                     )}
-                    {result === "skipped" && (
+                    {completion.complete && result === "skipped" && (
                       <Redo
                         data-progress-player-check
                         className="size-4 text-pt-yellow-500"
                         aria-hidden
                       />
                     )}
-                    {result === "satOut" && (
+                    {completion.complete && result === "satOut" && (
                       <Minus
                         data-progress-player-check
                         className="size-4 text-pt-blue-500 rotate-180"

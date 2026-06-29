@@ -7,6 +7,8 @@ export interface UseAddRoundDraft {
   setResult: (playerId: PlayerId, result: PhaseStatus) => void;
   setScore: (playerId: PlayerId, score: number) => void;
   incrementQuick: (playerId: PlayerId, button: draftHelpers.PointsQuickButtonId) => void;
+  decrementQuick: (playerId: PlayerId, button: draftHelpers.PointsQuickButtonId) => void;
+  resetQuick: (playerId: PlayerId) => void;
   setExpandedSecondary: (playerId: PlayerId, expanded: boolean) => void;
   setRoundWinner: (playerId: PlayerId) => void;
   clearRoundWinner: () => void;
@@ -30,12 +32,18 @@ export function useAddRoundDraft(players: Player[], settings: GameSettings): Use
       setNextDraft(draftHelpers.applyResult(draftRef.current, playerId, result, settings));
     },
     setScore: (playerId, score) => {
-      setNextDraft(draftHelpers.applyScore(draftRef.current, playerId, score));
+      setNextDraft(draftHelpers.applyScore(draftRef.current, playerId, score, settings));
     },
     incrementQuick: (playerId, button) => {
       setNextDraft(
         draftHelpers.applyQuickIncrement(draftRef.current, playerId, button, POINTS_MAX),
       );
+    },
+    decrementQuick: (playerId, button) => {
+      setNextDraft(draftHelpers.applyQuickDecrement(draftRef.current, playerId, button));
+    },
+    resetQuick: (playerId) => {
+      setNextDraft(draftHelpers.applyQuickReset(draftRef.current, playerId));
     },
     setExpandedSecondary: (playerId, expanded) => {
       setNextDraft(draftHelpers.applyExpandedSecondary(draftRef.current, playerId, expanded));
@@ -44,7 +52,7 @@ export function useAddRoundDraft(players: Player[], settings: GameSettings): Use
       setNextDraft(draftHelpers.applyRoundWinner(draftRef.current, playerId, settings));
     },
     clearRoundWinner: () => {
-      setNextDraft({ ...draftRef.current, roundWinnerId: null });
+      setNextDraft(draftHelpers.applyClearRoundWinner(draftRef.current, settings));
     },
     reset: () => {
       setNextDraft(draftHelpers.createInitialDraft(players));

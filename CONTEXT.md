@@ -60,6 +60,14 @@ _Avoid_: Champion
 The rule used to resolve winner comparisons when multiple players are otherwise tied.
 _Avoid_: Secondary score, fallback rule
 
+**Score Entry Complete**:
+A player's round score entry has enough Round Result and Tiebreaker information to be counted as entered for that round. For Points Tiebreakers, this includes a valid Points Card Count for the player's Round Result.
+_Avoid_: Completed, done
+
+**Points Card Count**:
+The total number of remaining cards represented by the point-entry counters for a Points Tiebreaker.
+_Avoid_: Score, points total
+
 **Points Tiebreaker**:
 A tiebreaker that compares players by a recorded point total, where the selected rule determines whether higher or lower points win.
 _Avoid_: Score tiebreaker
@@ -132,6 +140,9 @@ _Avoid_: Bookmark
 
 - **"Skip" is overloaded.**  
   **Resolution:** Use **Skip Card** for the card that causes a Turn Skip, **Turn Skip** for the missed turn, **Round Skip** for full-round skips that advance phase, and **Sit Out** for full-round skips that do not advance phase. The compact label **Skip** is acceptable only when surrounding card-entry controls make **Skip Card** unambiguous.
+
+- **"Complete" is overloaded.**
+  **Resolution:** Use **Completed** only for the phase outcome. Use **Score Entry Complete** for whether a player's round score entry is ready to save.
 
 ## Example dialogue
 

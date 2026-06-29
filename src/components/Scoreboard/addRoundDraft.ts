@@ -23,6 +23,23 @@ export type QuickCounts = Record<PointsQuickButtonId, number>;
 
 const ZERO_QUICK_COUNTS: QuickCounts = { p5: 0, p10: 0, skipCard: 0, wild: 0 };
 
+interface PointsEntrySnapshot {
+  score: number;
+  lastManualScore: number;
+  quickCounts: QuickCounts;
+}
+
+interface PointsCardCountRule {
+  minCards: number;
+  maxCards: number;
+  reason: string;
+}
+
+export interface ScoreEntryCompletion {
+  complete: boolean;
+  reason?: string;
+}
+
 /** Per-player draft state. `result === null` means the user hasn't picked yet — submission blocked. */
 export interface PlayerDraft {
   playerId: PlayerId;
@@ -33,6 +50,10 @@ export interface PlayerDraft {
   lastManualScore: number;
   /** Press counts per quick-add button (points-based tiebreaker only). */
   quickCounts: QuickCounts;
+  /** Snapshot of the quick counts last set while result was failed|completed. */
+  lastManualQuickCounts: QuickCounts;
+  /** Points/card-count entry to restore after this player stops being the Round Winner. */
+  pointsEntryBeforeWinner: PointsEntrySnapshot | null;
   /** Whether the Round Result secondary row (Skipped / Sat Out) is currently expanded for this player. */
   expandedSecondary: boolean;
 }
@@ -47,9 +68,320 @@ type CompleteAddRoundDraft = AddRoundDraft & {
 };
 
 type PenaltySettings = Pick<GameSettings, "roundSkipPenalty" | "sitOutPenalty">;
+type ResultSettings = PenaltySettings & Pick<GameSettings, "tiebreaker">;
+
+const FAILED_POINTS_DEFAULT_SCORE = 50;
+const FAILED_POINTS_DEFAULT_QUICK_COUNTS: QuickCounts = {
+  ...ZERO_QUICK_COUNTS,
+  p5: FAILED_POINTS_DEFAULT_SCORE / POINTS_QUICK_BUTTON_DELTAS.p5,
+};
+const POINTS_MAX = 250;
+const POINTS_STEP = 5;
+const allowedPointScoresCache = new Map<string, number[]>();
 
 function isManualResult(result: PhaseStatus | null): result is ManualResult {
   return result === "failed" || result === "completed";
+}
+
+function isPointsTiebreaker(tiebreaker: GameTiebreaker): boolean {
+  return tiebreaker === "lowestPoints" || tiebreaker === "highestPoints";
+}
+
+function getPointsCardCountRule(
+  result: PhaseStatus | null,
+  isRoundWinner: boolean,
+): PointsCardCountRule | null {
+  if (isRoundWinner) {
+    return { minCards: 0, maxCards: 0, reason: "Winner needs 0 cards." };
+  }
+
+  if (result === "failed") {
+    return { minCards: 10, maxCards: 10, reason: "Needs 10 cards." };
+  }
+
+  if (result === "completed") {
+    return { minCards: 0, maxCards: 9, reason: "Needs 9 or fewer cards." };
+  }
+
+  return null;
+}
+
+function getPointsPenaltyScore(result: PhaseStatus, settings: PenaltySettings): number | null {
+  if (result === "skipped") {
+    return settings.roundSkipPenalty;
+  }
+
+  if (result === "satOut") {
+    return settings.sitOutPenalty;
+  }
+
+  return null;
+}
+
+function getQuickCountsPoints(quickCounts: QuickCounts): number {
+  return (
+    quickCounts.p5 * POINTS_QUICK_BUTTON_DELTAS.p5 +
+    quickCounts.p10 * POINTS_QUICK_BUTTON_DELTAS.p10 +
+    quickCounts.skipCard * POINTS_QUICK_BUTTON_DELTAS.skipCard +
+    quickCounts.wild * POINTS_QUICK_BUTTON_DELTAS.wild
+  );
+}
+
+function getPointsCardCount(quickCounts: QuickCounts): number {
+  return quickCounts.p5 + quickCounts.p10 + quickCounts.skipCard + quickCounts.wild;
+}
+
+function isBetterQuickCounts(candidate: QuickCounts, current: QuickCounts): boolean {
+  const candidateSpecials = candidate.skipCard + candidate.wild;
+  const currentSpecials = current.skipCard + current.wild;
+  if (candidateSpecials !== currentSpecials) {
+    return candidateSpecials < currentSpecials;
+  }
+
+  if (candidate.wild !== current.wild) {
+    return candidate.wild < current.wild;
+  }
+
+  return candidate.p5 > current.p5;
+}
+
+function findQuickCountsForPoints(score: number, rule: PointsCardCountRule): QuickCounts | null {
+  let best: QuickCounts | null = null;
+
+  for (let p5 = 0; p5 <= rule.maxCards; p5 += 1) {
+    for (let p10 = 0; p10 <= rule.maxCards - p5; p10 += 1) {
+      for (let skipCard = 0; skipCard <= rule.maxCards - p5 - p10; skipCard += 1) {
+        for (let wild = 0; wild <= rule.maxCards - p5 - p10 - skipCard; wild += 1) {
+          const quickCounts = { p5, p10, skipCard, wild };
+          const cardCount = getPointsCardCount(quickCounts);
+          if (cardCount < rule.minCards || cardCount > rule.maxCards) {
+            continue;
+          }
+
+          if (getQuickCountsPoints(quickCounts) !== score) {
+            continue;
+          }
+
+          if (best === null || isBetterQuickCounts(quickCounts, best)) {
+            best = quickCounts;
+          }
+        }
+      }
+    }
+  }
+
+  return best;
+}
+
+export function getAllowedPointScoresForResult(
+  result: PhaseStatus | null,
+  isRoundWinner: boolean,
+): number[] {
+  const cacheKey = `${result ?? "none"}:${isRoundWinner}`;
+  const cached = allowedPointScoresCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const rule = getPointsCardCountRule(result, isRoundWinner);
+  if (!rule) {
+    return [];
+  }
+
+  const scores: number[] = [];
+  for (let score = 0; score <= POINTS_MAX; score += POINTS_STEP) {
+    if (findQuickCountsForPoints(score, rule)) {
+      scores.push(score);
+    }
+  }
+  allowedPointScoresCache.set(cacheKey, scores);
+  return scores;
+}
+
+function applyQuickCountsIncrement(
+  quickCounts: QuickCounts,
+  button: PointsQuickButtonId,
+  maxCards: number | null,
+): QuickCounts {
+  if (maxCards === null || getPointsCardCount(quickCounts) < maxCards) {
+    return { ...quickCounts, [button]: quickCounts[button] + 1 };
+  }
+
+  if (button === "p5" || quickCounts.p5 === 0) {
+    return quickCounts;
+  }
+
+  return {
+    ...quickCounts,
+    p5: quickCounts.p5 - 1,
+    [button]: quickCounts[button] + 1,
+  };
+}
+
+function applyQuickCountsDecrement(
+  quickCounts: QuickCounts,
+  button: PointsQuickButtonId,
+): QuickCounts {
+  if (quickCounts[button] === 0) {
+    return quickCounts;
+  }
+
+  return { ...quickCounts, [button]: quickCounts[button] - 1 };
+}
+
+export function isPointsQuickIncrementNoop({
+  result,
+  quickCounts,
+  button,
+  isRoundWinner,
+}: {
+  result: PhaseStatus | null;
+  quickCounts: QuickCounts;
+  button: PointsQuickButtonId;
+  isRoundWinner: boolean;
+}): boolean {
+  if (!isManualResult(result) || isRoundWinner) {
+    return true;
+  }
+
+  const rule = getPointsCardCountRule(result, false);
+  return applyQuickCountsIncrement(quickCounts, button, rule?.maxCards ?? null) === quickCounts;
+}
+
+function getQuickResetEntry(
+  result: PhaseStatus | null,
+  isRoundWinner: boolean,
+): PointsEntrySnapshot | null {
+  if (isRoundWinner || result === "completed") {
+    return {
+      score: 0,
+      lastManualScore: 0,
+      quickCounts: { ...ZERO_QUICK_COUNTS },
+    };
+  }
+
+  if (result === "failed") {
+    return {
+      score: FAILED_POINTS_DEFAULT_SCORE,
+      lastManualScore: FAILED_POINTS_DEFAULT_SCORE,
+      quickCounts: { ...FAILED_POINTS_DEFAULT_QUICK_COUNTS },
+    };
+  }
+
+  return null;
+}
+
+export function isPointsQuickResetNoop({
+  result,
+  quickCounts,
+  isRoundWinner,
+}: {
+  result: PhaseStatus | null;
+  quickCounts: QuickCounts;
+  isRoundWinner: boolean;
+}): boolean {
+  const resetEntry = getQuickResetEntry(result, isRoundWinner);
+  if (!resetEntry) {
+    return true;
+  }
+
+  return (
+    quickCounts.p5 === resetEntry.quickCounts.p5 &&
+    quickCounts.p10 === resetEntry.quickCounts.p10 &&
+    quickCounts.skipCard === resetEntry.quickCounts.skipCard &&
+    quickCounts.wild === resetEntry.quickCounts.wild
+  );
+}
+
+function findNearestAllowedPointScore(score: number, allowedScores: number[]): number {
+  return allowedScores.reduce((nearest, candidate) => {
+    const nearestDistance = Math.abs(score - nearest);
+    const candidateDistance = Math.abs(score - candidate);
+    if (candidateDistance !== nearestDistance) {
+      return candidateDistance < nearestDistance ? candidate : nearest;
+    }
+
+    return candidate < nearest ? candidate : nearest;
+  }, allowedScores[0] ?? 0);
+}
+
+function resolvePointsScoreEntry(
+  score: number,
+  result: PhaseStatus | null,
+  isRoundWinner: boolean,
+): PointsEntrySnapshot | null {
+  const rule = getPointsCardCountRule(result, isRoundWinner);
+  if (!rule) {
+    return null;
+  }
+
+  const allowedScores = getAllowedPointScoresForResult(result, isRoundWinner);
+  const resolvedScore = findNearestAllowedPointScore(score, allowedScores);
+  const quickCounts = findQuickCountsForPoints(resolvedScore, rule) ?? { ...ZERO_QUICK_COUNTS };
+
+  return {
+    score: resolvedScore,
+    lastManualScore: resolvedScore,
+    quickCounts,
+  };
+}
+
+function hasNoPointsEntry(player: PlayerDraft): boolean {
+  return (
+    player.score === 0 &&
+    player.lastManualScore === 0 &&
+    player.quickCounts.p5 === 0 &&
+    player.quickCounts.p10 === 0 &&
+    player.quickCounts.skipCard === 0 &&
+    player.quickCounts.wild === 0
+  );
+}
+
+function createPointsEntrySnapshot(player: PlayerDraft): PointsEntrySnapshot {
+  return {
+    score: player.score,
+    lastManualScore: player.lastManualScore,
+    quickCounts: { ...player.quickCounts },
+  };
+}
+
+function restorePointsEntry(player: PlayerDraft): PlayerDraft {
+  if (!player.pointsEntryBeforeWinner) {
+    return player;
+  }
+
+  return {
+    ...player,
+    score: player.pointsEntryBeforeWinner.score,
+    lastManualScore: player.pointsEntryBeforeWinner.lastManualScore,
+    quickCounts: { ...player.pointsEntryBeforeWinner.quickCounts },
+    lastManualQuickCounts: { ...player.pointsEntryBeforeWinner.quickCounts },
+    pointsEntryBeforeWinner: null,
+  };
+}
+
+function getLastManualPointsEntry(player: PlayerDraft): PointsEntrySnapshot {
+  if (isManualResult(player.result)) {
+    return {
+      score: player.score,
+      lastManualScore: player.score,
+      quickCounts: { ...player.quickCounts },
+    };
+  }
+
+  return {
+    score: player.lastManualScore,
+    lastManualScore: player.lastManualScore,
+    quickCounts: { ...player.lastManualQuickCounts },
+  };
+}
+
+function restoreRoundWinnerPointsEntry(draft: AddRoundDraft): AddRoundDraft {
+  if (!draft.roundWinnerId) {
+    return draft;
+  }
+
+  return updatePlayer(draft, draft.roundWinnerId, restorePointsEntry);
 }
 
 function updatePlayer(
@@ -73,6 +405,8 @@ export function createInitialDraft(players: Player[]): AddRoundDraft {
       score: 0,
       lastManualScore: 0,
       quickCounts: { ...ZERO_QUICK_COUNTS },
+      lastManualQuickCounts: { ...ZERO_QUICK_COUNTS },
+      pointsEntryBeforeWinner: null,
       expandedSecondary: false,
     })),
     roundWinnerId: null,
@@ -83,6 +417,9 @@ export function createInitialDraft(players: Player[]): AddRoundDraft {
  * Update a player's Round Result.
  *
  * Behavior:
+ * - Points tiebreakers preserve score/card counts for Pass, Skip, and Sat Out.
+ *   Failed starts at 50 points (+5 card count 10) only when the player has no
+ *   existing points entry yet.
  * - If new result is "skipped" → set score to settings.roundSkipPenalty.
  *   (Save current score as lastManualScore IFF the OLD result was "failed" or "completed".)
  * - If new result is "satOut" → set score to settings.sitOutPenalty.
@@ -95,9 +432,49 @@ export function applyResult(
   draft: AddRoundDraft,
   playerId: PlayerId,
   result: PhaseStatus,
-  settings: PenaltySettings,
+  settings: ResultSettings,
 ): AddRoundDraft {
+  const wasRoundWinner = draft.roundWinnerId === playerId;
   const updated = updatePlayer(draft, playerId, (player) => {
+    if (isPointsTiebreaker(settings.tiebreaker)) {
+      const restoredPlayer =
+        wasRoundWinner && result !== "completed" ? restorePointsEntry(player) : player;
+      const penaltyScore = getPointsPenaltyScore(result, settings);
+      if (penaltyScore !== null) {
+        const lastManualEntry = getLastManualPointsEntry(restoredPlayer);
+        return {
+          ...restoredPlayer,
+          result,
+          score: penaltyScore,
+          lastManualScore: lastManualEntry.lastManualScore,
+          quickCounts: { ...ZERO_QUICK_COUNTS },
+          lastManualQuickCounts: { ...lastManualEntry.quickCounts },
+        };
+      }
+
+      if (result === "failed" && hasNoPointsEntry(restoredPlayer)) {
+        return {
+          ...restoredPlayer,
+          result,
+          score: FAILED_POINTS_DEFAULT_SCORE,
+          lastManualScore: FAILED_POINTS_DEFAULT_SCORE,
+          quickCounts: { ...FAILED_POINTS_DEFAULT_QUICK_COUNTS },
+          lastManualQuickCounts: { ...FAILED_POINTS_DEFAULT_QUICK_COUNTS },
+        };
+      }
+
+      const lastManualEntry = getLastManualPointsEntry(restoredPlayer);
+
+      return {
+        ...restoredPlayer,
+        result,
+        score: lastManualEntry.score,
+        lastManualScore: lastManualEntry.lastManualScore,
+        quickCounts: { ...lastManualEntry.quickCounts },
+        lastManualQuickCounts: { ...lastManualEntry.quickCounts },
+      };
+    }
+
     const lastManualScore = isManualResult(player.result) ? player.score : player.lastManualScore;
     const quickCounts = isManualResult(result) ? player.quickCounts : { ...ZERO_QUICK_COUNTS };
 
@@ -105,7 +482,7 @@ export function applyResult(
       return {
         ...player,
         result,
-        score: settings.roundSkipPenalty,
+        score: 0,
         lastManualScore,
         quickCounts,
       };
@@ -115,7 +492,7 @@ export function applyResult(
       return {
         ...player,
         result,
-        score: settings.sitOutPenalty,
+        score: 0,
         lastManualScore,
         quickCounts,
       };
@@ -143,16 +520,42 @@ export function applyResult(
  * Update a player's tiebreaker score (the polymorphic numeric value). Only writable when result ∈ {failed, completed}.
  * If result is skipped/satOut, this is a no-op (UI should be greyed). Always updates lastManualScore.
  */
-export function applyScore(draft: AddRoundDraft, playerId: PlayerId, score: number): AddRoundDraft {
+export function applyScore(
+  draft: AddRoundDraft,
+  playerId: PlayerId,
+  score: number,
+  settings: Pick<GameSettings, "tiebreaker">,
+): AddRoundDraft {
   return updatePlayer(draft, playerId, (player) => {
     if (!isManualResult(player.result)) {
       return player;
+    }
+
+    if (isPointsTiebreaker(settings.tiebreaker)) {
+      const resolvedEntry = resolvePointsScoreEntry(
+        score,
+        player.result,
+        draft.roundWinnerId === playerId,
+      );
+      if (!resolvedEntry) {
+        return player;
+      }
+
+      return {
+        ...player,
+        ...resolvedEntry,
+        lastManualQuickCounts: { ...resolvedEntry.quickCounts },
+        pointsEntryBeforeWinner:
+          draft.roundWinnerId === playerId ? player.pointsEntryBeforeWinner : null,
+      };
     }
 
     return {
       ...player,
       score,
       lastManualScore: score,
+      lastManualQuickCounts: { ...player.quickCounts },
+      pointsEntryBeforeWinner: null,
     };
   });
 }
@@ -168,16 +571,76 @@ export function applyQuickIncrement(
   max: number,
 ): AddRoundDraft {
   return updatePlayer(draft, playerId, (player) => {
-    if (!isManualResult(player.result)) {
+    if (!isManualResult(player.result) || draft.roundWinnerId === playerId) {
       return player;
     }
-    const delta = POINTS_QUICK_BUTTON_DELTAS[button];
-    const nextScore = Math.min(max, player.score + delta);
+    const rule = getPointsCardCountRule(player.result, false);
+    const quickCounts = applyQuickCountsIncrement(
+      player.quickCounts,
+      button,
+      rule?.maxCards ?? null,
+    );
+    if (quickCounts === player.quickCounts) {
+      return player;
+    }
+    const nextScore = Math.min(max, getQuickCountsPoints(quickCounts));
     return {
       ...player,
       score: nextScore,
       lastManualScore: nextScore,
-      quickCounts: { ...player.quickCounts, [button]: player.quickCounts[button] + 1 },
+      quickCounts,
+      lastManualQuickCounts: { ...quickCounts },
+      pointsEntryBeforeWinner: null,
+    };
+  });
+}
+
+/** Decrement a points-based quick-add button by one press count. No-op if unavailable. */
+export function applyQuickDecrement(
+  draft: AddRoundDraft,
+  playerId: PlayerId,
+  button: PointsQuickButtonId,
+): AddRoundDraft {
+  return updatePlayer(draft, playerId, (player) => {
+    if (!isManualResult(player.result) || draft.roundWinnerId === playerId) {
+      return player;
+    }
+
+    const quickCounts = applyQuickCountsDecrement(player.quickCounts, button);
+    if (quickCounts === player.quickCounts) {
+      return player;
+    }
+
+    const nextScore = getQuickCountsPoints(quickCounts);
+    return {
+      ...player,
+      score: nextScore,
+      lastManualScore: nextScore,
+      quickCounts,
+      lastManualQuickCounts: { ...quickCounts },
+      pointsEntryBeforeWinner: null,
+    };
+  });
+}
+
+/** Reset a points-based quick-card entry to the default for the player's current status. */
+export function applyQuickReset(draft: AddRoundDraft, playerId: PlayerId): AddRoundDraft {
+  return updatePlayer(draft, playerId, (player) => {
+    if (!isManualResult(player.result)) {
+      return player;
+    }
+
+    const resetEntry = getQuickResetEntry(player.result, draft.roundWinnerId === playerId);
+    if (!resetEntry) {
+      return player;
+    }
+
+    return {
+      ...player,
+      ...resetEntry,
+      lastManualQuickCounts: { ...resetEntry.quickCounts },
+      pointsEntryBeforeWinner:
+        draft.roundWinnerId === playerId ? player.pointsEntryBeforeWinner : null,
     };
   });
 }
@@ -201,15 +664,42 @@ export function applyExpandedSecondary(
 export function applyRoundWinner(
   draft: AddRoundDraft,
   playerId: PlayerId,
-  settings: PenaltySettings,
+  settings: ResultSettings,
 ): AddRoundDraft {
-  const player = draft.players.find((candidate) => candidate.playerId === playerId);
+  if (draft.roundWinnerId === playerId) {
+    return draft;
+  }
+
+  const restoredDraft = isPointsTiebreaker(settings.tiebreaker)
+    ? restoreRoundWinnerPointsEntry(draft)
+    : draft;
+  const player = restoredDraft.players.find((candidate) => candidate.playerId === playerId);
   if (!player) {
     return draft;
   }
 
+  if (isPointsTiebreaker(settings.tiebreaker)) {
+    const winnerDraft = updatePlayer(restoredDraft, playerId, (candidate) => ({
+      ...candidate,
+      result: "completed",
+      score: 0,
+      lastManualScore: 0,
+      quickCounts: { ...ZERO_QUICK_COUNTS },
+      lastManualQuickCounts: { ...ZERO_QUICK_COUNTS },
+      pointsEntryBeforeWinner:
+        candidate.pointsEntryBeforeWinner ?? createPointsEntrySnapshot(candidate),
+    }));
+
+    return {
+      ...winnerDraft,
+      roundWinnerId: playerId,
+    };
+  }
+
   const autoPromoted = player.result !== "completed";
-  const promotedDraft = autoPromoted ? applyResult(draft, playerId, "completed", settings) : draft;
+  const promotedDraft = autoPromoted
+    ? applyResult(restoredDraft, playerId, "completed", settings)
+    : restoredDraft;
 
   return {
     ...promotedDraft,
@@ -217,18 +707,83 @@ export function applyRoundWinner(
   };
 }
 
-/** Validation: every player has a non-null result, and if any "completed" exists, roundWinnerId points to a "completed" player. */
-export function isDraftComplete(draft: AddRoundDraft): draft is CompleteAddRoundDraft {
-  if (draft.players.length === 0 || draft.players.some((player) => player.result === null)) {
+export function applyClearRoundWinner(
+  draft: AddRoundDraft,
+  settings: Pick<GameSettings, "tiebreaker">,
+): AddRoundDraft {
+  if (!draft.roundWinnerId) {
+    return draft;
+  }
+
+  const restoredDraft = isPointsTiebreaker(settings.tiebreaker)
+    ? restoreRoundWinnerPointsEntry(draft)
+    : draft;
+
+  return {
+    ...restoredDraft,
+    roundWinnerId: null,
+  };
+}
+
+export function getScoreEntryCompletion({
+  player,
+  tiebreaker,
+  roundWinnerId,
+}: {
+  player: PlayerDraft;
+  tiebreaker: GameTiebreaker;
+  roundWinnerId: PlayerId | null;
+}): ScoreEntryCompletion {
+  if (player.result === null) {
+    return { complete: false, reason: "Select a Round Result." };
+  }
+
+  if (!isPointsTiebreaker(tiebreaker)) {
+    return { complete: true };
+  }
+
+  const rule = getPointsCardCountRule(player.result, roundWinnerId === player.playerId);
+  if (!rule) {
+    return { complete: true };
+  }
+
+  const cardCount = getPointsCardCount(player.quickCounts);
+  if (cardCount < rule.minCards || cardCount > rule.maxCards) {
+    return { complete: false, reason: rule.reason };
+  }
+
+  if (player.score !== getQuickCountsPoints(player.quickCounts)) {
+    return { complete: false, reason: "Points must match cards." };
+  }
+
+  return { complete: true };
+}
+
+export function areScoreEntriesComplete(
+  draft: AddRoundDraft,
+  tiebreaker: GameTiebreaker,
+): draft is CompleteAddRoundDraft {
+  if (draft.players.length === 0) {
     return false;
   }
 
-  const completedPlayers = draft.players.filter((player) => player.result === "completed");
-  if (completedPlayers.length === 0) {
-    return draft.roundWinnerId === null;
+  return draft.players.every(
+    (player) =>
+      getScoreEntryCompletion({ player, tiebreaker, roundWinnerId: draft.roundWinnerId }).complete,
+  );
+}
+
+/** Validation: every player is Score Entry Complete, and roundWinnerId points to a completed player. */
+export function isDraftComplete(
+  draft: AddRoundDraft,
+  tiebreaker: GameTiebreaker,
+): draft is CompleteAddRoundDraft {
+  if (!areScoreEntriesComplete(draft, tiebreaker)) {
+    return false;
   }
 
-  return completedPlayers.some((player) => player.playerId === draft.roundWinnerId);
+  const roundWinner = draft.players.find((player) => player.playerId === draft.roundWinnerId);
+  return roundWinner?.result === "completed";
 }
 
 /**
@@ -241,9 +796,9 @@ export function isDraftComplete(draft: AddRoundDraft): draft is CompleteAddRound
  */
 export function toRoundScores(
   draft: AddRoundDraft,
-  _tiebreaker: GameTiebreaker,
+  tiebreaker: GameTiebreaker,
 ): ArrayAtLeastOne<Omit<RoundScore, "currentPhase">> {
-  if (!isDraftComplete(draft)) {
+  if (!isDraftComplete(draft, tiebreaker)) {
     throw new Error("Cannot build round scores from an incomplete draft.");
   }
 

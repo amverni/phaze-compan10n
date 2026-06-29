@@ -20,7 +20,7 @@ import {
   type ToastHandle,
 } from "../ui";
 import { AddRoundProgressPopover } from "./AddRoundProgressPopover";
-import { isDraftComplete, toRoundScores } from "./addRoundDraft";
+import { getScoreEntryCompletion, isDraftComplete, toRoundScores } from "./addRoundDraft";
 import { RoundResultSection } from "./RoundResultSection";
 import { TiebreakerEntrySection } from "./TiebreakerEntrySection";
 import type { UseAddRoundDraft } from "./useAddRoundDraft";
@@ -57,7 +57,7 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
   }, [selectedIndex]);
 
   const hasWinner = draft.draft.roundWinnerId !== null;
-  const canSave = isDraftComplete(draft.draft) && !addRound.isPending;
+  const canSave = isDraftComplete(draft.draft, game.settings.tiebreaker) && !addRound.isPending;
   const showTiebreakerEntry = game.settings.tiebreaker !== "roundsWon";
   const playerTabColumnCount = Math.max(players.length, 1);
 
@@ -118,6 +118,13 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                 {players.map((player) => {
                   const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                   const playerTabName = getPlayerTabName(player.name);
+                  const scoreEntryComplete = playerDraft
+                    ? getScoreEntryCompletion({
+                        player: playerDraft,
+                        tiebreaker: game.settings.tiebreaker,
+                        roundWinnerId: draft.draft.roundWinnerId,
+                      }).complete
+                    : false;
                   return (
                     <Tab
                       key={player.id}
@@ -138,13 +145,13 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                         aria-hidden
                         className="inline-flex h-4 w-4 shrink-0 items-center justify-center"
                       >
-                        {playerDraft?.result === "completed" ? (
+                        {scoreEntryComplete && playerDraft?.result === "completed" ? (
                           <Check className="size-3.5 text-pt-green-500" aria-hidden />
-                        ) : playerDraft?.result === "failed" ? (
+                        ) : scoreEntryComplete && playerDraft?.result === "failed" ? (
                           <X className="size-3.5 text-pt-red-500" aria-hidden />
-                        ) : playerDraft?.result === "skipped" ? (
+                        ) : scoreEntryComplete && playerDraft?.result === "skipped" ? (
                           <Redo className="size-3.5 text-pt-yellow-500" aria-hidden />
-                        ) : playerDraft?.result === "satOut" ? (
+                        ) : scoreEntryComplete && playerDraft?.result === "satOut" ? (
                           <Minus className="size-3.5 text-pt-blue-500" aria-hidden />
                         ) : null}
                       </span>
@@ -231,8 +238,11 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
                           value={playerDraft.score}
                           onChange={(next) => draft.setScore(player.id, next)}
                           onQuickIncrement={(button) => draft.incrementQuick(player.id, button)}
+                          onQuickDecrement={(button) => draft.decrementQuick(player.id, button)}
+                          onQuickReset={() => draft.resetQuick(player.id)}
                           quickCounts={playerDraft.quickCounts}
                           result={playerDraft.result}
+                          isRoundWinner={isWinner}
                         />
                       )}
 
@@ -291,6 +301,8 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
           <AddRoundProgressPopover
             players={players}
             playerDrafts={draft.draft.players}
+            tiebreaker={game.settings.tiebreaker}
+            roundWinnerId={draft.draft.roundWinnerId}
             hasRoundWinner={hasWinner}
           />
 
