@@ -1,6 +1,6 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Check, ChevronRight, Loader2, Minus, Redo, Trophy, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAddRound } from "../../data/hooks/useRounds";
 import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
@@ -21,6 +21,7 @@ import {
 } from "../ui";
 import { AddRoundProgressPopover } from "./AddRoundProgressPopover";
 import { getScoreEntryCompletion, isDraftComplete, toRoundScores } from "./addRoundDraft";
+import { shouldHideWonRoundButton } from "./addRoundLayout";
 import { RoundResultSection } from "./RoundResultSection";
 import { TiebreakerEntrySection } from "./TiebreakerEntrySection";
 import type { UseAddRoundDraft } from "./useAddRoundDraft";
@@ -36,6 +37,7 @@ interface AddRoundDialogProps {
 const NO_WINNER_VALUE = "__none__";
 type WinnerSelectValue = typeof NO_WINNER_VALUE | string;
 const PLAYER_TAB_NAME_LIMIT = 30;
+const WON_ROUND_BUTTON_SCROLL_RESERVE_PX = 44;
 
 function getPlayerTabName(name: string) {
   return name.length > PLAYER_TAB_NAME_LIMIT ? `${name.slice(0, PLAYER_TAB_NAME_LIMIT)}…` : name;
@@ -46,6 +48,8 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
   const addRound = useAddRound(game.id);
   const toastRef = useRef<ToastHandle>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [hideWonRoundButton, setHideWonRoundButton] = useState(false);
 
   // Keep the selected player visible in the horizontal tab strip.
   useEffect(() => {
@@ -55,6 +59,46 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
     const target = tabs[selectedIndex];
     target?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [selectedIndex]);
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body || !open) {
+      setHideWonRoundButton(false);
+      return;
+    }
+
+    const scrollRoot = body.querySelector<HTMLElement>("[data-swipe-navigation-root]");
+    const activePanelContent = body.querySelector<HTMLElement>(
+      `[data-add-round-panel-content="${selectedIndex}"]`,
+    );
+    if (!scrollRoot || !activePanelContent) {
+      setHideWonRoundButton(false);
+      return;
+    }
+
+    const updateScrollableState = () => {
+      setHideWonRoundButton((wasHidden) =>
+        shouldHideWonRoundButton({
+          activePanelContentHeight: activePanelContent.getBoundingClientRect().height,
+          scrollViewportHeight: scrollRoot.clientHeight,
+          hiddenWonRoundButtonHeight: WON_ROUND_BUTTON_SCROLL_RESERVE_PX,
+          wonRoundButtonHidden: wasHidden,
+        }),
+      );
+    };
+
+    updateScrollableState();
+
+    const resizeObserver = new ResizeObserver(updateScrollableState);
+    resizeObserver.observe(scrollRoot);
+    resizeObserver.observe(activePanelContent);
+
+    window.addEventListener("resize", updateScrollableState);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateScrollableState);
+    };
+  }, [open, selectedIndex]);
 
   const hasWinner = draft.draft.roundWinnerId !== null;
   const canSave = isDraftComplete(draft.draft, game.settings.tiebreaker) && !addRound.isPending;
@@ -209,76 +253,80 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
           </List>
 
           {/* Body */}
-          <div className="relative flex min-h-0 flex-1">
+          <div ref={bodyRef} className="relative flex min-h-0 flex-1">
             <SwipeableTabPanels
               selectedIndex={selectedIndex}
               onChange={setSelectedIndex}
               className="-mx-3 -my-3 flex min-h-0 flex-1 flex-col overflow-y-auto py-3"
             >
-              {players.map((player) => {
+              {players.map((player, playerIndex) => {
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
                 if (!playerDraft) return null;
                 const isWinner = draft.draft.roundWinnerId === player.id;
 
                 return (
                   <TabPanel key={player.id} className="flex flex-col px-3">
-                    <List rowVariant="content">
-                      <RoundResultSection
-                        key="round-result"
-                        value={playerDraft.result}
-                        onChange={(next) => draft.setResult(player.id, next)}
-                        expanded={playerDraft.expandedSecondary}
-                        onToggleExpand={(next) => draft.setExpandedSecondary(player.id, next)}
-                      />
-
-                      {showTiebreakerEntry && (
-                        <TiebreakerEntrySection
-                          key="tiebreaker-entry"
-                          tiebreaker={game.settings.tiebreaker}
-                          value={playerDraft.score}
-                          onChange={(next) => draft.setScore(player.id, next)}
-                          onQuickIncrement={(button) => draft.incrementQuick(player.id, button)}
-                          onQuickDecrement={(button) => draft.decrementQuick(player.id, button)}
-                          onQuickReset={() => draft.resetQuick(player.id)}
-                          quickCounts={playerDraft.quickCounts}
-                          result={playerDraft.result}
-                          isRoundWinner={isWinner}
+                    <div data-add-round-panel-content={playerIndex}>
+                      <List rowVariant="content">
+                        <RoundResultSection
+                          key="round-result"
+                          value={playerDraft.result}
+                          onChange={(next) => draft.setResult(player.id, next)}
+                          expanded={playerDraft.expandedSecondary}
+                          onToggleExpand={(next) => draft.setExpandedSecondary(player.id, next)}
                         />
-                      )}
 
-                      <button
-                        key="won-round"
-                        type="button"
-                        onClick={() => draft.setRoundWinner(player.id)}
-                        aria-pressed={isWinner}
-                        className={[
-                          "flex w-full cursor-pointer items-center justify-between gap-2 rounded-full px-3 py-2 text-sm font-semibold",
-                          "transition-[filter,transform,background-color] duration-150 ease-out",
-                          "active:scale-[0.98]",
-                          isWinner
-                            ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300"
-                            : "hover:bg-black/5 dark:hover:bg-white/5",
-                        ].join(" ")}
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <Trophy
-                            className={[
-                              "size-4",
-                              isWinner ? "text-yellow-500" : "text-text-secondary",
-                            ].join(" ")}
-                            aria-hidden
+                        {showTiebreakerEntry && (
+                          <TiebreakerEntrySection
+                            key="tiebreaker-entry"
+                            tiebreaker={game.settings.tiebreaker}
+                            value={playerDraft.score}
+                            onChange={(next) => draft.setScore(player.id, next)}
+                            onQuickIncrement={(button) => draft.incrementQuick(player.id, button)}
+                            onQuickDecrement={(button) => draft.decrementQuick(player.id, button)}
+                            onQuickReset={() => draft.resetQuick(player.id)}
+                            quickCounts={playerDraft.quickCounts}
+                            result={playerDraft.result}
+                            isRoundWinner={isWinner}
                           />
-                          {isWinner ? "Round Winner" : "Won Round"}
-                        </span>
-                        <ChevronRight
-                          className={[
-                            "size-4",
-                            isWinner ? "opacity-0" : "text-text-secondary",
-                          ].join(" ")}
-                          aria-hidden
-                        />
-                      </button>
-                    </List>
+                        )}
+
+                        {!hideWonRoundButton && (
+                          <button
+                            key="won-round"
+                            type="button"
+                            onClick={() => draft.setRoundWinner(player.id)}
+                            aria-pressed={isWinner}
+                            className={[
+                              "flex w-full cursor-pointer items-center justify-between gap-2 rounded-full px-3 py-2 text-sm font-semibold",
+                              "transition-[filter,transform,background-color] duration-150 ease-out",
+                              "active:scale-[0.98]",
+                              isWinner
+                                ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300"
+                                : "hover:bg-black/5 dark:hover:bg-white/5",
+                            ].join(" ")}
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <Trophy
+                                className={[
+                                  "size-4",
+                                  isWinner ? "text-yellow-500" : "text-text-secondary",
+                                ].join(" ")}
+                                aria-hidden
+                              />
+                              {isWinner ? "Round Winner" : "Won Round"}
+                            </span>
+                            <ChevronRight
+                              className={[
+                                "size-4",
+                                isWinner ? "opacity-0" : "text-text-secondary",
+                              ].join(" ")}
+                              aria-hidden
+                            />
+                          </button>
+                        )}
+                      </List>
+                    </div>
                   </TabPanel>
                 );
               })}

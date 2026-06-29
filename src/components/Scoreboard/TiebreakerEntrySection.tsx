@@ -270,7 +270,6 @@ export function TiebreakerEntrySection({
     (variant.kind === "points" && isRoundWinner);
   const pointValues =
     variant.kind === "points" ? getAllowedPointScoresForResult(result, isRoundWinner) : undefined;
-  const hasRemovableQuickCards = Object.values(quickCounts).some((count) => count > 0);
   const resetDisabled =
     disabled ||
     isPointsQuickResetNoop({
@@ -361,11 +360,9 @@ export function TiebreakerEntrySection({
             </div>
           </div>
           <p
-            className={[
-              "-mt-1 min-h-3 text-xs leading-none text-text-secondary transition-opacity duration-150",
-              hasRemovableQuickCards && !disabled ? "opacity-100" : "opacity-0",
-            ].join(" ")}
-            aria-hidden={hasRemovableQuickCards && !disabled ? undefined : true}
+            className={
+              "-mt-1 min-h-3 text-xs leading-none text-text-secondary transition-opacity duration-150"
+            }
           >
             Hold to decrease.
           </p>
