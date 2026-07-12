@@ -4,7 +4,6 @@ import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
 import { ActiveGames } from "./ActiveGames";
 import { CreateButton } from "./CreateButton";
-import { Disclaimer } from "./Disclaimer";
 import { HomeMenu } from "./HomeMenu";
 
 export const Home: React.FC = () => {
@@ -26,16 +25,9 @@ export const Home: React.FC = () => {
         </div>
       }
       footerContent={
-        <>
-          <div className="content-container flex h-full justify-end">
-            <CreateButton />
-          </div>
-          {/* Absolutely positioned so it never pushes the button up.
-              The card-panel-bottom-content (parent) is `relative`. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4">
-            <Disclaimer />
-          </div>
-        </>
+        <div className="content-container flex h-full justify-end">
+          <CreateButton />
+        </div>
       }
     />
   );

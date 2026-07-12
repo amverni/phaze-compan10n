@@ -1,4 +1,5 @@
 import type React from "react";
+import { Disclaimer } from "./Disclaimer";
 
 interface CardBackgroundProps {
   /** Content rendered inside the angled top panel (e.g. logo, page header). */
@@ -53,6 +54,9 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
         {/* Content layer */}
         <div className="card-panel-bottom card-panel-bottom-content pointer-events-auto relative h-[15svh] bg-white dark:bg-neutral-900">
           {footerContent}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4">
+            <Disclaimer />
+          </div>
         </div>
       </div>
     </div>
