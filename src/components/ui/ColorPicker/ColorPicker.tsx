@@ -46,7 +46,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                       {isSelected && (
                         <Icon
                           className="pointer-events-none absolute inset-0 m-auto"
-                          size={32}
+                          size={28}
                           strokeWidth={1.5}
                           color={contrastColor}
                         />

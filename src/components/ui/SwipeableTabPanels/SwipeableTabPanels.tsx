@@ -1,6 +1,7 @@
 import { TabPanels as HeadlessTabPanels, type TabPanelsProps } from "@headlessui/react";
 import {
   Children,
+  type CSSProperties,
   cloneElement,
   isValidElement,
   type ReactElement,
@@ -58,6 +59,7 @@ interface SwipeableTabPanelsProps extends Omit<TabPanelsProps<"div">, "children"
   selectedIndex: number;
   onChange: (nextIndex: number) => void;
   children: ReactNode;
+  horizontalBleed?: number;
 }
 
 function findTouchById(touchList: TouchList, id: number) {
@@ -95,10 +97,12 @@ function renderStaticTabPanel(panel: ReactNode) {
 }
 
 export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
-  const { selectedIndex, onChange, children, ...tabPanelsProps } = props;
+  const { selectedIndex, onChange, children, horizontalBleed = 0, ...tabPanelsProps } = props;
   const [containerElement, setContainerElement] = useState<HTMLElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const hasHorizontalBleed = horizontalBleed > 0;
+  const panelWidth = hasHorizontalBleed ? containerWidth + horizontalBleed * 2 : containerWidth;
 
   useLayoutEffect(() => {
     if (!containerElement) return;
@@ -139,12 +143,14 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
   const onChangeRef = useRef(onChange);
   const panelCountRef = useRef(panelCount);
   const containerWidthRef = useRef(containerWidth);
+  const panelWidthRef = useRef(panelWidth);
   const prefersReducedMotionRef = useRef(prefersReducedMotion);
 
   selectedIndexRef.current = selectedIndex;
   onChangeRef.current = onChange;
   panelCountRef.current = panelCount;
   containerWidthRef.current = containerWidth;
+  panelWidthRef.current = panelWidth;
   prefersReducedMotionRef.current = prefersReducedMotion;
 
   useLayoutEffect(() => {
@@ -187,7 +193,7 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
 
       trackElementRef.current.style.transform = getTrackTransform(
         index,
-        containerWidthRef.current,
+        panelWidthRef.current,
         offset,
       );
     };
@@ -427,7 +433,47 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
     };
   }, [containerElement]);
 
-  const mergedClassName = mergeClassName("overflow-x-hidden", tabPanelsProps);
+  const mergedClassName = mergeClassName(
+    hasHorizontalBleed ? "overflow-x-visible" : "overflow-clip",
+    tabPanelsProps,
+  );
+  const viewportStyle: CSSProperties | undefined = hasHorizontalBleed
+    ? { marginInline: `-${horizontalBleed}px` }
+    : undefined;
+  const panelStyle: CSSProperties | undefined = hasHorizontalBleed
+    ? { paddingInline: `${horizontalBleed}px` }
+    : undefined;
+
+  const track = (
+    <div
+      ref={trackElementRef}
+      className="flex h-full will-change-transform"
+      style={{
+        transform: getTrackTransform(visualIndex, panelWidth, visualOffset),
+        transition:
+          transitionEnabled && !prefersReducedMotion
+            ? `transform ${SNAP_TRANSITION_MS}ms ease-out`
+            : "none",
+      }}
+      onTransitionEnd={(event) => {
+        if (event.currentTarget === event.target) {
+          setTransitionEnabled(false);
+        }
+      }}
+    >
+      {panels.map((panel, index) => (
+        <div
+          key={isValidElement(panel) ? panel.key : index}
+          className="h-full w-full min-w-full shrink-0"
+          style={panelStyle}
+          inert={index !== visualIndex ? true : undefined}
+          aria-hidden={index !== visualIndex ? true : undefined}
+        >
+          {renderStaticTabPanel(panel)}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <HeadlessTabPanels
@@ -436,33 +482,13 @@ export function SwipeableTabPanels(props: SwipeableTabPanelsProps) {
       ref={setContainerElement}
       className={mergedClassName}
     >
-      <div
-        ref={trackElementRef}
-        className="flex min-h-full will-change-transform"
-        style={{
-          transform: getTrackTransform(visualIndex, containerWidth, visualOffset),
-          transition:
-            transitionEnabled && !prefersReducedMotion
-              ? `transform ${SNAP_TRANSITION_MS}ms ease-out`
-              : "none",
-        }}
-        onTransitionEnd={(event) => {
-          if (event.currentTarget === event.target) {
-            setTransitionEnabled(false);
-          }
-        }}
-      >
-        {panels.map((panel, index) => (
-          <div
-            key={isValidElement(panel) ? panel.key : index}
-            className="min-h-full w-full min-w-full shrink-0"
-            inert={index !== visualIndex ? true : undefined}
-            aria-hidden={index !== visualIndex ? true : undefined}
-          >
-            {renderStaticTabPanel(panel)}
-          </div>
-        ))}
-      </div>
+      {hasHorizontalBleed ? (
+        <div className="h-full overflow-clip" style={viewportStyle}>
+          {track}
+        </div>
+      ) : (
+        track
+      )}
     </HeadlessTabPanels>
   );
 }

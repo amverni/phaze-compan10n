@@ -47,7 +47,10 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
         <div className="add-player-slider h-full" data-view={view}>
           {/* ── Page 1: Search ───────────────────────────── */}
           <div
-            className="h-full w-full shrink-0 px-4"
+            className={[
+              "h-full w-full shrink-0 px-4",
+              view !== "search" ? "overflow-hidden" : "",
+            ].join(" ")}
             inert={view !== "search" ? true : undefined}
             aria-hidden={view !== "search"}
           >
@@ -77,7 +80,9 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
 
           {/* ── Page 2: Create Player ────────────────────── */}
           <div
-            className="h-full w-full shrink-0"
+            className={["h-full w-full shrink-0", view !== "create" ? "overflow-hidden" : ""].join(
+              " ",
+            )}
             inert={view !== "create" ? true : undefined}
             aria-hidden={view !== "create"}
           >

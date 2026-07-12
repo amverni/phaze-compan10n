@@ -10,6 +10,7 @@ import { PhasesList } from "./PhasesList";
 
 const tabClasses =
   "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none hover:brightness-110 data-focus:outline-2 data-focus:outline-white/60 data-selected:opacity-100";
+const tabPanelHorizontalBleed = 24;
 
 export function Phases() {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -49,6 +50,7 @@ export function Phases() {
             <SwipeableTabPanels
               selectedIndex={selectedIndex}
               onChange={setSelectedIndex}
+              horizontalBleed={tabPanelHorizontalBleed}
               className="min-h-0 flex-1"
             >
               <TabPanel className="h-full flex flex-col">
