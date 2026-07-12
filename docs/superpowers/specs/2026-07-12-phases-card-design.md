@@ -51,6 +51,8 @@ The Home page adds a top-left circular glass button opposite the existing menu b
 
 The Game page adds a top-left circular glass button in the header. It opens a Phases Card dialog for the game's exact `game.phaseSet` snapshot.
 
+Because the app uses TanStack Router hash history for GitHub Pages, copied share URLs must be absolute hash URLs such as `https://amverni.github.io/phase-10-scoreboard/#/phasescard/original` and `https://amverni.github.io/phase-10-scoreboard/#/phasescard/custom?data=...`. Shared links must not point to bare browser-history paths that would 404 on GitHub Pages.
+
 ## Phases list
 
 The list uses the shared `List` component. Each row contains:
@@ -72,16 +74,45 @@ When pressed, the button builds the best available URL and writes it to the clip
 
 Clipboard success swaps the icon to a checkmark for 5 seconds. Clipboard failure shows an explicit failure message using the app's existing inline/toast patterns.
 
+Save success on an imported custom card hides the Save button and shows a short success indication consistent with the share success treatment.
+
 ## Custom URL payload
 
-Custom share links encode a compact JSON payload as URL-safe data. The payload contains:
+Custom share links encode a compact JSON payload as URL-safe base64url UTF-8 data. Version 1 payloads have this shape:
 
-- schema version,
-- Phase Set name,
-- ordered phases,
-- each phase's requirements.
+```ts
+interface PhasesCardSharePayloadV1 {
+  v: 1;
+  name: string;
+  phases: Array<{
+    requirements: Array<
+      | { type: "set" | "run"; count: number; quantity: number; isSameColor: boolean }
+      | { type: "colorGroup"; count: number; quantity: number; isSameColor: true }
+    >;
+  }>;
+}
+```
 
 The payload does not contain local phase IDs or saved Phase Set IDs because recipients may not have the same IndexedDB data. Decoding validates the schema and phase requirements before rendering. Invalid data produces an explicit invalid-link state instead of falling back to defaults.
+
+Validation rules for version 1:
+
+- `v` must be exactly `1`; unknown versions are invalid.
+- `name` must be a non-empty string after trimming.
+- `phases` must contain at least one phase and no more than 50 phases.
+- each phase must contain at least one requirement and no more than 10 requirements.
+- requirement `type` must be one of the current `Meld` union values.
+- `count` and `quantity` must be finite positive integers.
+- `isSameColor` must be boolean for `set` and `run`, and `true` for `colorGroup`.
+- decoded JSON over 8 KB is invalid.
+
+The versioned payload allows future formats to be added deliberately without guessing how to interpret old links.
+
+## Equality and matching rules
+
+Phase equality for Phases Card sharing and imported-card duplicate detection ignores local IDs and compares normalized requirements structurally. Requirement order is significant because it affects the display name. Each requirement compares `type`, `count`, `quantity`, and `isSameColor`.
+
+Phase Set equality compares the ordered list of phases using the phase equality rule. For imported-card Save visibility, the Phase Set name must also match exactly after trimming. For game-share URL selection, only built-in Phase Sets are considered for short `/phasescard/$id` URLs; saved/custom/game-specific sets use self-contained custom URLs unless they exactly match a built-in Phase Set by ordered phase requirements.
 
 ## Saving imported custom cards
 
@@ -103,6 +134,8 @@ The share control must not overlap the list. The dialog does not include the Pha
 Missing or invalid existing Phase Set IDs show an explicit error state. Invalid custom URL payloads show an invalid-link message. Save failures and clipboard failures are surfaced rather than silently ignored.
 
 Empty lists use the existing `List` empty state, though valid Phase Sets should contain at least one phase.
+
+Loading states use the existing `List` shimmer rows for phase lists and a compact loading label where the top selector/title would appear.
 
 ## Implementation boundaries
 
