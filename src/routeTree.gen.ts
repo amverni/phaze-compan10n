@@ -11,10 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PlayersRouteImport } from './routes/players'
+import { Route as PhasescardRouteImport } from './routes/phasescard'
 import { Route as PhasesRouteImport } from './routes/phases'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PhasescardIndexRouteImport } from './routes/phasescard/index'
 import { Route as CreateIndexRouteImport } from './routes/create/index'
+import { Route as PhasescardCustomRouteImport } from './routes/phasescard/custom'
+import { Route as PhasescardPhaseSetIdRouteImport } from './routes/phasescard/$phaseSetId'
 import { Route as GameGameIdRouteImport } from './routes/game/$gameId'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -25,6 +29,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PlayersRoute = PlayersRouteImport.update({
   id: '/players',
   path: '/players',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhasescardRoute = PhasescardRouteImport.update({
+  id: '/phasescard',
+  path: '/phasescard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PhasesRoute = PhasesRouteImport.update({
@@ -42,10 +51,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PhasescardIndexRoute = PhasescardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PhasescardRoute,
+} as any)
 const CreateIndexRoute = CreateIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CreateRoute,
+} as any)
+const PhasescardCustomRoute = PhasescardCustomRouteImport.update({
+  id: '/custom',
+  path: '/custom',
+  getParentRoute: () => PhasescardRoute,
+} as any)
+const PhasescardPhaseSetIdRoute = PhasescardPhaseSetIdRouteImport.update({
+  id: '/$phaseSetId',
+  path: '/$phaseSetId',
+  getParentRoute: () => PhasescardRoute,
 } as any)
 const GameGameIdRoute = GameGameIdRouteImport.update({
   id: '/game/$gameId',
@@ -57,10 +81,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRouteWithChildren
   '/phases': typeof PhasesRoute
+  '/phasescard': typeof PhasescardRouteWithChildren
   '/players': typeof PlayersRoute
   '/settings': typeof SettingsRoute
   '/game/$gameId': typeof GameGameIdRoute
+  '/phasescard/$phaseSetId': typeof PhasescardPhaseSetIdRoute
+  '/phasescard/custom': typeof PhasescardCustomRoute
   '/create/': typeof CreateIndexRoute
+  '/phasescard/': typeof PhasescardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,17 +96,24 @@ export interface FileRoutesByTo {
   '/players': typeof PlayersRoute
   '/settings': typeof SettingsRoute
   '/game/$gameId': typeof GameGameIdRoute
+  '/phasescard/$phaseSetId': typeof PhasescardPhaseSetIdRoute
+  '/phasescard/custom': typeof PhasescardCustomRoute
   '/create': typeof CreateIndexRoute
+  '/phasescard': typeof PhasescardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRouteWithChildren
   '/phases': typeof PhasesRoute
+  '/phasescard': typeof PhasescardRouteWithChildren
   '/players': typeof PlayersRoute
   '/settings': typeof SettingsRoute
   '/game/$gameId': typeof GameGameIdRoute
+  '/phasescard/$phaseSetId': typeof PhasescardPhaseSetIdRoute
+  '/phasescard/custom': typeof PhasescardCustomRoute
   '/create/': typeof CreateIndexRoute
+  '/phasescard/': typeof PhasescardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -86,27 +121,45 @@ export interface FileRouteTypes {
     | '/'
     | '/create'
     | '/phases'
+    | '/phasescard'
     | '/players'
     | '/settings'
     | '/game/$gameId'
+    | '/phasescard/$phaseSetId'
+    | '/phasescard/custom'
     | '/create/'
+    | '/phasescard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/phases' | '/players' | '/settings' | '/game/$gameId' | '/create'
+  to:
+    | '/'
+    | '/phases'
+    | '/players'
+    | '/settings'
+    | '/game/$gameId'
+    | '/phasescard/$phaseSetId'
+    | '/phasescard/custom'
+    | '/create'
+    | '/phasescard'
   id:
     | '__root__'
     | '/'
     | '/create'
     | '/phases'
+    | '/phasescard'
     | '/players'
     | '/settings'
     | '/game/$gameId'
+    | '/phasescard/$phaseSetId'
+    | '/phasescard/custom'
     | '/create/'
+    | '/phasescard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRouteWithChildren
   PhasesRoute: typeof PhasesRoute
+  PhasescardRoute: typeof PhasescardRouteWithChildren
   PlayersRoute: typeof PlayersRoute
   SettingsRoute: typeof SettingsRoute
   GameGameIdRoute: typeof GameGameIdRoute
@@ -126,6 +179,13 @@ declare module '@tanstack/react-router' {
       path: '/players'
       fullPath: '/players'
       preLoaderRoute: typeof PlayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/phasescard': {
+      id: '/phasescard'
+      path: '/phasescard'
+      fullPath: '/phasescard'
+      preLoaderRoute: typeof PhasescardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/phases': {
@@ -149,12 +209,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/phasescard/': {
+      id: '/phasescard/'
+      path: '/'
+      fullPath: '/phasescard/'
+      preLoaderRoute: typeof PhasescardIndexRouteImport
+      parentRoute: typeof PhasescardRoute
+    }
     '/create/': {
       id: '/create/'
       path: '/'
       fullPath: '/create/'
       preLoaderRoute: typeof CreateIndexRouteImport
       parentRoute: typeof CreateRoute
+    }
+    '/phasescard/custom': {
+      id: '/phasescard/custom'
+      path: '/custom'
+      fullPath: '/phasescard/custom'
+      preLoaderRoute: typeof PhasescardCustomRouteImport
+      parentRoute: typeof PhasescardRoute
+    }
+    '/phasescard/$phaseSetId': {
+      id: '/phasescard/$phaseSetId'
+      path: '/$phaseSetId'
+      fullPath: '/phasescard/$phaseSetId'
+      preLoaderRoute: typeof PhasescardPhaseSetIdRouteImport
+      parentRoute: typeof PhasescardRoute
     }
     '/game/$gameId': {
       id: '/game/$gameId'
@@ -177,10 +258,27 @@ const CreateRouteChildren: CreateRouteChildren = {
 const CreateRouteWithChildren =
   CreateRoute._addFileChildren(CreateRouteChildren)
 
+interface PhasescardRouteChildren {
+  PhasescardPhaseSetIdRoute: typeof PhasescardPhaseSetIdRoute
+  PhasescardCustomRoute: typeof PhasescardCustomRoute
+  PhasescardIndexRoute: typeof PhasescardIndexRoute
+}
+
+const PhasescardRouteChildren: PhasescardRouteChildren = {
+  PhasescardPhaseSetIdRoute: PhasescardPhaseSetIdRoute,
+  PhasescardCustomRoute: PhasescardCustomRoute,
+  PhasescardIndexRoute: PhasescardIndexRoute,
+}
+
+const PhasescardRouteWithChildren = PhasescardRoute._addFileChildren(
+  PhasescardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRouteWithChildren,
   PhasesRoute: PhasesRoute,
+  PhasescardRoute: PhasescardRouteWithChildren,
   PlayersRoute: PlayersRoute,
   SettingsRoute: SettingsRoute,
   GameGameIdRoute: GameGameIdRoute,

@@ -1,0 +1,74 @@
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { type ReactNode, useRef } from "react";
+import type { PhasesCardPhase, PhasesCardShareTarget } from "../../types";
+import { CardBackground } from "../CardBackground/CardBackground";
+import { Logo } from "../Logo/Logo";
+import { Button, Toast, type ToastHandle } from "../ui";
+import { PhasesCardList } from "./PhasesCardList";
+import { PhasesCardShareButton } from "./PhasesCardShareButton";
+
+interface PhasesCardPageProps {
+  topContent: ReactNode;
+  phases?: PhasesCardPhase[];
+  isLoading?: boolean;
+  errorMessage?: string;
+  shareTarget?: PhasesCardShareTarget;
+  saveAction?: ReactNode;
+}
+
+export function PhasesCardPage({
+  topContent,
+  phases = [],
+  isLoading = false,
+  errorMessage,
+  shareTarget,
+  saveAction,
+}: PhasesCardPageProps) {
+  const toastRef = useRef<ToastHandle>(null);
+
+  return (
+    <CardBackground
+      headerContent={
+        <div className="relative flex h-full items-center">
+          <div className="absolute inset-0 flex items-center justify-center pt-6">
+            <Logo height={100} width="100%" />
+          </div>
+        </div>
+      }
+      mainContent={
+        <div className="content-container flex h-full min-h-0 flex-col py-4 pb-[calc(0.5rem+var(--slant))]">
+          <div className="mb-3 flex min-h-10 shrink-0 items-center justify-center gap-3">
+            <div className="min-w-0">{topContent}</div>
+            {saveAction}
+          </div>
+          {errorMessage ? (
+            <p
+              className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+              role="alert"
+            >
+              {errorMessage}
+            </p>
+          ) : (
+            <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
+          )}
+          <Toast ref={toastRef} />
+        </div>
+      }
+      footerContent={
+        <div className="content-container flex h-full items-center justify-between">
+          <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
+            <ArrowLeft className="size-8" />
+          </Button>
+          {shareTarget && !errorMessage && (
+            <PhasesCardShareButton
+              target={shareTarget}
+              disabled={isLoading || phases.length === 0}
+              onError={(message) => toastRef.current?.show(message)}
+            />
+          )}
+        </div>
+      }
+    />
+  );
+}
