@@ -6,6 +6,7 @@ import { phaseSetsApi } from "../../data/api/phaseSets";
 import { useToggleFavorite } from "../../data/hooks/useFavorites";
 import { phaseSetKeys } from "../../data/hooks/usePhaseSets";
 import { phaseKeys } from "../../data/hooks/usePhases";
+import { phasesCardImportKeys } from "../../data/hooks/usePhasesCardImport";
 import { settingsKeys } from "../../data/hooks/useSettings";
 import type { BuiltInT, SavedT } from "../../types";
 import { FavoriteAccent } from "../ui";
@@ -29,6 +30,7 @@ export function PhaseSetListRow({
   const deletePhaseSet = useMutation({
     mutationFn: (id: string) => phaseSetsApi.delete(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: phasesCardImportKeys.all });
       queryClient.invalidateQueries({ queryKey: phaseSetKeys.all });
       queryClient.invalidateQueries({ queryKey: phaseKeys.lists() });
       queryClient.invalidateQueries({ queryKey: settingsKeys.all });

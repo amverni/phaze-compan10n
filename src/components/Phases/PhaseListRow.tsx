@@ -6,6 +6,7 @@ import { phasesApi } from "../../data/api/phases";
 import { useToggleFavorite } from "../../data/hooks/useFavorites";
 import { phaseSetKeys } from "../../data/hooks/usePhaseSets";
 import { phaseKeys } from "../../data/hooks/usePhases";
+import { phasesCardImportKeys } from "../../data/hooks/usePhasesCardImport";
 import type { VisiblePhase } from "../../types";
 import { formatPhaseDisplayName } from "../../utils";
 import { FavoriteAccent } from "../ui";
@@ -25,6 +26,7 @@ export function PhaseListRow({ phase, isFavorite: isFavoriteProp, onView }: Phas
   const deletePhase = useMutation({
     mutationFn: (id: string) => phasesApi.delete(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: phasesCardImportKeys.all });
       queryClient.invalidateQueries({ queryKey: phaseKeys.all });
       queryClient.invalidateQueries({ queryKey: phaseSetKeys.all });
     },
