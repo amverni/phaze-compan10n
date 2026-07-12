@@ -32,3 +32,4 @@ dist-ssr
 
 # Visual verification artifacts
 .playwright-artifacts/
+.superpowers/

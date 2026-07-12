@@ -44,6 +44,11 @@ _Avoid_: Stage, tier
 The ordered list of phases used by a game.
 _Avoid_: Preset, playlist
 
+**Phases Card**:
+A shareable reference card for a Phase Set that lists its phases in order.
+_Aliases_: Phase Card
+_Avoid_: Phase Set Card, phasecard
+
 **Round**:
 One scoring cycle in which each active player records a score and phase outcome.
 _Avoid_: Hand, turn cycle
