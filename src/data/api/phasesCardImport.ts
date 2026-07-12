@@ -2,6 +2,7 @@ import type {
   ArrayAtLeastOne,
   Phase,
   PhaseId,
+  PhaseSet,
   PhasesCardPhase,
   SavedPhase,
   SavedPhaseSet,
@@ -28,16 +29,25 @@ export const phasesCardImportApi = {
   async saveImported(input: ImportedPhasesCardInput): Promise<SavedPhaseSet> {
     const name = normalizeName(input.name);
     if (input.phases.length === 0) throw new Error("At least one phase is required");
-    const existing = await this.findSavedMatch({ name, phases: input.phases });
-    if (existing) return existing;
 
     const db = await getDB();
     const tx = db.transaction(["customPhases", "customPhaseSets"], "readwrite");
     const phaseStore = tx.objectStore("customPhases");
     const phaseSetStore = tx.objectStore("customPhaseSets");
-    const savedPhases = (await phaseStore.index("by-type").getAll("saved")).filter(
-      (phase): phase is SavedPhase => phase.type === "saved",
+    const [customPhaseSets, customPhases] = await Promise.all([
+      phaseSetStore.getAll(),
+      phaseStore.index("by-type").getAll("saved"),
+    ]);
+    const savedPhases = customPhases.filter(isSavedPhase);
+    const existing = findSavedMatchInRecords(
+      { name, phases: input.phases },
+      customPhaseSets,
+      savedPhases,
     );
+    if (existing) {
+      await tx.done;
+      return existing;
+    }
 
     const phaseIds: PhaseId[] = [];
     for (const importedPhase of input.phases) {
@@ -81,17 +91,39 @@ async function getSavedPhaseSetsWithResolvedPhases(): Promise<
   Array<{ phaseSet: SavedPhaseSet; phases: Phase[] }>
 > {
   const db = await getDB();
-  const [customPhaseSets, customPhases] = await Promise.all([
+  const [customPhaseSets, savedPhases] = await Promise.all([
     db.getAll("customPhaseSets"),
-    db.getAll("customPhases"),
+    db.getAllFromIndex("customPhases", "by-type", "saved"),
   ]);
+  return getSavedPhaseSetsWithResolvedPhasesFromRecords(
+    customPhaseSets,
+    savedPhases.filter(isSavedPhase),
+  );
+}
+
+function findSavedMatchInRecords(
+  input: ImportedPhasesCardInput,
+  customPhaseSets: PhaseSet[],
+  savedPhases: SavedPhase[],
+): SavedPhaseSet | undefined {
+  const name = normalizeName(input.name);
+  return getSavedPhaseSetsWithResolvedPhasesFromRecords(customPhaseSets, savedPhases).find(
+    ({ phaseSet, phases }) =>
+      phaseSet.name.trim() === name && arePhaseListsEqual(phases, input.phases),
+  )?.phaseSet;
+}
+
+function getSavedPhaseSetsWithResolvedPhasesFromRecords(
+  customPhaseSets: PhaseSet[],
+  savedPhases: SavedPhase[],
+): Array<{ phaseSet: SavedPhaseSet; phases: Phase[] }> {
   const phaseById = new Map<PhaseId, Phase>([
     ...builtInPhases.map((phase) => [phase.id, phase] as const),
-    ...customPhases.map((phase) => [phase.id, phase] as const),
+    ...savedPhases.map((phase) => [phase.id, phase] as const),
   ]);
 
   return customPhaseSets
-    .filter((phaseSet): phaseSet is SavedPhaseSet => phaseSet.type === "saved")
+    .filter(isSavedPhaseSet)
     .map((phaseSet) => ({
       phaseSet,
       phases: phaseSet.phases
@@ -99,4 +131,12 @@ async function getSavedPhaseSetsWithResolvedPhases(): Promise<
         .filter((phase): phase is Phase => phase !== undefined),
     }))
     .filter(({ phaseSet, phases }) => phases.length === phaseSet.phases.length);
+}
+
+function isSavedPhase(phase: Phase): phase is SavedPhase {
+  return phase.type === "saved";
+}
+
+function isSavedPhaseSet(phaseSet: PhaseSet): phaseSet is SavedPhaseSet {
+  return phaseSet.type === "saved";
 }
