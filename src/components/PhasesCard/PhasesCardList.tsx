@@ -5,24 +5,31 @@ import { List } from "../ui";
 interface PhasesCardListProps {
   phases?: PhasesCardPhase[];
   isLoading?: boolean;
+  scrollable?: boolean;
   className?: string;
 }
 
-export function PhasesCardList({ phases = [], isLoading = false, className }: PhasesCardListProps) {
+export function PhasesCardList({
+  phases = [],
+  isLoading = false,
+  scrollable = true,
+  className,
+}: PhasesCardListProps) {
   return (
     <section
       aria-label="Phases Card phase list"
       className={[
-        "min-h-0 overflow-y-auto rounded-2xl focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60",
+        "rounded-2xl",
+        scrollable &&
+          "min-h-0 overflow-y-auto focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
-      /* biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable phase lists need keyboard focus for arrow/page scrolling. */
-      tabIndex={0}
+      tabIndex={scrollable ? 0 : undefined}
     >
       <List
-        className="min-h-full"
+        className={scrollable ? "min-h-full" : undefined}
         isLoading={isLoading}
         shimmerRows={6}
         emptyMessage="No phases in this set"

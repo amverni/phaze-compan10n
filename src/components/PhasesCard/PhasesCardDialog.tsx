@@ -34,7 +34,7 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
         {isError ? (
           <InlineError message="Unable to load phases." onRetry={() => refetch()} />
         ) : (
-          <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
+          <PhasesCardList phases={phases} isLoading={isLoading} scrollable={false} />
         )}
         <Toast ref={toastRef} />
       </div>

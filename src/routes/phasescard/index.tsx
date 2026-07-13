@@ -95,14 +95,19 @@ function PhasesCardIndexRoute() {
           disabled={settingsLoading || phaseSetsLoading || settingsError || phaseSetsError}
         >
           <ListboxLabel className="sr-only">Phase Set</ListboxLabel>
-          <ListboxButton>{selectedLabel}</ListboxButton>
+          <ListboxButton className="max-w-[calc(100vw-2rem)] sm:max-w-80">
+            <span className="block max-w-[calc(100vw-5rem)] truncate sm:max-w-64">
+              {selectedLabel}
+            </span>
+          </ListboxButton>
           <ListboxOptions
             anchor={{ to: "bottom", gap: "0.25rem", padding: "1rem" }}
             transformOrigin="top"
+            className="max-w-[calc(100vw-2rem)] sm:max-w-80"
           >
             {phaseSets.map(({ id, name }) => (
-              <ListboxOption key={id} value={id}>
-                {name}
+              <ListboxOption key={id} value={id} className="max-w-[calc(100vw-2rem)] sm:max-w-80">
+                <span className="block max-w-[calc(100vw-5rem)] truncate sm:max-w-64">{name}</span>
               </ListboxOption>
             ))}
           </ListboxOptions>
