@@ -19,8 +19,18 @@ export const Route = createFileRoute("/phasescard/")({
 });
 
 function PhasesCardIndexRoute() {
-  const { data: settings, isLoading: settingsLoading } = useQuery(appSettingsOptions());
-  const { data: phaseSets = [], isLoading: phaseSetsLoading } = useQuery(phaseSetListOptions());
+  const {
+    data: settings,
+    isError: settingsError,
+    isLoading: settingsLoading,
+    refetch: refetchSettings,
+  } = useQuery(appSettingsOptions());
+  const {
+    data: phaseSets = [],
+    isError: phaseSetsError,
+    isLoading: phaseSetsLoading,
+    refetch: refetchPhaseSets,
+  } = useQuery(phaseSetListOptions());
   const [selectedId, setSelectedId] = useState<PhaseSetId>("");
 
   useEffect(() => {
@@ -28,18 +38,53 @@ function PhasesCardIndexRoute() {
     setSelectedId(settings.gameDefaults.phaseSetId);
   }, [settings, selectedId]);
 
-  const { data: selectedPhaseSet, isLoading: phaseSetLoading } = useQuery({
+  const {
+    data: selectedPhaseSet,
+    isError: phaseSetError,
+    isLoading: phaseSetLoading,
+    refetch: refetchPhaseSet,
+  } = useQuery({
     ...phaseSetDetailOptions(selectedId),
     enabled: selectedId.length > 0,
   });
-  const { data: phases = [], isLoading: phasesLoading } = useQuery({
+  const {
+    data: phases = [],
+    isError: phasesError,
+    isLoading: phasesLoading,
+    refetch: refetchPhases,
+  } = useQuery({
     ...phasesByIdsOptions(selectedPhaseSet?.phases ?? []),
     enabled: !!selectedPhaseSet,
   });
 
+  const loading = settingsLoading || phaseSetsLoading || phaseSetLoading || phasesLoading;
+  const selectedMissing = selectedId.length > 0 && !loading && !selectedPhaseSet;
+  const errorMessage = settingsError
+    ? "Unable to load Phases Card settings."
+    : phaseSetsError
+      ? "Unable to load Phase Sets."
+      : phaseSetError
+        ? "Unable to load the selected Phase Set."
+        : phasesError
+          ? "Unable to load phases for the selected Phase Set."
+          : selectedMissing
+            ? "Selected Phase Set not found."
+            : undefined;
+
+  function retryFailedQueries() {
+    if (settingsError) void refetchSettings();
+    if (phaseSetsError) void refetchPhaseSets();
+    if (phaseSetError) void refetchPhaseSet();
+    if (phasesError) void refetchPhases();
+  }
+
   const selectedLabel =
     selectedPhaseSet?.name ??
-    (settingsLoading || phaseSetsLoading || phaseSetLoading ? "Loading..." : "Choose Phase Set");
+    (settingsError || phaseSetsError || phaseSetError
+      ? "Unable to load"
+      : settingsLoading || phaseSetsLoading || phaseSetLoading
+        ? "Loading..."
+        : "Choose Phase Set");
 
   return (
     <PhasesCardPage
@@ -47,7 +92,7 @@ function PhasesCardIndexRoute() {
         <Listbox
           value={selectedId}
           onChange={setSelectedId}
-          disabled={settingsLoading || phaseSetsLoading}
+          disabled={settingsLoading || phaseSetsLoading || settingsError || phaseSetsError}
         >
           <ListboxLabel className="sr-only">Phase Set</ListboxLabel>
           <ListboxButton>{selectedLabel}</ListboxButton>
@@ -64,7 +109,13 @@ function PhasesCardIndexRoute() {
         </Listbox>
       }
       phases={phases}
-      isLoading={settingsLoading || phaseSetsLoading || phaseSetLoading || phasesLoading}
+      isLoading={loading}
+      errorMessage={errorMessage}
+      onErrorRetry={
+        settingsError || phaseSetsError || phaseSetError || phasesError
+          ? retryFailedQueries
+          : undefined
+      }
       shareTarget={
         selectedPhaseSet
           ? { name: selectedPhaseSet.name, phases, phaseSet: selectedPhaseSet }

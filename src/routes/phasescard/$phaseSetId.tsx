@@ -10,25 +10,48 @@ export const Route = createFileRoute("/phasescard/$phaseSetId")({
 
 function SpecificPhasesCardRoute() {
   const { phaseSetId } = Route.useParams();
-  const { data: phaseSet, isLoading: phaseSetLoading } = useQuery(
-    phaseSetDetailOptions(phaseSetId),
-  );
-  const { data: phases = [], isLoading: phasesLoading } = useQuery({
+  const {
+    data: phaseSet,
+    isError: phaseSetError,
+    isLoading: phaseSetLoading,
+    refetch: refetchPhaseSet,
+  } = useQuery(phaseSetDetailOptions(phaseSetId));
+  const {
+    data: phases = [],
+    isError: phasesError,
+    isLoading: phasesLoading,
+    refetch: refetchPhases,
+  } = useQuery({
     ...phasesByIdsOptions(phaseSet?.phases ?? []),
     enabled: !!phaseSet,
   });
 
   const loading = phaseSetLoading || phasesLoading;
+  const errorMessage = phaseSetError
+    ? "Unable to load Phase Set."
+    : phasesError
+      ? "Unable to load phases for this Phase Set."
+      : !loading && !phaseSet
+        ? "Phase Set not found."
+        : undefined;
+
+  function retryFailedQueries() {
+    if (phaseSetError) void refetchPhaseSet();
+    if (phasesError) void refetchPhases();
+  }
+
   return (
     <PhasesCardPage
       topContent={
         <div className="glass max-w-full truncate rounded-full px-4 py-2 text-sm font-semibold">
-          {phaseSet?.name ?? (loading ? "Loading..." : "Phase Set not found")}
+          {phaseSet?.name ??
+            (phaseSetError ? "Unable to load" : loading ? "Loading..." : "Phase Set not found")}
         </div>
       }
       phases={phases}
       isLoading={loading}
-      errorMessage={!loading && !phaseSet ? "Phase Set not found." : undefined}
+      errorMessage={errorMessage}
+      onErrorRetry={phaseSetError || phasesError ? retryFailedQueries : undefined}
       shareTarget={phaseSet ? { name: phaseSet.name, phases, phaseSet } : undefined}
     />
   );

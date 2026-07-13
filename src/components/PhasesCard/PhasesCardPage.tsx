@@ -4,7 +4,7 @@ import { type ReactNode, useRef } from "react";
 import type { PhasesCardPhase, PhasesCardShareTarget } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button, Toast, type ToastHandle } from "../ui";
+import { Button, InlineError, Toast, type ToastHandle } from "../ui";
 import { PhasesCardList } from "./PhasesCardList";
 import { PhasesCardShareButton } from "./PhasesCardShareButton";
 
@@ -13,6 +13,7 @@ interface PhasesCardPageProps {
   phases?: PhasesCardPhase[];
   isLoading?: boolean;
   errorMessage?: string;
+  onErrorRetry?: () => void;
   shareTarget?: PhasesCardShareTarget;
   saveAction?: ReactNode;
 }
@@ -22,6 +23,7 @@ export function PhasesCardPage({
   phases = [],
   isLoading = false,
   errorMessage,
+  onErrorRetry,
   shareTarget,
   saveAction,
 }: PhasesCardPageProps) {
@@ -43,12 +45,7 @@ export function PhasesCardPage({
             {saveAction}
           </div>
           {errorMessage ? (
-            <p
-              className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
-              role="alert"
-            >
-              {errorMessage}
-            </p>
+            <InlineError message={errorMessage} onRetry={onErrorRetry} />
           ) : (
             <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
           )}

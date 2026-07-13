@@ -14,26 +14,60 @@ interface PhasesCardShareButtonProps {
 
 const SUCCESS_MS = 5000;
 
+type ShareUrlResult =
+  | { ok: true; url: string; targetKey: string }
+  | { ok: false; message: string; targetKey: string };
+
+function getShareUrlResult(target: PhasesCardShareTarget): ShareUrlResult {
+  try {
+    const url = buildPhasesCardShareUrl(target);
+    return { ok: true, url, targetKey: url };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Unable to copy Phases Card link.",
+      targetKey: JSON.stringify({
+        name: target.name.trim(),
+        phaseSet: target.phaseSet ? [target.phaseSet.type, target.phaseSet.id] : null,
+        phases: target.phases,
+      }),
+    };
+  }
+}
+
 export function PhasesCardShareButton({
   target,
   className,
   disabled = false,
   onError,
 }: PhasesCardShareButtonProps) {
-  const [copied, setCopied] = useState(false);
+  const shareUrlResult = getShareUrlResult(target);
+  const targetKey = shareUrlResult.targetKey;
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const timeoutRef = useRef<number | undefined>(undefined);
+  const copied = shareUrlResult.ok && copiedUrl === shareUrlResult.url;
 
   useEffect(() => {
+    setCopiedUrl((currentUrl) => (currentUrl === targetKey ? currentUrl : null));
+    window.clearTimeout(timeoutRef.current);
+    timeoutRef.current = undefined;
+
     return () => window.clearTimeout(timeoutRef.current);
-  }, []);
+  }, [targetKey]);
 
   async function handleShare() {
+    if (!shareUrlResult.ok) {
+      onError?.(shareUrlResult.message);
+      return;
+    }
+
     try {
-      const url = buildPhasesCardShareUrl(target);
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
+      await navigator.clipboard.writeText(shareUrlResult.url);
+      setCopiedUrl(shareUrlResult.url);
       window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = window.setTimeout(() => setCopied(false), SUCCESS_MS);
+      timeoutRef.current = window.setTimeout(() => {
+        setCopiedUrl((currentUrl) => (currentUrl === shareUrlResult.url ? null : currentUrl));
+      }, SUCCESS_MS);
     } catch (error) {
       onError?.(error instanceof Error ? error.message : "Unable to copy Phases Card link.");
     }
@@ -46,8 +80,8 @@ export function PhasesCardShareButton({
       disabled={disabled}
       aria-label={copied ? "Phases Card link copied" : "Share Phases Card"}
       className={[
-        "phases-card-share relative h-12 w-16 overflow-hidden rounded-2xl border border-black/20 text-black",
-        "hover:brightness-105 active:scale-95",
+        "phases-card-share relative h-12 w-16 overflow-hidden rounded-2xl! border border-black/20 text-text-primary dark:border-white/20",
+        "hover:brightness-105! active:scale-95!",
         className,
       ]
         .filter(Boolean)
@@ -56,9 +90,9 @@ export function PhasesCardShareButton({
       <span aria-hidden className="phases-card-share__cap phases-card-share__cap--top" />
       <span aria-hidden className="phases-card-share__cap phases-card-share__cap--bottom" />
       {copied ? (
-        <Check className="relative z-10 size-5 text-black" aria-hidden />
+        <Check className="relative z-10 size-5" aria-hidden />
       ) : (
-        <Share className="relative z-10 size-5 text-black" aria-hidden />
+        <Share className="relative z-10 size-5" aria-hidden />
       )}
     </Button>
   );

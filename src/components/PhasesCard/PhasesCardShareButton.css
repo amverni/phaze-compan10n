@@ -8,8 +8,8 @@
   right: 0.35rem;
   z-index: 0;
   height: 28%;
-  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  border: 1px solid rgb(0 0 0 / 22%);
+  background: rgb(0 0 0 / 10%);
   pointer-events: none;
 }
 

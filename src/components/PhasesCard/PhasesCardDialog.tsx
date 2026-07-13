@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { phasesByIdsOptions } from "../../data/hooks/usePhases";
 import type { TemporaryPhaseSet } from "../../types";
-import { Dialog, Toast, type ToastHandle } from "../ui";
+import { Dialog, InlineError, Toast, type ToastHandle } from "../ui";
 import { PhasesCardList } from "./PhasesCardList";
 import { PhasesCardShareButton } from "./PhasesCardShareButton";
 
@@ -14,7 +14,12 @@ interface PhasesCardDialogProps {
 
 export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogProps) {
   const toastRef = useRef<ToastHandle>(null);
-  const { data: phases = [], isLoading } = useQuery(phasesByIdsOptions([...phaseSet.phases]));
+  const {
+    data: phases = [],
+    isError,
+    isLoading,
+    refetch,
+  } = useQuery(phasesByIdsOptions([...phaseSet.phases]));
 
   return (
     <Dialog open={open} onClose={onClose} aria-label="Phases Card">
@@ -22,11 +27,15 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
         <div className="flex shrink-0 justify-end">
           <PhasesCardShareButton
             target={{ name: phaseSet.name, phases }}
-            disabled={isLoading || phases.length === 0}
+            disabled={isLoading || isError || phases.length === 0}
             onError={(message) => toastRef.current?.show(message)}
           />
         </div>
-        <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
+        {isError ? (
+          <InlineError message="Unable to load phases." onRetry={() => refetch()} />
+        ) : (
+          <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
+        )}
         <Toast ref={toastRef} />
       </div>
     </Dialog>
