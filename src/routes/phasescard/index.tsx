@@ -2,7 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PhasesCardPage } from "../../components/PhasesCard";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "../../components/ui";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
+} from "../../components/ui";
 import { phaseSetDetailOptions, phaseSetListOptions } from "../../data/hooks/usePhaseSets";
 import { phasesByIdsOptions } from "../../data/hooks/usePhases";
 import { appSettingsOptions } from "../../data/hooks/useSettings";
@@ -42,8 +48,8 @@ function PhasesCardIndexRoute() {
           value={selectedId}
           onChange={setSelectedId}
           disabled={settingsLoading || phaseSetsLoading}
-          aria-label="Phase Set"
         >
+          <ListboxLabel className="sr-only">Phase Set</ListboxLabel>
           <ListboxButton>{selectedLabel}</ListboxButton>
           <ListboxOptions
             anchor={{ to: "bottom", gap: "0.25rem", padding: "1rem" }}
