@@ -17,7 +17,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@headlessui/react";
 import { ChevronsUpDown, Minus } from "lucide-react";
-import { Children, isValidElement, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import {
+  type AriaRole,
+  Children,
+  isValidElement,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import "./List.css";
 
 const COMPACT_ROW_HEIGHT = "h-10";
@@ -319,6 +327,12 @@ export interface ListProps {
   scrollable?: boolean;
   /** Extra classes appended to the list's outer `.glass` wrapper. */
   className?: string;
+  /** Accessible name for focusable/scrollable list regions. */
+  "aria-label"?: string;
+  /** Optional semantic role for the list container. */
+  role?: AriaRole;
+  /** Optional keyboard focus support for the list container. */
+  tabIndex?: number;
   isLoading?: boolean;
   shimmerRows?: number;
   /** Use `content` for variable-height rows that contain controls or sections. */
@@ -336,6 +350,9 @@ export function List({
   allowOverflow = false,
   scrollable = false,
   className: classNameProp,
+  "aria-label": ariaLabel,
+  role,
+  tabIndex,
   isLoading = false,
   shimmerRows = 0,
   rowVariant = "compact",
@@ -705,10 +722,24 @@ export function List({
     renderedRows.map((row, index) => renderRow(row, index, renderedRows.length));
   const hasRows = currentRows.length > 0 || exitingRows.length > 0;
 
+  const containerProps = {
+    "aria-label": ariaLabel,
+    role,
+    tabIndex,
+  };
+
   if (!isLoading && !hasRows) {
     if (!emptyMessage) return null;
+    const emptyClassName = [
+      "flex items-center justify-center py-8 text-sm text-text-secondary",
+      scrollable && "overflow-y-auto",
+      classNameProp,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return (
-      <div className="flex items-center justify-center py-8 text-sm text-text-secondary">
+      <div className={emptyClassName} {...containerProps}>
         {emptyMessage}
       </div>
     );
@@ -723,7 +754,7 @@ export function List({
     .join(" ");
 
   return (
-    <div className={className}>
+    <div className={className} {...containerProps}>
       {isLoading ? (
         <ShimmerRows count={shimmerRows} />
       ) : sortable && items ? (

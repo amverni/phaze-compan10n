@@ -5,12 +5,12 @@
   isolation: isolate;
 }
 
-button.glass.phases-card-share {
+button.glass.phases-card-share:not(.glass-danger):not(.glass-error) {
   --_g-border: rgb(0 0 0 / 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
-  button.glass.phases-card-share {
+  button.glass.phases-card-share:not(.glass-danger):not(.glass-error) {
     --_g-border: rgb(0 0 0 / 0.4);
   }
 }
