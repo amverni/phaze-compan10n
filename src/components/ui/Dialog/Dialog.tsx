@@ -11,7 +11,6 @@ import "./Dialog.css";
 interface AppDialogProps extends Omit<DialogProps<"div">, "children"> {
   children?: ReactNode;
   afterLeave?: () => void;
-  contentLabel?: string;
 }
 
 const panelClasses =
@@ -36,7 +35,7 @@ const DISMISS_THRESHOLD = 0.3;
  * ```
  */
 export function Dialog(props: AppDialogProps) {
-  const { children, open, onClose, className, afterLeave, contentLabel, ...rest } = props;
+  const { children, open, onClose, className, afterLeave, ...rest } = props;
 
   const mergedPanelClasses = [panelClasses, className].filter(Boolean).join(" ");
 
@@ -252,10 +251,7 @@ export function Dialog(props: AppDialogProps) {
               </div>
               <section
                 ref={contentCallbackRef}
-                className="min-h-0 flex-1 overflow-y-auto overscroll-none focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white/60"
-                // biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable dialog content must be keyboard-focusable.
-                tabIndex={0}
-                aria-label={contentLabel ?? "Dialog content"}
+                className="min-h-0 flex-1 overflow-y-auto overscroll-none"
               >
                 {children}
               </section>

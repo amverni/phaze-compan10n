@@ -26,13 +26,14 @@ export function buildPhasesCardShareUrl(target: PhasesCardShareTarget): string {
     return buildAbsoluteHashUrl(`/phasescard/${builtInId}`);
   }
 
-  const data = encodePhasesCardPayload({
+  const payload = validateOutboundPayload({
     v: PAYLOAD_VERSION,
     name: target.name.trim(),
     phases: target.phases.map((phase) => ({
       requirements: phase.requirements.map(copyRequirement),
     })),
   });
+  const data = encodePhasesCardPayload(payload);
 
   return buildAbsoluteHashUrl(`/phasescard/custom?data=${encodeURIComponent(data)}`);
 }
@@ -87,6 +88,18 @@ function decodeBase64Url(data: string): string {
 
 function copyRequirement(requirement: Meld): Meld {
   return { ...requirement };
+}
+
+function validateOutboundPayload(payload: PhasesCardSharePayloadV1): PhasesCardSharePayloadV1 {
+  const result = validatePayload(payload);
+  if (!result.ok) throw new Error(result.message);
+  return {
+    v: PAYLOAD_VERSION,
+    name: result.name,
+    phases: result.phases.map((phase) => ({
+      requirements: phase.requirements.map(copyRequirement),
+    })),
+  };
 }
 
 function validatePayload(value: unknown): DecodePhasesCardResult {

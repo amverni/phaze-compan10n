@@ -89,7 +89,7 @@ export function PhasesCardShareButton({
       disabled={disabled}
       aria-label={copied ? "Phases Card link copied" : "Share Phases Card"}
       className={[
-        "phases-card-share relative h-12 w-16 overflow-hidden rounded-2xl! border border-black/20 text-text-primary dark:border-white/20",
+        "phases-card-share relative h-12 w-16 overflow-hidden rounded-2xl! border border-black/20 text-text-primary dark:border-black/40",
         "hover:brightness-105! active:scale-95!",
         className,
       ]

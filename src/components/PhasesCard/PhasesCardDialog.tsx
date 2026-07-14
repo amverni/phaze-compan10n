@@ -23,12 +23,7 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
   const missingPhaseRecords = !isLoading && !isError && phases.length !== phaseSet.phases.length;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      aria-label="Phases Card"
-      contentLabel="Phases Card actions and phase list"
-    >
+    <Dialog open={open} onClose={onClose} aria-label="Phases Card">
       <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-2 pb-3 text-text-primary">
         <div className="flex shrink-0 justify-end">
           <PhasesCardShareButton
@@ -42,7 +37,7 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
         ) : missingPhaseRecords ? (
           <InlineError message="This Phase Set is missing phase data and cannot be shared." />
         ) : (
-          <PhasesCardList phases={phases} isLoading={isLoading} scrollable={false} />
+          <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
         )}
         <Toast ref={toastRef} />
       </div>

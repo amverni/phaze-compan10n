@@ -18,8 +18,6 @@ const SAVE_SUCCESS_MS = 5000;
 export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps) {
   const [saved, setSaved] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [hideWhenBlurred, setHideWhenBlurred] = useState(false);
-  const saveActionRef = useRef<HTMLSpanElement>(null);
   const toastRef = useRef<ToastHandle>(null);
   const timeoutRef = useRef<number | undefined>(undefined);
   const input = { name, phases };
@@ -50,10 +48,6 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
       setSaved(true);
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(() => {
-        if (document.activeElement && saveActionRef.current?.contains(document.activeElement)) {
-          setHideWhenBlurred(true);
-          return;
-        }
         setHidden(true);
       }, SAVE_SUCCESS_MS);
     } catch (error) {
@@ -82,13 +76,10 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
           <span>{savedMatchFetching ? "Checking" : "Retry"}</span>
         </Button>
       ) : (
-        <span ref={saveActionRef}>
+        <span>
           <Button
             type="button"
             onClick={handleSave}
-            onBlur={() => {
-              if (hideWhenBlurred) setHidden(true);
-            }}
             aria-disabled={saveButtonUnavailable}
             aria-label={saved ? "Phases Card saved" : "Save Phases Card"}
             className={[
