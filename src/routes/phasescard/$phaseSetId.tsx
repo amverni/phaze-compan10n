@@ -27,13 +27,21 @@ function SpecificPhasesCardRoute() {
   });
 
   const loading = phaseSetLoading || phasesLoading;
+  const missingPhaseRecords =
+    phaseSet !== undefined &&
+    phaseSet !== null &&
+    !phasesLoading &&
+    !phasesError &&
+    phases.length !== phaseSet.phases.length;
   const errorMessage = phaseSetError
     ? "Unable to load Phase Set."
     : phasesError
       ? "Unable to load phases for this Phase Set."
-      : !loading && !phaseSet
+      : !loading && phaseSet === null
         ? "Phase Set not found."
-        : undefined;
+        : missingPhaseRecords
+          ? "This Phase Set is missing phase data and cannot be shared."
+          : undefined;
 
   function retryFailedQueries() {
     if (phaseSetError) void refetchPhaseSet();
@@ -52,7 +60,9 @@ function SpecificPhasesCardRoute() {
       isLoading={loading}
       errorMessage={errorMessage}
       onErrorRetry={phaseSetError || phasesError ? retryFailedQueries : undefined}
-      shareTarget={phaseSet ? { name: phaseSet.name, phases, phaseSet } : undefined}
+      shareTarget={
+        phaseSet && !missingPhaseRecords ? { name: phaseSet.name, phases, phaseSet } : undefined
+      }
     />
   );
 }

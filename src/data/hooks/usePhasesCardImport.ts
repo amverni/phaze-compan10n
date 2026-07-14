@@ -1,9 +1,12 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SavedPhaseSet } from "../../types";
 import type { ImportedPhasesCardInput } from "../api/phasesCardImport";
 import { phasesCardImportApi } from "../api/phasesCardImport";
 import { phaseSetKeys } from "./usePhaseSets";
 import { phaseKeys } from "./usePhases";
 import { settingsKeys } from "./useSettings";
+
+export type ImportedPhasesCardMatch = SavedPhaseSet | null;
 
 export const phasesCardImportKeys = {
   all: ["phasesCardImport"] as const,
@@ -13,7 +16,8 @@ export const phasesCardImportKeys = {
 export function importedPhasesCardMatchOptions(input: ImportedPhasesCardInput) {
   return queryOptions({
     queryKey: phasesCardImportKeys.match(input),
-    queryFn: () => phasesCardImportApi.findSavedMatch(input),
+    queryFn: async (): Promise<ImportedPhasesCardMatch> =>
+      (await phasesCardImportApi.findSavedMatch(input)) ?? null,
     enabled: input.name.trim().length > 0 && input.phases.length > 0,
   });
 }

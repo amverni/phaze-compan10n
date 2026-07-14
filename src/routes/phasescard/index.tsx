@@ -58,7 +58,13 @@ function PhasesCardIndexRoute() {
   });
 
   const loading = settingsLoading || phaseSetsLoading || phaseSetLoading || phasesLoading;
-  const selectedMissing = selectedId.length > 0 && !loading && !selectedPhaseSet;
+  const selectedMissing = selectedId.length > 0 && !loading && selectedPhaseSet === null;
+  const missingPhaseRecords =
+    selectedPhaseSet !== undefined &&
+    selectedPhaseSet !== null &&
+    !phasesLoading &&
+    !phasesError &&
+    phases.length !== selectedPhaseSet.phases.length;
   const errorMessage = settingsError
     ? "Unable to load Phases Card settings."
     : phaseSetsError
@@ -69,7 +75,9 @@ function PhasesCardIndexRoute() {
           ? "Unable to load phases for the selected Phase Set."
           : selectedMissing
             ? "Selected Phase Set not found."
-            : undefined;
+            : missingPhaseRecords
+              ? "This Phase Set is missing phase data and cannot be shared."
+              : undefined;
 
   function retryFailedQueries() {
     if (settingsError) void refetchSettings();
@@ -84,7 +92,9 @@ function PhasesCardIndexRoute() {
       ? "Unable to load"
       : settingsLoading || phaseSetsLoading || phaseSetLoading
         ? "Loading..."
-        : "Choose Phase Set");
+        : selectedMissing
+          ? "Phase Set not found"
+          : "Choose Phase Set");
 
   return (
     <PhasesCardPage
@@ -122,7 +132,7 @@ function PhasesCardIndexRoute() {
           : undefined
       }
       shareTarget={
-        selectedPhaseSet
+        selectedPhaseSet && !missingPhaseRecords
           ? { name: selectedPhaseSet.name, phases, phaseSet: selectedPhaseSet }
           : undefined
       }

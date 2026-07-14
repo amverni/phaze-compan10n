@@ -1,6 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { BuiltInT, PhaseSetId, SavedT } from "../../types";
+import type { BuiltInT, PhaseSet, PhaseSetId, SavedT } from "../../types";
 import { phaseSetsApi } from "../api/phaseSets";
+
+export type PhaseSetDetail = PhaseSet | null;
 
 export const phaseSetKeys = {
   all: ["phaseSets"] as const,
@@ -26,7 +28,7 @@ export function phaseSetListOptions(filters?: {
 export function phaseSetDetailOptions(id: PhaseSetId) {
   return queryOptions({
     queryKey: phaseSetKeys.detail(id),
-    queryFn: () => phaseSetsApi.getById(id),
+    queryFn: async (): Promise<PhaseSetDetail> => (await phaseSetsApi.getById(id)) ?? null,
     enabled: !!id,
   });
 }

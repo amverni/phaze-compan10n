@@ -20,19 +20,27 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
     isLoading,
     refetch,
   } = useQuery(phasesByIdsOptions([...phaseSet.phases]));
+  const missingPhaseRecords = !isLoading && !isError && phases.length !== phaseSet.phases.length;
 
   return (
-    <Dialog open={open} onClose={onClose} aria-label="Phases Card">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-label="Phases Card"
+      contentLabel="Phases Card actions and phase list"
+    >
       <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-2 pb-3 text-text-primary">
         <div className="flex shrink-0 justify-end">
           <PhasesCardShareButton
             target={{ name: phaseSet.name, phases }}
-            disabled={isLoading || isError || phases.length === 0}
+            disabled={isLoading || isError || missingPhaseRecords || phases.length === 0}
             onError={(message) => toastRef.current?.show(message)}
           />
         </div>
         {isError ? (
           <InlineError message="Unable to load phases." onRetry={() => refetch()} />
+        ) : missingPhaseRecords ? (
+          <InlineError message="This Phase Set is missing phase data and cannot be shared." />
         ) : (
           <PhasesCardList phases={phases} isLoading={isLoading} scrollable={false} />
         )}
