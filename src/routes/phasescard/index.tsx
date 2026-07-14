@@ -113,7 +113,7 @@ function PhasesCardIndexRoute() {
           <ListboxOptions
             anchor={{ to: "bottom", gap: "0.25rem", padding: "1rem" }}
             transformOrigin="top"
-            className="max-w-[calc(100vw-2rem)] sm:max-w-80"
+            className="max-h-[min(20rem,calc(100svh-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-80"
           >
             {phaseSets.map(({ id, name }) => (
               <ListboxOption key={id} value={id} className="max-w-[calc(100vw-2rem)] sm:max-w-80">
