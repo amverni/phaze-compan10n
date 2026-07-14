@@ -26,13 +26,22 @@ function getShareUrlResult(target: PhasesCardShareTarget): ShareUrlResult {
     return {
       ok: false,
       message: error instanceof Error ? error.message : "Unable to copy Phases Card link.",
-      targetKey: JSON.stringify({
-        name: target.name.trim(),
-        phaseSet: target.phaseSet ? [target.phaseSet.type, target.phaseSet.id] : null,
-        phases: target.phases,
-      }),
+      targetKey: getTargetKey(target),
     };
   }
+}
+
+function getTargetKey(target: PhasesCardShareTarget): string {
+  const baseTarget = {
+    source: target.source,
+    name: target.name.trim(),
+    phases: target.phases,
+  };
+  if (target.source !== "phase-set") return JSON.stringify(baseTarget);
+  return JSON.stringify({
+    ...baseTarget,
+    phaseSet: [target.phaseSet.type, target.phaseSet.id],
+  });
 }
 
 export function PhasesCardShareButton({

@@ -11,8 +11,26 @@ export interface PhasesCardSharePayloadV1 {
   }>;
 }
 
-export interface PhasesCardShareTarget {
+interface PhasesCardPhaseSetShareTarget {
+  source: "phase-set";
   name: string;
   phases: PhasesCardPhase[];
-  phaseSet?: Pick<PhaseSet, "id" | "type">;
+  phaseSet: Pick<PhaseSet, "id" | "type">;
 }
+
+interface PhasesCardCustomShareTarget {
+  source: "custom";
+  name: string;
+  phases: PhasesCardPhase[];
+}
+
+interface PhasesCardGameSnapshotShareTarget {
+  source: "game-snapshot";
+  name: string;
+  phases: PhasesCardPhase[];
+}
+
+export type PhasesCardShareTarget =
+  | PhasesCardPhaseSetShareTarget
+  | PhasesCardCustomShareTarget
+  | PhasesCardGameSnapshotShareTarget;

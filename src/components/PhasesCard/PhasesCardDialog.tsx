@@ -32,7 +32,7 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
       <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-2 pb-3 text-text-primary">
         <div className="flex shrink-0 justify-end">
           <PhasesCardShareButton
-            target={{ name: phaseSet.name, phases }}
+            target={{ source: "game-snapshot", name: phaseSet.name, phases }}
             disabled={isLoading || isError || missingPhaseRecords || phases.length === 0}
             onError={(message) => toastRef.current?.show(message)}
           />

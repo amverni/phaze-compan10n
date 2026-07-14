@@ -133,7 +133,7 @@ function PhasesCardIndexRoute() {
       }
       shareTarget={
         selectedPhaseSet && !missingPhaseRecords
-          ? { name: selectedPhaseSet.name, phases, phaseSet: selectedPhaseSet }
+          ? { source: "phase-set", name: selectedPhaseSet.name, phases, phaseSet: selectedPhaseSet }
           : undefined
       }
     />

@@ -21,10 +21,7 @@ export type DecodePhasesCardResult =
   | { ok: false; message: string };
 
 export function buildPhasesCardShareUrl(target: PhasesCardShareTarget): string {
-  const builtInId =
-    target.phaseSet?.type === "built-in"
-      ? target.phaseSet.id
-      : getMatchingBuiltInPhaseSetId(target.phases);
+  const builtInId = getBuiltInShareId(target);
   if (builtInId) {
     return buildAbsoluteHashUrl(`/phasescard/${builtInId}`);
   }
@@ -38,6 +35,17 @@ export function buildPhasesCardShareUrl(target: PhasesCardShareTarget): string {
   });
 
   return buildAbsoluteHashUrl(`/phasescard/custom?data=${encodeURIComponent(data)}`);
+}
+
+function getBuiltInShareId(target: PhasesCardShareTarget): PhaseSetId | undefined {
+  switch (target.source) {
+    case "phase-set":
+      return target.phaseSet.type === "built-in" ? target.phaseSet.id : undefined;
+    case "game-snapshot":
+      return getMatchingBuiltInPhaseSetId(target.phases);
+    case "custom":
+      return undefined;
+  }
 }
 
 export function encodePhasesCardPayload(payload: PhasesCardSharePayloadV1): string {

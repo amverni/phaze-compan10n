@@ -61,7 +61,9 @@ function SpecificPhasesCardRoute() {
       errorMessage={errorMessage}
       onErrorRetry={phaseSetError || phasesError ? retryFailedQueries : undefined}
       shareTarget={
-        phaseSet && !missingPhaseRecords ? { name: phaseSet.name, phases, phaseSet } : undefined
+        phaseSet && !missingPhaseRecords
+          ? { source: "phase-set", name: phaseSet.name, phases, phaseSet }
+          : undefined
       }
     />
   );

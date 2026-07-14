@@ -33,16 +33,17 @@ export function PhasesCardList({
         isLoading={isLoading}
         shimmerRows={6}
         emptyMessage="No phases in this set"
+        rowVariant="content"
       >
         {phases.map((phase, index) => (
           <div
             key={`${index}-${formatPhaseDisplayName(phase)}`}
-            className="flex items-center gap-2"
+            className="flex w-full min-w-0 items-start gap-3"
           >
-            <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-black/10 bg-black/5 text-xs font-semibold text-text-secondary tabular-nums dark:border-white/20 dark:bg-white/10">
+            <span className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-black/10 bg-black/5 text-xs font-semibold text-text-secondary tabular-nums dark:border-white/20 dark:bg-white/10">
               {index + 1}
             </span>
-            <span className="min-w-0 flex-1 truncate">{formatPhaseDisplayName(phase)}</span>
+            <span className="min-w-0 flex-1 break-words">{formatPhaseDisplayName(phase)}</span>
           </div>
         ))}
       </List>

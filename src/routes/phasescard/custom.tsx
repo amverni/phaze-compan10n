@@ -41,7 +41,7 @@ function CustomPhasesCardRoute() {
         </div>
       }
       phases={decoded.phases}
-      shareTarget={{ name: decoded.name, phases: decoded.phases }}
+      shareTarget={{ source: "custom", name: decoded.name, phases: decoded.phases }}
       saveAction={
         <PhasesCardSaveButton
           key={`${decoded.name}-${JSON.stringify(decoded.phases)}`}
