@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, RotateCcw, Save } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   importedPhasesCardMatchOptions,
   useSaveImportedPhasesCard,
@@ -18,6 +24,9 @@ const SAVE_SUCCESS_MS = 5000;
 export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps) {
   const [saved, setSaved] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
+  const savedStatusRef = useRef<HTMLOutputElement>(null);
+  const shouldFocusSavedStatusRef = useRef(false);
   const toastRef = useRef<ToastHandle>(null);
   const timeoutRef = useRef<number | undefined>(undefined);
   const input = { name, phases };
@@ -35,19 +44,28 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
     return () => window.clearTimeout(timeoutRef.current);
   }, []);
 
-  if (hidden || (!saved && (savedMatchLoading || (savedMatchSuccess && savedMatch !== null)))) {
+  useLayoutEffect(() => {
+    if (!hidden || !shouldFocusSavedStatusRef.current) return;
+    shouldFocusSavedStatusRef.current = false;
+    savedStatusRef.current?.focus({ preventScroll: true });
+  }, [hidden]);
+
+  if (!saved && (savedMatchLoading || (savedMatchSuccess && savedMatch !== null))) {
     return null;
   }
   if (!saved && !savedMatchSuccess && !savedMatchError) return null;
   const saveButtonUnavailable = saveImported.isPending || saved;
 
-  async function handleSave() {
+  async function handleSave(event: ReactMouseEvent<HTMLButtonElement>) {
     if (saveButtonUnavailable) return;
+    saveButtonRef.current = event.currentTarget;
     try {
       await saveImported.mutateAsync(input);
       setSaved(true);
+      setHidden(false);
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(() => {
+        shouldFocusSavedStatusRef.current = document.activeElement === saveButtonRef.current;
         setHidden(true);
       }, SAVE_SUCCESS_MS);
     } catch (error) {
@@ -59,7 +77,20 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
 
   return (
     <>
-      {savedMatchError && !saved ? (
+      {hidden && saved ? (
+        <output
+          ref={savedStatusRef}
+          tabIndex={-1}
+          className={[
+            "glass inline-flex h-10 items-center justify-center gap-2 rounded-full",
+            "px-3 text-sm font-semibold text-text-secondary",
+            "focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60",
+          ].join(" ")}
+        >
+          <Check className="size-4 text-pt-green-500" aria-hidden />
+          <span>Saved</span>
+        </output>
+      ) : savedMatchError && !saved ? (
         <Button
           type="button"
           onClick={() => void refetchSavedMatch()}

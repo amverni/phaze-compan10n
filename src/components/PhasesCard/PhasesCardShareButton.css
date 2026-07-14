@@ -1,7 +1,18 @@
 .phases-card-share {
   --phases-card-share-accent: rgb(0 0 0);
+  --_g-border: rgb(0 0 0 / 0.2);
 
   isolation: isolate;
+}
+
+button.glass.phases-card-share {
+  --_g-border: rgb(0 0 0 / 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  button.glass.phases-card-share {
+    --_g-border: rgb(0 0 0 / 0.4);
+  }
 }
 
 .phases-card-share__cap {

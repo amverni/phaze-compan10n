@@ -18,6 +18,31 @@ const panelClasses =
 
 const DISMISS_THRESHOLD = 0.3;
 
+function isVerticallyScrollable(element: HTMLElement) {
+  const overflowY = window.getComputedStyle(element).overflowY;
+  return (
+    (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") &&
+    element.scrollHeight > element.clientHeight
+  );
+}
+
+function getEventTargetElement(target: EventTarget | null) {
+  if (target instanceof Element) return target;
+  if (target instanceof Node) return target.parentElement;
+  return null;
+}
+
+function findNearestVerticalScroller(target: EventTarget | null, contentNode: HTMLDivElement) {
+  let element = getEventTargetElement(target);
+
+  while (element && element !== contentNode) {
+    if (element instanceof HTMLElement && isVerticallyScrollable(element)) return element;
+    element = element.parentElement;
+  }
+
+  return contentNode;
+}
+
 /**
  * A frosted-glass dialog that wraps Headless UI's `Dialog`.
  *
@@ -173,7 +198,8 @@ export function Dialog(props: AppDialogProps) {
           if (Math.abs(delta) < 8) return;
           // Horizontally-dominant gestures should yield here so nested horizontal
           // interactions can opt out of swipe-to-dismiss and handle the drag.
-          if (delta > 0 && Math.abs(delta) > Math.abs(deltaX) && node.scrollTop <= 0) {
+          const scroller = findNearestVerticalScroller(e.target, node);
+          if (delta > 0 && Math.abs(delta) > Math.abs(deltaX) && scroller.scrollTop <= 0) {
             d.decided = true;
             d.active = true;
             d.source = "content";
