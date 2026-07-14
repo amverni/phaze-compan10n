@@ -5,12 +5,14 @@ import { Logo } from "../Logo/Logo";
 import { ActiveGames } from "./ActiveGames";
 import { CreateButton } from "./CreateButton";
 import { HomeMenu } from "./HomeMenu";
+import { PhasesCardButton } from "./PhasesCardButton";
 
 export const Home: React.FC = () => {
   return (
     <CardBackground
       headerContent={
-        <div className="relative z-10 mx-auto flex h-full w-full items-center justify-end px-4">
+        <div className="relative z-10 mx-auto flex h-full w-full items-center justify-between px-4">
+          <PhasesCardButton />
           <HomeMenu />
         </div>
       }
