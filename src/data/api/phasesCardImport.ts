@@ -19,11 +19,13 @@ export interface ImportedPhasesCardInput {
 export const phasesCardImportApi = {
   async findSavedMatch(input: ImportedPhasesCardInput): Promise<SavedPhaseSet | undefined> {
     const name = normalizeName(input.name);
-    const savedPhaseSets = await getSavedPhaseSetsWithResolvedPhases();
-    return savedPhaseSets.find(
-      ({ phaseSet, phases }) =>
-        phaseSet.name.trim() === name && arePhaseListsEqual(phases, input.phases),
-    )?.phaseSet;
+    const db = await getDB();
+    const customPhaseSets = await db.getAll("customPhaseSets");
+    const candidates = getSavedPhaseSetCandidates(name, customPhaseSets);
+    if (candidates.length === 0) return undefined;
+
+    const savedPhases = await db.getAllFromIndex("customPhases", "by-type", "saved");
+    return findSavedMatchInCandidates(input, candidates, savedPhases.filter(isSavedPhase));
   },
 
   async saveImported(input: ImportedPhasesCardInput): Promise<SavedPhaseSet> {
@@ -87,34 +89,32 @@ function normalizeName(name: string): string {
   return trimmed;
 }
 
-async function getSavedPhaseSetsWithResolvedPhases(): Promise<
-  Array<{ phaseSet: SavedPhaseSet; phases: Phase[] }>
-> {
-  const db = await getDB();
-  const [customPhaseSets, savedPhases] = await Promise.all([
-    db.getAll("customPhaseSets"),
-    db.getAllFromIndex("customPhases", "by-type", "saved"),
-  ]);
-  return getSavedPhaseSetsWithResolvedPhasesFromRecords(
-    customPhaseSets,
-    savedPhases.filter(isSavedPhase),
-  );
-}
-
 function findSavedMatchInRecords(
   input: ImportedPhasesCardInput,
   customPhaseSets: PhaseSet[],
   savedPhases: SavedPhase[],
 ): SavedPhaseSet | undefined {
   const name = normalizeName(input.name);
-  return getSavedPhaseSetsWithResolvedPhasesFromRecords(customPhaseSets, savedPhases).find(
-    ({ phaseSet, phases }) =>
-      phaseSet.name.trim() === name && arePhaseListsEqual(phases, input.phases),
+  const candidates = getSavedPhaseSetCandidates(name, customPhaseSets);
+  return findSavedMatchInCandidates(input, candidates, savedPhases);
+}
+
+function getSavedPhaseSetCandidates(name: string, phaseSets: PhaseSet[]): SavedPhaseSet[] {
+  return phaseSets.filter(isSavedPhaseSet).filter((phaseSet) => phaseSet.name.trim() === name);
+}
+
+function findSavedMatchInCandidates(
+  input: ImportedPhasesCardInput,
+  candidates: SavedPhaseSet[],
+  savedPhases: SavedPhase[],
+): SavedPhaseSet | undefined {
+  return getSavedPhaseSetsWithResolvedPhasesFromRecords(candidates, savedPhases).find(
+    ({ phases }) => arePhaseListsEqual(phases, input.phases),
   )?.phaseSet;
 }
 
 function getSavedPhaseSetsWithResolvedPhasesFromRecords(
-  customPhaseSets: PhaseSet[],
+  phaseSets: SavedPhaseSet[],
   savedPhases: SavedPhase[],
 ): Array<{ phaseSet: SavedPhaseSet; phases: Phase[] }> {
   const phaseById = new Map<PhaseId, Phase>([
@@ -122,8 +122,7 @@ function getSavedPhaseSetsWithResolvedPhasesFromRecords(
     ...savedPhases.map((phase) => [phase.id, phase] as const),
   ]);
 
-  return customPhaseSets
-    .filter(isSavedPhaseSet)
+  return phaseSets
     .map((phaseSet) => ({
       phaseSet,
       phases: phaseSet.phases
