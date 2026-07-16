@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { PhasesCardPage } from "../../components/PhasesCard";
-import { phaseSetDetailOptions } from "../../data/hooks/usePhaseSets";
-import { phasesByIdsOptions } from "../../data/hooks/usePhases";
+import { phaseSetDetailOptions, phaseSetPhasesStatusOptions } from "../../data/hooks/usePhaseSets";
 
 export const Route = createFileRoute("/phasescard/$phaseSetId")({
   component: SpecificPhasesCardRoute,
@@ -17,22 +16,19 @@ function SpecificPhasesCardRoute() {
     refetch: refetchPhaseSet,
   } = useQuery(phaseSetDetailOptions(phaseSetId));
   const {
-    data: phases = [],
+    data: phaseStatus,
     isError: phasesError,
     isLoading: phasesLoading,
     refetch: refetchPhases,
   } = useQuery({
-    ...phasesByIdsOptions(phaseSet?.phases ?? []),
+    ...phaseSetPhasesStatusOptions(phaseSetId),
     enabled: !!phaseSet,
   });
+  const phases = phaseStatus?.phases ?? [];
 
   const loading = phaseSetLoading || phasesLoading;
   const missingPhaseRecords =
-    phaseSet !== undefined &&
-    phaseSet !== null &&
-    !phasesLoading &&
-    !phasesError &&
-    phases.length !== phaseSet.phases.length;
+    !phasesLoading && !phasesError && (phaseStatus?.missingPhaseRecords ?? false);
   const errorMessage = phaseSetError
     ? "Unable to load Phase Set."
     : phasesError

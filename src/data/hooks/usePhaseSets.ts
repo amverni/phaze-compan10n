@@ -13,6 +13,7 @@ export const phaseSetKeys = {
   details: () => [...phaseSetKeys.all, "detail"] as const,
   detail: (id: PhaseSetId) => [...phaseSetKeys.details(), id] as const,
   phases: (id: PhaseSetId) => [...phaseSetKeys.detail(id), "phases"] as const,
+  phasesStatus: (id: PhaseSetId) => [...phaseSetKeys.detail(id), "phasesStatus"] as const,
   builtInMatches: () => [...phaseSetKeys.all, "builtInMatch"] as const,
   builtInMatch: (phases: PhasesCardPhase[]) => [...phaseSetKeys.builtInMatches(), phases] as const,
 };
@@ -40,6 +41,14 @@ export function phaseSetPhasesOptions(id: PhaseSetId) {
   return queryOptions({
     queryKey: phaseSetKeys.phases(id),
     queryFn: () => phaseSetsApi.getPhases(id),
+    enabled: !!id,
+  });
+}
+
+export function phaseSetPhasesStatusOptions(id: PhaseSetId) {
+  return queryOptions({
+    queryKey: phaseSetKeys.phasesStatus(id),
+    queryFn: () => phaseSetsApi.getPhasesWithStatus(id),
     enabled: !!id,
   });
 }

@@ -17,6 +17,11 @@ import { favoritesApi } from "./favorites";
 import { phasesApi } from "./phases";
 import { nameMatchScore } from "./utils";
 
+export interface PhaseSetPhasesResult {
+  phases: Phase[];
+  missingPhaseRecords: boolean;
+}
+
 export const phaseSetsApi = {
   /**
    * Get all phase sets, optionally filtered by type, name, and favorite status.
@@ -95,6 +100,17 @@ export const phaseSetsApi = {
     const phaseSet = await this.getById(id);
     if (!phaseSet) return [];
     return phasesApi.getByIds([...phaseSet.phases]);
+  },
+
+  async getPhasesWithStatus(id: PhaseSetId): Promise<PhaseSetPhasesResult> {
+    const phaseSet = await this.getById(id);
+    if (!phaseSet) return { phases: [], missingPhaseRecords: false };
+
+    const phases = await phasesApi.getByIds([...phaseSet.phases]);
+    return {
+      phases,
+      missingPhaseRecords: phases.length !== phaseSet.phases.length,
+    };
   },
 
   /**

@@ -9,8 +9,11 @@ import {
   ListboxOption,
   ListboxOptions,
 } from "../../components/ui";
-import { phaseSetDetailOptions, phaseSetListOptions } from "../../data/hooks/usePhaseSets";
-import { phasesByIdsOptions } from "../../data/hooks/usePhases";
+import {
+  phaseSetDetailOptions,
+  phaseSetListOptions,
+  phaseSetPhasesStatusOptions,
+} from "../../data/hooks/usePhaseSets";
 import { appSettingsOptions } from "../../data/hooks/useSettings";
 import type { PhaseSetId } from "../../types";
 
@@ -48,23 +51,20 @@ function PhasesCardIndexRoute() {
     enabled: selectedId.length > 0,
   });
   const {
-    data: phases = [],
+    data: phaseStatus,
     isError: phasesError,
     isLoading: phasesLoading,
     refetch: refetchPhases,
   } = useQuery({
-    ...phasesByIdsOptions(selectedPhaseSet?.phases ?? []),
+    ...phaseSetPhasesStatusOptions(selectedId),
     enabled: !!selectedPhaseSet,
   });
+  const phases = phaseStatus?.phases ?? [];
 
   const loading = settingsLoading || phaseSetsLoading || phaseSetLoading || phasesLoading;
   const selectedMissing = selectedId.length > 0 && !loading && selectedPhaseSet === null;
   const missingPhaseRecords =
-    selectedPhaseSet !== undefined &&
-    selectedPhaseSet !== null &&
-    !phasesLoading &&
-    !phasesError &&
-    phases.length !== selectedPhaseSet.phases.length;
+    !phasesLoading && !phasesError && (phaseStatus?.missingPhaseRecords ?? false);
   const errorMessage = settingsError
     ? "Unable to load Phases Card settings."
     : phaseSetsError
