@@ -91,21 +91,31 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
           <span>Saved</span>
         </output>
       ) : savedMatchError && !saved ? (
-        <Button
-          type="button"
-          onClick={() => void refetchSavedMatch()}
-          disabled={savedMatchFetching}
-          aria-label="Retry checking whether this Phases Card is already saved"
-          title="Unable to check whether this Phases Card is already saved"
-          className="h-10 gap-2 rounded-full px-3 text-sm font-semibold text-red-700 dark:text-red-300"
+        <div
+          className={[
+            "glass flex max-w-full items-center gap-2 rounded-2xl px-3 py-2",
+            "text-sm text-red-700 dark:text-red-300",
+          ].join(" ")}
+          role="alert"
         >
-          {savedMatchFetching ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <RotateCcw className="size-4" aria-hidden />
-          )}
-          <span>{savedMatchFetching ? "Checking" : "Retry"}</span>
-        </Button>
+          <span className="min-w-0 flex-1">
+            Unable to check whether this Phases Card is already saved.
+          </span>
+          <Button
+            type="button"
+            onClick={() => void refetchSavedMatch()}
+            disabled={savedMatchFetching}
+            aria-label="Retry checking whether this Phases Card is already saved"
+            className="h-9 shrink-0 gap-1.5 rounded-full px-3 text-sm font-semibold"
+          >
+            {savedMatchFetching ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <RotateCcw className="size-4" aria-hidden />
+            )}
+            <span>{savedMatchFetching ? "Checking" : "Retry"}</span>
+          </Button>
+        </div>
       ) : (
         <span>
           <Button
