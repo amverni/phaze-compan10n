@@ -51,7 +51,7 @@ function SpecificPhasesCardRoute() {
   return (
     <PhasesCardPage
       topContent={
-        <div className="glass max-w-full truncate rounded-full px-4 py-2 text-sm font-semibold">
+        <div className="glass relative max-w-full truncate rounded-full px-4 py-2 text-sm font-semibold">
           {phaseSet?.name ??
             (phaseSetError ? "Unable to load" : loading ? "Loading..." : "Phase Set not found")}
         </div>

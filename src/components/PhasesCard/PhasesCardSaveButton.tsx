@@ -82,7 +82,7 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
           ref={savedStatusRef}
           tabIndex={-1}
           className={[
-            "glass inline-flex h-10 items-center justify-center gap-2 rounded-full",
+            "glass relative inline-flex h-10 items-center justify-center gap-2 rounded-full",
             "px-3 text-sm font-semibold text-text-secondary",
             "focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60",
           ].join(" ")}
@@ -93,7 +93,7 @@ export function PhasesCardSaveButton({ name, phases }: PhasesCardSaveButtonProps
       ) : savedMatchError && !saved ? (
         <div
           className={[
-            "glass flex max-w-full items-center gap-2 rounded-2xl px-3 py-2",
+            "glass relative flex max-w-full items-center gap-2 rounded-2xl px-3 py-2",
             "text-sm text-red-700 dark:text-red-300",
           ].join(" ")}
           role="alert"
