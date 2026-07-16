@@ -9,8 +9,10 @@ import type {
 
 const PAYLOAD_VERSION = 1;
 const MAX_JSON_BYTES = 8192;
+const MAX_ENCODED_PAYLOAD_LENGTH = Math.ceil(MAX_JSON_BYTES / 3) * 4;
 const MAX_PHASES = 50;
 const MAX_REQUIREMENTS = 10;
+const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/u;
 
 export type DecodePhasesCardResult =
   | { ok: true; name: string; phases: PhasesCardPhase[] }
@@ -58,6 +60,12 @@ export function encodePhasesCardPayload(payload: PhasesCardSharePayloadV1): stri
 
 export function decodePhasesCardPayload(data: string | undefined): DecodePhasesCardResult {
   if (!data) return { ok: false, message: "This Phases Card link is missing data." };
+  if (data.length > MAX_ENCODED_PAYLOAD_LENGTH) {
+    return { ok: false, message: "This Phases Card link is too large." };
+  }
+  if (!BASE64URL_PATTERN.test(data)) {
+    return { ok: false, message: "This Phases Card link is invalid." };
+  }
   try {
     const json = decodeBase64Url(data);
     if (new TextEncoder().encode(json).byteLength > MAX_JSON_BYTES) {
