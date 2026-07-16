@@ -24,8 +24,15 @@ export const phasesCardImportApi = {
     const candidates = getSavedPhaseSetCandidates(name, customPhaseSets);
     if (candidates.length === 0) return undefined;
 
-    const savedPhases = await db.getAllFromIndex("customPhases", "by-type", "saved");
-    return findSavedMatchInCandidates(input, candidates, savedPhases.filter(isSavedPhase));
+    const candidatePhaseIds = [...new Set(candidates.flatMap((phaseSet) => phaseSet.phases))];
+    const savedPhases = await Promise.all(
+      candidatePhaseIds.map((phaseId) => db.get("customPhases", phaseId)),
+    );
+    return findSavedMatchInCandidates(
+      input,
+      candidates,
+      savedPhases.filter((phase): phase is Phase => phase !== undefined).filter(isSavedPhase),
+    );
   },
 
   async saveImported(input: ImportedPhasesCardInput): Promise<SavedPhaseSet> {
