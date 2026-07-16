@@ -20,9 +20,14 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
     isError,
     isLoading,
     refetch,
-  } = useQuery(phasesByIdsOptions([...phaseSet.phases]));
-  const missingPhaseRecords = !isLoading && !isError && phases.length !== phaseSet.phases.length;
-  const canMatchBuiltIn = !isLoading && !isError && !missingPhaseRecords && phases.length > 0;
+  } = useQuery({
+    ...phasesByIdsOptions([...phaseSet.phases]),
+    enabled: open,
+  });
+  const missingPhaseRecords =
+    open && !isLoading && !isError && phases.length !== phaseSet.phases.length;
+  const canMatchBuiltIn =
+    open && !isLoading && !isError && !missingPhaseRecords && phases.length > 0;
   const { data: builtInPhaseSetId = null, isLoading: builtInMatchLoading } = useQuery({
     ...builtInPhaseSetMatchOptions(phases),
     enabled: canMatchBuiltIn,
