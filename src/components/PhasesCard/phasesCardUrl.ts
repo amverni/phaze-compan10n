@@ -1,15 +1,11 @@
-import { builtInPhaseSets } from "../../data/constants/phaseSets";
-import { builtInPhases } from "../../data/constants/phases";
 import type {
   Meld,
   Phase,
-  PhaseId,
   PhaseSetId,
   PhasesCardPhase,
   PhasesCardSharePayloadV1,
   PhasesCardShareTarget,
 } from "../../types";
-import { arePhaseListsEqual } from "../../utils";
 
 const PAYLOAD_VERSION = 1;
 const MAX_JSON_BYTES = 8192;
@@ -43,7 +39,7 @@ function getBuiltInShareId(target: PhasesCardShareTarget): PhaseSetId | undefine
     case "phase-set":
       return target.phaseSet.type === "built-in" ? target.phaseSet.id : undefined;
     case "game-snapshot":
-      return getMatchingBuiltInPhaseSetId(target.phases);
+      return target.builtInPhaseSetId ?? undefined;
     case "custom":
       return undefined;
   }
@@ -159,14 +155,4 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-function getMatchingBuiltInPhaseSetId(phases: PhasesCardPhase[]): PhaseSetId | undefined {
-  const builtInPhaseById = new Map<PhaseId, Phase>(builtInPhases.map((phase) => [phase.id, phase]));
-  return builtInPhaseSets.find((phaseSet) => {
-    const builtInPhasesForSet = phaseSet.phases
-      .map((phaseId) => builtInPhaseById.get(phaseId))
-      .filter((phase): phase is Phase => phase !== undefined);
-    return arePhaseListsEqual(phases, builtInPhasesForSet);
-  })?.id;
 }

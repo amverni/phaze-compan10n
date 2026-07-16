@@ -1,5 +1,5 @@
 import type { Meld, Phase } from "./phase";
-import type { PhaseSet } from "./phaseSet";
+import type { PhaseSet, PhaseSetId } from "./phaseSet";
 
 export type PhasesCardPhase = Pick<Phase, "requirements">;
 
@@ -28,6 +28,7 @@ interface PhasesCardGameSnapshotShareTarget {
   source: "game-snapshot";
   name: string;
   phases: PhasesCardPhase[];
+  builtInPhaseSetId?: PhaseSetId | null;
 }
 
 export type PhasesCardShareTarget =

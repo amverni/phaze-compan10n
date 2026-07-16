@@ -1,13 +1,17 @@
 import type {
   BuiltInT,
   Phase,
+  PhaseId,
   PhaseSet,
   PhaseSetId,
+  PhasesCardPhase,
   SavedPhaseSet,
   SavedT,
   VisiblePhaseSet,
 } from "../../types";
+import { arePhaseListsEqual } from "../../utils";
 import { builtInPhaseSets, normalizePhaseSetId } from "../constants/phaseSets";
+import { builtInPhases } from "../constants/phases";
 import { getDB } from "../db";
 import { favoritesApi } from "./favorites";
 import { phasesApi } from "./phases";
@@ -91,6 +95,29 @@ export const phaseSetsApi = {
     const phaseSet = await this.getById(id);
     if (!phaseSet) return [];
     return phasesApi.getByIds([...phaseSet.phases]);
+  },
+
+  /**
+   * Find the built-in phase set whose ordered phase requirements match the
+   * provided phases.
+   *
+   * Used by Phases Card sharing to shorten game-snapshot links only when the
+   * game phases exactly match a built-in Phase Set.
+   */
+  getMatchingBuiltInId(phases: PhasesCardPhase[]): PhaseSetId | undefined {
+    const builtInPhaseById = new Map<PhaseId, Phase>(
+      builtInPhases.map((phase) => [phase.id, phase]),
+    );
+
+    return builtInPhaseSets.find((phaseSet) => {
+      const phasesForSet = phaseSet.phases
+        .map((phaseId) => builtInPhaseById.get(phaseId))
+        .filter((phase): phase is Phase => phase !== undefined);
+
+      return (
+        phasesForSet.length === phaseSet.phases.length && arePhaseListsEqual(phases, phasesForSet)
+      );
+    })?.id;
   },
 
   /**

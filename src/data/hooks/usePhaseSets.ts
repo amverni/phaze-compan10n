@@ -1,8 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { BuiltInT, PhaseSet, PhaseSetId, SavedT } from "../../types";
+import type { BuiltInT, PhaseSet, PhaseSetId, PhasesCardPhase, SavedT } from "../../types";
 import { phaseSetsApi } from "../api/phaseSets";
 
 export type PhaseSetDetail = PhaseSet | null;
+export type BuiltInPhaseSetMatch = PhaseSetId | null;
 
 export const phaseSetKeys = {
   all: ["phaseSets"] as const,
@@ -12,6 +13,8 @@ export const phaseSetKeys = {
   details: () => [...phaseSetKeys.all, "detail"] as const,
   detail: (id: PhaseSetId) => [...phaseSetKeys.details(), id] as const,
   phases: (id: PhaseSetId) => [...phaseSetKeys.detail(id), "phases"] as const,
+  builtInMatches: () => [...phaseSetKeys.all, "builtInMatch"] as const,
+  builtInMatch: (phases: PhasesCardPhase[]) => [...phaseSetKeys.builtInMatches(), phases] as const,
 };
 
 export function phaseSetListOptions(filters?: {
@@ -38,5 +41,13 @@ export function phaseSetPhasesOptions(id: PhaseSetId) {
     queryKey: phaseSetKeys.phases(id),
     queryFn: () => phaseSetsApi.getPhases(id),
     enabled: !!id,
+  });
+}
+
+export function builtInPhaseSetMatchOptions(phases: PhasesCardPhase[]) {
+  return queryOptions({
+    queryKey: phaseSetKeys.builtInMatch(phases),
+    queryFn: (): BuiltInPhaseSetMatch => phaseSetsApi.getMatchingBuiltInId(phases) ?? null,
+    enabled: phases.length > 0,
   });
 }
