@@ -36,7 +36,10 @@ export function Game({ gameId }: GameProps) {
                 type="button"
                 aria-label="Open Phases Card"
                 className="size-10"
-                onClick={() => setPhasesCardOpen(true)}
+                disabled={!game}
+                onClick={() => {
+                  if (game) setPhasesCardOpen(true);
+                }}
               >
                 <ListChecks className="relative z-10 size-6" />
               </Button>

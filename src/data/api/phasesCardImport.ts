@@ -59,12 +59,14 @@ export const phasesCardImportApi = {
     }
 
     const phaseIds: PhaseId[] = [];
+    const usedPhaseIds = new Set<PhaseId>();
     for (const importedPhase of input.phases) {
-      const existingPhase = savedPhases.find((phase) =>
-        arePhaseRequirementsEqual(phase, importedPhase),
+      const existingPhase = savedPhases.find(
+        (phase) => !usedPhaseIds.has(phase.id) && arePhaseRequirementsEqual(phase, importedPhase),
       );
       if (existingPhase) {
         phaseIds.push(existingPhase.id);
+        usedPhaseIds.add(existingPhase.id);
         continue;
       }
 
@@ -76,6 +78,7 @@ export const phasesCardImportApi = {
       await phaseStore.add(phase);
       savedPhases.push(phase);
       phaseIds.push(phase.id);
+      usedPhaseIds.add(phase.id);
     }
 
     const phaseSet: SavedPhaseSet = {
