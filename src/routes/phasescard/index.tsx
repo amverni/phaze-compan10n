@@ -105,19 +105,23 @@ function PhasesCardIndexRoute() {
           disabled={settingsLoading || phaseSetsLoading || settingsError || phaseSetsError}
         >
           <ListboxLabel className="sr-only">Phase Set</ListboxLabel>
-          <ListboxButton className="max-w-[calc(100vw-2rem)] sm:max-w-80">
-            <span className="block max-w-[calc(100vw-5rem)] truncate sm:max-w-64">
-              {selectedLabel}
-            </span>
+          <ListboxButton
+            variant="plain"
+            className={[
+              "glass w-[min(26rem,calc(100vw-2rem))] justify-between!",
+              "rounded-full! px-3! py-2!",
+            ].join(" ")}
+          >
+            <span className="block min-w-0 flex-1 truncate text-left">{selectedLabel}</span>
           </ListboxButton>
           <ListboxOptions
             anchor={{ to: "bottom", gap: "0.25rem", padding: "1rem" }}
             transformOrigin="top"
-            className="[--anchor-max-height:min(20rem,calc(100svh-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-80"
+            className="[--anchor-max-height:min(20rem,calc(100svh-2rem))] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto"
           >
             {phaseSets.map(({ id, name }) => (
-              <ListboxOption key={id} value={id} className="max-w-[calc(100vw-2rem)] sm:max-w-80">
-                <span className="block max-w-[calc(100vw-5rem)] truncate sm:max-w-64">{name}</span>
+              <ListboxOption key={id} value={id} className="max-w-full">
+                <span className="block min-w-0 flex-1 truncate">{name}</span>
               </ListboxOption>
             ))}
           </ListboxOptions>

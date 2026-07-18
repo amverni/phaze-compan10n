@@ -39,6 +39,7 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
         <div className="flex shrink-0 justify-end">
           <PhasesCardShareButton
             target={{ source: "game-snapshot", name: phaseSet.name, phases, builtInPhaseSetId }}
+            className="size-10!"
             disabled={
               isLoading ||
               builtInMatchLoading ||

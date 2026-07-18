@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import type { PhasesCardShareTarget } from "../../types";
 import { Button } from "../ui";
 import { buildPhasesCardShareUrl } from "./phasesCardUrl";
-import "./PhasesCardShareButton.css";
 
 interface PhasesCardShareButtonProps {
   target: PhasesCardShareTarget;
@@ -88,20 +87,12 @@ export function PhasesCardShareButton({
       onClick={handleShare}
       disabled={disabled}
       aria-label={copied ? "Phases Card link copied" : "Share Phases Card"}
-      className={[
-        "phases-card-share relative h-12 w-16 overflow-hidden rounded-2xl! border border-black/20 text-text-primary dark:border-black/40",
-        "hover:brightness-105! active:scale-95!",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={["size-14 p-0", className].filter(Boolean).join(" ")}
     >
-      <span aria-hidden className="phases-card-share__cap phases-card-share__cap--top" />
-      <span aria-hidden className="phases-card-share__cap phases-card-share__cap--bottom" />
       {copied ? (
-        <Check className="relative z-10 size-5" aria-hidden />
+        <Check className="relative z-10 size-6 text-pt-green-500" aria-hidden />
       ) : (
-        <Share className="relative z-10 size-5" aria-hidden />
+        <Share className="relative z-10 size-6" aria-hidden />
       )}
     </Button>
   );

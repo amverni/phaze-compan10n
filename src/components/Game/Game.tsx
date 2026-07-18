@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ListChecks } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { gameDetailOptions } from "../../data/hooks/useGames";
 import { playersByIdsOptions } from "../../data/hooks/usePlayers";
@@ -8,7 +8,11 @@ import { roundsListOptions } from "../../data/hooks/useRounds";
 import type { GameId } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { PhasesCardDialog } from "../PhasesCard";
+import {
+  PhasesCardDialog,
+  PhasesCardEntryButtonContent,
+  phasesCardEntryButtonClasses,
+} from "../PhasesCard";
 import { Scoreboard } from "../Scoreboard";
 import { Button } from "../ui";
 
@@ -35,13 +39,13 @@ export function Game({ gameId }: GameProps) {
               <Button
                 type="button"
                 aria-label="Open Phases Card"
-                className="size-10"
+                className={phasesCardEntryButtonClasses}
                 disabled={!game}
                 onClick={() => {
                   if (game) setPhasesCardOpen(true);
                 }}
               >
-                <ListChecks className="relative z-10 size-6" />
+                <PhasesCardEntryButtonContent />
               </Button>
             </div>
           </div>

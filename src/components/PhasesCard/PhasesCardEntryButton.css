@@ -1,0 +1,32 @@
+.phases-card-entry-card {
+  --phases-card-entry-accent: var(--color-text-primary);
+  --phases-card-entry-slant: 0.55rem;
+  --phases-card-entry-inset-x: 0.2rem;
+  --phases-card-entry-inset-y: 0.2rem;
+  --phases-card-entry-cap-height: 28%;
+
+  isolation: isolate;
+}
+
+.phases-card-entry-card__cap {
+  position: absolute;
+  left: var(--phases-card-entry-inset-x);
+  right: var(--phases-card-entry-inset-x);
+  z-index: 0;
+  height: var(--phases-card-entry-cap-height);
+  border: 1px solid color-mix(in oklab, var(--phases-card-entry-accent) 55%, transparent);
+  background: var(--phases-card-entry-accent);
+  pointer-events: none;
+}
+
+.phases-card-entry-card__cap--top {
+  top: var(--phases-card-entry-inset-y);
+  border-radius: 0.5rem 0.5rem 0.15rem 0.15rem;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--phases-card-entry-slant)), 0 100%);
+}
+
+.phases-card-entry-card__cap--bottom {
+  bottom: var(--phases-card-entry-inset-y);
+  border-radius: 0.15rem 0.15rem 0.5rem 0.5rem;
+  clip-path: polygon(0 var(--phases-card-entry-slant), 100% 0, 100% 100%, 0 100%);
+}
