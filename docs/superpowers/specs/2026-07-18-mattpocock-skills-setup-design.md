@@ -13,16 +13,20 @@ In scope:
 - Create an `AGENTS.md` entry point that tells agents where issue tracker, triage label, domain-doc, and code-review standards live.
 - Use GitHub Issues as the configured issue tracker for specs, tickets, triage, and wayfinder maps.
 - Use the default Matt Pocock triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`.
+- Verify the default triage labels exist on GitHub, and create any missing labels when the available tooling and permissions allow it.
+- Verify the Wayfinder labels exist on GitHub, and create any missing labels when the available tooling and permissions allow it.
 - Treat this repo as a single-context project with root `CONTEXT.md` and ADRs under `docs/adr/`.
 - Refactor the project code-review setup so Matt's `code-review` skill owns `/code-review`, and Phase 10-specific review priorities are included in Matt's Standards axis.
 
 Out of scope:
 
 - Changing app runtime behavior, routing, UI, IndexedDB data, or build tooling.
-- Creating GitHub labels or issues as part of setup.
+- Creating regular feature/spec/ticket GitHub issues as part of setup.
 - Replacing the existing Phase 10 expert review lenses with generic advice.
 - Adding a test framework.
-- Changing Matt Pocock's installed plugin source files.
+- Manually editing Matt Pocock's installed plugin source files. Updating the checkout with `git pull --ff-only` is allowed.
+
+Creating regular feature/spec/ticket issues is out of scope. Creating missing setup labels is in scope because `to-spec`, `to-tickets`, `triage`, and `wayfinder` need those labels to run without failing on first publish.
 
 ## Existing context
 
@@ -44,6 +48,14 @@ The latest `mattpocock/skills` plugin includes the requested skills:
 - `code-review`
 
 It also includes the dependent skills needed by those workflows, including `setup-matt-pocock-skills`, `triage`, `tdd`, `prototype`, `research`, `domain-modeling`, and `grilling`.
+
+The external plugin update is not a repo file change. The implementation plan should run:
+
+```bash
+git -C "$HOME/.copilot/installed-plugins/_direct/mattpocock--skills" pull --ff-only
+```
+
+Then it should verify the requested skills exist under that checkout. If the checkout is missing or not a git checkout, stop and ask before reinstalling because plugin installation lives outside this repo.
 
 ## Approved direction
 
@@ -72,6 +84,20 @@ Add `docs/agents/triage-labels.md` from the Matt default triage label template. 
 | `ready-for-human` | `ready-for-human` |
 | `wontfix` | `wontfix` |
 
+Implementation should verify these labels exist on GitHub. If any are missing and GitHub label creation is available, create them with neutral colors/descriptions. If label creation is unavailable, stop and report the missing labels as a manual prerequisite instead of silently leaving publishing workflows broken.
+
+Implementation should also verify Wayfinder's issue labels exist:
+
+| Wayfinder role | Tracker label |
+| --- | --- |
+| map issue | `wayfinder:map` |
+| research child issue | `wayfinder:research` |
+| prototype child issue | `wayfinder:prototype` |
+| grilling child issue | `wayfinder:grilling` |
+| task child issue | `wayfinder:task` |
+
+If any Wayfinder labels are missing and GitHub label creation is available, create them with neutral colors/descriptions. If label creation is unavailable, stop and report the missing labels as a manual prerequisite.
+
 Add `docs/agents/domain.md` from the Matt domain-doc template. It should configure this as a single-context repo:
 
 - read root `CONTEXT.md` before domain-sensitive work,
@@ -95,6 +121,15 @@ The `AGENTS.md` guidance should stay short and route details to `docs/agents/*.m
 ## Code review integration
 
 Add `docs/agents/code-review-standards.md` as the bridge between Matt's `code-review` skill and this repo's existing review priorities.
+
+The document should use this rough structure:
+
+- **Standards sources**: list `.github/copilot-instructions.md`, `CONTEXT.md`, relevant ADRs, and the focused `.github/skills/code-review-*` files as supporting material.
+- **Architecture and data flow**: route, component, hook, API, and IndexedDB boundaries.
+- **React, TypeScript, and TanStack**: React Compiler, type safety, Query, and Form expectations.
+- **Persistence and domain rules**: IndexedDB and Phase 10 game-rule invariants.
+- **UI, accessibility, and UX**: shared primitives, Headless UI, keyboard/focus behavior, mobile/touch flows, icons, Tailwind, and glass styling.
+- **Manual deep-review option**: point to the renamed Phase 10 review matrix helper for cases where a human explicitly wants the older expert-agent orchestration.
 
 The standards document should consolidate the review concerns currently spread across the project `code-review-*` skills:
 
@@ -131,7 +166,7 @@ After implementation:
 
 - Agents can run Matt's `grill-with-docs`, `to-spec`, `to-tickets`, `wayfinder`, `implement`, and `code-review` without asking for setup first.
 - `to-spec` and `to-tickets` can publish to GitHub Issues and apply the `ready-for-agent` label.
-- `wayfinder` can create map issues and child decision tickets using the GitHub tracker conventions.
+- `wayfinder` can create map issues and child decision tickets using the GitHub tracker conventions and labels.
 - `triage` can use the default label vocabulary.
 - `grill-with-docs`, `domain-modeling`, and architecture-oriented skills know to use root `CONTEXT.md` and `docs/adr/`.
 - Matt's `code-review` can run its Standards and Spec axes, and the Standards axis has access to the Phase 10-specific review priorities.
@@ -150,6 +185,14 @@ Expected file changes:
 - Update the renamed skill frontmatter `name` and description.
 - Update the renamed skill body to clarify that Matt's `code-review` is canonical and this helper is for Phase 10 expert-matrix deep dives.
 
+Expected external setup:
+
+- Pull the installed `mattpocock/skills` checkout with `git pull --ff-only`.
+- Verify requested and dependent skills exist in the installed checkout.
+- Verify the default triage labels exist in GitHub Issues.
+- Verify the Wayfinder labels exist in GitHub Issues.
+- Create missing default triage and Wayfinder labels if the available tooling and permissions support it; otherwise report the missing labels as a blocking manual prerequisite.
+
 Do not modify app source files for this setup.
 
 Do not duplicate the full Matt `code-review` process in project docs. Project docs should provide standards and repo setup, not fork Matt's skill.
@@ -165,6 +208,7 @@ If a review has no originating spec or issue, Matt's `code-review` should still 
 ## Validation
 
 - Confirm the installed `mattpocock/skills` checkout contains the requested skills and dependencies.
+- Confirm GitHub Issues has the default triage labels and Wayfinder labels, or document any missing labels that must be created manually.
 - Confirm the repo no longer has a project skill whose frontmatter name is exactly `code-review`.
 - Confirm `AGENTS.md` points to the new `docs/agents/*.md` files.
 - Confirm `docs/agents/code-review-standards.md` covers the current Phase 10 expert review lenses.
