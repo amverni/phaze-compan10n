@@ -15,7 +15,7 @@ This file adds Phase 10 scoreboard standards on top of Matt's fixed smell baseli
 
 ## React, TypeScript, and TanStack
 
-- React Compiler is enabled. Do not recommend routine `useMemo` or `useCallback`; flag manual memoization only when it creates bugs or when there is a concrete identity-stability issue the compiler will not solve.
+- React Compiler is enabled. Do not add or recommend manual `useMemo` or `useCallback`; challenge any manual memoization unless there is an explicit documented exception.
 - Avoid duplicated React state that can drift from props, query data, form state, or persisted data.
 - Effects should synchronize with external systems, not compute render data that belongs in render, API, or query layers.
 - Use stable domain identifiers for list keys when order can change.
