@@ -1,11 +1,13 @@
 ---
-name: code-review
-description: Use when reviewing pull requests, evaluating code quality, or writing React/TypeScript code in the Phase 10 scoreboard app
+name: phase10-code-review-matrix
+description: Use when explicitly requesting the Phase 10 expert-matrix review rather than Matt Pocock's default code-review workflow
 ---
 
-# Code Review Orchestrator
+# Phase 10 Code Review Matrix
 
-Use this as the review lead. The lead scopes the diff, assigns focused expert reviewers, synthesizes their findings, and returns one consolidated review. Expert details live in separate `code-review-*` skills so each sub-agent can stay focused.
+Matt Pocock's `code-review` skill is the canonical `/code-review` workflow for this repo. Use this helper only when a human explicitly asks for the older Phase 10 expert-matrix deep review.
+
+This helper scopes the diff, assigns focused Phase 10 expert reviewers, synthesizes their findings, and returns one consolidated review. Expert details live in separate `code-review-*` skills so each sub-agent can stay focused.
 
 ---
 
