@@ -29,11 +29,10 @@ import {
 import "./List.css";
 
 const COMPACT_ROW_HEIGHT = "h-10";
-const DENSE_ROW_HEIGHT = "h-8";
 const LIST_ANIMATION_MS = 220;
 const LIST_MOVE_EASING = "cubic-bezier(0.2, 0, 0, 1)";
 const LIST_HEIGHT_EASING = "linear";
-export type ListRowVariant = "dense" | "compact" | "content";
+export type ListRowVariant = "compact" | "content";
 
 interface RowRect {
   top: number;
@@ -104,9 +103,7 @@ function rowClassName(isFirst: boolean, isLast: boolean, rowVariant: ListRowVari
   const sizing =
     rowVariant === "content"
       ? "min-h-10 flex items-center px-4 py-4 text-sm"
-      : rowVariant === "dense"
-        ? `${DENSE_ROW_HEIGHT} flex items-center px-3 text-sm`
-        : `${COMPACT_ROW_HEIGHT} flex items-center px-3 text-sm`;
+      : `${COMPACT_ROW_HEIGHT} flex items-center px-3 text-sm`;
   return `${sizing} ${radius}`;
 }
 
