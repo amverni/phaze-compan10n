@@ -16,6 +16,7 @@ import {
 } from "../../data/hooks/usePhaseSets";
 import { appSettingsOptions } from "../../data/hooks/useSettings";
 import type { PhaseSetId } from "../../types";
+import "../../components/PhasesCard/PhasesCardSelector.css";
 
 export const Route = createFileRoute("/phasescard/")({
   component: PhasesCardIndexRoute,
@@ -103,12 +104,13 @@ function PhasesCardIndexRoute() {
           value={selectedId}
           onChange={setSelectedId}
           disabled={settingsLoading || phaseSetsLoading || settingsError || phaseSetsError}
+          className="flex w-full justify-center"
         >
           <ListboxLabel className="sr-only">Phase Set</ListboxLabel>
           <ListboxButton
             variant="plain"
             className={[
-              "glass w-[min(26rem,calc(100vw-2rem))] justify-between!",
+              "glass w-fit min-w-[50%] max-w-full justify-between!",
               "rounded-full! px-3! py-2!",
             ].join(" ")}
           >
@@ -117,7 +119,7 @@ function PhasesCardIndexRoute() {
           <ListboxOptions
             anchor={{ to: "bottom", gap: "0.25rem", padding: "1rem" }}
             transformOrigin="top"
-            className="[--anchor-max-height:min(20rem,calc(100svh-2rem))] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto"
+            className="phases-card-selector-options [--anchor-max-height:min(20rem,calc(100svh-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto"
           >
             {phaseSets.map(({ id, name }) => (
               <ListboxOption key={id} value={id} className="max-w-full">

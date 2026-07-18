@@ -41,13 +41,13 @@ export function PhasesCardPage({
       mainContent={
         <div className="content-container flex h-full min-h-0 flex-col py-4 pb-[calc(0.5rem+var(--slant))]">
           <div className="mb-3 flex min-h-10 shrink-0 items-center justify-center gap-3">
-            <div className="min-w-0">{topContent}</div>
+            <div className="flex min-w-0 flex-1 justify-center">{topContent}</div>
             {saveAction}
           </div>
           {errorMessage ? (
             <InlineError message={errorMessage} onRetry={onErrorRetry} />
           ) : (
-            <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
+            <PhasesCardList phases={phases} isLoading={isLoading} />
           )}
           <Toast ref={toastRef} />
         </div>

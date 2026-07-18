@@ -55,7 +55,7 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
         ) : missingPhaseRecords ? (
           <InlineError message="This Phase Set is missing phase data and cannot be shared." />
         ) : (
-          <PhasesCardList phases={phases} isLoading={isLoading} className="flex-1" />
+          <PhasesCardList phases={phases} isLoading={isLoading} />
         )}
         <Toast ref={toastRef} />
       </div>
