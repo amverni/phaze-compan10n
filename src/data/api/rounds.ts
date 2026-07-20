@@ -1,25 +1,8 @@
 import type { ArrayAtLeastOne, GameId, PlayerId, Round, RoundScore } from "../../types";
+import { getNextCurrentPhase } from "../../utils";
 import { getDB } from "../db";
 
 type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
-
-/**
- * Determine the next `currentPhase` for a player based on their previous
- * round's phase status. Completed or skipped phases advance the player;
- * failed or sat-out phases keep them on the same phase. The result is
- * clamped to `totalPhases` so it never exceeds the game's phase count.
- */
-function getNextPhase(previousScore: RoundScore | undefined, totalPhases: number): number {
-  if (!previousScore) return 1;
-
-  const advances =
-    previousScore.phaseStatus === "completed" || previousScore.phaseStatus === "skipped";
-
-  if (advances) {
-    return Math.min(previousScore.currentPhase + 1, totalPhases);
-  }
-  return previousScore.currentPhase;
-}
 
 export const roundsApi = {
   /**
@@ -82,7 +65,7 @@ export const roundsApi = {
       const prevScore = previousRound?.scores.find((s) => s.playerId === input.playerId);
       return {
         ...input,
-        currentPhase: getNextPhase(prevScore, totalPhases),
+        currentPhase: getNextCurrentPhase(prevScore, totalPhases),
       };
       // Input guarantees at least one score; .map() preserves length but TS can't infer tuple minimum
     }) as ArrayAtLeastOne<RoundScore>;
@@ -167,7 +150,7 @@ export const roundsApi = {
         }
 
         const prevScore = prevRound.scores.find((s) => s.playerId === playerId);
-        const newCurrentPhase = getNextPhase(prevScore, totalPhases);
+        const newCurrentPhase = getNextCurrentPhase(prevScore, totalPhases);
 
         if (laterRound.scores[laterScoreIndex].currentPhase !== newCurrentPhase) {
           // Spread preserves minimum length of original; TS can't infer tuple minimum from spread

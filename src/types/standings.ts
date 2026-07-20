@@ -19,8 +19,8 @@ export interface StandingsDerivation {
 
 export interface StandingsRow {
   player: Player;
-  rank: number;
-  showRank: boolean;
+  place: number;
+  showPlace: boolean;
   progress: PlayerProgress;
   tiebreakerTotal: number;
   formattedTiebreaker: string;

@@ -70,8 +70,8 @@ export function deriveStandings({ game, players, rounds }: StandingsInput): Stan
     const tiebreakerTotal = state?.tiebreakerTotal ?? 0;
     return {
       player,
-      rank: 1,
-      showRank: true,
+      place: 1,
+      showPlace: true,
       progress,
       tiebreakerTotal,
       formattedTiebreaker: formatTiebreakerValue(tiebreakerTotal, game.settings.tiebreaker),
@@ -95,8 +95,14 @@ export function deriveStandings({ game, players, rounds }: StandingsInput): Stan
 
     return (gameOrder.get(a.player.id) ?? 0) - (gameOrder.get(b.player.id) ?? 0);
   });
-  const rows = applyCompetitionRanks(sortedRows);
+  const rows = applyCompetitionPlaces(sortedRows);
   const hasFinishedPlayers = rows.some((row) => row.progress.isFinished);
+  const gameWinner =
+    game.status === "completed"
+      ? (rows.find((row) => row.player.id === game.winnerId) ?? null)
+      : hasFinishedPlayers
+        ? (rows[0] ?? null)
+        : null;
 
   return {
     includedPlayers,
@@ -110,7 +116,7 @@ export function deriveStandings({ game, players, rounds }: StandingsInput): Stan
       points: stateByPlayerId.get(player.id)?.tiebreakerPoints ?? [],
     })),
     hasFinishedPlayers,
-    gameWinner: hasFinishedPlayers ? rows[0] : null,
+    gameWinner,
   };
 }
 
@@ -147,7 +153,7 @@ function getMostRecentRoundWin(playerId: PlayerId, rounds: readonly Round[]): nu
   return mostRecent;
 }
 
-function applyCompetitionRanks(rows: StandingsRow[]): StandingsRow[] {
+function applyCompetitionPlaces(rows: StandingsRow[]): StandingsRow[] {
   return rows.map((row, index) => {
     const previous = rows[index - 1];
     if (
@@ -158,15 +164,15 @@ function applyCompetitionRanks(rows: StandingsRow[]): StandingsRow[] {
     ) {
       return {
         ...row,
-        rank: previous.rank,
-        showRank: false,
+        place: previous.place,
+        showPlace: false,
       };
     }
 
     return {
       ...row,
-      rank: index + 1,
-      showRank: true,
+      place: index + 1,
+      showPlace: true,
     };
   });
 }

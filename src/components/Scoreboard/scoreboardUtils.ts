@@ -1,4 +1,5 @@
 import type { GameTiebreaker, PlayerId, Round, RoundScore } from "../../types";
+import { getNextCurrentPhase } from "../../utils";
 
 /**
  * Returns the player id whose turn it is to deal round `roundNumber` (1-indexed).
@@ -22,8 +23,8 @@ export function getDealerId(
  * Returns the phase a player will be on for the next (not-yet-played) round.
  *
  * Implementation: read the player's `currentPhase` from the most recent round
- * in `rounds`, then advance it iff the most recent `phaseStatus` was
- * `completed` or `skipped`. Defaults to `1` when there are no rounds and is
+ * in `rounds`, then apply the shared Current Phase advancement rule.
+ * Defaults to `1` when there are no rounds and is
  * clamped to `totalPhases`.
  */
 export function getCurrentPhase(
@@ -34,10 +35,7 @@ export function getCurrentPhase(
   if (rounds.length === 0) return 1;
   const latest = rounds.reduce((acc, r) => (r.roundNumber > acc.roundNumber ? r : acc));
   const score = latest.scores.find((s) => s.playerId === playerId);
-  if (!score) return 1;
-  const advances = score.phaseStatus === "completed" || score.phaseStatus === "skipped";
-  const next = advances ? score.currentPhase + 1 : score.currentPhase;
-  return Math.min(Math.max(next, 1), totalPhases);
+  return getNextCurrentPhase(score, totalPhases);
 }
 
 /**

@@ -10,7 +10,7 @@ const players = {
 };
 
 describe("deriveStandings", () => {
-  it("derives a no-round active game from active players tied for first", () => {
+  it("derives a no-round active game from active players tied for first place", () => {
     const game = makeActiveGame({
       players: [players.amy.id, players.bob.id, players.cam.id],
       activePlayers: [players.bob.id, players.amy.id],
@@ -26,8 +26,8 @@ describe("deriveStandings", () => {
     expect(
       standings.rows.map((row) => ({
         playerId: row.player.id,
-        rank: row.rank,
-        showRank: row.showRank,
+        place: row.place,
+        showPlace: row.showPlace,
         currentPhase: row.progress.currentPhase,
         isFinished: row.progress.isFinished,
         tiebreakerTotal: row.tiebreakerTotal,
@@ -35,16 +35,16 @@ describe("deriveStandings", () => {
     ).toEqual([
       {
         playerId: "amy",
-        rank: 1,
-        showRank: true,
+        place: 1,
+        showPlace: true,
         currentPhase: 1,
         isFinished: false,
         tiebreakerTotal: 0,
       },
       {
         playerId: "bob",
-        rank: 1,
-        showRank: false,
+        place: 1,
+        showPlace: false,
         currentPhase: 1,
         isFinished: false,
         tiebreakerTotal: 0,
@@ -114,7 +114,7 @@ describe("deriveStandings", () => {
     expect(
       standings.rows.map((row) => ({
         playerId: row.player.id,
-        rank: row.rank,
+        place: row.place,
         currentPhase: row.progress.currentPhase,
         isFinished: row.progress.isFinished,
         standingValue: row.progress.standingValue,
@@ -123,7 +123,7 @@ describe("deriveStandings", () => {
     ).toEqual([
       {
         playerId: "amy",
-        rank: 1,
+        place: 1,
         currentPhase: 3,
         isFinished: true,
         standingValue: 4,
@@ -131,7 +131,7 @@ describe("deriveStandings", () => {
       },
       {
         playerId: "bob",
-        rank: 2,
+        place: 2,
         currentPhase: 3,
         isFinished: false,
         standingValue: 3,
@@ -292,6 +292,23 @@ describe("deriveStandings", () => {
     expect(standings.rows.map((row) => row.player.id)).toEqual(["bob", "amy"]);
   });
 
+  it("uses finalized Game Winner id for a Completed Game without a Finished Player state", () => {
+    const game = makeCompletedGame({
+      players: [players.amy.id, players.bob.id],
+      winnerId: players.bob.id,
+      winnerName: players.bob.name,
+    });
+
+    const standings = deriveStandings({
+      game,
+      players: [players.amy, players.bob],
+      rounds: [],
+    });
+
+    expect(standings.hasFinishedPlayers).toBe(false);
+    expect(standings.gameWinner?.player.id).toBe(players.bob.id);
+  });
+
   it.each([
     {
       tiebreaker: "lowestPoints",
@@ -341,7 +358,7 @@ describe("deriveStandings", () => {
     bobScore: number;
     roundWinnerId: string;
     expectedOrder: string[];
-  }>)("uses $tiebreaker direction to order finished players and select the winner", ({
+  }>)("uses $tiebreaker direction to order finished players and select the Game Winner", ({
     tiebreaker,
     amyScore,
     bobScore,
@@ -389,7 +406,7 @@ describe("deriveStandings", () => {
     expect(standings.gameWinner?.player.id).toBe(expectedOrder[0]);
   });
 
-  it("uses competition ranks while ordering equal places by recent round winner", () => {
+  it("uses competition places while ordering equal places by recent Round Winner", () => {
     const game = makeActiveGame({
       players: [players.amy.id, players.bob.id, players.cam.id],
       activePlayers: [players.amy.id, players.bob.id, players.cam.id],
@@ -410,13 +427,13 @@ describe("deriveStandings", () => {
     expect(
       standings.rows.map((row) => ({
         playerId: row.player.id,
-        rank: row.rank,
-        showRank: row.showRank,
+        place: row.place,
+        showPlace: row.showPlace,
       })),
     ).toEqual([
-      { playerId: "bob", rank: 1, showRank: true },
-      { playerId: "amy", rank: 1, showRank: false },
-      { playerId: "cam", rank: 3, showRank: true },
+      { playerId: "bob", place: 1, showPlace: true },
+      { playerId: "amy", place: 1, showPlace: false },
+      { playerId: "cam", place: 3, showPlace: true },
     ]);
   });
 });
