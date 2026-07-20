@@ -28,4 +28,14 @@ export type {
 export type { Player, PlayerId } from "./player";
 export type { PhaseStatus, Round, RoundScore } from "./round";
 export type { AppGameDefaults, AppSettings, AppSettingsId } from "./settings";
+export type {
+  PhaseGraphPoint,
+  PhaseGraphSeries,
+  PlayerProgress,
+  StandingsDerivation,
+  StandingsInput,
+  StandingsRow,
+  TiebreakerGraphPoint,
+  TiebreakerGraphSeries,
+} from "./standings";
 export type { ArrayAtLeastOne, BuiltInT, SavedT, TemporaryT } from "./utils";

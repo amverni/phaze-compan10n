@@ -4,11 +4,12 @@
 
 ```bash
 npm run build     # TypeScript check + Vite build
+npm test          # Vitest suite for pure behavior seams
 npm run lint      # Biome check (lint + format issues)
 npm run format    # Biome auto-fix formatting
 ```
 
-No test framework is configured. Run `npm run lint` to validate changes.
+Use targeted Vitest runs for changed pure behavior seams, then run `npm test`, `npm run lint`, and `npm run build` before finishing implementation work.
 
 ## Architecture
 

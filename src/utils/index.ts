@@ -5,4 +5,11 @@ export {
   arePhaseListsEqual,
   arePhaseRequirementsEqual,
 } from "./phaseEquality";
+export { getInitialPlayerProgress, getProgressAfterScore } from "./phaseProgress";
 export { shuffle } from "./shuffle";
+export {
+  formatTiebreakerValue,
+  getRoundTiebreakerValue,
+  isLowerBetterTiebreaker,
+  toTiebreakerStandingValue,
+} from "./tiebreakers";

@@ -22,6 +22,10 @@ _Avoid_: Archived game, old game
 A person participating in a game.
 _Avoid_: User, participant
 
+**Game Creation Order**:
+The order of Players chosen when the Game is created. It is the final fallback for ordering otherwise tied Players.
+_Avoid_: Player list order, setup order
+
 **Active Player**:
 A player currently participating in an active game; this may differ from everyone ever added to that game.
 _Avoid_: Current player, enabled player
@@ -58,8 +62,21 @@ The player who completed their phase in that round and went out first.
 _Avoid_: Round leader
 
 **Game Winner**:
-The player who first completes the final phase; ties are resolved by the selected Tiebreaker.
+The player who first becomes a Finished Player; ties are resolved by the selected Tiebreaker, then by the most recent Round Winner, then by Game Creation Order.
 _Avoid_: Champion
+
+**Win Count**:
+A Player's lifetime-style count of Game Winner results. It increases when a Player becomes the Game Winner and is not decremented when a Completed Game is deleted.
+_Avoid_: Active game wins, undeleted win total
+
+**Finished Player**:
+A player whose phase progress has advanced past the final Phase in a Game. Finished Players are beyond the final Current Phase for progress comparisons.
+_Avoid_: Completed player, done player
+
+**Standings**:
+The ordered comparison of players in a Game. Players are placed by Finished Player state first, then highest Current Phase, then by the selected Tiebreaker, with equal place when those values are tied and subsequent places skipping by the number of tied players.
+In an Active Game, Standings compare Active Players; in a Completed Game, Standings compare the players in the finalized result; players within an equal place are ordered by most recent Round Winner, then Game Creation Order.
+_Avoid_: Leaderboard, rankings
 
 **Tiebreaker**:
 The rule used to resolve winner comparisons when multiple players are otherwise tied.
