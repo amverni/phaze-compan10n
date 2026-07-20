@@ -36,4 +36,22 @@ describe("scoreboardUtils tiebreakers", () => {
     expect(getTiebreakerValue(round, "player-1", "roundsWon")).toBe(1);
     expect(getTiebreakerValue(round, "player-2", "roundsWon")).toBe(0);
   });
+
+  it("does not count a rounds-won tiebreaker value when the round winner has no score entry", () => {
+    const round: Round = {
+      gameId: "game-1",
+      roundNumber: 1,
+      roundWinnerId: "player-1",
+      scores: [
+        {
+          playerId: "player-2",
+          currentPhase: 1,
+          phaseStatus: "failed",
+          score: 0,
+        },
+      ],
+    };
+
+    expect(getTiebreakerValue(round, "player-1", "roundsWon")).toBe(0);
+  });
 });
