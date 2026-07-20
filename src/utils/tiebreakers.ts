@@ -57,13 +57,13 @@ export function getRoundTiebreakerValue(
   round: Round,
   playerId: PlayerId,
   tiebreaker: GameTiebreaker,
-  score: RoundScore,
+  score: RoundScore | undefined,
 ): number {
   if (TIEBREAKER_RULES[tiebreaker].valueSource === "roundWinner") {
     return round.roundWinnerId === playerId ? 1 : 0;
   }
 
-  return score.score;
+  return score?.score ?? 0;
 }
 
 export function isLowerBetterTiebreaker(tiebreaker: GameTiebreaker): boolean {

@@ -1,5 +1,5 @@
-import type { GameTiebreaker, PlayerId, Round, RoundScore } from "../../types";
-import { getNextCurrentPhase } from "../../utils";
+import type { GameTiebreaker, PlayerId, Round } from "../../types";
+import { formatTiebreakerValue, getNextCurrentPhase, getRoundTiebreakerValue } from "../../utils";
 
 /**
  * Returns the player id whose turn it is to deal round `roundNumber` (1-indexed).
@@ -39,36 +39,16 @@ export function getCurrentPhase(
 }
 
 /**
- * Per-round tiebreaker contribution for one player. The mapping:
- *
- * | tiebreaker                  | value                                  |
- * | --------------------------- | -------------------------------------- |
- * | lowestPoints / highestPoints| score.score (points)                   |
- * | fewestWilds                 | score.score (wilds used)               |
- * | fewestSkips                 | score.score (skip cards played)        |
- * | mostSkipped                 | score.score (skip cards played against)|
- * | roundsWon                   | round.roundWinnerId === playerId ? 1:0 |
- *
- * Returns 0 if the player has no score entry for the round.
+ * Per-round tiebreaker contribution for one player, using the shared
+ * tiebreaker rules so Scoreboard and Standings stay consistent.
  */
 export function getTiebreakerValue(
   round: Round,
   playerId: PlayerId,
   tiebreaker: GameTiebreaker,
 ): number {
-  if (tiebreaker === "roundsWon") {
-    return round.roundWinnerId === playerId ? 1 : 0;
-  }
-  const score: RoundScore | undefined = round.scores.find((s) => s.playerId === playerId);
-  if (!score) return 0;
-  switch (tiebreaker) {
-    case "lowestPoints":
-    case "highestPoints":
-    case "fewestWilds":
-    case "fewestSkips":
-    case "mostSkipped":
-      return score.score;
-  }
+  const score = round.scores.find((s) => s.playerId === playerId);
+  return getRoundTiebreakerValue(round, playerId, tiebreaker, score);
 }
 
 /**
@@ -91,15 +71,5 @@ export function getRunningTiebreakerTotal(
 
 /** Format a tiebreaker value with units. E.g. `(43, "lowestPoints") -> "43 pts"`. */
 export function formatTiebreaker(value: number, tiebreaker: GameTiebreaker): string {
-  switch (tiebreaker) {
-    case "fewestSkips":
-    case "mostSkipped":
-      return `${value} ${value === 1 ? "skip" : "skips"}`;
-    case "roundsWon":
-      return `${value} ${value === 1 ? "win" : "wins"}`;
-    case "lowestPoints":
-    case "highestPoints":
-    case "fewestWilds":
-      return `${value} pts`;
-  }
+  return formatTiebreakerValue(value, tiebreaker);
 }
