@@ -32,6 +32,7 @@ interface AddRoundDialogProps {
   game: Game;
   players: Player[];
   draft: UseAddRoundDraft;
+  onGameCompleted?: () => void;
 }
 
 const NO_WINNER_VALUE = "__none__";
@@ -43,7 +44,14 @@ function getPlayerTabName(name: string) {
   return name.length > PLAYER_TAB_NAME_LIMIT ? `${name.slice(0, PLAYER_TAB_NAME_LIMIT)}…` : name;
 }
 
-export function AddRoundDialog({ open, onClose, game, players, draft }: AddRoundDialogProps) {
+export function AddRoundDialog({
+  open,
+  onClose,
+  game,
+  players,
+  draft,
+  onGameCompleted,
+}: AddRoundDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const addRound = useAddRound(game.id);
   const toastRef = useRef<ToastHandle>(null);
@@ -119,9 +127,12 @@ export function AddRoundDialog({ open, onClose, game, players, draft }: AddRound
     addRound.mutate(
       { scores, roundWinnerId: winnerId },
       {
-        onSuccess: () => {
+        onSuccess: (result) => {
           draft.reset();
           onClose(false);
+          if (result.outcome === "gameCompleted") {
+            onGameCompleted?.();
+          }
         },
         onError: () => {
           toastRef.current?.show("Couldn't save round — try again.");

@@ -68,7 +68,12 @@ export function Game({ gameId }: GameProps) {
           <div className="content-container flex h-full min-h-0 flex-col py-4 pb-[calc(0.5rem+var(--slant))]">
             {game && players && rounds ? (
               <div className="min-h-0 flex-1">
-                <Scoreboard game={game} rounds={rounds} players={players} />
+                <Scoreboard
+                  game={game}
+                  rounds={rounds}
+                  players={players}
+                  onGameCompleted={() => setStandingsOpen(true)}
+                />
               </div>
             ) : (
               <p className="text-text-secondary flex flex-1 items-center justify-center text-center">

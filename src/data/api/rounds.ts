@@ -1,8 +1,33 @@
-import type { ArrayAtLeastOne, GameId, PlayerId, Round, RoundScore } from "../../types";
+import type {
+  ArrayAtLeastOne,
+  CompletedGame,
+  GameId,
+  Player,
+  PlayerId,
+  Round,
+  RoundScore,
+} from "../../types";
 import { getNextCurrentPhase } from "../../utils";
 import { getDB } from "../db";
+import { withGameDefaults } from "./gameDefaults";
+import { resolveGameCompletion } from "./roundCompletion";
 
 type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
+
+export interface AddRoundAddedResult {
+  outcome: "roundAdded";
+  round: Round;
+}
+
+export interface AddRoundCompletedResult {
+  outcome: "gameCompleted";
+  round: Round;
+  completedGame: CompletedGame;
+  gameWinner: Player;
+  updatedWinner: Player;
+}
+
+export type AddRoundResult = AddRoundAddedResult | AddRoundCompletedResult;
 
 export const roundsApi = {
   /**
@@ -32,24 +57,29 @@ export const roundsApi = {
    *
    * @param data - The round data. Scores should omit `currentPhase` (it is computed).
    *   `roundWinnerId` is required and identifies the player who went out.
-   * @returns The newly created round.
+   * @returns The newly created round and completion details when this round finishes the game.
    * @throws {Error} If the game does not exist.
    */
   async add(data: {
     gameId: GameId;
     scores: ArrayAtLeastOne<AddRoundScoreInput>;
     roundWinnerId: PlayerId;
-  }): Promise<Round> {
+  }): Promise<AddRoundResult> {
     const db = await getDB();
 
-    const tx = db.transaction(["games", "rounds"], "readwrite");
+    const tx = db.transaction(["games", "players", "rounds"], "readwrite");
     const gamesStore = tx.objectStore("games");
+    const playersStore = tx.objectStore("players");
     const roundsStore = tx.objectStore("rounds");
 
-    const game = await gamesStore.get(data.gameId);
-    if (!game) throw new Error("Game not found");
+    const existingGame = await gamesStore.get(data.gameId);
+    const existing = existingGame ? withGameDefaults(existingGame) : undefined;
+    if (!existing) throw new Error("Game not found");
+    if (existing.status === "completed") throw new Error("Cannot add a round to a completed game");
 
+    const game = existing;
     const totalPhases = game.phaseSet.phases.length;
+    const now = Date.now();
 
     const existingRounds = await roundsStore.index("by-game").getAll(data.gameId);
     const nextRoundNumber =
@@ -77,13 +107,40 @@ export const roundsApi = {
       roundWinnerId: data.roundWinnerId,
     };
 
-    await Promise.all([
-      roundsStore.add(round),
-      gamesStore.put({ ...game, lastActivityAt: Date.now() }),
-      tx.done,
-    ]);
+    const activeGameWithActivity = { ...game, lastActivityAt: now };
+    const players = (
+      await Promise.all(game.players.map((playerId) => playersStore.get(playerId)))
+    ).filter((player): player is Player => player !== undefined);
+    const completion = resolveGameCompletion({
+      game: activeGameWithActivity,
+      players,
+      rounds: [...existingRounds, round],
+      completedAt: now,
+    });
 
-    return round;
+    await roundsStore.add(round);
+    if (completion) {
+      await gamesStore.put(completion.completedGame);
+      await playersStore.put(completion.incrementedWinner);
+    } else {
+      await gamesStore.put(activeGameWithActivity);
+    }
+    await tx.done;
+
+    if (completion) {
+      return {
+        outcome: "gameCompleted",
+        round,
+        completedGame: completion.completedGame,
+        gameWinner: completion.gameWinner,
+        updatedWinner: completion.incrementedWinner,
+      };
+    }
+
+    return {
+      outcome: "roundAdded",
+      round,
+    };
   },
 
   /**

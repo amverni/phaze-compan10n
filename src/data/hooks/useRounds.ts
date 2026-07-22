@@ -1,7 +1,8 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ArrayAtLeastOne, GameId, PlayerId, RoundScore } from "../../types";
+import type { ArrayAtLeastOne, GameId, PlayerId, Round, RoundScore } from "../../types";
 import { roundsApi } from "../api/rounds";
 import { gameKeys } from "./useGames";
+import { playerKeys } from "./usePlayers";
 
 type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
 
@@ -24,10 +25,23 @@ export function useAddRound(gameId: GameId) {
   return useMutation({
     mutationFn: (data: { scores: ArrayAtLeastOne<AddRoundScoreInput>; roundWinnerId: PlayerId }) =>
       roundsApi.add({ gameId, ...data }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      queryClient.setQueryData(roundKeys.list(gameId), (current: Round[] | undefined) => {
+        if (!current) return current;
+        return [
+          ...current.filter((round) => round.roundNumber !== result.round.roundNumber),
+          result.round,
+        ].sort((a, b) => a.roundNumber - b.roundNumber);
+      });
+      if (result.outcome === "gameCompleted") {
+        queryClient.setQueryData(gameKeys.detail(gameId), result.completedGame);
+      }
       queryClient.invalidateQueries({ queryKey: roundKeys.lists() });
       // Adding a round bumps the game's `lastActivityAt`, so re-sort the home list.
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
+      if (result.outcome === "gameCompleted") {
+        queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      }
     },
   });
 }

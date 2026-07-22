@@ -11,9 +11,10 @@ interface ScoreboardProps {
   game: Game;
   rounds: Round[];
   players: Player[];
+  onGameCompleted?: () => void;
 }
 
-export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
+export function Scoreboard({ game, rounds, players, onGameCompleted }: ScoreboardProps) {
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -111,6 +112,7 @@ export function Scoreboard({ game, rounds, players }: ScoreboardProps) {
           game={game}
           players={orderedPlayers}
           draft={draft}
+          onGameCompleted={onGameCompleted}
         />
       )}
     </div>

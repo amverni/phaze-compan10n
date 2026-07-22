@@ -4,13 +4,12 @@ import type {
   CompletedGame,
   Game,
   GameId,
-  GameSettings,
   PhaseId,
   PlayerId,
   TemporaryPhaseSet,
 } from "../../types";
-import { normalizeGameSettings } from "../constants/gameSettings";
 import { getDB } from "../db";
+import { withGameDefaults } from "./gameDefaults";
 import { phasesApi } from "./phases";
 import { roundsApi } from "./rounds";
 
@@ -199,16 +198,6 @@ export const gamesApi = {
   },
 };
 
-type LegacyActiveGame = Omit<ActiveGame, "settings" | "lastActivityAt"> & {
-  settings?: Partial<GameSettings>;
-  lastActivityAt?: number;
-};
-type LegacyCompletedGame = Omit<CompletedGame, "settings" | "lastActivityAt"> & {
-  settings?: Partial<GameSettings>;
-  lastActivityAt?: number;
-};
-type LegacyGame = LegacyActiveGame | LegacyCompletedGame;
-
 /**
  * Get games filtered by their status.
  *
@@ -231,14 +220,6 @@ async function getByStatus<GameStatus extends Game["status"]>(
 function byLastActivityDesc(a: Game, b: Game): number {
   if (b.lastActivityAt !== a.lastActivityAt) return b.lastActivityAt - a.lastActivityAt;
   return b.createdAt - a.createdAt;
-}
-
-function withGameDefaults(game: LegacyGame): Game {
-  const settings = normalizeGameSettings(game.settings);
-  const lastActivityAt = game.lastActivityAt ?? game.createdAt;
-
-  if (game.status === "active") return { ...game, settings, lastActivityAt };
-  return { ...game, settings, lastActivityAt };
 }
 
 /**
