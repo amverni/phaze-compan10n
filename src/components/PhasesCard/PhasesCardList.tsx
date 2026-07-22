@@ -1,6 +1,6 @@
 import type { PhasesCardPhase } from "../../types";
 import { formatPhaseDisplayName } from "../../utils";
-import { List } from "../ui";
+import { List, numberCircleClasses } from "../ui";
 
 interface PhasesCardListProps {
   phases?: PhasesCardPhase[];
@@ -39,9 +39,7 @@ export function PhasesCardList({
         const displayName = formatPhaseDisplayName(phase);
         return (
           <div key={`${index}-${displayName}`} className="flex w-full min-w-0 items-center text-sm">
-            <span className="mr-2 inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/10 bg-black/5 text-xs font-semibold text-text-secondary tabular-nums dark:border-white/20 dark:bg-white/10">
-              {index + 1}
-            </span>
+            <span className={["mr-2", numberCircleClasses].join(" ")}>{index + 1}</span>
             <div className="min-w-0 flex-1">
               <span className="block w-full truncate" title={displayName}>
                 {displayName}

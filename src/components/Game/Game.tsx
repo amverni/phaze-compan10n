@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, ChartNoAxesColumn } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { gameDetailOptions } from "../../data/hooks/useGames";
 import { playersByIdsOptions } from "../../data/hooks/usePlayers";
 import { roundsListOptions } from "../../data/hooks/useRounds";
@@ -14,7 +14,9 @@ import {
   phasesCardEntryButtonClasses,
 } from "../PhasesCard";
 import { Scoreboard } from "../Scoreboard";
+import { StandingsDialog } from "../Standings";
 import { Button } from "../ui";
+import { shouldAutoOpenStandings } from "./standingsAutoOpen";
 
 interface GameProps {
   gameId: GameId;
@@ -22,10 +24,22 @@ interface GameProps {
 
 export function Game({ gameId }: GameProps) {
   const [phasesCardOpen, setPhasesCardOpen] = useState(false);
+  const [standingsOpen, setStandingsOpen] = useState(false);
+  const checkedInitialStandingsGameId = useRef<GameId | null>(null);
   const { data: game } = useQuery(gameDetailOptions(gameId));
   const playerIds = game?.players ?? [];
   const { data: players } = useQuery(playersByIdsOptions(playerIds));
   const { data: rounds } = useQuery(roundsListOptions(gameId));
+  const standingsReady = Boolean(game && players && rounds);
+
+  useEffect(() => {
+    if (!game) return;
+    if (checkedInitialStandingsGameId.current === game.id) return;
+    checkedInitialStandingsGameId.current = game.id;
+    if (shouldAutoOpenStandings(game.status, game.id, null)) {
+      setStandingsOpen(true);
+    }
+  }, [game]);
 
   return (
     <>
@@ -64,9 +78,18 @@ export function Game({ gameId }: GameProps) {
           </div>
         }
         footerContent={
-          <div className="content-container flex h-full">
+          <div className="content-container flex h-full justify-between">
             <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
               <ArrowLeft className="size-8" />
+            </Button>
+            <Button
+              type="button"
+              className="size-14 p-0"
+              aria-label="Open Standings"
+              disabled={!standingsReady}
+              onClick={() => setStandingsOpen(true)}
+            >
+              <ChartNoAxesColumn className="size-8" aria-hidden />
             </Button>
           </div>
         }
@@ -76,6 +99,15 @@ export function Game({ gameId }: GameProps) {
           open={phasesCardOpen}
           onClose={setPhasesCardOpen}
           phaseSet={game.phaseSet}
+        />
+      )}
+      {game && players && rounds && (
+        <StandingsDialog
+          open={standingsOpen}
+          onClose={setStandingsOpen}
+          game={game}
+          players={players}
+          rounds={rounds}
         />
       )}
     </>

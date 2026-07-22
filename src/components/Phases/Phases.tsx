@@ -4,12 +4,10 @@ import { ArrowLeft, Layers, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { Logo } from "../Logo/Logo";
-import { Button, SwipeableTabPanels, TabList } from "../ui";
+import { Button, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PhaseSetsList } from "./PhaseSetsList";
 import { PhasesList } from "./PhasesList";
 
-const tabClasses =
-  "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold opacity-60 outline-none hover:brightness-110 data-focus:outline-2 data-focus:outline-white/60 data-selected:opacity-100";
 const tabPanelHorizontalBleed = 24;
 
 export function Phases() {
