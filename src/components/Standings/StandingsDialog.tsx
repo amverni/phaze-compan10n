@@ -1,4 +1,4 @@
-import { DialogTitle, Tab, TabGroup, TabPanel } from "@headlessui/react";
+import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Check, Clock3, LineChart } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { deriveStandings } from "../../data/api/standings";
