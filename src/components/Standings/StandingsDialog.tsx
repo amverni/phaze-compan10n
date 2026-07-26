@@ -5,6 +5,10 @@ import { deriveStandings } from "../../data/api/standings";
 import type { Game, Player, Round } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Dialog, List, numberCircleClasses, SwipeableTabPanels, TabList, tabClasses } from "../ui";
+import {
+  standingsDialogTabPanelClasses,
+  standingsDialogTabPanelHorizontalBleed,
+} from "./standingsDialogLayout";
 import { getStandingsDisplayRows } from "./standingsDialogView";
 
 interface StandingsDialogProps {
@@ -50,9 +54,10 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
           <SwipeableTabPanels
             selectedIndex={selectedIndex}
             onChange={setSelectedIndex}
+            horizontalBleed={standingsDialogTabPanelHorizontalBleed}
             className="min-h-0 flex-1"
           >
-            <TabPanel className="h-full">
+            <TabPanel className={standingsDialogTabPanelClasses}>
               <List
                 aria-label="Standings"
                 role="region"
@@ -67,7 +72,7 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
               </List>
             </TabPanel>
 
-            <TabPanel className="h-full">
+            <TabPanel className={standingsDialogTabPanelClasses}>
               <DeferredGraphTab
                 icon={<LineChart className="size-6" aria-hidden />}
                 title="Phases graph coming soon"
@@ -75,7 +80,7 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
               />
             </TabPanel>
 
-            <TabPanel className="h-full">
+            <TabPanel className={standingsDialogTabPanelClasses}>
               <DeferredGraphTab
                 icon={<Clock3 className="size-6" aria-hidden />}
                 title="Tiebreaker graph coming soon"
