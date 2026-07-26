@@ -1,6 +1,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { Player } from "../../types";
-import { PlayerAvatar, type PlayerAvatarVariant } from "../PlayerAvatar/PlayerAvatar";
+import {
+  getPlayerAvatarBoxSize,
+  PlayerAvatar,
+  type PlayerAvatarVariant,
+} from "../PlayerAvatar/PlayerAvatar";
 
 const OVERLAP_PX = 6;
 
@@ -25,9 +29,7 @@ export function PlayerAvatarStack({
 }: PlayerAvatarStackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [availableWidth, setAvailableWidth] = useState<number | null>(null);
-  // PlayerAvatar renders at `size + 10` (see PlayerAvatar.tsx: `pad = size + 10`).
-  // The "+N" chip uses the same render size so they line up visually.
-  const itemSize = size + 10;
+  const itemSize = getPlayerAvatarBoxSize(size);
 
   useLayoutEffect(() => {
     const el = containerRef.current;

@@ -1,4 +1,4 @@
-import type { ActiveGame, Player, Round } from "../../types";
+import type { ActiveGame, PhaseGraphSeries, Player, Round } from "../../types";
 
 export const phaseGraphPlayers = {
   amy: makePhaseGraphPlayer("amy", "Amy", "Jam", 0),
@@ -39,6 +39,21 @@ export function makePhaseGraphRound(
     roundNumber,
     roundWinnerId,
     scores,
+  };
+}
+
+export function makePhaseGraphSeries(
+  roundCount: number,
+  player = phaseGraphPlayers.amy,
+): PhaseGraphSeries {
+  return {
+    player,
+    points: Array.from({ length: roundCount }, (_, index) => ({
+      roundNumber: index,
+      currentPhase: Math.min(index + 1, 3),
+      isFinished: index > 3,
+      standingValue: Math.min(index + 1, 4),
+    })),
   };
 }
 

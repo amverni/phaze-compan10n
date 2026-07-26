@@ -12,6 +12,10 @@ export interface PlayerAvatarProps {
   variant?: PlayerAvatarVariant;
 }
 
+export function getPlayerAvatarBoxSize(size: number): number {
+  return size + 10;
+}
+
 const FALLBACK_ENTRY: ColorEntry = {
   hex: "#525252",
   name: "Unknown",
@@ -29,7 +33,7 @@ function getInitials(name: string | undefined): string {
 export function PlayerAvatar({ player, size = 16, variant = "icon" }: PlayerAvatarProps) {
   const entry = getColorEntry(player.color) ?? FALLBACK_ENTRY;
   const Icon = entry.icon;
-  const pad = size + 10;
+  const pad = getPlayerAvatarBoxSize(size);
   const fg = getContrastColor(entry.hex);
   const initials = variant === "icon" ? null : getInitials(player.name);
 

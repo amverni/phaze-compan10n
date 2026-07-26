@@ -4,11 +4,10 @@ import type { PhaseGraphPoint, PhaseGraphSeries, Player, StandingsRow } from "..
 const GRAPH_LEFT = 64;
 const GRAPH_TOP = 24;
 const GRAPH_BOTTOM = 44;
-const GRAPH_RIGHT = 48;
-const ROUND_SPACING = 72;
+const GRAPH_RIGHT = 64;
+const GRAPH_WIDTH = 360;
 const PHASE_SPACING = 52;
-const MAX_GRAPH_HEIGHT = 360;
-const MIN_GRAPH_WIDTH = 240;
+const MAX_GRAPH_HEIGHT = 320;
 const MAX_VISIBLE_ROUND_LABELS = 7;
 
 export interface PhaseGraphViewInput {
@@ -69,14 +68,8 @@ export function getPhaseGraphView({
   const phaseSpacing = getPhaseSpacing(totalPhases);
   const roundNumbers = getRoundNumbers(series);
   const roundLabelStride = getRoundLabelStride(roundNumbers.length);
-  const roundXByNumber = new Map(
-    roundNumbers.map((roundNumber, index) => [roundNumber, GRAPH_LEFT + index * ROUND_SPACING]),
-  );
+  const roundXByNumber = getRoundXByNumber(roundNumbers);
   const height = GRAPH_TOP + (maxStandingValue - 1) * phaseSpacing + GRAPH_BOTTOM;
-  const width = Math.max(
-    MIN_GRAPH_WIDTH,
-    GRAPH_LEFT + Math.max(roundNumbers.length - 1, 0) * ROUND_SPACING + GRAPH_RIGHT,
-  );
   const rowOrder = new Map(rows.map((row, index) => [row.player.id, index]));
   const viewSeries = series.map((graphSeries) => {
     const linePoints = graphSeries.points.map((point) => ({
@@ -94,7 +87,7 @@ export function getPhaseGraphView({
   });
 
   return {
-    width,
+    width: GRAPH_WIDTH,
     height,
     roundLabels: roundNumbers.map((roundNumber, index) => ({
       roundNumber,
@@ -124,6 +117,22 @@ function getRoundNumbers(series: readonly PhaseGraphSeries[]): number[] {
 
 function getY(standingValue: number, maxStandingValue: number, phaseSpacing: number): number {
   return GRAPH_TOP + (maxStandingValue - standingValue) * phaseSpacing;
+}
+
+function getRoundXByNumber(roundNumbers: readonly number[]): ReadonlyMap<number, number> {
+  const chartWidth = GRAPH_WIDTH - GRAPH_LEFT - GRAPH_RIGHT;
+  const roundSpacing = roundNumbers.length > 1 ? chartWidth / (roundNumbers.length - 1) : 0;
+
+  return new Map(
+    roundNumbers.map((roundNumber, index) => [
+      roundNumber,
+      roundToTwoDecimals(GRAPH_LEFT + index * roundSpacing),
+    ]),
+  );
+}
+
+function roundToTwoDecimals(value: number): number {
+  return Number(value.toFixed(2));
 }
 
 function getPhaseSpacing(totalPhases: number): number {

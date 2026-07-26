@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { deriveStandings } from "../../data/api/standings";
-import type { PhaseGraphSeries, Round } from "../../types";
+import type { Round } from "../../types";
 import {
   makePhaseGraphGame,
   makePhaseGraphRound,
+  makePhaseGraphSeries,
   phaseGraphPlayers,
 } from "./phaseGraphTestFixtures";
 import { getPhaseGraphView } from "./phaseGraphView";
@@ -34,8 +35,8 @@ describe("getPhaseGraphView", () => {
 
     expect(view.roundLabels).toEqual([
       { roundNumber: 0, label: "Start", showLabel: true, x: 64 },
-      { roundNumber: 1, label: "1", showLabel: true, x: 136 },
-      { roundNumber: 2, label: "2", showLabel: true, x: 208 },
+      { roundNumber: 1, label: "1", showLabel: true, x: 180 },
+      { roundNumber: 2, label: "2", showLabel: true, x: 296 },
     ]);
     expect(view.phaseLabels).toEqual([
       { value: 4, label: "Phase 3", isFinished: true, y: 24 },
@@ -46,16 +47,16 @@ describe("getPhaseGraphView", () => {
     expect(view.series.map((series) => series.player.id)).toEqual(["amy", "bob"]);
     expect(view.series[0]?.linePoints.map(({ x, y }) => ({ x, y }))).toEqual([
       { x: 64, y: 180 },
-      { x: 136, y: 128 },
-      { x: 208, y: 24 },
+      { x: 180, y: 128 },
+      { x: 296, y: 24 },
     ]);
-    expect(view.series[0]?.path).toBe("M 64 180 L 136 128 L 208 24");
+    expect(view.series[0]?.path).toBe("M 64 180 L 180 128 L 296 24");
     expect(view.series[1]?.linePoints.map(({ x, y }) => ({ x, y }))).toEqual([
       { x: 64, y: 180 },
-      { x: 136, y: 180 },
-      { x: 208, y: 128 },
+      { x: 180, y: 180 },
+      { x: 296, y: 128 },
     ]);
-    expect(view.width).toBe(256);
+    expect(view.width).toBe(360);
     expect(view.height).toBe(224);
     expect(view.latestEndpointGroups.find((group) => group.key === "4")).toMatchObject({
       label: "finished phase 3",
@@ -88,7 +89,7 @@ describe("getPhaseGraphView", () => {
       {
         key: "2",
         label: "phase 2",
-        x: 136,
+        x: 296,
         y: 128,
         players: [phaseGraphPlayers.cam, phaseGraphPlayers.bob, phaseGraphPlayers.amy],
       },
@@ -96,17 +97,7 @@ describe("getPhaseGraphView", () => {
   });
 
   it("preserves readable spacing when there are many rounds", () => {
-    const series: PhaseGraphSeries[] = [
-      {
-        player: phaseGraphPlayers.amy,
-        points: Array.from({ length: 13 }, (_, index) => ({
-          roundNumber: index,
-          currentPhase: Math.min(index + 1, 3),
-          isFinished: index > 3,
-          standingValue: Math.min(index + 1, 4),
-        })),
-      },
-    ];
+    const series = [makePhaseGraphSeries(13)];
 
     const view = getPhaseGraphView({ series, totalPhases: 3 });
 
@@ -114,7 +105,67 @@ describe("getPhaseGraphView", () => {
     expect(view.roundLabels.filter((label) => label.showLabel).map((label) => label.label)).toEqual(
       ["Start", "2", "4", "6", "8", "10", "12"],
     );
-    expect(view.width).toBe(976);
+    expect(view.width).toBe(360);
+  });
+
+  it("fits many saved Rounds into one graph width without dropping ticks", () => {
+    const series = [makePhaseGraphSeries(25)];
+
+    const view = getPhaseGraphView({ series, totalPhases: 3 });
+    const xPositions = view.roundLabels.map((label) => label.x);
+    const roundSpacing = xPositions[1] - xPositions[0];
+
+    expect(view.roundLabels).toHaveLength(25);
+    expect(view.width).toBeLessThanOrEqual(360);
+    expect(roundSpacing).toBeGreaterThan(0);
+    expect(roundSpacing).toBeLessThan(72);
+    expect(new Set(xPositions).size).toBe(25);
+    expect(Math.max(...xPositions)).toBeLessThanOrEqual(view.width - 64);
+  });
+
+  it("keeps every Phase row inside a compact chart height", () => {
+    const view = getPhaseGraphView({
+      totalPhases: 10,
+      series: [
+        {
+          player: phaseGraphPlayers.amy,
+          points: [
+            { roundNumber: 0, currentPhase: 1, isFinished: false, standingValue: 1 },
+            { roundNumber: 12, currentPhase: 10, isFinished: true, standingValue: 11 },
+          ],
+        },
+      ],
+    });
+    const yPositions = view.phaseLabels.map((label) => label.y);
+
+    expect(view.height).toBeLessThanOrEqual(320);
+    expect(view.phaseLabels).toHaveLength(11);
+    expect(Math.min(...yPositions)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...yPositions)).toBeLessThanOrEqual(view.height - 44);
+  });
+
+  it("reserves endpoint padding so latest avatar groups stay within chart bounds", () => {
+    const view = getPhaseGraphView({
+      totalPhases: 3,
+      rows: [],
+      series: [
+        {
+          player: phaseGraphPlayers.amy,
+          points: [
+            { roundNumber: 0, currentPhase: 1, isFinished: false, standingValue: 1 },
+            { roundNumber: 12, currentPhase: 3, isFinished: true, standingValue: 4 },
+          ],
+        },
+      ],
+    });
+
+    expect(view.latestEndpointGroups[0]).toMatchObject({
+      x: expect.any(Number),
+      y: expect.any(Number),
+    });
+    expect(view.latestEndpointGroups[0]?.x).toBeLessThanOrEqual(view.width - 64);
+    expect(view.latestEndpointGroups[0]?.y).toBeGreaterThanOrEqual(0);
+    expect(view.latestEndpointGroups[0]?.y).toBeLessThanOrEqual(view.height - 44);
   });
 
   it("keeps large Phase Sets within the mobile graph height", () => {
@@ -131,7 +182,7 @@ describe("getPhaseGraphView", () => {
       ],
     });
 
-    expect(view.height).toBe(358);
+    expect(view.height).toBe(318);
     expect(view.phaseLabels).toHaveLength(11);
     expect(view.phaseLabels[0]).toMatchObject({
       label: "Phase 10",
@@ -141,7 +192,7 @@ describe("getPhaseGraphView", () => {
     expect(view.phaseLabels.at(-1)).toMatchObject({
       label: "Phase 1",
       isFinished: false,
-      y: 314,
+      y: 274,
     });
   });
 });
