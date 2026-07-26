@@ -34,9 +34,9 @@ describe("getPhaseGraphView", () => {
     });
 
     expect(view.roundLabels).toEqual([
-      { roundNumber: 0, label: "Start", x: 48 },
-      { roundNumber: 1, label: "1", x: 120 },
-      { roundNumber: 2, label: "2", x: 192 },
+      { roundNumber: 0, label: "Start", showLabel: true, x: 48 },
+      { roundNumber: 1, label: "1", showLabel: true, x: 120 },
+      { roundNumber: 2, label: "2", showLabel: true, x: 192 },
     ]);
     expect(view.phaseLabels).toEqual([
       { value: 4, label: "Ph 3", isFinished: true, y: 24 },
@@ -58,6 +58,10 @@ describe("getPhaseGraphView", () => {
     ]);
     expect(view.width).toBe(240);
     expect(view.height).toBe(224);
+    expect(view.latestEndpointGroups.find((group) => group.key === "4")).toMatchObject({
+      label: "finished phase 3",
+      players: [players.amy],
+    });
   });
 
   it("groups latest tied phase endpoints in tiebreaker order without collapsing players", () => {
@@ -102,6 +106,7 @@ describe("getPhaseGraphView", () => {
     expect(view.latestEndpointGroups).toEqual([
       {
         key: "2",
+        label: "phase 2",
         x: 120,
         y: 128,
         players: [players.cam, players.bob, players.amy],
@@ -125,8 +130,10 @@ describe("getPhaseGraphView", () => {
     const view = getPhaseGraphView({ series, totalPhases: 3 });
 
     expect(view.roundLabels).toHaveLength(13);
-    expect(view.width).toBe(912);
-    expect(view.defaultScrollLeft).toBe(392);
+    expect(view.roundLabels.filter((label) => label.showLabel).map((label) => label.label)).toEqual(
+      ["Start", "2", "4", "6", "8", "10", "12"],
+    );
+    expect(view.width).toBe(960);
   });
 });
 

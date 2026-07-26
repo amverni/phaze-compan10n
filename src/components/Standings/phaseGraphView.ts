@@ -4,10 +4,11 @@ import type { PhaseGraphPoint, PhaseGraphSeries, Player, StandingsRow } from "..
 const GRAPH_LEFT = 48;
 const GRAPH_TOP = 24;
 const GRAPH_BOTTOM = 44;
+const GRAPH_RIGHT = 48;
 const ROUND_SPACING = 72;
 const PHASE_SPACING = 52;
 const MIN_GRAPH_WIDTH = 240;
-const DEFAULT_VISIBLE_WIDTH = 520;
+const MAX_VISIBLE_ROUND_LABELS = 7;
 
 export interface PhaseGraphViewInput {
   series: readonly PhaseGraphSeries[];
@@ -18,7 +19,6 @@ export interface PhaseGraphViewInput {
 export interface PhaseGraphView {
   width: number;
   height: number;
-  defaultScrollLeft: number;
   roundLabels: RoundLabel[];
   phaseLabels: PhaseLabel[];
   series: PhaseGraphViewSeries[];
@@ -28,6 +28,7 @@ export interface PhaseGraphView {
 export interface RoundLabel {
   roundNumber: number;
   label: string;
+  showLabel: boolean;
   x: number;
 }
 
@@ -52,6 +53,7 @@ export interface PositionedPhaseGraphPoint extends PhaseGraphPoint {
 
 export interface LatestPhaseEndpointGroup {
   key: string;
+  label: string;
   x: number;
   y: number;
   players: Player[];
@@ -64,13 +66,14 @@ export function getPhaseGraphView({
 }: PhaseGraphViewInput): PhaseGraphView {
   const maxStandingValue = totalPhases + 1;
   const roundNumbers = getRoundNumbers(series);
+  const roundLabelStride = getRoundLabelStride(roundNumbers.length);
   const roundXByNumber = new Map(
     roundNumbers.map((roundNumber, index) => [roundNumber, GRAPH_LEFT + index * ROUND_SPACING]),
   );
   const height = GRAPH_TOP + (maxStandingValue - 1) * PHASE_SPACING + GRAPH_BOTTOM;
   const width = Math.max(
     MIN_GRAPH_WIDTH,
-    GRAPH_LEFT + Math.max(roundNumbers.length - 1, 0) * ROUND_SPACING,
+    GRAPH_LEFT + Math.max(roundNumbers.length - 1, 0) * ROUND_SPACING + GRAPH_RIGHT,
   );
   const rowOrder = new Map(rows.map((row, index) => [row.player.id, index]));
   const viewSeries = series.map((graphSeries) => {
@@ -91,10 +94,10 @@ export function getPhaseGraphView({
   return {
     width,
     height,
-    defaultScrollLeft: Math.max(0, width - DEFAULT_VISIBLE_WIDTH),
-    roundLabels: roundNumbers.map((roundNumber) => ({
+    roundLabels: roundNumbers.map((roundNumber, index) => ({
       roundNumber,
       label: roundNumber === 0 ? "Start" : String(roundNumber),
+      showLabel: shouldShowRoundLabel(index, roundNumbers.length, roundLabelStride),
       x: roundXByNumber.get(roundNumber) ?? GRAPH_LEFT,
     })),
     phaseLabels: Array.from({ length: maxStandingValue }, (_, index) => {
@@ -121,6 +124,15 @@ function getY(standingValue: number, maxStandingValue: number): number {
   return GRAPH_TOP + (maxStandingValue - standingValue) * PHASE_SPACING;
 }
 
+function getRoundLabelStride(roundCount: number): number {
+  if (roundCount <= MAX_VISIBLE_ROUND_LABELS) return 1;
+  return Math.ceil((roundCount - 1) / (MAX_VISIBLE_ROUND_LABELS - 1));
+}
+
+function shouldShowRoundLabel(index: number, roundCount: number, stride: number): boolean {
+  return index === 0 || index === roundCount - 1 || index % stride === 0;
+}
+
 function getPlayerLineColor(player: Player): string {
   return getColorEntry(player.color)?.hex ?? player.color;
 }
@@ -142,6 +154,7 @@ function getLatestEndpointGroups(
     } else {
       groups.set(key, {
         key,
+        label: formatEndpointGroupLabel(latestPoint),
         x: latestPoint.x,
         y: latestPoint.y,
         players: [graphSeries.player],
@@ -161,4 +174,8 @@ function getLatestEndpointGroups(
         ),
     }))
     .sort((a, b) => a.y - b.y);
+}
+
+function formatEndpointGroupLabel(point: PhaseGraphPoint): string {
+  return point.isFinished ? `finished phase ${point.currentPhase}` : `phase ${point.currentPhase}`;
 }

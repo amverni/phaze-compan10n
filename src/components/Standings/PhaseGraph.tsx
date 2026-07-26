@@ -2,7 +2,11 @@ import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { PhaseGraphSeries, StandingsRow } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import { getPhaseGraphView } from "./phaseGraphView";
+import {
+  getPhaseGraphView,
+  type PhaseGraphView,
+  type PositionedPhaseGraphPoint,
+} from "./phaseGraphView";
 
 export interface PhaseGraphProps {
   series: readonly PhaseGraphSeries[];
@@ -34,6 +38,7 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
 
   return (
     <div className="glass h-full rounded-2xl p-3">
+      <PhaseGraphAccessibleTable view={view} />
       <section
         ref={scrollRef}
         className="h-full overflow-x-auto overflow-y-hidden"
@@ -95,26 +100,28 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
               />
             ))}
 
-            {view.roundLabels.map((label) => (
-              <text
-                key={label.roundNumber}
-                x={label.x}
-                y={view.height - 14}
-                fill="var(--color-text-secondary)"
-                fontSize={11}
-                fontWeight={600}
-                textAnchor="middle"
-              >
-                {label.label}
-              </text>
-            ))}
+            {view.roundLabels
+              .filter((label) => label.showLabel)
+              .map((label) => (
+                <text
+                  key={label.roundNumber}
+                  x={label.x}
+                  y={view.height - 14}
+                  fill="var(--color-text-secondary)"
+                  fontSize={11}
+                  fontWeight={600}
+                  textAnchor="middle"
+                >
+                  {label.label}
+                </text>
+              ))}
           </svg>
 
           {view.latestEndpointGroups.map((group) => (
             <div
               key={group.key}
               role="img"
-              aria-label={`Latest phase ${group.key}: ${group.players
+              aria-label={`Latest ${group.label}: ${group.players
                 .map((player) => player.name)
                 .join(", ")}`}
               className="absolute flex -space-x-1.5"
@@ -125,7 +132,10 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
               }}
             >
               {group.players.map((player) => (
-                <span key={player.id} className="inline-flex rounded-full ring-2 ring-white/75">
+                <span
+                  key={player.id}
+                  className="inline-flex rounded-full ring-2 ring-text-primary/75"
+                >
                   <PlayerAvatar player={player} size={16} variant="icon" />
                 </span>
               ))}
@@ -135,4 +145,39 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
       </section>
     </div>
   );
+}
+
+function PhaseGraphAccessibleTable({ view }: { view: PhaseGraphView }) {
+  return (
+    <div className="sr-only">
+      <h3>Phase progress details</h3>
+      <table>
+        <caption>Phase progress details</caption>
+        <thead>
+          <tr>
+            <th scope="col">Player</th>
+            {view.roundLabels.map((label) => (
+              <th key={label.roundNumber} scope="col">
+                {label.roundNumber === 0 ? "Start" : `Round ${label.roundNumber}`}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {view.series.map((graphSeries) => (
+            <tr key={graphSeries.player.id}>
+              <th scope="row">{graphSeries.player.name}</th>
+              {graphSeries.linePoints.map((point) => (
+                <td key={point.roundNumber}>{formatPhasePoint(point)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function formatPhasePoint(point: PositionedPhaseGraphPoint): string {
+  return point.isFinished ? `Finished phase ${point.currentPhase}` : `Phase ${point.currentPhase}`;
 }

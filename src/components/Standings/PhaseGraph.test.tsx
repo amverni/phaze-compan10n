@@ -58,8 +58,34 @@ describe("PhaseGraph", () => {
     expect(markup).toContain('d="M 48 180 L 120 128"');
     expect(markup).toContain("Start");
     expect(markup).toContain("Ph 3");
+    expect(markup).toContain("Phase progress details");
+    expect(markup).toContain("<table");
     expect(markup).toContain('aria-label="Latest phase 2: Cam, Bob, Amy"');
+    expect(markup).toContain("ring-text-primary/75");
+    expect(markup).not.toContain("ring-white");
     expect(markup).not.toContain("+");
+  });
+
+  it("announces Finished Players by final phase instead of the standing value above the graph", () => {
+    const markup = renderToStaticMarkup(
+      <PhaseGraph
+        rows={[]}
+        totalPhases={3}
+        series={[
+          {
+            player: players.amy,
+            points: [
+              { roundNumber: 0, currentPhase: 1, isFinished: false, standingValue: 1 },
+              { roundNumber: 1, currentPhase: 3, isFinished: true, standingValue: 4 },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(markup).toContain('aria-label="Latest finished phase 3: Amy"');
+    expect(markup).toContain("Finished phase 3");
+    expect(markup).not.toContain('aria-label="Latest phase 4: Amy"');
   });
 });
 
