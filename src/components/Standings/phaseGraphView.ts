@@ -1,15 +1,18 @@
-import { getColorEntry } from "../../data/constants/colors";
 import type { PhaseGraphPoint, PhaseGraphSeries, Player, StandingsRow } from "../../types";
+import {
+  GRAPH_BOTTOM,
+  GRAPH_LEFT,
+  GRAPH_TOP,
+  GRAPH_WIDTH,
+  getGraphPlayerColor,
+  getRoundLabelStride,
+  getRoundNumbers,
+  getRoundXByNumber,
+  shouldShowRoundLabel,
+} from "./graphLayout";
 
-const GRAPH_LEFT = 64;
-const GRAPH_TOP = 24;
-const GRAPH_BOTTOM = 44;
-const GRAPH_RIGHT = 64;
-const GRAPH_WIDTH = 360;
-const CHART_WIDTH = GRAPH_WIDTH - GRAPH_LEFT - GRAPH_RIGHT;
 const PHASE_SPACING = 52;
 const MAX_GRAPH_HEIGHT = 320;
-const MIN_ROUND_LABEL_SPACING = 24;
 
 export interface PhaseGraphViewInput {
   series: readonly PhaseGraphSeries[];
@@ -81,7 +84,7 @@ export function getPhaseGraphView({
 
     return {
       player: graphSeries.player,
-      color: getPlayerLineColor(graphSeries.player),
+      color: getGraphPlayerColor(graphSeries.player),
       linePoints,
       path: linePoints.map(({ x, y }, index) => `${index === 0 ? "M" : "L"} ${x} ${y}`).join(" "),
     };
@@ -110,58 +113,14 @@ export function getPhaseGraphView({
   };
 }
 
-function getRoundNumbers(series: readonly PhaseGraphSeries[]): number[] {
-  return Array.from(
-    new Set(series.flatMap((graphSeries) => graphSeries.points.map((point) => point.roundNumber))),
-  ).sort((a, b) => a - b);
-}
-
 function getY(standingValue: number, maxStandingValue: number, phaseSpacing: number): number {
   return GRAPH_TOP + (maxStandingValue - standingValue) * phaseSpacing;
-}
-
-function getRoundXByNumber(roundNumbers: readonly number[]): ReadonlyMap<number, number> {
-  const roundSpacing = roundNumbers.length > 1 ? CHART_WIDTH / (roundNumbers.length - 1) : 0;
-
-  return new Map(
-    roundNumbers.map((roundNumber, index) => [
-      roundNumber,
-      roundToTwoDecimals(GRAPH_LEFT + index * roundSpacing),
-    ]),
-  );
-}
-
-function roundToTwoDecimals(value: number): number {
-  return Number(value.toFixed(2));
 }
 
 function getPhaseSpacing(totalPhases: number): number {
   const phaseSteps = Math.max(totalPhases, 1);
   const maxSpacing = Math.floor((MAX_GRAPH_HEIGHT - GRAPH_TOP - GRAPH_BOTTOM) / phaseSteps);
   return Math.min(PHASE_SPACING, maxSpacing);
-}
-
-function getRoundLabelStride(roundCount: number): number {
-  if (roundCount <= 1) return 1;
-
-  const roundSpacing = CHART_WIDTH / (roundCount - 1);
-  return Math.max(1, Math.ceil(MIN_ROUND_LABEL_SPACING / roundSpacing));
-}
-
-function shouldShowRoundLabel(
-  roundNumber: number,
-  index: number,
-  roundCount: number,
-  stride: number,
-): boolean {
-  if (roundNumber === 0) return false;
-  if (stride === 1) return true;
-
-  return (roundCount - 1 - index) % stride === 0;
-}
-
-function getPlayerLineColor(player: Player): string {
-  return getColorEntry(player.color)?.hex ?? player.color;
 }
 
 function getLatestEndpointGroups(

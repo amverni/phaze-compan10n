@@ -1,26 +1,26 @@
-import { Check } from "lucide-react";
-import type { PhaseGraphSeries, StandingsRow } from "../../types";
+import type { GameTiebreaker, Round, TiebreakerGraphSeries } from "../../types";
+import { formatTiebreakerValue } from "../../utils";
 import { GraphAccessibleTable } from "./GraphAccessibleTable";
 import { GraphEndpointAvatarGroup } from "./GraphEndpointAvatarGroup";
 import { GraphRoundAxis, GraphSeriesPaths } from "./GraphPlot";
 import { graphContentClasses, graphShellClasses, graphSvgClasses } from "./graphLayout";
-import { formatPhaseProgressLabel, getPhaseGraphView } from "./phaseGraphView";
+import { getTiebreakerGraphView } from "./tiebreakerGraphView";
 
-export interface PhaseGraphProps {
-  series: readonly PhaseGraphSeries[];
-  rows: readonly StandingsRow[];
-  totalPhases: number;
+export interface TiebreakerGraphProps {
+  series: readonly TiebreakerGraphSeries[];
+  tiebreaker: GameTiebreaker;
+  rounds: readonly Round[];
 }
 
-export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
-  const view = getPhaseGraphView({ series, rows, totalPhases });
+export function TiebreakerGraph({ series, tiebreaker, rounds }: TiebreakerGraphProps) {
+  const view = getTiebreakerGraphView({ series, tiebreaker, rounds });
   const chartStartX = view.roundLabels[0]?.x ?? 0;
   const chartEndX = view.roundLabels.at(-1)?.x ?? view.width;
 
   if (series.length === 0) {
     return (
       <div className="glass flex h-full items-center justify-center rounded-2xl px-6 text-center text-sm text-text-secondary">
-        No phase progress to show yet.
+        No Tiebreaker progress to show yet.
       </div>
     );
   }
@@ -28,21 +28,21 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
   return (
     <div className={graphShellClasses}>
       <GraphAccessibleTable
-        title="Phase progress details"
+        title="Tiebreaker progress details"
         roundLabels={view.roundLabels}
         series={view.series}
-        formatPoint={(point) => formatPhaseProgressLabel(point, "sentence")}
+        formatPoint={(point) => formatTiebreakerValue(point.value, tiebreaker)}
       />
       <div className={graphContentClasses}>
         <svg
           role="img"
-          aria-label="Phase progress by round"
+          aria-label="Tiebreaker progress by round"
           viewBox={`0 0 ${view.width} ${view.height}`}
           preserveAspectRatio="none"
           className={graphSvgClasses}
         >
-          {view.phaseLabels.map((label) => (
-            <g key={label.value}>
+          {view.valueLabels.map((label) => (
+            <g key={`${label.value}-${label.y}`}>
               <line
                 x1={chartStartX}
                 x2={chartEndX}
@@ -50,29 +50,16 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
                 y2={label.y}
                 stroke="var(--color-text-secondary)"
                 strokeOpacity={0.16}
-                strokeDasharray={label.isFinished ? "4 5" : undefined}
               />
-              {label.label && (
-                <text
-                  x={8}
-                  y={label.y + 4}
-                  fill="var(--color-text-secondary)"
-                  fontSize={11}
-                  fontWeight={500}
-                >
-                  {label.label}
-                </text>
-              )}
-              {label.isFinished && (
-                <Check
-                  x={chartStartX - 12}
-                  y={label.y - 7}
-                  width={13}
-                  height={13}
-                  color="var(--color-pt-green-500)"
-                  aria-hidden
-                />
-              )}
+              <text
+                x={8}
+                y={label.y + 4}
+                fill="var(--color-text-secondary)"
+                fontSize={11}
+                fontWeight={500}
+              >
+                {label.label}
+              </text>
             </g>
           ))}
 

@@ -1,6 +1,6 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
-import { Check, Clock3 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { deriveStandings } from "../../data/api/standings";
 import type { Game, Player, Round } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
@@ -11,6 +11,7 @@ import {
   standingsDialogTabPanelHorizontalBleed,
 } from "./standingsDialogLayout";
 import { getStandingsDisplayRows } from "./standingsDialogView";
+import { TiebreakerGraph } from "./TiebreakerGraph";
 
 interface StandingsDialogProps {
   open: boolean;
@@ -75,10 +76,10 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
             </TabPanel>
 
             <TabPanel className={standingsDialogTabPanelClasses}>
-              <DeferredGraphTab
-                icon={<Clock3 className="size-6" aria-hidden />}
-                title="Tiebreaker graph coming soon"
-                description="The cumulative Tiebreaker graph is planned for a downstream Standings ticket."
+              <TiebreakerGraph
+                series={standings.tiebreakerGraphSeries}
+                tiebreaker={game.settings.tiebreaker}
+                rounds={rounds}
               />
             </TabPanel>
           </SwipeableTabPanels>
@@ -117,24 +118,6 @@ function StandingsRow({ row }: StandingsRowProps) {
         <span className="text-text-secondary">-</span>
         <span className="text-text-secondary">{row.tiebreakerText}</span>
       </span>
-    </div>
-  );
-}
-
-interface DeferredGraphTabProps {
-  icon: ReactNode;
-  title: string;
-  description: string;
-}
-
-function DeferredGraphTab({ icon, title, description }: DeferredGraphTabProps) {
-  return (
-    <div className="glass flex h-full flex-col items-center justify-center rounded-2xl px-6 text-center">
-      <div className="mb-3 inline-flex size-12 items-center justify-center rounded-full bg-text-secondary/10 text-text-secondary">
-        {icon}
-      </div>
-      <h3 className="text-base font-semibold">{title}</h3>
-      <p className="mt-2 max-w-xs text-sm text-text-secondary">{description}</p>
     </div>
   );
 }
