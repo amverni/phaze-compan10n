@@ -31,13 +31,6 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
   return (
     <Dialog open={open} onClose={onClose} className="max-w-xl">
       <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-2 pb-3 text-text-primary">
-        <div className="shrink-0">
-          <DialogTitle className="text-center text-xl font-semibold">Standings</DialogTitle>
-          <p className="mt-1 text-center text-sm text-text-secondary">
-            Current places for this Game
-          </p>
-        </div>
-
         <TabGroup
           selectedIndex={selectedIndex}
           onChange={setSelectedIndex}
