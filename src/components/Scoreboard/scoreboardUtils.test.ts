@@ -6,10 +6,10 @@ describe("scoreboardUtils tiebreakers", () => {
   it("formats tiebreaker values with shared domain-specific units", () => {
     expect(formatTiebreaker(1, "fewestWilds")).toBe("1 wild");
     expect(formatTiebreaker(2, "fewestWilds")).toBe("2 wilds");
-    expect(formatTiebreaker(1, "fewestSkips")).toBe("1 skip card");
-    expect(formatTiebreaker(2, "fewestSkips")).toBe("2 skip cards");
-    expect(formatTiebreaker(1, "mostSkipped")).toBe("1 time skipped");
-    expect(formatTiebreaker(2, "mostSkipped")).toBe("2 times skipped");
+    expect(formatTiebreaker(1, "fewestSkips")).toBe("1 skip");
+    expect(formatTiebreaker(2, "fewestSkips")).toBe("2 skips");
+    expect(formatTiebreaker(1, "mostSkipped")).toBe("1 skip");
+    expect(formatTiebreaker(2, "mostSkipped")).toBe("2 skips");
   });
 
   it("returns one rounds-won tiebreaker value for the round winner", () => {

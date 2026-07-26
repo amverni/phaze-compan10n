@@ -269,10 +269,10 @@ describe("deriveStandings", () => {
     expect(formatTiebreakerValue(12, "highestPoints")).toBe("12 pts");
     expect(formatTiebreakerValue(1, "fewestWilds")).toBe("1 wild");
     expect(formatTiebreakerValue(3, "fewestWilds")).toBe("3 wilds");
-    expect(formatTiebreakerValue(1, "fewestSkips")).toBe("1 skip card");
-    expect(formatTiebreakerValue(3, "fewestSkips")).toBe("3 skip cards");
-    expect(formatTiebreakerValue(1, "mostSkipped")).toBe("1 time skipped");
-    expect(formatTiebreakerValue(3, "mostSkipped")).toBe("3 times skipped");
+    expect(formatTiebreakerValue(1, "fewestSkips")).toBe("1 skip");
+    expect(formatTiebreakerValue(3, "fewestSkips")).toBe("3 skips");
+    expect(formatTiebreakerValue(1, "mostSkipped")).toBe("1 skip");
+    expect(formatTiebreakerValue(3, "mostSkipped")).toBe("3 skips");
     expect(formatTiebreakerValue(1, "roundsWon")).toBe("1 win");
     expect(formatTiebreakerValue(3, "roundsWon")).toBe("3 wins");
   });

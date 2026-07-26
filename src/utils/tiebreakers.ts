@@ -25,14 +25,14 @@ const TIEBREAKER_RULES = {
   fewestSkips: {
     direction: "lower",
     valueSource: "score",
-    singularUnit: "skip card",
-    pluralUnit: "skip cards",
+    singularUnit: "skip",
+    pluralUnit: "skips",
   },
   mostSkipped: {
     direction: "higher",
     valueSource: "score",
-    singularUnit: "time skipped",
-    pluralUnit: "times skipped",
+    singularUnit: "skip",
+    pluralUnit: "skips",
   },
   fewestWilds: {
     direction: "lower",
