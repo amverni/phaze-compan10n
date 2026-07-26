@@ -2,11 +2,7 @@ import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { PhaseGraphSeries, StandingsRow } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import {
-  getPhaseGraphView,
-  type PhaseGraphView,
-  type PositionedPhaseGraphPoint,
-} from "./phaseGraphView";
+import { formatPhaseProgressLabel, getPhaseGraphView, type PhaseGraphView } from "./phaseGraphView";
 
 export interface PhaseGraphProps {
   series: readonly PhaseGraphSeries[];
@@ -77,7 +73,7 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
                 </text>
                 {label.isFinished && (
                   <Check
-                    x={35}
+                    x={chartStartX - 12}
                     y={label.y - 7}
                     width={13}
                     height={13}
@@ -97,6 +93,19 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
                 strokeWidth={3}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+              />
+            ))}
+
+            {view.roundLabels.map((label) => (
+              <line
+                key={`tick-${label.roundNumber}`}
+                data-round-tick={label.roundNumber}
+                x1={label.x}
+                x2={label.x}
+                y1={view.height - 34}
+                y2={view.height - 28}
+                stroke="var(--color-text-secondary)"
+                strokeOpacity={0.32}
               />
             ))}
 
@@ -168,7 +177,7 @@ function PhaseGraphAccessibleTable({ view }: { view: PhaseGraphView }) {
             <tr key={graphSeries.player.id}>
               <th scope="row">{graphSeries.player.name}</th>
               {graphSeries.linePoints.map((point) => (
-                <td key={point.roundNumber}>{formatPhasePoint(point)}</td>
+                <td key={point.roundNumber}>{formatPhaseProgressLabel(point, "sentence")}</td>
               ))}
             </tr>
           ))}
@@ -176,8 +185,4 @@ function PhaseGraphAccessibleTable({ view }: { view: PhaseGraphView }) {
       </table>
     </div>
   );
-}
-
-function formatPhasePoint(point: PositionedPhaseGraphPoint): string {
-  return point.isFinished ? `Finished phase ${point.currentPhase}` : `Phase ${point.currentPhase}`;
 }

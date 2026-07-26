@@ -50,15 +50,38 @@ describe("PhaseGraph", () => {
     expect(markup).toContain("<svg");
     expect(markup).toContain('stroke="#df0e88"');
     expect(markup).toContain('stroke="#1D4ED8"');
-    expect(markup).toContain('d="M 48 180 L 120 128"');
+    expect(markup).toContain('d="M 64 180 L 136 128"');
     expect(markup).toContain("Start");
-    expect(markup).toContain("Ph 3");
+    expect(markup).toContain("Phase 3");
     expect(markup).toContain("Phase progress details");
     expect(markup).toContain("<table");
     expect(markup).toContain('aria-label="Latest phase 2: Cam, Bob, Amy"');
     expect(markup).toContain("ring-text-primary/75");
     expect(markup).not.toContain("ring-white");
     expect(markup).not.toContain("+");
+  });
+
+  it("renders every saved Round as an x-axis tick while keeping dense text labels sparse", () => {
+    const markup = renderToStaticMarkup(
+      <PhaseGraph
+        rows={[]}
+        totalPhases={3}
+        series={[
+          {
+            player: phaseGraphPlayers.amy,
+            points: Array.from({ length: 13 }, (_, index) => ({
+              roundNumber: index,
+              currentPhase: Math.min(index + 1, 3),
+              isFinished: index > 3,
+              standingValue: Math.min(index + 1, 4),
+            })),
+          },
+        ]}
+      />,
+    );
+
+    expect(markup.match(/data-round-tick=/g)).toHaveLength(13);
+    expect(markup).toContain(">12</text>");
   });
 
   it("announces Finished Players by final phase instead of the standing value above the graph", () => {

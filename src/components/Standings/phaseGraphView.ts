@@ -1,12 +1,13 @@
 import { getColorEntry } from "../../data/constants/colors";
 import type { PhaseGraphPoint, PhaseGraphSeries, Player, StandingsRow } from "../../types";
 
-const GRAPH_LEFT = 48;
+const GRAPH_LEFT = 64;
 const GRAPH_TOP = 24;
 const GRAPH_BOTTOM = 44;
 const GRAPH_RIGHT = 48;
 const ROUND_SPACING = 72;
 const PHASE_SPACING = 52;
+const MAX_GRAPH_HEIGHT = 360;
 const MIN_GRAPH_WIDTH = 240;
 const MAX_VISIBLE_ROUND_LABELS = 7;
 
@@ -65,12 +66,13 @@ export function getPhaseGraphView({
   rows = [],
 }: PhaseGraphViewInput): PhaseGraphView {
   const maxStandingValue = totalPhases + 1;
+  const phaseSpacing = getPhaseSpacing(totalPhases);
   const roundNumbers = getRoundNumbers(series);
   const roundLabelStride = getRoundLabelStride(roundNumbers.length);
   const roundXByNumber = new Map(
     roundNumbers.map((roundNumber, index) => [roundNumber, GRAPH_LEFT + index * ROUND_SPACING]),
   );
-  const height = GRAPH_TOP + (maxStandingValue - 1) * PHASE_SPACING + GRAPH_BOTTOM;
+  const height = GRAPH_TOP + (maxStandingValue - 1) * phaseSpacing + GRAPH_BOTTOM;
   const width = Math.max(
     MIN_GRAPH_WIDTH,
     GRAPH_LEFT + Math.max(roundNumbers.length - 1, 0) * ROUND_SPACING + GRAPH_RIGHT,
@@ -80,7 +82,7 @@ export function getPhaseGraphView({
     const linePoints = graphSeries.points.map((point) => ({
       ...point,
       x: roundXByNumber.get(point.roundNumber) ?? GRAPH_LEFT,
-      y: getY(point.standingValue, maxStandingValue),
+      y: getY(point.standingValue, maxStandingValue, phaseSpacing),
     }));
 
     return {
@@ -104,9 +106,9 @@ export function getPhaseGraphView({
       const value = maxStandingValue - index;
       return {
         value,
-        label: `Ph ${Math.min(value, totalPhases)}`,
+        label: `Phase ${Math.min(value, totalPhases)}`,
         isFinished: value > totalPhases,
-        y: getY(value, maxStandingValue),
+        y: getY(value, maxStandingValue, phaseSpacing),
       };
     }),
     series: viewSeries,
@@ -120,8 +122,14 @@ function getRoundNumbers(series: readonly PhaseGraphSeries[]): number[] {
   ).sort((a, b) => a - b);
 }
 
-function getY(standingValue: number, maxStandingValue: number): number {
-  return GRAPH_TOP + (maxStandingValue - standingValue) * PHASE_SPACING;
+function getY(standingValue: number, maxStandingValue: number, phaseSpacing: number): number {
+  return GRAPH_TOP + (maxStandingValue - standingValue) * phaseSpacing;
+}
+
+function getPhaseSpacing(totalPhases: number): number {
+  const phaseSteps = Math.max(totalPhases, 1);
+  const maxSpacing = Math.floor((MAX_GRAPH_HEIGHT - GRAPH_TOP - GRAPH_BOTTOM) / phaseSteps);
+  return Math.min(PHASE_SPACING, maxSpacing);
 }
 
 function getRoundLabelStride(roundCount: number): number {
@@ -154,7 +162,7 @@ function getLatestEndpointGroups(
     } else {
       groups.set(key, {
         key,
-        label: formatEndpointGroupLabel(latestPoint),
+        label: formatPhaseProgressLabel(latestPoint, "lower"),
         x: latestPoint.x,
         y: latestPoint.y,
         players: [graphSeries.player],
@@ -176,6 +184,14 @@ function getLatestEndpointGroups(
     .sort((a, b) => a.y - b.y);
 }
 
-function formatEndpointGroupLabel(point: PhaseGraphPoint): string {
-  return point.isFinished ? `finished phase ${point.currentPhase}` : `phase ${point.currentPhase}`;
+type PhaseProgressLabelCase = "lower" | "sentence";
+
+export function formatPhaseProgressLabel(
+  point: Pick<PhaseGraphPoint, "currentPhase" | "isFinished">,
+  labelCase: PhaseProgressLabelCase,
+): string {
+  const label = point.isFinished
+    ? `finished phase ${point.currentPhase}`
+    : `phase ${point.currentPhase}`;
+  return labelCase === "sentence" ? `${label[0]?.toUpperCase() ?? ""}${label.slice(1)}` : label;
 }
