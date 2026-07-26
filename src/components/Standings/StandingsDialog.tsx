@@ -1,10 +1,11 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
-import { Check, Clock3, LineChart } from "lucide-react";
+import { Check, Clock3 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { deriveStandings } from "../../data/api/standings";
 import type { Game, Player, Round } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Dialog, List, numberCircleClasses, SwipeableTabPanels, TabList, tabClasses } from "../ui";
+import { PhaseGraph } from "./PhaseGraph";
 import {
   standingsDialogTabPanelClasses,
   standingsDialogTabPanelHorizontalBleed,
@@ -66,10 +67,10 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
             </TabPanel>
 
             <TabPanel className={standingsDialogTabPanelClasses}>
-              <DeferredGraphTab
-                icon={<LineChart className="size-6" aria-hidden />}
-                title="Phases graph coming soon"
-                description="The phase-over-time graph is planned for the next Standings ticket."
+              <PhaseGraph
+                series={standings.phaseGraphSeries}
+                rows={standings.rows}
+                totalPhases={game.phaseSet.phases.length}
               />
             </TabPanel>
 
