@@ -49,15 +49,17 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
                 strokeOpacity={0.16}
                 strokeDasharray={label.isFinished ? "4 5" : undefined}
               />
-              <text
-                x={8}
-                y={label.y + 4}
-                fill="var(--color-text-secondary)"
-                fontSize={11}
-                fontWeight={label.isFinished ? 700 : 500}
-              >
-                {label.label}
-              </text>
+              {label.label && (
+                <text
+                  x={8}
+                  y={label.y + 4}
+                  fill="var(--color-text-secondary)"
+                  fontSize={11}
+                  fontWeight={500}
+                >
+                  {label.label}
+                </text>
+              )}
               {label.isFinished && (
                 <Check
                   x={chartStartX - 12}

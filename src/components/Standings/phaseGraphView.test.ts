@@ -10,7 +10,7 @@ import {
 import { getPhaseGraphView } from "./phaseGraphView";
 
 describe("getPhaseGraphView", () => {
-  it("maps Start and after-round phase progress so better progress is higher on screen", () => {
+  it("maps baseline and after-round phase progress with compact axis labels", () => {
     const view = getPhaseGraphView({
       series: [
         {
@@ -34,15 +34,15 @@ describe("getPhaseGraphView", () => {
     });
 
     expect(view.roundLabels).toEqual([
-      { roundNumber: 0, label: "Start", showLabel: true, x: 64 },
+      { roundNumber: 0, label: null, showLabel: false, x: 64 },
       { roundNumber: 1, label: "1", showLabel: true, x: 180 },
       { roundNumber: 2, label: "2", showLabel: true, x: 296 },
     ]);
     expect(view.phaseLabels).toEqual([
-      { value: 4, label: "Phase 3", isFinished: true, y: 24 },
-      { value: 3, label: "Phase 3", isFinished: false, y: 76 },
-      { value: 2, label: "Phase 2", isFinished: false, y: 128 },
-      { value: 1, label: "Phase 1", isFinished: false, y: 180 },
+      { value: 4, label: null, isFinished: true, y: 24 },
+      { value: 3, label: "3", isFinished: false, y: 76 },
+      { value: 2, label: "2", isFinished: false, y: 128 },
+      { value: 1, label: "1", isFinished: false, y: 180 },
     ]);
     expect(view.series.map((series) => series.player.id)).toEqual(["amy", "bob"]);
     expect(view.series[0]?.linePoints.map(({ x, y }) => ({ x, y }))).toEqual([
@@ -96,16 +96,39 @@ describe("getPhaseGraphView", () => {
     ]);
   });
 
-  it("preserves readable spacing when there are many rounds", () => {
+  it("shows every saved Round label while spacing is readable", () => {
+    const series = [makePhaseGraphSeries(9)];
+
+    const view = getPhaseGraphView({ series, totalPhases: 3 });
+
+    expect(view.roundLabels).toHaveLength(9);
+    expect(view.roundLabels.filter((label) => label.showLabel).map((label) => label.label)).toEqual(
+      ["1", "2", "3", "4", "5", "6", "7", "8"],
+    );
+    expect(view.width).toBe(360);
+  });
+
+  it("thins Round labels only when spacing is too dense", () => {
     const series = [makePhaseGraphSeries(13)];
 
     const view = getPhaseGraphView({ series, totalPhases: 3 });
 
     expect(view.roundLabels).toHaveLength(13);
     expect(view.roundLabels.filter((label) => label.showLabel).map((label) => label.label)).toEqual(
-      ["Start", "2", "4", "6", "8", "10", "12"],
+      ["2", "4", "6", "8", "10", "12"],
     );
     expect(view.width).toBe(360);
+  });
+
+  it("does not force the final Round label too close to the previous visible label", () => {
+    const series = [makePhaseGraphSeries(12)];
+
+    const view = getPhaseGraphView({ series, totalPhases: 3 });
+
+    expect(view.roundLabels).toHaveLength(12);
+    expect(view.roundLabels.filter((label) => label.showLabel).map((label) => label.label)).toEqual(
+      ["1", "3", "5", "7", "9", "11"],
+    );
   });
 
   it("fits many saved Rounds into one graph width without dropping ticks", () => {
@@ -185,12 +208,12 @@ describe("getPhaseGraphView", () => {
     expect(view.height).toBe(318);
     expect(view.phaseLabels).toHaveLength(11);
     expect(view.phaseLabels[0]).toMatchObject({
-      label: "Phase 10",
+      label: null,
       isFinished: true,
       y: 24,
     });
     expect(view.phaseLabels.at(-1)).toMatchObject({
-      label: "Phase 1",
+      label: "1",
       isFinished: false,
       y: 274,
     });

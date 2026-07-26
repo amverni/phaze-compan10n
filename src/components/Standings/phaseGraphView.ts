@@ -6,9 +6,10 @@ const GRAPH_TOP = 24;
 const GRAPH_BOTTOM = 44;
 const GRAPH_RIGHT = 64;
 const GRAPH_WIDTH = 360;
+const CHART_WIDTH = GRAPH_WIDTH - GRAPH_LEFT - GRAPH_RIGHT;
 const PHASE_SPACING = 52;
 const MAX_GRAPH_HEIGHT = 320;
-const MAX_VISIBLE_ROUND_LABELS = 7;
+const MIN_ROUND_LABEL_SPACING = 24;
 
 export interface PhaseGraphViewInput {
   series: readonly PhaseGraphSeries[];
@@ -27,14 +28,14 @@ export interface PhaseGraphView {
 
 export interface RoundLabel {
   roundNumber: number;
-  label: string;
+  label: string | null;
   showLabel: boolean;
   x: number;
 }
 
 export interface PhaseLabel {
   value: number;
-  label: string;
+  label: string | null;
   isFinished: boolean;
   y: number;
 }
@@ -91,15 +92,15 @@ export function getPhaseGraphView({
     height,
     roundLabels: roundNumbers.map((roundNumber, index) => ({
       roundNumber,
-      label: roundNumber === 0 ? "Start" : String(roundNumber),
-      showLabel: shouldShowRoundLabel(index, roundNumbers.length, roundLabelStride),
+      label: roundNumber === 0 ? null : String(roundNumber),
+      showLabel: shouldShowRoundLabel(roundNumber, index, roundNumbers.length, roundLabelStride),
       x: roundXByNumber.get(roundNumber) ?? GRAPH_LEFT,
     })),
     phaseLabels: Array.from({ length: maxStandingValue }, (_, index) => {
       const value = maxStandingValue - index;
       return {
         value,
-        label: `Phase ${Math.min(value, totalPhases)}`,
+        label: value > totalPhases ? null : String(value),
         isFinished: value > totalPhases,
         y: getY(value, maxStandingValue, phaseSpacing),
       };
@@ -120,8 +121,7 @@ function getY(standingValue: number, maxStandingValue: number, phaseSpacing: num
 }
 
 function getRoundXByNumber(roundNumbers: readonly number[]): ReadonlyMap<number, number> {
-  const chartWidth = GRAPH_WIDTH - GRAPH_LEFT - GRAPH_RIGHT;
-  const roundSpacing = roundNumbers.length > 1 ? chartWidth / (roundNumbers.length - 1) : 0;
+  const roundSpacing = roundNumbers.length > 1 ? CHART_WIDTH / (roundNumbers.length - 1) : 0;
 
   return new Map(
     roundNumbers.map((roundNumber, index) => [
@@ -142,12 +142,22 @@ function getPhaseSpacing(totalPhases: number): number {
 }
 
 function getRoundLabelStride(roundCount: number): number {
-  if (roundCount <= MAX_VISIBLE_ROUND_LABELS) return 1;
-  return Math.ceil((roundCount - 1) / (MAX_VISIBLE_ROUND_LABELS - 1));
+  if (roundCount <= 1) return 1;
+
+  const roundSpacing = CHART_WIDTH / (roundCount - 1);
+  return Math.max(1, Math.ceil(MIN_ROUND_LABEL_SPACING / roundSpacing));
 }
 
-function shouldShowRoundLabel(index: number, roundCount: number, stride: number): boolean {
-  return index === 0 || index === roundCount - 1 || index % stride === 0;
+function shouldShowRoundLabel(
+  roundNumber: number,
+  index: number,
+  roundCount: number,
+  stride: number,
+): boolean {
+  if (roundNumber === 0) return false;
+  if (stride === 1) return true;
+
+  return (roundCount - 1 - index) % stride === 0;
 }
 
 function getPlayerLineColor(player: Player): string {

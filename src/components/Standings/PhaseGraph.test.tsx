@@ -52,10 +52,12 @@ describe("PhaseGraph", () => {
     expect(markup).toContain('stroke="#df0e88"');
     expect(markup).toContain('stroke="#1D4ED8"');
     expect(markup).toContain('d="M 64 180 L 296 128"');
-    expect(markup).toContain("Start");
-    expect(markup).toContain("Phase 3");
+    expect(markup).not.toContain(">Start</text>");
+    expect(markup).not.toContain(">Phase 3</text>");
+    expect(markup).toContain(">3</text>");
     expect(markup).toContain("Phase progress details");
     expect(markup).toContain("<table");
+    expect(markup).toContain('<th scope="col">Start</th>');
     expect(markup).toContain('aria-label="Latest phase 2: Cam, Bob, Amy"');
     expect(markup).toContain("ring-text-primary/75");
     expect(markup).not.toContain("ring-white");
@@ -133,6 +135,8 @@ describe("PhaseGraph", () => {
 
     expect(markup).toContain('aria-label="Latest finished phase 3: Amy"');
     expect(markup).toContain("Finished phase 3");
+    expect(markup).not.toContain('font-weight="700">3</text>');
+    expect(markup).not.toContain('font-weight="700">Phase 3</text>');
     expect(markup).not.toContain('aria-label="Latest phase 4: Amy"');
   });
 });
