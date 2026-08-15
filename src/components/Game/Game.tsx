@@ -16,6 +16,7 @@ import {
 import { Scoreboard } from "../Scoreboard";
 import { StandingsDialog } from "../Standings";
 import { Button } from "../ui";
+import { shouldShowPhasesCardEntryButton } from "./gameView";
 import { shouldAutoOpenStandings } from "./standingsAutoOpen";
 
 interface GameProps {
@@ -31,6 +32,7 @@ export function Game({ gameId }: GameProps) {
   const { data: players } = useQuery(playersByIdsOptions(playerIds));
   const { data: rounds } = useQuery(roundsListOptions(gameId));
   const standingsReady = Boolean(game && players && rounds);
+  const showPhasesCardEntryButton = game ? shouldShowPhasesCardEntryButton(game.status) : true;
 
   useEffect(() => {
     if (!game) return;
@@ -50,17 +52,19 @@ export function Game({ gameId }: GameProps) {
               <Logo height={100} width="100%" />
             </div>
             <div className="relative z-10 mx-auto flex h-full w-full items-center px-4">
-              <Button
-                type="button"
-                aria-label="Open Phases Card"
-                className={phasesCardEntryButtonClasses}
-                disabled={!game}
-                onClick={() => {
-                  if (game) setPhasesCardOpen(true);
-                }}
-              >
-                <PhasesCardEntryButtonContent />
-              </Button>
+              {showPhasesCardEntryButton && (
+                <Button
+                  type="button"
+                  aria-label="Open Phases Card"
+                  className={phasesCardEntryButtonClasses}
+                  disabled={!game}
+                  onClick={() => {
+                    if (game) setPhasesCardOpen(true);
+                  }}
+                >
+                  <PhasesCardEntryButtonContent />
+                </Button>
+              )}
             </div>
           </div>
         }
