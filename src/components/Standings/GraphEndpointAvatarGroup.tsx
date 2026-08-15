@@ -44,7 +44,7 @@ export function GraphEndpointAvatarGroup({
       {players.map((player, index) => (
         <span
           key={player.id}
-          className="inline-flex rounded-full ring-2 ring-text-primary/75"
+          className="inline-flex rounded-full"
           style={{ marginLeft: index === 0 ? undefined : -LATEST_AVATAR_OVERLAP }}
         >
           <PlayerAvatar player={player} size={LATEST_AVATAR_ICON_SIZE} variant="icon" />

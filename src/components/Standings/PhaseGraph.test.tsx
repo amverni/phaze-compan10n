@@ -59,7 +59,7 @@ describe("PhaseGraph", () => {
     expect(markup).toContain("<table");
     expect(markup).toContain('<th scope="col">Start</th>');
     expect(markup).toContain('aria-label="Latest phase 2: Cam, Bob, Amy"');
-    expect(markup).toContain("ring-text-primary/75");
+    expect(markup).not.toContain("ring-text-primary/75");
     expect(markup).not.toContain("ring-white");
     expect(markup).not.toContain("+");
   });

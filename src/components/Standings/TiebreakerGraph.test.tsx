@@ -75,6 +75,7 @@ describe("TiebreakerGraph", () => {
     expect(markup).not.toContain("Scrollable");
     expect(markup).not.toContain("overflow-x-auto");
     expect(markup).not.toContain("data-swipe-navigation-ignore");
+    expect(markup).not.toContain("ring-text-primary/75");
     expect(markup).not.toContain("+");
   });
 
