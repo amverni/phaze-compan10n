@@ -34,8 +34,8 @@ describe("getPhaseGraphView", () => {
     });
 
     expect(view.roundLabels).toEqual([
-      { roundNumber: 0, label: null, showLabel: false, x: 64 },
-      { roundNumber: 1, label: "1", showLabel: true, x: 180 },
+      { roundNumber: 0, label: null, showLabel: false, x: 40 },
+      { roundNumber: 1, label: "1", showLabel: true, x: 168 },
       { roundNumber: 2, label: "2", showLabel: true, x: 296 },
     ]);
     expect(view.phaseLabels).toEqual([
@@ -46,14 +46,14 @@ describe("getPhaseGraphView", () => {
     ]);
     expect(view.series.map((series) => series.player.id)).toEqual(["amy", "bob"]);
     expect(view.series[0]?.linePoints.map(({ x, y }) => ({ x, y }))).toEqual([
-      { x: 64, y: 180 },
-      { x: 180, y: 128 },
+      { x: 40, y: 180 },
+      { x: 168, y: 128 },
       { x: 296, y: 24 },
     ]);
-    expect(view.series[0]?.path).toBe("M 64 180 L 180 128 L 296 24");
+    expect(view.series[0]?.path).toBe("M 40 180 L 168 128 L 296 24");
     expect(view.series[1]?.linePoints.map(({ x, y }) => ({ x, y }))).toEqual([
-      { x: 64, y: 180 },
-      { x: 180, y: 180 },
+      { x: 40, y: 180 },
+      { x: 168, y: 180 },
       { x: 296, y: 128 },
     ]);
     expect(view.width).toBe(360);

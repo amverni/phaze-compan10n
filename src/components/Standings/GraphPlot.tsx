@@ -22,6 +22,20 @@ interface GraphRoundAxisProps {
   height: number;
 }
 
+interface GraphAxisLabelsProps {
+  labels: readonly GraphAxisLabel[];
+  graphWidth: number;
+  graphHeight: number;
+}
+
+export interface GraphAxisLabel {
+  key: string;
+  label: string;
+  x: number;
+  y: number;
+  anchor: "start" | "middle" | "end";
+}
+
 export function GraphSeriesPaths({ series }: GraphSeriesPathsProps) {
   return (
     <>
@@ -55,22 +69,37 @@ export function GraphRoundAxis({ roundLabels, height }: GraphRoundAxisProps) {
           strokeOpacity={0.32}
         />
       ))}
+    </>
+  );
+}
 
-      {roundLabels
-        .filter((label) => label.showLabel)
-        .map((label) => (
-          <text
-            key={label.roundNumber}
-            x={label.x}
-            y={height - 14}
-            fill="var(--color-text-secondary)"
-            fontSize={11}
-            fontWeight={600}
-            textAnchor="middle"
-          >
-            {label.label}
-          </text>
-        ))}
+export function GraphAxisLabels({ labels, graphWidth, graphHeight }: GraphAxisLabelsProps) {
+  return (
+    <>
+      {labels.map((label) => (
+        <span
+          key={label.key}
+          className={[
+            "pointer-events-none",
+            "absolute",
+            label.anchor === "middle" ? "-translate-x-1/2" : "",
+            label.anchor === "end" ? "-translate-x-full text-right" : "",
+            "-translate-y-1/2",
+            "text-sm",
+            "font-medium",
+            "text-text-secondary",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-hidden="true"
+          style={{
+            left: `${(label.x / graphWidth) * 100}%`,
+            top: `${(label.y / graphHeight) * 100}%`,
+          }}
+        >
+          {label.label}
+        </span>
+      ))}
     </>
   );
 }

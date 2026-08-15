@@ -2,9 +2,11 @@ import type { GameTiebreaker, Round, TiebreakerGraphSeries } from "../../types";
 import { formatTiebreakerValue } from "../../utils";
 import { GraphAccessibleTable } from "./GraphAccessibleTable";
 import { GraphEndpointAvatarGroup } from "./GraphEndpointAvatarGroup";
-import { GraphRoundAxis, GraphSeriesPaths } from "./GraphPlot";
-import { graphContentClasses, graphShellClasses, graphSvgClasses } from "./graphLayout";
+import { GraphAxisLabels, GraphRoundAxis, GraphSeriesPaths } from "./GraphPlot";
+import { GRAPH_LEFT, graphContentClasses, graphShellClasses, graphSvgClasses } from "./graphLayout";
 import { getTiebreakerGraphView } from "./tiebreakerGraphView";
+
+const TIEBREAKER_AXIS_LABEL_X = GRAPH_LEFT - 18;
 
 export interface TiebreakerGraphProps {
   series: readonly TiebreakerGraphSeries[];
@@ -42,30 +44,43 @@ export function TiebreakerGraph({ series, tiebreaker, rounds }: TiebreakerGraphP
           className={graphSvgClasses}
         >
           {view.valueLabels.map((label) => (
-            <g key={`${label.value}-${label.y}`}>
-              <line
-                x1={chartStartX}
-                x2={chartEndX}
-                y1={label.y}
-                y2={label.y}
-                stroke="var(--color-text-secondary)"
-                strokeOpacity={0.16}
-              />
-              <text
-                x={8}
-                y={label.y + 4}
-                fill="var(--color-text-secondary)"
-                fontSize={11}
-                fontWeight={500}
-              >
-                {label.label}
-              </text>
-            </g>
+            <line
+              key={`${label.value}-${label.y}`}
+              x1={chartStartX}
+              x2={chartEndX}
+              y1={label.y}
+              y2={label.y}
+              stroke="var(--color-text-secondary)"
+              strokeOpacity={0.16}
+            />
           ))}
 
           <GraphSeriesPaths series={view.series} />
           <GraphRoundAxis roundLabels={view.roundLabels} height={view.height} />
         </svg>
+
+        <GraphAxisLabels
+          graphWidth={view.width}
+          graphHeight={view.height}
+          labels={[
+            ...view.valueLabels.map((label) => ({
+              key: `value-${label.value}-${label.y}`,
+              label: label.label,
+              x: TIEBREAKER_AXIS_LABEL_X,
+              y: label.y,
+              anchor: "end" as const,
+            })),
+            ...view.roundLabels
+              .filter((label) => label.showLabel && label.label)
+              .map((label) => ({
+                key: `round-${label.roundNumber}`,
+                label: label.label ?? "",
+                x: label.x,
+                y: view.height - 14,
+                anchor: "middle" as const,
+              })),
+          ]}
+        />
 
         {view.latestEndpointGroups.map((group) => (
           <GraphEndpointAvatarGroup

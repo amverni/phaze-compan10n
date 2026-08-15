@@ -1,7 +1,7 @@
 import type { PhaseGraphPoint, PhaseGraphSeries, Player, StandingsRow } from "../../types";
 import {
   GRAPH_BOTTOM,
-  GRAPH_LEFT,
+  GRAPH_RIGHT,
   GRAPH_TOP,
   GRAPH_WIDTH,
   getGraphPlayerColor,
@@ -13,6 +13,13 @@ import {
 
 const PHASE_SPACING = 52;
 const MAX_GRAPH_HEIGHT = 320;
+const PHASE_GRAPH_LEFT = 40;
+const PHASE_CHART_WIDTH = GRAPH_WIDTH - PHASE_GRAPH_LEFT - GRAPH_RIGHT;
+const PHASE_GRAPH_HORIZONTAL_LAYOUT = {
+  left: PHASE_GRAPH_LEFT,
+  right: GRAPH_RIGHT,
+  width: GRAPH_WIDTH,
+};
 
 export interface PhaseGraphViewInput {
   series: readonly PhaseGraphSeries[];
@@ -71,14 +78,14 @@ export function getPhaseGraphView({
   const maxStandingValue = totalPhases + 1;
   const phaseSpacing = getPhaseSpacing(totalPhases);
   const roundNumbers = getRoundNumbers(series);
-  const roundLabelStride = getRoundLabelStride(roundNumbers.length);
-  const roundXByNumber = getRoundXByNumber(roundNumbers);
+  const roundLabelStride = getRoundLabelStride(roundNumbers.length, PHASE_CHART_WIDTH);
+  const roundXByNumber = getRoundXByNumber(roundNumbers, PHASE_GRAPH_HORIZONTAL_LAYOUT);
   const height = GRAPH_TOP + (maxStandingValue - 1) * phaseSpacing + GRAPH_BOTTOM;
   const rowOrder = new Map(rows.map((row, index) => [row.player.id, index]));
   const viewSeries = series.map((graphSeries) => {
     const linePoints = graphSeries.points.map((point) => ({
       ...point,
-      x: roundXByNumber.get(point.roundNumber) ?? GRAPH_LEFT,
+      x: roundXByNumber.get(point.roundNumber) ?? PHASE_GRAPH_LEFT,
       y: getY(point.standingValue, maxStandingValue, phaseSpacing),
     }));
 
@@ -97,7 +104,7 @@ export function getPhaseGraphView({
       roundNumber,
       label: roundNumber === 0 ? null : String(roundNumber),
       showLabel: shouldShowRoundLabel(roundNumber, index, roundNumbers.length, roundLabelStride),
-      x: roundXByNumber.get(roundNumber) ?? GRAPH_LEFT,
+      x: roundXByNumber.get(roundNumber) ?? PHASE_GRAPH_LEFT,
     })),
     phaseLabels: Array.from({ length: maxStandingValue }, (_, index) => {
       const value = maxStandingValue - index;

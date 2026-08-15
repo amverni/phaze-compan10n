@@ -22,21 +22,37 @@ export function getRoundNumbers<TPoint extends { roundNumber: number }>(
   ).sort((a, b) => a - b);
 }
 
-export function getRoundXByNumber(roundNumbers: readonly number[]): ReadonlyMap<number, number> {
-  const roundSpacing = roundNumbers.length > 1 ? CHART_WIDTH / (roundNumbers.length - 1) : 0;
+export interface GraphHorizontalLayout {
+  left: number;
+  right: number;
+  width: number;
+}
+
+const DEFAULT_GRAPH_HORIZONTAL_LAYOUT: GraphHorizontalLayout = {
+  left: GRAPH_LEFT,
+  right: GRAPH_RIGHT,
+  width: GRAPH_WIDTH,
+};
+
+export function getRoundXByNumber(
+  roundNumbers: readonly number[],
+  layout: GraphHorizontalLayout = DEFAULT_GRAPH_HORIZONTAL_LAYOUT,
+): ReadonlyMap<number, number> {
+  const chartWidth = layout.width - layout.left - layout.right;
+  const roundSpacing = roundNumbers.length > 1 ? chartWidth / (roundNumbers.length - 1) : 0;
 
   return new Map(
     roundNumbers.map((roundNumber, index) => [
       roundNumber,
-      roundToTwoDecimals(GRAPH_LEFT + index * roundSpacing),
+      roundToTwoDecimals(layout.left + index * roundSpacing),
     ]),
   );
 }
 
-export function getRoundLabelStride(roundCount: number): number {
+export function getRoundLabelStride(roundCount: number, chartWidth: number = CHART_WIDTH): number {
   if (roundCount <= 1) return 1;
 
-  const roundSpacing = CHART_WIDTH / (roundCount - 1);
+  const roundSpacing = chartWidth / (roundCount - 1);
   return Math.max(1, Math.ceil(MIN_ROUND_LABEL_SPACING / roundSpacing));
 }
 

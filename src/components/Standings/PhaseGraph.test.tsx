@@ -51,10 +51,10 @@ describe("PhaseGraph", () => {
     expect(markup).toContain("<svg");
     expect(markup).toContain('stroke="#df0e88"');
     expect(markup).toContain('stroke="#1D4ED8"');
-    expect(markup).toContain('d="M 64 180 L 296 128"');
+    expect(markup).toContain('d="M 40 180 L 296 128"');
     expect(markup).not.toContain(">Start</text>");
     expect(markup).not.toContain(">Phase 3</text>");
-    expect(markup).toContain(">3</text>");
+    expect(markup).toContain(">3</span>");
     expect(markup).toContain("Phase progress details");
     expect(markup).toContain("<table");
     expect(markup).toContain('<th scope="col">Start</th>');
@@ -64,13 +64,71 @@ describe("PhaseGraph", () => {
     expect(markup).not.toContain("+");
   });
 
+  it("aligns the finished checkmark with phase numbers and starts the graph closer to them", () => {
+    const markup = renderToStaticMarkup(
+      <PhaseGraph
+        rows={[]}
+        totalPhases={3}
+        series={[
+          {
+            player: phaseGraphPlayers.amy,
+            points: [
+              { roundNumber: 0, currentPhase: 1, isFinished: false, standingValue: 1 },
+              { roundNumber: 1, currentPhase: 3, isFinished: true, standingValue: 4 },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(markup).toContain('d="M 40 180 L 296 24"');
+    expect(markup).toContain('style="left:3.3333333333333335%;top:33.92857142857143%">3</span>');
+    expect(markup).toContain('width="13" height="13"');
+    expect(markup).toContain('x="5.5" y="17.5"');
+  });
+
+  it("keeps the finished win line visually distinct from normal phase gridlines", () => {
+    const markup = renderToStaticMarkup(
+      <PhaseGraph
+        rows={[]}
+        totalPhases={3}
+        series={[
+          {
+            player: phaseGraphPlayers.amy,
+            points: [
+              { roundNumber: 0, currentPhase: 1, isFinished: false, standingValue: 1 },
+              { roundNumber: 1, currentPhase: 3, isFinished: true, standingValue: 4 },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(markup).toContain('stroke-dasharray="4 5"');
+  });
+
+  it("renders phase y-axis and x-axis labels with the shared unscaled axis style", () => {
+    const markup = renderToStaticMarkup(
+      <PhaseGraph rows={[]} totalPhases={3} series={[makePhaseGraphSeries(3)]} />,
+    );
+
+    expect(markup).toContain(
+      'class="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-sm font-medium text-text-secondary" aria-hidden="true" style="left:3.3333333333333335%;top:33.92857142857143%">3</span>',
+    );
+    expect(markup).toContain(
+      'class="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-sm font-medium text-text-secondary" aria-hidden="true" style="left:46.666666666666664%;top:93.75%">1</span>',
+    );
+    expect(markup).not.toContain('font-size="11" font-weight="500">3</text>');
+    expect(markup).not.toContain('font-size="11" font-weight="600" text-anchor="middle">1</text>');
+  });
+
   it("renders every saved Round as an x-axis tick while keeping dense text labels sparse", () => {
     const markup = renderToStaticMarkup(
       <PhaseGraph rows={[]} totalPhases={3} series={[makePhaseGraphSeries(13)]} />,
     );
 
     expect(markup.match(/data-round-tick=/g)).toHaveLength(13);
-    expect(markup).toContain(">12</text>");
+    expect(markup).toContain(">12</span>");
   });
 
   it("renders the graph fitted to its panel instead of inside a scroll region", () => {

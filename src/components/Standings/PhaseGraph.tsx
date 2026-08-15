@@ -2,9 +2,12 @@ import { Check } from "lucide-react";
 import type { PhaseGraphSeries, StandingsRow } from "../../types";
 import { GraphAccessibleTable } from "./GraphAccessibleTable";
 import { GraphEndpointAvatarGroup } from "./GraphEndpointAvatarGroup";
-import { GraphRoundAxis, GraphSeriesPaths } from "./GraphPlot";
+import { GraphAxisLabels, GraphRoundAxis, GraphSeriesPaths } from "./GraphPlot";
 import { graphContentClasses, graphShellClasses, graphSvgClasses } from "./graphLayout";
 import { formatPhaseProgressLabel, getPhaseGraphView } from "./phaseGraphView";
+
+const PHASE_AXIS_LABEL_X = 12;
+const FINISHED_CHECK_SIZE = 13;
 
 export interface PhaseGraphProps {
   series: readonly PhaseGraphSeries[];
@@ -52,23 +55,12 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
                 strokeOpacity={0.16}
                 strokeDasharray={label.isFinished ? "4 5" : undefined}
               />
-              {label.label && (
-                <text
-                  x={8}
-                  y={label.y + 4}
-                  fill="var(--color-text-secondary)"
-                  fontSize={11}
-                  fontWeight={500}
-                >
-                  {label.label}
-                </text>
-              )}
               {label.isFinished && (
                 <Check
-                  x={chartStartX - 12}
-                  y={label.y - 7}
-                  width={13}
-                  height={13}
+                  x={PHASE_AXIS_LABEL_X - FINISHED_CHECK_SIZE / 2}
+                  y={label.y - FINISHED_CHECK_SIZE / 2}
+                  width={FINISHED_CHECK_SIZE}
+                  height={FINISHED_CHECK_SIZE}
                   color="var(--color-pt-green-500)"
                   aria-hidden
                 />
@@ -79,6 +71,31 @@ export function PhaseGraph({ series, rows, totalPhases }: PhaseGraphProps) {
           <GraphSeriesPaths series={view.series} />
           <GraphRoundAxis roundLabels={view.roundLabels} height={view.height} />
         </svg>
+
+        <GraphAxisLabels
+          graphWidth={view.width}
+          graphHeight={view.height}
+          labels={[
+            ...view.phaseLabels
+              .filter((label) => label.label)
+              .map((label) => ({
+                key: `phase-${label.value}`,
+                label: label.label ?? "",
+                x: PHASE_AXIS_LABEL_X,
+                y: label.y,
+                anchor: "middle" as const,
+              })),
+            ...view.roundLabels
+              .filter((label) => label.showLabel && label.label)
+              .map((label) => ({
+                key: `round-${label.roundNumber}`,
+                label: label.label ?? "",
+                x: label.x,
+                y: view.height - 14,
+                anchor: "middle" as const,
+              })),
+          ]}
+        />
 
         {view.latestEndpointGroups.map((group) => (
           <GraphEndpointAvatarGroup
