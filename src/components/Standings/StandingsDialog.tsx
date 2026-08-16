@@ -7,6 +7,7 @@ import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Dialog, List, numberCircleClasses, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PhaseGraph } from "./PhaseGraph";
 import {
+  standingsDialogListClasses,
   standingsDialogTabPanelClasses,
   standingsDialogTabPanelHorizontalBleed,
 } from "./standingsDialogLayout";
@@ -59,7 +60,7 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
                 scrollable
                 tabIndex={0}
                 emptyMessage="No players in these Standings"
-                className="h-full rounded-2xl"
+                className={standingsDialogListClasses}
               >
                 {displayRows.map((row) => (
                   <StandingsRow key={row.player.id} row={row} />
