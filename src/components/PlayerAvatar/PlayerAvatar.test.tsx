@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PlayerAvatar } from "./PlayerAvatar";
 
 describe("PlayerAvatar", () => {
-  it("falls back to same-size initials for icon avatars when the color has no icon entry", () => {
+  it("falls back to smaller initials in the same-size circle for icon avatars without icon entries", () => {
     const markup = renderToStaticMarkup(
       <PlayerAvatar player={{ name: "Casey Jones", color: "#123456" }} size={16} variant="icon" />,
     );
@@ -11,8 +11,25 @@ describe("PlayerAvatar", () => {
     expect(markup).toContain(">CJ</span>");
     expect(markup).toContain("width:26px;height:26px");
     expect(markup).toContain("background-color:#123456");
+    expect(markup).toContain("font-size:14px");
     expect(markup).toContain('aria-hidden="true"');
     expect(markup).not.toContain("lucide-triangle-alert");
+  });
+
+  it("keeps non-fallback initials at the requested avatar text size", () => {
+    const initialsMarkup = renderToStaticMarkup(
+      <PlayerAvatar player={{ name: "Casey Jones", color: "Jam" }} size={16} variant="initials" />,
+    );
+    const iconInitialsMarkup = renderToStaticMarkup(
+      <PlayerAvatar
+        player={{ name: "Casey Jones", color: "#123456" }}
+        size={16}
+        variant="icon-initials"
+      />,
+    );
+
+    expect(initialsMarkup).toContain("font-size:16px");
+    expect(iconInitialsMarkup).toContain("font-size:16px");
   });
 
   it("keeps the warning icon for icon-initials fallback while using a valid player color", () => {

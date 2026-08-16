@@ -1,11 +1,10 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
-import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { deriveStandings } from "../../data/api/standings";
 import type { Game, Player, Round } from "../../types";
-import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import { Dialog, List, numberCircleClasses, SwipeableTabPanels, TabList, tabClasses } from "../ui";
+import { Dialog, List, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PhaseGraph } from "./PhaseGraph";
+import { StandingsRow } from "./StandingsRow";
 import {
   standingsDialogListClasses,
   standingsDialogTabPanelClasses,
@@ -87,38 +86,5 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
         </TabGroup>
       </div>
     </Dialog>
-  );
-}
-
-interface StandingsRowProps {
-  row: ReturnType<typeof getStandingsDisplayRows>[number];
-}
-
-function StandingsRow({ row }: StandingsRowProps) {
-  const placeClasses = [numberCircleClasses, !row.showPlace && "opacity-0"]
-    .filter(Boolean)
-    .join(" ");
-
-  return (
-    <div className="flex w-full min-w-0 items-center gap-3 text-sm">
-      <span className="sr-only">
-        {row.showPlace ? `Place ${row.place}` : `Tied for place ${row.place}`}
-      </span>
-      <span className={placeClasses} aria-hidden>
-        {row.place}
-      </span>
-      <PlayerAvatar player={row.player} size={16} variant="icon" />
-      <span className="min-w-0 flex-1 truncate font-medium" title={row.player.name}>
-        {row.player.name}
-      </span>
-      <span className="inline-flex shrink-0 items-center gap-1 text-right tabular-nums">
-        <span className="inline-flex items-center gap-0.5 font-semibold text-text-primary">
-          Ph {row.phaseNumber}
-          {row.isFinished && <Check className="size-3.5 text-pt-green-500" aria-label="Finished" />}
-        </span>
-        <span className="text-text-secondary">-</span>
-        <span className="text-text-secondary">{row.tiebreakerText}</span>
-      </span>
-    </div>
   );
 }
