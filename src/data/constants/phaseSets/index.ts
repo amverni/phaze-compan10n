@@ -1,4 +1,4 @@
-import type { BuiltInPhaseSet, PhaseSetId } from "../../../types";
+import type { BuiltInPhaseSet } from "../../../types";
 
 export const originalPhaseSet: BuiltInPhaseSet = {
   type: "built-in",
@@ -17,22 +17,6 @@ export const originalPhaseSet: BuiltInPhaseSet = {
     "classic-10",
   ],
 };
-
-const phaseSetIdAliases = new Map<PhaseSetId, PhaseSetId>([["classic", originalPhaseSet.id]]);
-
-export function normalizePhaseSetId(id: PhaseSetId): PhaseSetId {
-  return phaseSetIdAliases.get(id) ?? id;
-}
-
-export function getPhaseSetIdVariants(id: PhaseSetId): PhaseSetId[] {
-  const normalizedId = normalizePhaseSetId(id);
-  return [
-    normalizedId,
-    ...[...phaseSetIdAliases.entries()]
-      .filter(([, targetId]) => targetId === normalizedId)
-      .map(([aliasId]) => aliasId),
-  ];
-}
 
 export const skipSimilarPhaseSet: BuiltInPhaseSet = {
   type: "built-in",

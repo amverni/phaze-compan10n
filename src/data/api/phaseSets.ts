@@ -10,7 +10,7 @@ import type {
   VisiblePhaseSet,
 } from "../../types";
 import { arePhaseListsEqual } from "../../utils";
-import { builtInPhaseSets, normalizePhaseSetId } from "../constants/phaseSets";
+import { builtInPhaseSets } from "../constants/phaseSets";
 import { builtInPhases } from "../constants/phases";
 import { getDB } from "../db";
 import { favoritesApi } from "./favorites";
@@ -55,7 +55,7 @@ export const phaseSetsApi = {
     // Filter by favorite status
     if (filters?.isFavorite === 1) {
       const favoriteIds = await favoritesApi.getAll("phaseSet");
-      const favoriteSet = new Set(favoriteIds.map(normalizePhaseSetId));
+      const favoriteSet = new Set(favoriteIds);
       phaseSets = phaseSets.filter((ps) => favoriteSet.has(ps.id));
     }
 
@@ -80,8 +80,7 @@ export const phaseSetsApi = {
    * @returns The phase set if found, or `undefined` if no phase set exists with the given ID.
    */
   async getById(id: PhaseSetId): Promise<PhaseSet | undefined> {
-    const normalizedId = normalizePhaseSetId(id);
-    const builtIn = builtInPhaseSets.find((ps) => ps.id === normalizedId);
+    const builtIn = builtInPhaseSets.find((ps) => ps.id === id);
     if (builtIn) return builtIn;
 
     const db = await getDB();
@@ -163,9 +162,8 @@ export const phaseSetsApi = {
    * @throws {Error} If the ID belongs to a built-in phase set.
    */
   async delete(id: PhaseSetId): Promise<void> {
-    const normalizedId = normalizePhaseSetId(id);
-    if (builtInPhaseSets.some((ps) => ps.id === normalizedId)) {
-      throw new Error(`Cannot delete built-in phase set: ${normalizedId}`);
+    if (builtInPhaseSets.some((ps) => ps.id === id)) {
+      throw new Error(`Cannot delete built-in phase set: ${id}`);
     }
 
     const db = await getDB();
