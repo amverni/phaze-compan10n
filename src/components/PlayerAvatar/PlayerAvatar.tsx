@@ -197,6 +197,7 @@ export function PlayerAvatar({ player, size = 16, variant = "icon" }: PlayerAvat
   const fg = entry ? getContrastColor(entry.hex) : getAvatarTextColor(backgroundColor);
   const initials = getInitials(player.name);
   const useIconFallbackInitials = variant === "icon" && !entry;
+  const initialsFontSize = useIconFallbackInitials ? Math.max(size - 2, 1) : size;
 
   if (variant === "initials" || useIconFallbackInitials) {
     return (
@@ -208,7 +209,7 @@ export function PlayerAvatar({ player, size = 16, variant = "icon" }: PlayerAvat
           height: pad,
           backgroundColor,
           color: fg,
-          fontSize: size,
+          fontSize: initialsFontSize,
         }}
       >
         {initials}
