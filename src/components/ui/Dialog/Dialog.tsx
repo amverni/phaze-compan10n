@@ -13,8 +13,26 @@ interface AppDialogProps extends Omit<DialogProps<"div">, "children"> {
   afterLeave?: () => void;
 }
 
-const panelClasses =
-  "glass dialog-glass relative w-[90vw] max-w-lg h-[75svh] flex flex-col rounded-t-2xl";
+const panelClasses = [
+  "glass",
+  "dialog-glass",
+  "relative",
+  "w-[90vw]",
+  "max-w-lg",
+  "flex",
+  "flex-col",
+  "rounded-t-2xl",
+].join(" ");
+const wrapperClasses = [
+  "fixed",
+  "inset-0",
+  "z-10",
+  "flex",
+  "items-end",
+  "justify-center",
+  "pl-[env(safe-area-inset-left,0px)]",
+  "pr-[env(safe-area-inset-right,0px)]",
+].join(" ");
 
 const DISMISS_THRESHOLD = 0.3;
 
@@ -253,7 +271,7 @@ export function Dialog(props: AppDialogProps) {
         </TransitionChild>
 
         {/* Bottom-anchored wrapper — above the backdrop */}
-        <div className="fixed inset-0 z-10 flex items-end justify-center">
+        <div className={wrapperClasses}>
           {/* Glass panel — slides up */}
           <TransitionChild
             enter="dialog-panel-enter"

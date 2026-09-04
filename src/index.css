@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: "Quicksand Variable", sans-serif;
+  --color-app-background: #ffffff;
   --color-pt-blue-500: oklch(47% 0.15 255);
   --color-pt-red-500: oklch(48% 0.19 27);
   --color-pt-green-500: oklch(52% 0.17 142);
@@ -39,6 +40,7 @@
 
 @media (prefers-color-scheme: light) {
   :root {
+    --color-app-background: #ffffff;
     --color-logo-text: #1a1a1a;
     --color-text-primary: #1a1a1a;
     --color-text-secondary: rgba(26, 26, 26, 0.6);
@@ -48,6 +50,8 @@
 }
 
 body {
+  margin: 0;
+  background-color: var(--color-app-background);
   color: var(--color-text-primary);
 }
 
@@ -57,7 +61,9 @@ body,
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: hidden;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
 }
 
 * {
@@ -110,6 +116,7 @@ body,
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --color-app-background: #171717;
     --glass-base-opacity: 0.03;
     --glass-base-bg: rgba(255, 255, 255, var(--glass-base-opacity));
     --glass-base-filter: blur(40px) saturate(180%) brightness(58%);
@@ -189,7 +196,7 @@ body,
 
 .content-container {
   @apply mx-auto max-w-lg px-4;
-  min-height: fit-content;
+  min-width: 0;
 }
 
 /* ── Glass variants ───────────────────────────────────────
@@ -225,16 +232,30 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 }
 
 .card-background {
-  height: var(--card-viewport-height, 100dvh);
+  --card-viewport-height: 100vh;
+  --card-panel-height: 15vh;
+
+  height: var(--card-viewport-height);
+}
+
+@supports (height: 100svh) {
+  .card-background {
+    --card-viewport-height: 100svh;
+    --card-panel-height: 15svh;
+  }
 }
 
 .card-panel-edge-height {
-  height: var(--card-panel-height, 15dvh);
+  height: var(--card-panel-height, 15vh);
 }
 
 .card-panel-shadow {
   filter: drop-shadow(0 0 12px var(--card-shadow-lg))
     drop-shadow(0 0 4px var(--card-shadow-sm));
+}
+
+.card-panel-surface {
+  background-color: var(--color-app-background);
 }
 
 .card-panel-top {
@@ -252,16 +273,36 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   min-height: fit-content;
 }
 
+.card-panel-top-content,
+.card-panel-bottom-content {
+  box-sizing: border-box;
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
 .card-panel-top-content {
+  height: calc(var(--card-panel-height) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: var(--slant);
 }
 
 .card-panel-bottom-content {
+  height: calc(var(--card-panel-height) + env(safe-area-inset-bottom, 0px));
   padding-top: var(--slant);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.card-panel-disclaimer {
+  bottom: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
+  padding-right: calc(1rem + env(safe-area-inset-right, 0px));
+  padding-left: calc(1rem + env(safe-area-inset-left, 0px));
 }
 
 .card-panel-main {
   margin-top: calc(var(--slant) * -1);
   margin-bottom: calc(var(--slant) * -1);
   padding-top: var(--slant);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
 }

@@ -10,13 +10,46 @@ interface CardBackgroundProps {
   footerContent?: React.ReactNode;
 }
 
+const shellClasses = ["card-background", "flex", "min-h-0", "flex-col", "overflow-x-clip"].join(
+  " ",
+);
+const panelWrapperClasses = ["pointer-events-none", "relative", "z-10", "shrink-0"].join(" ");
+const shadowPanelClasses = ["card-panel-surface", "h-full"].join(" ");
+const topShadowPanelClasses = ["card-panel-top", shadowPanelClasses].join(" ");
+const panelContentBaseClasses = ["card-panel-surface", "pointer-events-auto", "relative"].join(" ");
+const topPanelClasses = [panelContentBaseClasses, "card-panel-top", "card-panel-top-content"].join(
+  " ",
+);
+const mainPanelClasses = [
+  "card-panel-main",
+  "relative",
+  "z-0",
+  "min-h-0",
+  "flex-1",
+  "overflow-x-visible",
+  "overflow-y-auto",
+].join(" ");
+const bottomPanelClasses = [
+  panelContentBaseClasses,
+  "card-panel-bottom",
+  "card-panel-bottom-content",
+].join(" ");
+const bottomShadowPanelClasses = ["card-panel-bottom", shadowPanelClasses].join(" ");
+const disclaimerClasses = [
+  "card-panel-disclaimer",
+  "pointer-events-none",
+  "absolute",
+  "inset-x-0",
+].join(" ");
+
 /**
  * Reusable Phase-10-card-style page layout.
  *
  * Renders a top panel (flat top, angled bottom) and a bottom panel
- * (angled top, flat bottom) that each occupy 15 % of the viewport height.
- * Both panels match the page background colour and use a drop-shadow on
- * the angled edge to create depth.
+ * (angled top, flat bottom) that each occupy 15 % of the stable mobile
+ * viewport, plus any device safe-area inset on their outside edge. Both
+ * panels match the page background colour and use a drop-shadow on the
+ * angled edge to create depth.
  *
  * Panel geometry (slant, clip-paths, shadow) is defined in index.css —
  * adjust the `--slant` custom property there to change the angle.
@@ -27,34 +60,30 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
   footerContent,
 }) => {
   return (
-    <div className="flex h-svh flex-col overflow-x-clip">
+    <div className={shellClasses}>
       {/* ── Top panel: flat top, angled bottom ────────────────────── */}
-      <div className="pointer-events-none relative z-10">
+      <div className={panelWrapperClasses}>
         {/* Shadow layer (no children → never re-rendered by interactions) */}
         <div aria-hidden className="card-panel-shadow absolute inset-0">
-          <div className="card-panel-top h-full bg-white dark:bg-neutral-900" />
+          <div className={topShadowPanelClasses} />
         </div>
         {/* Content layer */}
-        <div className="card-panel-top card-panel-top-content pointer-events-auto relative h-[15svh] bg-white dark:bg-neutral-900">
-          {headerContent}
-        </div>
+        <div className={topPanelClasses}>{headerContent}</div>
       </div>
 
       {/* ── Main content ──────────────────────────────────────────── */}
-      <div className="card-panel-main relative z-0 min-h-0 flex-1 overflow-x-visible overflow-y-auto">
-        {mainContent}
-      </div>
+      <div className={mainPanelClasses}>{mainContent}</div>
 
       {/* ── Bottom panel: angled top, flat bottom ─────────────────── */}
-      <div className="pointer-events-none relative z-10">
+      <div className={panelWrapperClasses}>
         {/* Shadow layer */}
         <div aria-hidden className="card-panel-shadow absolute inset-0">
-          <div className="card-panel-bottom h-full bg-white dark:bg-neutral-900" />
+          <div className={bottomShadowPanelClasses} />
         </div>
         {/* Content layer */}
-        <div className="card-panel-bottom card-panel-bottom-content pointer-events-auto relative h-[15svh] bg-white dark:bg-neutral-900">
+        <div className={bottomPanelClasses}>
           {footerContent}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4">
+          <div className={disclaimerClasses}>
             <Disclaimer />
           </div>
         </div>
