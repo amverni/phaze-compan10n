@@ -245,6 +245,13 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   }
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .card-background {
+    --card-viewport-height: 100vh;
+    --card-panel-height: 15vh;
+  }
+}
+
 .card-panel-edge-height {
   height: var(--card-panel-height, 15vh);
 }
