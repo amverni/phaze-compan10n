@@ -158,6 +158,16 @@ _Avoid_: Draft phase set
 A user-pinned Player, Phase, or Phase Set prioritized for quick selection.
 _Avoid_: Bookmark
 
+### Interface layout
+
+**Safe Area**:
+A viewport region reserved for device or browser controls. Interactive content remains outside it, while noninteractive visual surfaces may continue through it.
+_Avoid_: Safe space
+
+**Visual Bleed**:
+The noninteractive continuation of a decorative background, surface, shadow, or similar visual through a Safe Area without moving interactive content into that area.
+_Avoid_: Overflow (when referring to this deliberate layout behavior)
+
 ## Flagged ambiguities
 
 - **"Skip" is overloaded.**  

@@ -54,11 +54,12 @@ export function PhasesCardPage({
       }
       footerContent={
         <div className="content-container flex h-full items-center justify-between">
-          <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
+          <Button as={Link} to="/" className="card-footer-button p-0" aria-label="Go home">
             <ArrowLeft className="size-8" />
           </Button>
           {shareTarget && !errorMessage && (
             <PhasesCardShareButton
+              className="card-footer-button"
               target={shareTarget}
               disabled={isLoading || phases.length === 0}
               onError={(message) => toastRef.current?.show(message)}

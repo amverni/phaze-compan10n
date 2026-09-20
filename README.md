@@ -12,3 +12,19 @@ Currently, two official plugins are available:
 The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
 
 Note: This will impact Vite dev & build performances.
+
+## Tests
+
+`npm test` runs Vitest behavior tests, including rendered safe-area layout tests
+using Playwright WebKit. After installing npm dependencies, install that browser:
+
+```bash
+npx playwright install webkit
+npm test
+```
+
+On Linux CI, use `npx playwright install --with-deps webkit` instead. The browser
+tests start and close their own local Vite server; no running app is required.
+Device insets are supplied through the shared `--safe-area-inset-*` CSS variables
+because desktop WebKit automation does not expose hardware cutouts or Safari's
+mobile toolbar. Real-device checks remain necessary for browser-chrome overlap.

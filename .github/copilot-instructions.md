@@ -4,7 +4,7 @@
 
 ```bash
 npm run build     # TypeScript check + Vite build
-npm test          # Vitest suite for pure behavior seams
+npm test          # Vitest behavior seams + Playwright WebKit layout coverage
 npm run lint      # Biome check (lint + format issues)
 npm run format    # Biome auto-fix formatting
 ```

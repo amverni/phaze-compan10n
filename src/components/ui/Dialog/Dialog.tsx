@@ -14,9 +14,9 @@ interface AppDialogProps extends Omit<DialogProps<"div">, "children"> {
 }
 
 const panelClasses = [
-  "glass",
-  "dialog-glass",
+  "dialog-panel",
   "relative",
+  "isolate",
   "w-[90vw]",
   "max-w-lg",
   "flex",
@@ -30,8 +30,8 @@ const wrapperClasses = [
   "flex",
   "items-end",
   "justify-center",
-  "pl-[env(safe-area-inset-left,0px)]",
-  "pr-[env(safe-area-inset-right,0px)]",
+  "pl-(--safe-area-inset-left)",
+  "pr-(--safe-area-inset-right)",
 ].join(" ");
 
 const DISMISS_THRESHOLD = 0.3;
@@ -267,7 +267,7 @@ export function Dialog(props: AppDialogProps) {
           leaveFrom="dialog-backdrop-open"
           leaveTo="dialog-backdrop-closed"
         >
-          <div className="fixed inset-0 bg-black/15 backdrop-blur-xs" />
+          <div className="dialog-backdrop fixed inset-0 bg-black/15 backdrop-blur-xs" />
         </TransitionChild>
 
         {/* Bottom-anchored wrapper — above the backdrop */}
@@ -282,6 +282,7 @@ export function Dialog(props: AppDialogProps) {
             leaveTo="dialog-panel-closed"
           >
             <DialogPanel ref={panelRef} className={mergedPanelClasses}>
+              <div aria-hidden="true" className="glass dialog-glass" />
               {/* Drag handle */}
               <div
                 className="flex shrink-0 cursor-grab justify-center pt-2.5 pb-1 touch-none select-none active:cursor-grabbing"

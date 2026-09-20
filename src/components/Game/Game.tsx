@@ -88,12 +88,12 @@ export function Game({ gameId }: GameProps) {
         }
         footerContent={
           <div className="content-container flex h-full justify-between">
-            <Button as={Link} to="/" className="size-14 p-0" aria-label="Go home">
+            <Button as={Link} to="/" className="card-footer-button p-0" aria-label="Go home">
               <ArrowLeft className="size-8" />
             </Button>
             <Button
               type="button"
-              className="size-14 p-0"
+              className="card-footer-button p-0"
               aria-label="Open Standings"
               disabled={!standingsReady}
               onClick={() => setStandingsOpen(true)}

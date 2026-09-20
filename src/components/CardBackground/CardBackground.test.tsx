@@ -22,8 +22,9 @@ describe("CardBackground", () => {
       expect.arrayContaining(["card-background", "flex", "min-h-0", "flex-col", "overflow-x-clip"]),
     );
     expect(rootClassName).not.toContain("h-svh");
-    expect(markup).toContain("card-panel-top card-panel-top-content");
-    expect(markup).toContain("card-panel-bottom card-panel-bottom-content");
+    expect(markup).toContain("<span>Header</span>");
+    expect(markup).toContain("<span>Main</span>");
+    expect(markup).toContain("<span>Footer</span>");
   });
 
   it("keeps mobile stable while using full viewport coverage for desktop pointers", () => {

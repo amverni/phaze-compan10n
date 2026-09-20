@@ -40,7 +40,6 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
       onClose={onClose}
       afterLeave={handleAfterLeave}
       initialFocus={inputRef}
-      className="overflow-hidden"
       aria-label={view === "create" ? "Create player" : "Add player"}
     >
       <div className="h-full w-full overflow-hidden">

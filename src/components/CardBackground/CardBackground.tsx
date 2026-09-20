@@ -16,10 +16,8 @@ const shellClasses = ["card-background", "flex", "min-h-0", "flex-col", "overflo
 const panelWrapperClasses = ["pointer-events-none", "relative", "z-10", "shrink-0"].join(" ");
 const shadowPanelClasses = ["card-panel-surface", "h-full"].join(" ");
 const topShadowPanelClasses = ["card-panel-top", shadowPanelClasses].join(" ");
-const panelContentBaseClasses = ["card-panel-surface", "pointer-events-auto", "relative"].join(" ");
-const topPanelClasses = [panelContentBaseClasses, "card-panel-top", "card-panel-top-content"].join(
-  " ",
-);
+const panelContentBaseClasses = ["pointer-events-none", "relative"].join(" ");
+const topPanelClasses = [panelContentBaseClasses, "card-panel-top-content"].join(" ");
 const mainPanelClasses = [
   "card-panel-main",
   "relative",
@@ -29,11 +27,7 @@ const mainPanelClasses = [
   "overflow-x-visible",
   "overflow-y-auto",
 ].join(" ");
-const bottomPanelClasses = [
-  panelContentBaseClasses,
-  "card-panel-bottom",
-  "card-panel-bottom-content",
-].join(" ");
+const bottomPanelClasses = [panelContentBaseClasses, "card-panel-bottom-content"].join(" ");
 const bottomShadowPanelClasses = ["card-panel-bottom", shadowPanelClasses].join(" ");
 const disclaimerClasses = [
   "card-panel-disclaimer",
@@ -47,7 +41,8 @@ const disclaimerClasses = [
  *
  * Renders a top panel (flat top, angled bottom) and a bottom panel
  * (angled top, flat bottom) that each occupy 15 % of the stable mobile
- * viewport, plus any device safe-area inset on their outside edge. Both
+ * viewport, plus any device safe-area inset on their outside edge. The
+ * footer also reserves a minimum clearance for pressed controls and shadows. Both
  * panels match the page background colour and use a drop-shadow on the
  * angled edge to create depth.
  *
@@ -80,6 +75,7 @@ export const CardBackground: React.FC<CardBackgroundProps> = ({
         <div aria-hidden className="card-panel-shadow absolute inset-0">
           <div className={bottomShadowPanelClasses} />
         </div>
+        <div aria-hidden className="card-panel-bottom-bleed" />
         {/* Content layer */}
         <div className={bottomPanelClasses}>
           {footerContent}
