@@ -42,9 +42,9 @@ const disclaimerClasses = [
  * Renders a top panel (flat top, angled bottom) and a bottom panel
  * (angled top, flat bottom) that each occupy 15 % of the stable mobile
  * viewport, plus any device safe-area inset on their outside edge. The
- * footer also reserves a minimum clearance for pressed controls and shadows. Both
- * panels match the page background colour and use a drop-shadow on the
- * angled edge to create depth.
+ * footer also reserves minimum clearance for fully pressed controls and the
+ * disclaimer; decorative shadows do not affect layout. Both panels match the
+ * page background colour and use a drop-shadow on the angled edge to create depth.
  *
  * Panel geometry (slant, clip-paths, shadow) is defined in index.css —
  * adjust the `--slant` custom property there to change the angle.

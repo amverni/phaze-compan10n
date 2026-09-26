@@ -253,9 +253,8 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   --card-viewport-height: 100vh;
   --card-panel-height: 15vh;
   --card-footer-button-size: 3.5rem;
-  --card-footer-shadow-top: 2.625rem;
-  --card-footer-shadow-bottom: 3.75rem;
-  --card-footer-shadow-side: 3.125rem;
+  /* Covers each edge of the 10% press growth at both footer button sizes. */
+  --card-footer-press-clearance: 0.1875rem;
 
   height: var(--card-viewport-height);
 }
@@ -263,14 +262,6 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 @media (max-height: 700px) {
   .card-background {
     --card-footer-button-size: 2.75rem;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  .card-background {
-    --card-footer-shadow-top: 1.125rem;
-    --card-footer-shadow-bottom: 1.375rem;
-    --card-footer-shadow-side: 1.25rem;
   }
 }
 
@@ -351,9 +342,9 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 }
 
 .card-panel-bottom-content {
-  /* Include the 10% press growth, visible shadow tail, and the disclaimer. */
-  --footer-top: calc(var(--slant) + var(--card-footer-shadow-top));
-  --footer-bottom: calc(var(--card-footer-shadow-bottom) + 8px);
+  /* Reserve pressed controls and the disclaimer, not decorative shadow tails. */
+  --footer-top: calc(var(--slant) + var(--card-footer-press-clearance));
+  --footer-bottom: calc(var(--card-footer-press-clearance) + 8px);
   height: calc(var(--card-panel-height) + var(--safe-area-inset-bottom));
   min-height: calc(
     var(--footer-top) + var(--card-footer-button-size) + var(--footer-bottom) +
@@ -361,10 +352,6 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   );
   padding-top: var(--footer-top);
   padding-bottom: calc(var(--footer-bottom) + var(--safe-area-inset-bottom));
-}
-
-.card-panel-bottom-content > .content-container {
-  padding-inline: max(1rem, var(--card-footer-shadow-side));
 }
 
 .card-footer-button {

@@ -25,11 +25,16 @@ afterAll(async () => {
   await server?.close();
 });
 
-async function openPage(height: number, colorScheme: "light" | "dark" = "light", width = 390) {
+async function openPage(
+  height: number,
+  colorScheme: "light" | "dark" = "light",
+  width = 390,
+  hasTouch = true,
+) {
   const page = await browser.newPage({
     viewport: { width, height },
     colorScheme,
-    hasTouch: true,
+    hasTouch,
   });
   await page.goto(`${appUrl}#/create`);
   await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
@@ -63,56 +68,104 @@ async function readPixels(page: Page, x: number, y: number, width: number, heigh
 }
 
 describe("safe-area layout in WebKit", () => {
-  it("keeps the full pressed footer control and shadow inside the footer at the height breakpoint", async () => {
-    for (const height of [600, 700, 701, 900]) {
-      const page = await openPage(height);
+  it.each([
+    "light",
+    "dark",
+  ] as const)("uses compact footer geometry while containing pressed controls in %s mode", async (colorScheme) => {
+    for (const [width, height] of [
+      [390, 600],
+      [390, 700],
+      [390, 701],
+      [390, 844],
+      [390, 900],
+      [844, 390],
+      [1280, 900],
+    ]) {
+      const page = await openPage(height, colorScheme, width, width < 1024);
       try {
+        const size = height <= 700 ? 44 : 56;
         const button = page.getByRole("link", { name: "Cancel", exact: true });
         const resting = await button.boundingBox();
-        expect(resting?.width).toBe(height <= 700 ? 44 : 56);
+        expect(resting?.width).toBe(size);
         expect(resting?.height).toBe(resting?.width);
+        const footer = await bounds(page, ".card-panel-bottom-content");
+        expect(footer.height).toBeCloseTo(Math.max(height * 0.15, 50 + size + 6 + 8), 1);
+        expect(
+          await page
+            .locator(".card-panel-bottom-content > .content-container")
+            .evaluate((element) => {
+              const style = getComputedStyle(element);
+              return [style.paddingLeft, style.paddingRight];
+            }),
+        ).toEqual(["16px", "16px"]);
+        expect(await button.evaluate((element) => getComputedStyle(element).boxShadow)).toContain(
+          colorScheme === "light" ? "0px 2px 10px" : "0px 8px 28px",
+        );
 
         await button.hover();
         await page.mouse.down();
         await expect
           .poll(async () => (await button.boundingBox())?.width)
-          .toBeCloseTo((height <= 700 ? 44 : 56) * 1.1, 1);
+          .toBeCloseTo(size * 1.1, 1);
         const pressed = await button.boundingBox();
         if (!pressed) throw new Error("Pressed button is not visible");
-        const footer = await bounds(page, ".card-panel-bottom-content");
-        // Leave space for the visible glass shadow, not just the scaled circle.
-        expect(pressed.y - 15).toBeGreaterThanOrEqual(footer.y + 50);
-        expect(pressed.y + pressed.height + 19).toBeLessThanOrEqual(height - 8);
-        expect(pressed.x - 15).toBeGreaterThanOrEqual(0);
-        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+        const disclaimer = await bounds(page, ".card-panel-disclaimer");
+        // The control stays contained; its decorative shadow need not be.
+        expect(pressed.y).toBeGreaterThanOrEqual(footer.y + 50);
+        expect(pressed.y + pressed.height).toBeLessThanOrEqual(disclaimer.y);
+        expect(pressed.x).toBeGreaterThanOrEqual(0);
+        expect(pressed.x + pressed.width).toBeLessThanOrEqual(width);
+        expect(await bounds(page, ".card-panel-bottom-content")).toEqual(footer);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       } finally {
         await page.close();
       }
     }
   }, 60_000);
 
-  it("reserves device insets and the larger dark-mode shadow without shrinking the tap target", async () => {
-    const page = await openPage(701, "dark");
-    try {
-      // WebKit's desktop automation does not expose device cutouts. Supply the
-      // same insets the browser normally provides through the layout variables.
-      await page.addStyleTag({
-        content: ":root { --safe-area-inset-bottom: 34px; --safe-area-inset-left: 44px; }",
-      });
-      const button = page.getByRole("link", { name: "Cancel", exact: true });
-      await button.hover();
-      await page.mouse.down();
-      await expect.poll(async () => (await button.boundingBox())?.width).toBeCloseTo(61.6, 1);
-      const pressed = await button.boundingBox();
-      if (!pressed) throw new Error("Pressed button is not visible");
-      const footer = await bounds(page, ".card-panel-bottom-content");
-      expect(pressed.y - 38).toBeGreaterThanOrEqual(footer.y + 50);
-      expect(pressed.y + pressed.height + 55).toBeLessThanOrEqual(701 - 34 - 8);
-      expect(pressed.x - 47).toBeGreaterThanOrEqual(44);
-    } finally {
-      await page.close();
+  it.each([
+    "light",
+    "dark",
+  ] as const)("keeps pressed controls at both footer edges outside device insets in %s mode", async (colorScheme) => {
+    for (const height of [600, 701, 900]) {
+      const page = await openPage(height, colorScheme);
+      try {
+        for (const { route, name } of [
+          { route: "create", name: "Cancel" },
+          { route: "", name: "Create Game" },
+        ]) {
+          await page.goto(`${appUrl}#/${route}`);
+          const button = page.getByRole("link", { name, exact: true });
+          await button.waitFor();
+          // Desktop WebKit does not expose device cutouts; supply their layout variables.
+          await page.addStyleTag({
+            content:
+              ":root { --safe-area-inset-top: 47px; --safe-area-inset-bottom: 34px; --safe-area-inset-left: 44px; --safe-area-inset-right: 44px; }",
+          });
+          const size = height <= 700 ? 44 : 56;
+          const footer = await bounds(page, ".card-panel-bottom-content");
+          expect(footer.height).toBeCloseTo(Math.max(height * 0.15, 50 + size + 6 + 8) + 34, 1);
+          await button.hover();
+          await page.mouse.down();
+          await expect
+            .poll(async () => (await button.boundingBox())?.width)
+            .toBeCloseTo(size * 1.1, 1);
+          const pressed = await button.boundingBox();
+          if (!pressed) throw new Error("Pressed button is not visible");
+          const disclaimer = await bounds(page, ".card-panel-disclaimer");
+          expect(pressed.y).toBeGreaterThanOrEqual(footer.y + 50);
+          expect(pressed.y + pressed.height).toBeLessThanOrEqual(disclaimer.y);
+          expect(disclaimer.y + disclaimer.height).toBeLessThanOrEqual(height - 34);
+          expect(pressed.x).toBeGreaterThanOrEqual(44);
+          expect(pressed.x + pressed.width).toBeLessThanOrEqual(390 - 44);
+          await page.mouse.move(0, 0);
+          await page.mouse.up();
+        }
+      } finally {
+        await page.close();
+      }
     }
-  }, 30_000);
+  }, 60_000);
 
   it.each([
     "light",
@@ -209,17 +262,35 @@ describe("safe-area layout in WebKit", () => {
   }, 30_000);
 
   it("keeps rows exposed above the footer diagonal tappable while footer controls still work", async () => {
-    const page = await openPage(600);
+    const page = await openPage(500);
     try {
       await page.goto(`${appUrl}#/phases`);
       await page.getByRole("tab", { name: "Phases", exact: true }).click();
-      await page.getByText("1 run of 9", { exact: true }).waitFor();
+      const row = page.getByText("1 run of 9", { exact: true });
+      await row.waitFor();
+      const footer = await bounds(page, ".card-panel-bottom-content");
+      const clickY = footer.y + 25;
+      await row.evaluate((element, y) => {
+        let parent = element.parentElement;
+        while (parent) {
+          if (
+            parent.scrollHeight > parent.clientHeight &&
+            getComputedStyle(parent).overflowY === "auto"
+          ) {
+            const rowBounds = element.getBoundingClientRect();
+            parent.scrollTop += rowBounds.y + rowBounds.height / 2 - y;
+            return;
+          }
+          parent = parent.parentElement;
+        }
+        throw new Error("Missing scrollable phase list");
+      }, clickY);
       // The right end of the same row is hidden by the painted footer.
-      await page.mouse.click(300, 480);
+      await page.mouse.click(300, clickY);
       expect(await page.getByRole("dialog").count()).toBe(0);
       // This visible part of the row lies inside the footer's rectangular bounds,
       // but outside its painted diagonal. A transparent layer must not catch it.
-      await page.mouse.click(40, 480);
+      await page.mouse.click(40, clickY);
       const dialog = page.getByRole("dialog", { name: "1 run of 9", exact: true });
       await expect.poll(() => dialog.count()).toBe(1);
       await dialog.getByRole("button", { name: "Go back" }).click();
