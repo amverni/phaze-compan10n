@@ -7,6 +7,8 @@
   --color-pt-red-500: oklch(48% 0.19 27);
   --color-pt-green-500: oklch(52% 0.17 142);
   --color-pt-yellow-500: oklch(90% 0.19 98);
+  --color-button-surface: #ffffff;
+  --color-button-danger: #e60a0a;
 
   /* Logo text fill */
   --color-logo-text: #ffffff;
@@ -117,6 +119,7 @@ body,
 @media (prefers-color-scheme: dark) {
   :root {
     --color-app-background: #171717;
+    --color-button-surface: #262626;
     --glass-base-opacity: 0.03;
     --glass-base-bg: rgba(255, 255, 255, var(--glass-base-opacity));
     --glass-base-filter: blur(40px) saturate(180%) brightness(58%);
@@ -192,6 +195,16 @@ body,
   }
 }
 
+/* Button faces are opaque; their existing borders, shadows, and shine remain. */
+:is(button, a, [role="button"]).glass,
+:is(button, a, [role="button"]) > .glass:not(.glass-tab-indicator),
+.glass-control-surface {
+  background-color: var(--button-surface-bg, var(--color-button-surface));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  isolation: isolate;
+}
+
 /* ── Content container ────────────────────────────────────── */
 
 .content-container {
@@ -208,7 +221,8 @@ body,
 }
 
 .glass-danger {
-  --_g-bg: rgba(230, 10, 10, 0.8);
+  --_g-bg: color-mix(in srgb, var(--color-button-danger) 80%, transparent);
+  --button-surface-bg: var(--color-button-danger);
   --_g-border: rgba(255, 80, 80, 0.6);
 }
 

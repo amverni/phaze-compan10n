@@ -42,7 +42,7 @@ function resultButtonClasses(status: PhaseStatus, selected: boolean, disabled: b
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
     selected
       ? SELECTED_RESULT_CLASSES[status]
-      : "opacity-70 hover:brightness-110 hover:opacity-100",
+      : "hover:brightness-110 [&>*]:opacity-70 [&>*]:transition-opacity [&>*]:duration-150 hover:[&>*]:opacity-100 disabled:[&>*]:opacity-100",
     disabled ? "" : "cursor-pointer",
   ]
     .filter(Boolean)

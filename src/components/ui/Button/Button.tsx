@@ -12,10 +12,10 @@ const baseClasses = [
 ].join(" ");
 
 /**
- * A frosted-glass button that wraps Headless UI's `Button`.
+ * An opaque, theme-aware button that wraps Headless UI's `Button`.
  *
  * Accepts the same props as `@headlessui/react`'s `Button` and layers on
- * the app's glass styling. Pass `as`, `children`, `className`, etc. just
+ * the app's shared surface styling. Pass `as`, `children`, `className`, etc. just
  * like you would with the Headless UI component.
  */
 export function Button<TTag extends ElementType = "button">(props: ButtonProps<TTag>): ReactElement;
