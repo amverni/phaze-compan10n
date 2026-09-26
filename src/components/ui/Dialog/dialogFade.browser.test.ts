@@ -150,6 +150,68 @@ async function expectCardEdgeUnaffected(page: Page, scroller: Locator, card: Loc
   ).toBeLessThanOrEqual(2);
 }
 
+describe.each([
+  { width: 390, height: 600 },
+  { width: 1280, height: 900 },
+])("Add Round winner selection at $width px", (viewport) => {
+  it("uses only the shared dropdown while preserving winner corrections and saving", async () => {
+    const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
+    try {
+      await startGame(page);
+      await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+      const dialog = page.getByRole("dialog");
+      const amy = dialog.getByRole("tabpanel", { name: "Amy", exact: true });
+      await amy.waitFor();
+      const shortcuts = dialog.getByRole("tabpanel", { includeHidden: true }).getByRole("button", {
+        name: /^(Won Round|Round Winner)$/,
+        includeHidden: true,
+      });
+      expect(await shortcuts.count()).toBe(0);
+
+      await amy.getByRole("button", { name: "Passed", exact: true }).click();
+      await amy.getByRole("button", { name: /^Add 10 points/ }).click();
+      const points = amy.getByRole("spinbutton", { name: "Points", exact: true });
+      await expect.poll(() => points.getAttribute("aria-valuenow")).toBe("10");
+
+      const winner = dialog.getByRole("button", { name: /Round Winner/ });
+      await winner.click();
+      await page.getByRole("option", { name: "Amy", exact: true }).click();
+      await expect.poll(() => points.getAttribute("aria-valuenow")).toBe("0");
+      expect(await points.getAttribute("aria-disabled")).toBe("true");
+      expect(await shortcuts.count()).toBe(0);
+
+      await winner.click();
+      await page.getByRole("option", { name: "Ben", exact: true }).click();
+      await expect.poll(() => points.getAttribute("aria-valuenow")).toBe("10");
+      expect(await points.getAttribute("aria-disabled")).toBeNull();
+
+      await winner.click();
+      await page.getByRole("option", { name: "Choose winner", exact: true }).click();
+      const save = dialog.getByRole("button", { name: "Save round", exact: true });
+      expect(await save.isDisabled()).toBe(true);
+
+      await winner.click();
+      await page.getByRole("option", { name: "Amy", exact: true }).click();
+      await dialog.getByRole("tab", { name: "Ben", exact: true }).click();
+      const ben = dialog.getByRole("tabpanel", { name: "Ben", exact: true });
+      expect(
+        await ben.getByRole("button", { name: "Passed", exact: true }).getAttribute("aria-pressed"),
+      ).toBe("true");
+      await ben.getByRole("button", { name: "Show extra options", exact: true }).click();
+      await ben.getByRole("button", { name: /^Add 5 points/ }).click();
+      await page.setViewportSize(
+        viewport.width === 390 ? { width: 1280, height: 900 } : { width: 390, height: 600 },
+      );
+      expect(await shortcuts.count()).toBe(0);
+      await save.click();
+      await dialog.waitFor({ state: "detached" });
+      await page.getByRole("button", { name: "Add round 2", exact: true }).waitFor();
+    } finally {
+      await page.close();
+    }
+  }, 60_000);
+});
+
 describe.each(["light", "dark"] as const)("dialog bottom fade in %s mode", (colorScheme) => {
   it("fully reveals the final Add Round card at maximum scroll without fading fixed controls", async () => {
     const page = await browser.newPage({
@@ -161,7 +223,9 @@ describe.each(["light", "dark"] as const)("dialog bottom fade in %s mode", (colo
       await startGame(page);
       await page.getByRole("button", { name: "Add round 1", exact: true }).click();
       const dialog = page.getByRole("dialog");
-      const lastContent = dialog.getByRole("button", { name: "Won Round", exact: true });
+      const lastContent = dialog
+        .getByRole("tabpanel", { name: "Amy", exact: true })
+        .getByText("Hold to decrease.", { exact: true });
       await lastContent.waitFor({ state: "attached" });
       const scroller = scrollAreaFor(lastContent);
       await expectBottomFade(scroller);
