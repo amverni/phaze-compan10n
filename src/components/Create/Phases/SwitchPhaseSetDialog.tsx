@@ -58,7 +58,7 @@ export function SwitchPhaseSetDialog({ open, onClose, onSelectPhases }: SwitchPh
         />
 
         {/* Phase set list */}
-        <div className="min-h-0 flex-1 overflow-y-auto -mx-4 px-4 py-2">
+        <div className="dialog-scroll min-h-0 flex-1 overflow-y-auto -mx-4 px-4 pt-2 pb-2.5">
           {selectError && <InlineError message={selectError} />}
           {isError ? (
             <InlineError message="Unable to load phase sets." onRetry={() => refetch()} />

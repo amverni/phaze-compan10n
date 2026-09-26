@@ -2,7 +2,7 @@ import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { useEffect, useState } from "react";
 import { deriveStandings } from "../../data/api/standings";
 import type { Game, Player, Round } from "../../types";
-import { Dialog, List, SwipeableTabPanels, TabList, tabClasses } from "../ui";
+import { Dialog, DialogScrollArea, List, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PhaseGraph } from "./PhaseGraph";
 import { StandingsRow } from "./StandingsRow";
 import {
@@ -53,18 +53,16 @@ export function StandingsDialog({ open, onClose, game, players, rounds }: Standi
             className="min-h-0 flex-1"
           >
             <TabPanel className={standingsDialogTabPanelClasses}>
-              <List
-                aria-label="Standings"
-                role="region"
-                scrollable
-                tabIndex={0}
-                emptyMessage="No players in these Standings"
-                className={standingsDialogListClasses}
-              >
-                {displayRows.map((row) => (
-                  <StandingsRow key={row.player.id} row={row} />
-                ))}
-              </List>
+              <DialogScrollArea aria-label="Standings">
+                <List
+                  emptyMessage="No players in these Standings"
+                  className={standingsDialogListClasses}
+                >
+                  {displayRows.map((row) => (
+                    <StandingsRow key={row.player.id} row={row} />
+                  ))}
+                </List>
+              </DialogScrollArea>
             </TabPanel>
 
             <TabPanel className={standingsDialogTabPanelClasses}>

@@ -140,7 +140,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
         </div>
 
         {/* Phase list */}
-        <div className="min-h-0 flex-1 overflow-y-auto -mx-4 px-4 py-2">
+        <div className="dialog-scroll min-h-0 flex-1 overflow-y-auto -mx-4 px-4 pt-2 pb-2.5">
           {isError ? (
             <InlineError message="Unable to load phases." onRetry={() => refetch()} />
           ) : (

@@ -26,8 +26,8 @@ export function PhasesCardList({
 
   return (
     <List
-      aria-label="Phases Card phase list"
-      role="region"
+      aria-label={scrollable ? "Phases Card phase list" : undefined}
+      role={scrollable ? "region" : undefined}
       tabIndex={scrollable ? 0 : undefined}
       scrollable={scrollable}
       className={listClassName}

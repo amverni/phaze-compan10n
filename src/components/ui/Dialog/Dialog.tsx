@@ -296,7 +296,7 @@ export function Dialog(props: AppDialogProps) {
               </div>
               <section
                 ref={contentCallbackRef}
-                className="min-h-0 flex-1 overflow-y-auto overscroll-none"
+                className="dialog-content dialog-scroll min-h-0 flex-1 overflow-y-auto overscroll-none"
               >
                 {children}
               </section>

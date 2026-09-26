@@ -2,6 +2,7 @@ export { Button } from "./Button/Button";
 export type { ColorPickerProps } from "./ColorPicker/ColorPicker";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
 export { Dialog } from "./Dialog/Dialog";
+export { DialogScrollArea } from "./Dialog/DialogScrollArea";
 export { FavoriteAccent } from "./FavoriteAccent/FavoriteAccent";
 export type { GlassSurfaceProps } from "./GlassSurface/GlassSurface";
 export { GlassSurface, GlassSurfaceButton } from "./GlassSurface/GlassSurface";

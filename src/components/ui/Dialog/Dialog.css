@@ -53,10 +53,51 @@
    picking up the dark overlay behind the panel. */
 
 .dialog-panel {
+  --dialog-fade-height: 10px;
   height: calc(75svh + var(--safe-area-inset-bottom));
   padding-bottom: var(--safe-area-inset-bottom);
   border: 1px solid transparent;
   border-bottom: none;
+}
+
+/* Fade the scroll owner, not its fixed siblings or a second enclosing viewport.
+   Nested scroll owners use dialog-scroll and keep at least 10px of end padding. */
+.dialog-panel .dialog-scroll:not(:has(.dialog-scroll)) {
+  --dialog-scroll-mask: linear-gradient(
+    to bottom,
+    black calc(100% - var(--dialog-fade-height)),
+    transparent
+  );
+  mask-image: var(--dialog-scroll-mask);
+  -webkit-mask-image: var(--dialog-scroll-mask);
+}
+
+.dialog-content:not(:has(.dialog-scroll)) {
+  padding-bottom: var(--dialog-fade-height);
+}
+
+.dialog-scroll-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  margin-inline: -1rem;
+}
+
+.dialog-scroll-frame > .dialog-scroll:focus-visible {
+  outline: none;
+}
+
+/* The focus ring must not be clipped by the scroll viewport's alpha mask. */
+.dialog-scroll-frame:has(> :focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: 0.5rem 1rem var(--dialog-fade-height);
+  border-radius: 1rem;
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 2px;
+  pointer-events: none;
 }
 
 .dialog-glass {

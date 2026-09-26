@@ -268,7 +268,7 @@ export function AddRoundDialog({
             <SwipeableTabPanels
               selectedIndex={selectedIndex}
               onChange={setSelectedIndex}
-              className="-mx-3 -my-3 flex min-h-0 flex-1 flex-col overflow-y-auto py-3"
+              className="dialog-scroll -mx-3 -my-3 flex min-h-0 flex-1 flex-col overflow-y-auto py-3"
             >
               {players.map((player, playerIndex) => {
                 const playerDraft = draft.draft.players.find((p) => p.playerId === player.id);
@@ -276,7 +276,7 @@ export function AddRoundDialog({
                 const isWinner = draft.draft.roundWinnerId === player.id;
 
                 return (
-                  <TabPanel key={player.id} className="flex flex-col px-3">
+                  <TabPanel key={player.id} className="flex flex-col px-3 pb-3">
                     <div data-add-round-panel-content={playerIndex}>
                       <List rowVariant="content">
                         <RoundResultSection

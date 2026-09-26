@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { builtInPhaseSetMatchOptions } from "../../data/hooks/usePhaseSets";
 import { phasesByIdsOptions } from "../../data/hooks/usePhases";
 import type { TemporaryPhaseSet } from "../../types";
-import { Dialog, InlineError, Toast, type ToastHandle } from "../ui";
+import { Dialog, DialogScrollArea, InlineError, Toast, type ToastHandle } from "../ui";
 import { PhasesCardList } from "./PhasesCardList";
 import { PhasesCardShareButton } from "./PhasesCardShareButton";
 
@@ -55,7 +55,9 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
         ) : missingPhaseRecords ? (
           <InlineError message="This Phase Set is missing phase data and cannot be shared." />
         ) : (
-          <PhasesCardList phases={phases} isLoading={isLoading} />
+          <DialogScrollArea aria-label="Phases Card phase list">
+            <PhasesCardList phases={phases} isLoading={isLoading} scrollable={false} />
+          </DialogScrollArea>
         )}
         <Toast ref={toastRef} />
       </div>

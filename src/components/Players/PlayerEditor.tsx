@@ -105,7 +105,7 @@ export function PlayerEditor({
 
       {/* Form */}
       <form
-        className="flex flex-1 flex-col overflow-y-auto p-4"
+        className="dialog-scroll flex flex-1 flex-col overflow-y-auto p-4"
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
