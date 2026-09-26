@@ -319,15 +319,21 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 }
 
 .card-panel-top-content {
+  /* Align independent logo and control layers above the diagonal. */
+  --card-header-alignment-height: max(
+    0px,
+    calc(var(--card-panel-height) - var(--slant) + 1.5rem - 5px)
+  );
+
   height: calc(var(--card-panel-height) + var(--safe-area-inset-top));
   min-height: fit-content;
   padding-top: var(--safe-area-inset-top);
   padding-bottom: var(--slant);
 }
 
-.card-header-logo {
-  /* Keep the logo inside the safe area with extra clearance above the diagonal. */
-  height: max(0px, calc(var(--card-panel-height) - var(--slant) + 1.5rem - 5px));
+.card-header-logo,
+.card-header-controls {
+  height: var(--card-header-alignment-height);
 }
 
 .card-panel-bottom-content {

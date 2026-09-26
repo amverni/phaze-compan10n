@@ -57,11 +57,8 @@ export function CreateGame() {
     <CardBackground
       headerContent={
         <div className="relative flex h-full items-center justify-end">
-          {/* Logo as background */}
           <HeaderLogo />
-
-          {/* Info icon in normal flow, on top */}
-          <div className="relative z-10 mx-auto flex h-full w-full items-center justify-end px-4">
+          <div className="card-header-controls absolute inset-x-0 top-0 z-10 flex items-center justify-end px-4">
             <Button aria-label="Tips" className="size-10">
               <Info className="size-6 relative z-10" />
             </Button>

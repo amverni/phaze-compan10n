@@ -127,7 +127,7 @@ describe("safe-area layout in WebKit", () => {
       const logo = await page.getByRole("img", { name: "Phaze Compan10n" }).boundingBox();
       expect(logo).toEqual({ x: 44, y: 47, width: 302, height: 74 });
       const tips = await page.getByRole("button", { name: "Tips" }).boundingBox();
-      expect(tips).toEqual({ x: 290, y: 54.5, width: 40, height: 40 });
+      expect(tips).toEqual({ x: 290, y: 64, width: 40, height: 40 });
 
       const opaqueColors = await page.evaluate(() => {
         const canvas = document.createElement("canvas");
@@ -253,6 +253,8 @@ describe("responsive header logos in WebKit", () => {
       expect(logo.width).toBeCloseTo(width, 1);
       expect(logo.y + logo.height).toBeLessThanOrEqual(height * 0.15);
       expect((await bounds(page, ".card-panel-top-content")).height).toBeCloseTo(height * 0.15, 1);
+      const tips = await bounds(page, 'button[aria-label="Tips"]');
+      expect(tips.y + tips.height / 2).toBeCloseTo(logo.y + logo.height / 2, 1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     } finally {
       await page.close();

@@ -99,6 +99,70 @@ async function seedGame(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
+it("centers the Phases control with the independent logo layer across viewport sizes and safe areas", async () => {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    colorScheme: "light",
+  });
+  try {
+    await seedGame(page);
+    const button = page.getByRole("button", {
+      name: "Open Phases Card",
+      exact: true,
+      includeHidden: true,
+    });
+    const logo = page.getByRole("img", { name: "Phaze Compan10n" });
+    const header = page.locator(".card-panel-top-content");
+    const main = page.locator(".card-panel-main");
+    for (const { width, height, logoHeight, top, left } of [
+      { width: 320, height: 568, logoHeight: 54.2, top: 0, left: 0 },
+      { width: 390, height: 700, logoHeight: 74, top: 0, left: 0 },
+      { width: 390, height: 844, logoHeight: 95.6, top: 0, left: 0 },
+      { width: 844, height: 390, logoHeight: 27.5, top: 0, left: 0 },
+      { width: 1280, height: 900, logoHeight: 100, top: 0, left: 0 },
+      { width: 390, height: 844, logoHeight: 95.6, top: 47, left: 44 },
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.addStyleTag({
+        content: `:root { --safe-area-inset-top: ${top}px; --safe-area-inset-left: ${left}px; }`,
+      });
+      await expect.poll(async () => (await box(logo)).height).toBeCloseTo(logoHeight, 1);
+      const logoBounds = await box(logo);
+      const buttonBounds = await box(button);
+      const headerBounds = await box(header);
+      const mainBounds = await box(main);
+      expect(buttonBounds.y + buttonBounds.height / 2).toBeCloseTo(
+        logoBounds.y + logoBounds.height / 2,
+        1,
+      );
+      expect(buttonBounds.x).toBe(left + 16);
+      expect(buttonBounds.width).toBeGreaterThanOrEqual(48);
+      expect(buttonBounds.height).toBe(56);
+      expect(logoBounds.x + logoBounds.width / 2).toBeCloseTo(left + (width - left) / 2, 1);
+      expect(headerBounds.height).toBeCloseTo(height * 0.15 + top, 1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+
+      await button.evaluate((element) => {
+        element.setAttribute("hidden", "");
+      });
+      expect(await box(logo)).toEqual(logoBounds);
+      expect(await box(header)).toEqual(headerBounds);
+      expect(await box(main)).toEqual(mainBounds);
+      await button.evaluate((element) => {
+        element.removeAttribute("hidden");
+      });
+    }
+    await button.click();
+    await page
+      .getByRole("dialog", { name: "Phases Card", exact: true })
+      .getByRole("button", { name: "Share Phases Card", exact: true })
+      .waitFor();
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
 describe.each([320, 1280])("approved typography at %ipx viewport width", (width) => {
   it("enlarges the Phase Set switch without overflowing its toolbar", async () => {
     const page = await browser.newPage({ viewport: { width, height: 844 } });

@@ -49,7 +49,7 @@ export function Game({ gameId }: GameProps) {
         headerContent={
           <div className="relative flex h-full items-center">
             <HeaderLogo />
-            <div className="relative z-10 mx-auto flex h-full w-full items-center px-4">
+            <div className="card-header-controls absolute inset-x-0 top-0 z-10 flex items-center px-4">
               {showPhasesCardEntryButton && (
                 <Button
                   type="button"
