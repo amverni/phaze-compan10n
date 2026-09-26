@@ -1,5 +1,5 @@
 import type React from "react";
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { SLANT_PX } from "../../constants/layout";
 
 const STRIPES = [
@@ -58,8 +58,6 @@ interface LogoProps {
 
 /** Phaze Compan10n logo. */
 export const Logo: React.FC<LogoProps> = ({ height, width }) => {
-  const stripeFadeId = useId();
-  const stripeMaskId = useId();
   const scale = height / wordHeight;
   const scaledInnerWidth = innerWidth * scale;
 
@@ -102,50 +100,17 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <defs>
-          <linearGradient
-            id={stripeFadeId}
-            gradientUnits="userSpaceOnUse"
-            x1={-viewBoxWidth}
-            x2={viewBoxWidth * 2}
-          >
-            <stop offset="0" stopColor="white" stopOpacity="0" />
-            <stop offset="33.33%" stopColor="white" stopOpacity="0.25" />
-            <stop offset="40%" stopColor="white" />
-            <stop offset="60%" stopColor="white" />
-            <stop offset="66.67%" stopColor="white" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-          <mask
-            id={stripeMaskId}
-            maskUnits="userSpaceOnUse"
-            x={-viewBoxWidth}
-            y={-wordHeight}
-            width={viewBoxWidth * 3}
-            height={wordHeight * 3}
-          >
-            <rect
-              x={-viewBoxWidth}
-              y={-wordHeight}
-              width={viewBoxWidth * 3}
-              height={wordHeight * 3}
-              fill={`url(#${stripeFadeId})`}
-            />
-          </mask>
-        </defs>
-        <g mask={`url(#${stripeMaskId})`}>
-          {STRIPES.map((color, i) => {
-            const y = stripeBandTop + i * (stripeHeight + stripeGap);
-            // Extend the same slope beyond the word area, including device insets.
-            const points = [
-              `${-viewBoxWidth},${y + dyHalf * 3}`,
-              `${viewBoxWidth * 2},${y - dyHalf * 3}`,
-              `${viewBoxWidth * 2},${y + stripeHeight - dyHalf * 3}`,
-              `${-viewBoxWidth},${y + stripeHeight + dyHalf * 3}`,
-            ].join(" ");
-            return <polygon key={color} points={points} fill={`var(${color})`} />;
-          })}
-        </g>
+        {STRIPES.map((color, i) => {
+          const y = stripeBandTop + i * (stripeHeight + stripeGap);
+          // Extend the same slope beyond the word area, including device insets.
+          const points = [
+            `${-viewBoxWidth},${y + dyHalf * 3}`,
+            `${viewBoxWidth * 2},${y - dyHalf * 3}`,
+            `${viewBoxWidth * 2},${y + stripeHeight - dyHalf * 3}`,
+            `${-viewBoxWidth},${y + stripeHeight + dyHalf * 3}`,
+          ].join(" ");
+          return <polygon key={color} points={points} fill={`var(${color})`} />;
+        })}
       </svg>
       <svg
         className="relative block shrink-0"

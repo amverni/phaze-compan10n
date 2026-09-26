@@ -114,25 +114,46 @@ describe("safe-area layout in WebKit", () => {
     }
   }, 30_000);
 
-  it("paints faded stripes through the side safe area without moving logo text or header controls", async () => {
-    const page = await openPage(700);
+  it.each([
+    "light",
+    "dark",
+  ] as const)("paints full-opacity stripes inside and beyond the logo area in %s mode without moving content", async (colorScheme) => {
+    const page = await openPage(700, colorScheme);
     try {
       await page.addStyleTag({
-        content: ":root { --safe-area-inset-top: 47px; --safe-area-inset-left: 44px; }",
+        content:
+          ":root { --safe-area-inset-top: 47px; --safe-area-inset-left: 44px; --safe-area-inset-right: 44px; }",
       });
       const logo = await page.getByRole("img", { name: "Phaze Compan10n" }).boundingBox();
-      expect(logo).toEqual({ x: 44, y: 36.5, width: 346, height: 100 });
+      expect(logo).toEqual({ x: 44, y: 36.5, width: 302, height: 100 });
       const tips = await page.getByRole("button", { name: "Tips" }).boundingBox();
-      expect(tips).toEqual({ x: 334, y: 54.5, width: 40, height: 40 });
+      expect(tips).toEqual({ x: 290, y: 54.5, width: 40, height: 40 });
 
-      const pixels = await readPixels(page, 20, 0, 1, 152);
-      const colorfulPixels = pixels.filter((red, index) => {
-        if (index % 4 !== 0) return false;
-        const green = pixels[index + 1];
-        const blue = pixels[index + 2];
-        return Math.max(red, green, blue) - Math.min(red, green, blue) > 35;
+      const opaqueColors = await page.evaluate(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 4;
+        canvas.height = 1;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Missing canvas context");
+        const theme = getComputedStyle(document.documentElement);
+        return ["red", "blue", "green", "yellow"].map((color, index) => {
+          context.fillStyle = theme.getPropertyValue(`--color-pt-${color}-500`).trim();
+          context.fillRect(index, 0, 1, 1);
+          return Array.from(context.getImageData(index, 0, 1, 1).data).slice(0, 3);
+        });
       });
-      expect(colorfulPixels.length).toBeGreaterThan(3);
+      // Sample the left inset, normal logo area, and right viewport edge.
+      for (const x of [20, 60, 385]) {
+        const pixels = await readPixels(page, x, 0, 1, 152);
+        for (const color of opaqueColors) {
+          const hasOpaqueStripe = pixels.some(
+            (_, index) =>
+              index % 4 === 0 &&
+              color.every((channel, offset) => Math.abs(pixels[index + offset] - channel) <= 3),
+          );
+          expect(hasOpaqueStripe, `Opaque stripe ${color} at x=${x}`).toBe(true);
+        }
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
       await page.getByRole("button", { name: "Tips" }).click();
     } finally {
