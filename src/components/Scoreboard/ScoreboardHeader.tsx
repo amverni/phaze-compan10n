@@ -38,7 +38,7 @@ export function ScoreboardHeader({
               <span className="text-2xl font-medium leading-none tabular-nums text-text-primary">
                 {phase}
               </span>
-              <span className="text-[11px] leading-none text-text-secondary tabular-nums">
+              <span className="text-sm leading-none text-text-secondary tabular-nums">
                 {formatTiebreaker(tbValue, tiebreaker)}
               </span>
             </div>

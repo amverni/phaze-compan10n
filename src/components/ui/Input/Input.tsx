@@ -3,7 +3,7 @@ import type { ElementType, ReactElement, Ref } from "react";
 import { mergeClassName } from "../mergeClassName";
 
 const baseClasses = [
-  "w-full bg-transparent text-sm outline-none",
+  "w-full bg-transparent text-base outline-none",
   "placeholder:text-text-secondary/50",
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
 ].join(" ");

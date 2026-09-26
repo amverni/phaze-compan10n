@@ -56,7 +56,7 @@ export function PlayerResultCell({
         {isDealer && (
           <span
             aria-hidden
-            className={`absolute left-0.75 inline-flex size-3.75 items-center justify-center rounded-full text-[9px] font-medium leading-none ${
+            className={`absolute left-0.75 inline-flex size-4.25 items-center justify-center rounded-full text-xs font-medium leading-none ${
               isGhost ? "opacity-60" : ""
             }`}
             style={{ backgroundColor: "#FAC775", color: "#412402" }}
