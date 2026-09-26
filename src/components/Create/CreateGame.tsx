@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useCreateGame } from "../../data/hooks/useGames";
 import type { ArrayAtLeastOne, PhaseId, TemporaryPhaseSet } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
-import { Logo } from "../Logo/Logo";
+import { HeaderLogo } from "../Logo/HeaderLogo";
 import { Button, ScrollFade, SwipeableTabPanels, TabList } from "../ui";
 import { useGamePhases, useGamePlayers, useGameSettings } from "./CreateGameContext";
 import { Phases } from "./Phases";
@@ -58,9 +58,7 @@ export function CreateGame() {
       headerContent={
         <div className="relative flex h-full items-center justify-end">
           {/* Logo as background */}
-          <div className="absolute inset-0 flex items-center justify-center pt-6">
-            <Logo height={100} width="100%" />
-          </div>
+          <HeaderLogo />
 
           {/* Info icon in normal flow, on top */}
           <div className="relative z-10 mx-auto flex h-full w-full items-center justify-end px-4">

@@ -54,29 +54,39 @@ interface LogoProps {
   height: number;
   /** Width of the word area; the decorative stripe band may bleed beyond it. */
   width?: number | string;
+  /** Treat height as a cap and shrink the word area to fit the available space. */
+  fitToContainer?: boolean;
 }
 
 /** Phaze Compan10n logo. */
-export const Logo: React.FC<LogoProps> = ({ height, width }) => {
-  const scale = height / wordHeight;
-  const scaledInnerWidth = innerWidth * scale;
+export const Logo: React.FC<LogoProps> = ({ height, width, fitToContainer = false }) => {
+  const scaledInnerWidth = (innerWidth * height) / wordHeight;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
 
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    setContainerWidth(el.getBoundingClientRect().width);
+    const { width, height } = el.getBoundingClientRect();
+    setContainerSize({ width, height });
     const ro = new ResizeObserver(([entry]) => {
-      setContainerWidth(entry.contentRect.width);
+      const { width, height } = entry.contentRect;
+      setContainerSize({ width, height });
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  const targetWidth = containerWidth || (typeof width === "number" ? width : scaledInnerWidth);
-  const viewBoxWidth = Math.max(innerWidth, targetWidth / scale);
+  const targetWidth =
+    containerSize?.width ?? (typeof width === "number" ? width : scaledInnerWidth);
+  const renderedHeight = fitToContainer
+    ? Math.min(height, containerSize?.height ?? height, (targetWidth * wordHeight) / innerWidth)
+    : height;
+  const scale = renderedHeight / wordHeight;
+  const viewBoxWidth = scale > 0 ? Math.max(innerWidth, targetWidth / scale) : innerWidth;
   const svgWidth = viewBoxWidth * scale;
   const visibleWidth = Math.min(targetWidth, svgWidth);
   // Half the total viewBox-unit drop so the clipped visible slant equals SLANT_PX.
@@ -86,17 +96,18 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
   return (
     <div
       ref={containerRef}
-      className="relative shrink-0 flex justify-center"
+      className="relative shrink-0 flex items-center justify-center"
       style={{
         width: width ?? scaledInnerWidth,
         height,
+        maxHeight: fitToContainer ? "100%" : undefined,
       }}
     >
       <svg
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 overflow-visible"
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible"
         viewBox={`0 0 ${viewBoxWidth} ${wordHeight}`}
         width={svgWidth}
-        height={height}
+        height={renderedHeight}
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
@@ -116,7 +127,7 @@ export const Logo: React.FC<LogoProps> = ({ height, width }) => {
         className="relative block shrink-0"
         viewBox={`0 0 ${viewBoxWidth} ${wordHeight}`}
         width={svgWidth}
-        height={height}
+        height={renderedHeight}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
       >

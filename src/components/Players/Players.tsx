@@ -3,7 +3,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Player } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
-import { Logo } from "../Logo/Logo";
+import { HeaderLogo } from "../Logo/HeaderLogo";
 import { Button, Dialog } from "../ui";
 import { PlayerEditor } from "./PlayerEditor";
 import { PlayerListRow } from "./PlayerListRow";
@@ -32,9 +32,7 @@ export function Players() {
     <CardBackground
       headerContent={
         <div className="relative flex h-full items-center">
-          <div className="absolute inset-0 flex items-center justify-center pt-6">
-            <Logo height={100} width="100%" />
-          </div>
+          <HeaderLogo />
         </div>
       }
       mainContent={

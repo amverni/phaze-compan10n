@@ -325,6 +325,11 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   padding-bottom: var(--slant);
 }
 
+.card-header-logo {
+  /* Keep the logo inside the safe area with extra clearance above the diagonal. */
+  height: max(0px, calc(var(--card-panel-height) - var(--slant) + 1.5rem - 5px));
+}
+
 .card-panel-bottom-content {
   /* Include the 10% press growth, visible shadow tail, and the disclaimer. */
   --footer-top: calc(var(--slant) + var(--card-footer-shadow-top));

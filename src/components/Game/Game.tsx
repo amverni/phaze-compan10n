@@ -7,7 +7,7 @@ import { playersByIdsOptions } from "../../data/hooks/usePlayers";
 import { roundsListOptions } from "../../data/hooks/useRounds";
 import type { GameId } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
-import { Logo } from "../Logo/Logo";
+import { HeaderLogo } from "../Logo/HeaderLogo";
 import {
   PhasesCardDialog,
   PhasesCardEntryButtonContent,
@@ -48,9 +48,7 @@ export function Game({ gameId }: GameProps) {
       <CardBackground
         headerContent={
           <div className="relative flex h-full items-center">
-            <div className="absolute inset-0 flex items-center justify-center pt-6">
-              <Logo height={100} width="100%" />
-            </div>
+            <HeaderLogo />
             <div className="relative z-10 mx-auto flex h-full w-full items-center px-4">
               {showPhasesCardEntryButton && (
                 <Button

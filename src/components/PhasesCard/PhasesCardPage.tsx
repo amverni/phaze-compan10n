@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { type ReactNode, useRef } from "react";
 import type { PhasesCardPhase, PhasesCardShareTarget } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
-import { Logo } from "../Logo/Logo";
+import { HeaderLogo } from "../Logo/HeaderLogo";
 import { Button, InlineError, Toast, type ToastHandle } from "../ui";
 import { PhasesCardList } from "./PhasesCardList";
 import { PhasesCardShareButton } from "./PhasesCardShareButton";
@@ -33,9 +33,7 @@ export function PhasesCardPage({
     <CardBackground
       headerContent={
         <div className="relative flex h-full items-center">
-          <div className="absolute inset-0 flex items-center justify-center pt-6">
-            <Logo height={100} width="100%" />
-          </div>
+          <HeaderLogo />
         </div>
       }
       mainContent={

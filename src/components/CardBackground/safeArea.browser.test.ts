@@ -25,9 +25,9 @@ afterAll(async () => {
   await server?.close();
 });
 
-async function openPage(height: number, colorScheme: "light" | "dark" = "light") {
+async function openPage(height: number, colorScheme: "light" | "dark" = "light", width = 390) {
   const page = await browser.newPage({
-    viewport: { width: 390, height },
+    viewport: { width, height },
     colorScheme,
     hasTouch: true,
   });
@@ -125,7 +125,7 @@ describe("safe-area layout in WebKit", () => {
           ":root { --safe-area-inset-top: 47px; --safe-area-inset-left: 44px; --safe-area-inset-right: 44px; }",
       });
       const logo = await page.getByRole("img", { name: "Phaze Compan10n" }).boundingBox();
-      expect(logo).toEqual({ x: 44, y: 36.5, width: 302, height: 100 });
+      expect(logo).toEqual({ x: 44, y: 47, width: 302, height: 74 });
       const tips = await page.getByRole("button", { name: "Tips" }).boundingBox();
       expect(tips).toEqual({ x: 290, y: 54.5, width: 40, height: 40 });
 
@@ -230,4 +230,107 @@ describe("safe-area layout in WebKit", () => {
       await page.close();
     }
   }, 30_000);
+});
+
+describe("responsive header logos in WebKit", () => {
+  it.each([
+    { width: 320, height: 568, logoHeight: 54.2 },
+    { width: 375, height: 600, logoHeight: 59 },
+    { width: 390, height: 700, logoHeight: 74 },
+    { width: 844, height: 390, logoHeight: 27.5 },
+    { width: 1280, height: 900, logoHeight: 100 },
+  ])("uses the largest fitting header logo with 5px extra clearance at $width x $height", async ({
+    width,
+    height,
+    logoHeight,
+  }) => {
+    const page = await openPage(height, "light", width);
+    try {
+      const logo = await bounds(page, 'svg[role="img"]');
+      expect(logo.y).toBeGreaterThanOrEqual(0);
+      expect(logo.height).toBeCloseTo(logoHeight, 1);
+      expect(logo.height).toBeLessThanOrEqual(100);
+      expect(logo.width).toBeCloseTo(width, 1);
+      expect(logo.y + logo.height).toBeLessThanOrEqual(height * 0.15);
+      expect((await bounds(page, ".card-panel-top-content")).height).toBeCloseTo(height * 0.15, 1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it("refits on rotation and grows back to the 100px cap without a minimum", async () => {
+    const page = await openPage(900);
+    try {
+      for (const { width, height, logoHeight } of [
+        { width: 844, height: 390, logoHeight: 27.5 },
+        { width: 320, height: 568, logoHeight: 54.2 },
+        { width: 390, height: 844, logoHeight: 95.6 },
+        { width: 1440, height: 1200, logoHeight: 100 },
+      ]) {
+        await page.setViewportSize({ width, height });
+        await expect
+          .poll(async () => (await bounds(page, 'svg[role="img"]')).height)
+          .toBeCloseTo(logoHeight, 1);
+        expect((await bounds(page, 'svg[role="img"]')).y).toBeGreaterThanOrEqual(0);
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
+  it("fits narrow safe-area widths proportionally and recovers when space returns", async () => {
+    const page = await openPage(900);
+    try {
+      await page.addStyleTag({
+        content:
+          ":root { --safe-area-inset-top: 47px; --safe-area-inset-left: 120px; --safe-area-inset-right: 120px; }",
+      });
+      // The 420 x 159.44 word area must fit in the remaining 150px.
+      await expect
+        .poll(async () => (await bounds(page, 'svg[role="img"]')).height)
+        .toBeCloseTo((150 * 159.44) / 420, 1);
+      const logo = await bounds(page, 'svg[role="img"]');
+      expect(logo.x).toBeCloseTo(120, 1);
+      expect(logo.width).toBeCloseTo(150, 1);
+      expect(logo.y).toBeGreaterThanOrEqual(47);
+
+      await page.addStyleTag({
+        content: ":root { --safe-area-inset-left: 390px; --safe-area-inset-right: 0px; }",
+      });
+      await expect
+        .poll(() =>
+          page
+            .locator('svg[role="img"]')
+            .evaluate((element) => element.getBoundingClientRect().height),
+        )
+        .toBe(0);
+      expect(await page.locator('svg[role="img"]').getAttribute("viewBox")).not.toMatch(
+        /NaN|Infinity/,
+      );
+
+      await page.addStyleTag({
+        content: ":root { --safe-area-inset-left: 0px; --safe-area-inset-right: 0px; }",
+      });
+      await expect.poll(async () => (await bounds(page, 'svg[role="img"]')).height).toBe(100);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it("shares compact sizing across header pages without changing the Home logo", async () => {
+    const page = await openPage(600, "light", 375);
+    try {
+      for (const route of ["/create", "/players", "/phases", "/settings", "/phasescard"]) {
+        await page.goto(`${appUrl}#${route}`);
+        await expect
+          .poll(async () => (await bounds(page, '.card-panel-top-content svg[role="img"]')).height)
+          .toBe(59);
+      }
+      await page.goto(`${appUrl}#/`);
+      expect((await bounds(page, '.card-panel-main svg[role="img"]')).height).toBe(120);
+    } finally {
+      await page.close();
+    }
+  });
 });

@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Layers, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { CardBackground } from "../CardBackground/CardBackground";
-import { Logo } from "../Logo/Logo";
+import { HeaderLogo } from "../Logo/HeaderLogo";
 import { Button, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PhaseSetsList } from "./PhaseSetsList";
 import { PhasesList } from "./PhasesList";
@@ -17,9 +17,7 @@ export function Phases() {
     <CardBackground
       headerContent={
         <div className="relative flex h-full items-center">
-          <div className="absolute inset-0 flex items-center justify-center pt-6">
-            <Logo height={100} width="100%" />
-          </div>
+          <HeaderLogo />
         </div>
       }
       mainContent={
