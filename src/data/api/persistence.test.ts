@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it } from "vitest";
 import { closeDB } from "../db";
 import { favoritesApi } from "./favorites";
 import { gamesApi } from "./games";
+import { genericGamesApi } from "./genericGames";
 import { phaseSetsApi } from "./phaseSets";
 import { phasesApi } from "./phases";
 import { playersApi } from "./players";
@@ -57,6 +58,26 @@ it("resets all disposable pre-refactor data once, then preserves new data on reo
   expect(await favoritesApi.getAll("phase")).toEqual([phase.id]);
   closeDB();
   expect(await playersApi.getById(player.id)).toEqual(player);
+});
+
+it("retries generic list and detail reads after a rejected database open", async () => {
+  const incompatible = await openDB("phase10-db", 9);
+  incompatible.close();
+  const failed = await Promise.allSettled([
+    genericGamesApi.getActiveViews(),
+    genericGamesApi.getDetail("missing"),
+  ]);
+  expect(failed.map((result) => result.status)).toEqual(["rejected", "rejected"]);
+  await deleteDB("phase10-db");
+
+  expect(await genericGamesApi.getActiveViews()).toEqual([]);
+  expect(await genericGamesApi.getDetail("missing")).toBeNull();
+  const player = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const game = await genericGamesApi.create({
+    players: [player.id],
+    settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+  });
+  expect(await genericGamesApi.getDetail(game.id)).toEqual({ game, players: [player] });
 });
 
 async function resetDatabase() {

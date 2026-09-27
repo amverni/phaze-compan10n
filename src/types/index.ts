@@ -8,6 +8,7 @@ export type {
   GameSettings,
   GameTiebreaker,
   PhaseGame,
+  StoredGame,
 } from "./game";
 export type {
   ActiveGameMetadata,
@@ -16,6 +17,19 @@ export type {
   RoundMetadata,
   ScorekeeperId,
 } from "./gameLifecycle";
+export type {
+  ActiveGenericGame,
+  CompletedGenericGame,
+  CreateGenericGameInput,
+  GenericGame,
+  GenericGameView,
+  GenericPointsSettings,
+  GenericScoreDirection,
+  GenericScoringMode,
+  GenericScoringSettings,
+  GenericTiebreakerSettings,
+} from "./genericGame";
+export type { GenericPointsScore, GenericRound } from "./genericRound";
 export type {
   BuiltInPhase,
   ColorMeld,
@@ -42,7 +56,7 @@ export type {
   PhasesCardShareTarget,
 } from "./phasesCard";
 export type { Player, PlayerId, PlayerIdentity } from "./player";
-export type { PhaseRound, PhaseStatus, Round, RoundScore } from "./round";
+export type { PhaseRound, PhaseStatus, Round, RoundScore, StoredRound } from "./round";
 export type { ScorekeeperExperience } from "./scorekeeperExperience";
 export type { AppGameDefaults, AppSettings, AppSettingsId } from "./settings";
 export type {

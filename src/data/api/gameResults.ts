@@ -4,6 +4,7 @@ export function getGamePlayers(
   game: Game,
   livePlayers: readonly PlayerIdentity[],
 ): PlayerIdentity[] {
+  if (game.scorekeeper !== "phase10") throw new Error("Phase 10 Game not found");
   const identities = game.status === "completed" ? game.playerSnapshots : livePlayers;
   const byId = new Map(identities.map((player) => [player.id, player]));
   const included = new Set(game.status === "active" ? game.activePlayers : game.players);

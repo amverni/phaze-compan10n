@@ -1,7 +1,14 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { Game, Player, PlayerId } from "../../types";
 import { getGamePlayers } from "../api/gameResults";
 import { playersApi } from "../api/players";
+import { gameKeys } from "./useGames";
 
 export const playerKeys = {
   all: ["players"] as const,
@@ -28,7 +35,7 @@ export function playersByIdsOptions(ids: PlayerId[]) {
   });
 }
 
-export function useGamePlayers(game: Game | undefined) {
+export function useGamePlayers(game: Game | null | undefined) {
   const { data: livePlayers } = useQuery({
     ...playersByIdsOptions(game?.players ?? []),
     enabled: game?.status === "active",
@@ -41,7 +48,7 @@ export function useCreatePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<Player, "id" | "createdAt">) => playersApi.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    onSuccess: () => invalidatePlayerViews(queryClient),
   });
 }
 
@@ -55,7 +62,7 @@ export function useUpdatePlayer() {
       id: PlayerId;
       updates: Partial<Omit<Player, "id" | "createdAt">>;
     }) => playersApi.update(id, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    onSuccess: () => invalidatePlayerViews(queryClient),
   });
 }
 
@@ -63,6 +70,13 @@ export function useDeletePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: PlayerId) => playersApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    onSuccess: () => invalidatePlayerViews(queryClient),
   });
+}
+
+function invalidatePlayerViews(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+  ]);
 }

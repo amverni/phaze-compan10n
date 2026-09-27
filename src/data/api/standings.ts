@@ -18,6 +18,9 @@ import {
 import { getGamePlayers } from "./gameResults";
 
 export function deriveStandings({ game, players, rounds }: StandingsInput): StandingsDerivation {
+  if (game.scorekeeper !== "phase10" || rounds.some((round) => round.scorekeeper !== "phase10")) {
+    throw new Error("Phase 10 Standings require Phase 10 Game and Round data");
+  }
   const includedPlayers = getGamePlayers(game, players);
   const sortedRounds = rounds.slice().sort((a, b) => a.roundNumber - b.roundNumber);
   const totalPhases = game.phaseSet.phases.length;

@@ -10,7 +10,7 @@ import type {
 import { getNextCurrentPhase } from "../../utils";
 import { getDB } from "../db";
 import { finalizeGame, requirePlayers, withGameTransaction } from "./gameLifecycle";
-import { assertActivePhaseGame } from "./games";
+import { assertActivePhaseGame, assertPhaseRounds } from "./games";
 import { resolveGameCompletion } from "./roundCompletion";
 
 type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
@@ -38,7 +38,11 @@ export const roundsApi = {
    */
   async getByGameId(gameId: GameId): Promise<Round[]> {
     const db = await getDB();
-    const rounds = await db.getAllFromIndex("rounds", "by-game", gameId);
+    const tx = db.transaction(["games", "rounds"]);
+    const game = await tx.objectStore("games").get(gameId);
+    if (game?.scorekeeper !== "phase10") return [];
+    const rounds = await tx.objectStore("rounds").index("by-game").getAll(gameId);
+    await tx.done;
     return rounds
       .filter((round) => round.scorekeeper === "phase10")
       .sort((a, b) => a.roundNumber - b.roundNumber);
@@ -76,6 +80,7 @@ export const roundsApi = {
       const now = Date.now();
 
       const existingRounds = await roundsStore.index("by-game").getAll(data.gameId);
+      assertPhaseRounds(existingRounds);
       const nextRoundNumber =
         existingRounds.length > 0 ? Math.max(...existingRounds.map((r) => r.roundNumber)) + 1 : 1;
 
@@ -164,6 +169,7 @@ export const roundsApi = {
       const roundsStore = tx.objectStore("rounds");
       const round = await roundsStore.get([gameId, roundNumber]);
       if (!round) throw new Error("Round not found");
+      if (round.scorekeeper !== "phase10") throw new Error("Round belongs to another Scorekeeper");
 
       const scoreIndex = round.scores.findIndex((s) => s.playerId === playerId);
       if (scoreIndex === -1) throw new Error("Player not found in round");
@@ -179,6 +185,7 @@ export const roundsApi = {
       if (updates.phaseStatus !== undefined && game) {
         const totalPhases = game.phaseSet.phases.length;
         const allRounds = await roundsStore.index("by-game").getAll(gameId);
+        assertPhaseRounds(allRounds);
         const sorted = allRounds
           .map((r) => (r.roundNumber === roundNumber ? updatedRound : r))
           .sort((a, b) => a.roundNumber - b.roundNumber);
@@ -230,6 +237,7 @@ export const roundsApi = {
       assertActivePhaseGame(game);
       const store = tx.objectStore("rounds");
       const rounds = await store.index("by-game").getAll(gameId);
+      assertPhaseRounds(rounds);
       const round = rounds.find((candidate) => candidate.roundNumber === roundNumber);
       if (!round) return;
 
@@ -253,6 +261,7 @@ export const roundsApi = {
       assertActivePhaseGame(game);
       const store = tx.objectStore("rounds");
       const rounds = await store.index("by-game").getAll(gameId);
+      assertPhaseRounds(rounds);
       await Promise.all(rounds.map((r) => store.delete([r.gameId, r.roundNumber])));
     });
   },
