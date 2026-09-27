@@ -1,18 +1,19 @@
 import { Button } from "@headlessui/react";
 import { Pencil, Star, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useDeletePlayer, useUpdatePlayer } from "../../data/hooks/usePlayers";
-import type { Player } from "../../types";
+import { useUpdatePlayer } from "../../data/hooks/usePlayers";
+import type { Player, PlayerId } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { FavoriteAccent } from "../ui";
 
 export interface PlayerListRowProps {
   player: Player;
   onEdit?: (player: Player) => void;
+  onDelete: (id: PlayerId) => void;
+  isDeleting: boolean;
 }
 
-export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
-  const deletePlayer = useDeletePlayer();
+export function PlayerListRow({ player, onEdit, onDelete, isDeleting }: PlayerListRowProps) {
   const updatePlayer = useUpdatePlayer();
   const [isFavorite, setIsFavorite] = useState(player.isFavorite);
 
@@ -37,8 +38,9 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
   }
 
   function handleDelete() {
+    if (isDeleting) return;
     if (!window.confirm(`Delete ${player.name}?`)) return;
-    deletePlayer.mutate(player.id);
+    onDelete(player.id);
   }
 
   return (
@@ -63,9 +65,10 @@ export function PlayerListRow({ player, onEdit }: PlayerListRowProps) {
         <Star className={isFavorite ? "h-4 w-4 shrink-0 fill-current" : "h-4 w-4 shrink-0"} />
       </Button>
       <Button
-        className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20"
+        className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:text-red-500! hover:bg-black/5 dark:hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
         onClick={handleDelete}
         aria-label={`Delete ${player.name}`}
+        disabled={isDeleting}
       >
         <Trash className="h-4 w-4 shrink-0 fill-none group-hover/trash:fill-current" />
       </Button>

@@ -65,56 +65,16 @@ describe("roundsApi.add", () => {
 
     expect(result.outcome).toBe("gameCompleted");
     if (result.outcome !== "gameCompleted") throw new Error("Expected Game completion");
-    expect(result.completedGame.winnerId).toBe(players.amy.id);
+    expect(result.completedGame.winnerIds).toEqual([players.amy.id]);
     expect(result.gameWinner).toEqual(players.amy);
     expect(result).not.toHaveProperty("updatedWinner");
     expect(storedGame).toMatchObject({
       status: "completed",
-      winnerId: players.amy.id,
-      winnerName: players.amy.name,
+      winnerIds: [players.amy.id],
       players: [players.amy.id, players.bob.id],
     });
     expect(await playersApi.getAll()).toEqual([players.amy, players.bob]);
     expect(storedRound?.scores.map((score) => score.currentPhase)).toEqual([2, 2]);
-  });
-
-  it("uses Game defaults when completing a legacy Active Game without persisted settings", async () => {
-    const {
-      settings: _settings,
-      lastActivityAt: _lastActivityAt,
-      ...legacyGame
-    } = makeActiveGame();
-    await seedGame(legacyGame as ActiveGame, [
-      makeRound(1, players.bob.id, [
-        { playerId: players.amy.id, currentPhase: 1, phaseStatus: "completed", score: 5 },
-        { playerId: players.bob.id, currentPhase: 1, phaseStatus: "completed", score: 10 },
-      ]),
-    ]);
-
-    const result = await roundsApi.add({
-      gameId: legacyGame.id,
-      roundWinnerId: players.amy.id,
-      scores: [
-        { playerId: players.amy.id, phaseStatus: "completed", score: 0 },
-        { playerId: players.bob.id, phaseStatus: "completed", score: 2 },
-      ],
-    });
-
-    const db = await getDB();
-    const storedGame = await db.get("games", legacyGame.id);
-
-    expect(result.outcome).toBe("gameCompleted");
-    if (result.outcome !== "gameCompleted") throw new Error("Expected Game completion");
-    expect(result.completedGame.settings.tiebreaker).toBe("lowestPoints");
-    expect(storedGame).toMatchObject({
-      status: "completed",
-      settings: {
-        tiebreaker: "lowestPoints",
-        roundSkipPenalty: 100,
-        sitOutPenalty: 0,
-      },
-      winnerId: players.amy.id,
-    });
   });
 
   it("leaves saved Players unchanged when deleting a Completed Game", async () => {
@@ -139,34 +99,6 @@ describe("roundsApi.add", () => {
     expect(await playersApi.getAll()).toEqual([players.amy, players.bob]);
     expect(await gamesApi.getById(game.id)).toBeUndefined();
     expect(await roundsApi.getByGameId(game.id)).toEqual([]);
-  });
-
-  it("ignores legacy Player Win Counts without migrating or incrementing them", async () => {
-    const game = makeActiveGame();
-    await seedGame({
-      ...game,
-      phaseSet: { ...game.phaseSet, phases: ["phase-1"] },
-    });
-    const legacyPlayer = { ...players.amy, wins: 37 };
-    const db = await getDB();
-    await db.put("players", legacyPlayer);
-
-    const result = await roundsApi.add({
-      gameId: game.id,
-      roundWinnerId: players.amy.id,
-      scores: [
-        { playerId: players.amy.id, phaseStatus: "completed", score: 0 },
-        { playerId: players.bob.id, phaseStatus: "failed", score: 20 },
-      ],
-    });
-
-    expect(result.outcome).toBe("gameCompleted");
-    expect(await gamesApi.getById(game.id)).toMatchObject({
-      status: "completed",
-      winnerId: players.amy.id,
-      winnerName: "Amy",
-    });
-    expect(await playersApi.getAll()).toEqual([legacyPlayer, players.bob]);
   });
 });
 

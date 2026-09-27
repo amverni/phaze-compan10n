@@ -1,10 +1,4 @@
-import type {
-  AppGameDefaults,
-  AppSettings,
-  GameSettings,
-  GameTiebreaker,
-  PhaseSetId,
-} from "../../types";
+import type { AppGameDefaults, AppSettings, GameTiebreaker, PhaseSetId } from "../../types";
 import { APP_SETTINGS_ID, DEFAULT_APP_SETTINGS } from "../constants/appSettings";
 import {
   DEFAULT_GAME_SETTINGS,
@@ -13,11 +7,6 @@ import {
 } from "../constants/gameSettings";
 import { getDB } from "../db";
 import { phaseSetsApi } from "./phaseSets";
-
-type LegacyAppSettings = Partial<Omit<AppSettings, "gameDefaults">> & {
-  game?: Partial<GameSettings>;
-  gameDefaults?: Partial<AppGameDefaults>;
-};
 
 export const settingsApi = {
   async get(): Promise<AppSettings> {
@@ -65,12 +54,8 @@ export const settingsApi = {
   },
 };
 
-async function withSettingsDefaults(settings?: LegacyAppSettings): Promise<AppSettings> {
-  const legacyGameSettings = {
-    ...settings?.game,
-    ...settings?.gameDefaults,
-  };
-  const normalizedGameSettings = normalizeGameSettings(legacyGameSettings);
+async function withSettingsDefaults(settings?: AppSettings): Promise<AppSettings> {
+  const normalizedGameSettings = normalizeGameSettings(settings?.gameDefaults);
   const gameDefaults: AppGameDefaults = {
     ...DEFAULT_APP_SETTINGS.gameDefaults,
     ...normalizedGameSettings,

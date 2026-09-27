@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
+import { useDeletePlayer } from "../../data/hooks/usePlayers";
 import type { Player } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { HeaderLogo } from "../Logo/HeaderLogo";
@@ -10,6 +11,7 @@ import { PlayerListRow } from "./PlayerListRow";
 import { PlayersSearch } from "./PlayersSearch";
 
 export function Players() {
+  const deletePlayer = useDeletePlayer();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [defaultName, setDefaultName] = useState("");
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
@@ -38,8 +40,15 @@ export function Players() {
       mainContent={
         <div className="content-container h-full">
           <PlayersSearch
+            error={deletePlayer.error?.message}
             renderRow={(player) => (
-              <PlayerListRow key={player.id} player={player} onEdit={handleEdit} />
+              <PlayerListRow
+                key={player.id}
+                player={player}
+                onEdit={handleEdit}
+                onDelete={deletePlayer.mutate}
+                isDeleting={deletePlayer.isPending}
+              />
             )}
             actions={(searchTerm) => (
               <Button

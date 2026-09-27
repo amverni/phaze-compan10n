@@ -1,10 +1,11 @@
-import type { GameId } from "./game";
+import type { RoundMetadata } from "./gameLifecycle";
 import type { PlayerId } from "./player";
 import type { ArrayAtLeastOne } from "./utils";
 
-export interface Round {
-  gameId: GameId;
-  roundNumber: number;
+export type Round = PhaseRound;
+
+export interface PhaseRound extends RoundMetadata {
+  scorekeeper: "phase10";
   scores: ArrayAtLeastOne<RoundScore>;
   roundWinnerId: PlayerId;
 }

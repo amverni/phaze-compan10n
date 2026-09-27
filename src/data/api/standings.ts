@@ -1,5 +1,4 @@
 import type {
-  Game,
   GameTiebreaker,
   PlayerId,
   PlayerIdentity,
@@ -16,13 +15,10 @@ import {
   isLowerBetterTiebreaker,
   toTiebreakerStandingValue,
 } from "../../utils";
+import { getGamePlayers } from "./gameResults";
 
-export function deriveStandings<TPlayer extends PlayerIdentity>({
-  game,
-  players,
-  rounds,
-}: StandingsInput<TPlayer>): StandingsDerivation<TPlayer> {
-  const includedPlayers = getIncludedPlayers(game, players);
+export function deriveStandings({ game, players, rounds }: StandingsInput): StandingsDerivation {
+  const includedPlayers = getGamePlayers(game, players);
   const sortedRounds = rounds.slice().sort((a, b) => a.roundNumber - b.roundNumber);
   const totalPhases = game.phaseSet.phases.length;
   const gameOrder = new Map(game.players.map((playerId, index) => [playerId, index]));
@@ -103,7 +99,7 @@ export function deriveStandings<TPlayer extends PlayerIdentity>({
   const hasFinishedPlayers = rows.some((row) => row.progress.isFinished);
   const gameWinner =
     game.status === "completed"
-      ? (rows.find((row) => row.player.id === game.winnerId) ?? null)
+      ? (rows.find((row) => row.player.id === game.winnerIds[0]) ?? null)
       : hasFinishedPlayers
         ? (rows[0] ?? null)
         : null;
@@ -122,19 +118,6 @@ export function deriveStandings<TPlayer extends PlayerIdentity>({
     hasFinishedPlayers,
     gameWinner,
   };
-}
-
-function getIncludedPlayers<TPlayer extends PlayerIdentity>(
-  game: Game,
-  players: readonly TPlayer[],
-): TPlayer[] {
-  const includedIds = new Set(game.status === "active" ? game.activePlayers : game.players);
-  const playerById = new Map(players.map((player) => [player.id, player]));
-
-  return game.players
-    .filter((playerId) => includedIds.has(playerId))
-    .map((playerId) => playerById.get(playerId))
-    .filter((player): player is TPlayer => player !== undefined);
 }
 
 function compareTiebreakerTotals(

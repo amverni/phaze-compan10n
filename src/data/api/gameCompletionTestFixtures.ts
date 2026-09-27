@@ -8,8 +8,9 @@ export const completionPlayers = {
 
 export function makeActiveGame(overrides: Partial<ActiveGame> = {}): ActiveGame {
   const playerIds = [completionPlayers.amy.id, completionPlayers.bob.id];
-  return {
+  const game = {
     id: "game-1",
+    scorekeeper: "phase10",
     status: "active",
     phaseSet: {
       id: "phase-set-1",
@@ -28,6 +29,7 @@ export function makeActiveGame(overrides: Partial<ActiveGame> = {}): ActiveGame 
     lastActivityAt: 10,
     ...overrides,
   };
+  return game as ActiveGame;
 }
 
 export function makeRound(
@@ -37,10 +39,11 @@ export function makeRound(
 ): Round {
   return {
     gameId: "game-1",
+    scorekeeper: "phase10",
     roundNumber,
     roundWinnerId,
     scores,
-  };
+  } as Round;
 }
 
 function makePlayer(id: string, name: string): Player {

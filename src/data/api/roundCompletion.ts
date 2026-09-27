@@ -1,16 +1,17 @@
-import type { ActiveGame, CompletedGame, Player, Round } from "../../types";
+import type { ActiveGame, CompletedGame, PlayerIdentity, Round } from "../../types";
+import { capturePlayerSnapshots } from "./gameResults";
 import { deriveStandings } from "./standings";
 
 interface ResolveGameCompletionInput {
   game: ActiveGame;
-  players: readonly Player[];
+  players: readonly PlayerIdentity[];
   rounds: readonly Round[];
   completedAt: number;
 }
 
 export interface GameCompletionResolution {
   completedGame: CompletedGame;
-  gameWinner: Player;
+  gameWinner: PlayerIdentity;
 }
 
 export function resolveGameCompletion(
@@ -30,6 +31,7 @@ export function resolveGameCompletion(
   return {
     completedGame: {
       id: input.game.id,
+      scorekeeper: "phase10",
       status: "completed",
       phaseSet: input.game.phaseSet,
       players: standings.includedPlayers.map((player) => player.id),
@@ -37,8 +39,12 @@ export function resolveGameCompletion(
       createdAt: input.game.createdAt,
       lastActivityAt: input.completedAt,
       completedAt: input.completedAt,
-      winnerId: gameWinner.id,
-      winnerName: gameWinner.name,
+      completionType: "normal",
+      winnerIds: [gameWinner.id],
+      playerSnapshots: capturePlayerSnapshots(
+        standings.includedPlayers.map((player) => player.id),
+        input.players,
+      ),
     },
     gameWinner,
   };

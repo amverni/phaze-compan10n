@@ -16,6 +16,7 @@ describe("playersApi", () => {
       color: "Jam",
       isFavorite: 0,
     });
+
     expect(await playersApi.getById(player.id)).toEqual(player);
     expect(await playersApi.getByIds([player.id])).toEqual([player]);
 
@@ -29,6 +30,15 @@ describe("playersApi", () => {
     await playersApi.delete(player.id);
     expect(await playersApi.getById(player.id)).toBeUndefined();
     expect(await playersApi.getAll()).toEqual([]);
+  });
+
+  it("does not resurrect a saved Player when an edit races with deletion", async () => {
+    const player = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+    await Promise.allSettled([
+      playersApi.update(player.id, { name: "Amelia" }),
+      playersApi.delete(player.id),
+    ]);
+    expect(await playersApi.getById(player.id)).toBeUndefined();
   });
 });
 

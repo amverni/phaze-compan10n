@@ -295,8 +295,7 @@ describe("deriveStandings", () => {
   it("uses finalized Game Winner id for a Completed Game without a Finished Player state", () => {
     const game = makeCompletedGame({
       players: [players.amy.id, players.bob.id],
-      winnerId: players.bob.id,
-      winnerName: players.bob.name,
+      winnerIds: [players.bob.id],
     });
 
     const standings = deriveStandings({
@@ -450,6 +449,7 @@ function makePlayer(id: string, name: string, index: number): Player {
 
 function makeActiveGame(overrides: Partial<ActiveGame> = {}): ActiveGame {
   return {
+    scorekeeper: "phase10",
     id: "game-1",
     status: "active",
     players: [players.amy.id, players.bob.id, players.cam.id],
@@ -473,6 +473,7 @@ function makeActiveGame(overrides: Partial<ActiveGame> = {}): ActiveGame {
 
 function makeCompletedGame(overrides: Partial<CompletedGame> = {}): CompletedGame {
   return {
+    scorekeeper: "phase10",
     id: "game-1",
     status: "completed",
     players: [players.amy.id, players.bob.id, players.cam.id],
@@ -487,8 +488,13 @@ function makeCompletedGame(overrides: Partial<CompletedGame> = {}): CompletedGam
       roundSkipPenalty: 100,
       sitOutPenalty: 50,
     },
-    winnerId: players.amy.id,
-    winnerName: players.amy.name,
+    completionType: "normal",
+    winnerIds: [players.amy.id],
+    playerSnapshots: [
+      { id: "amy", name: "Amy", color: players.amy.color },
+      { id: "bob", name: "Bob", color: players.bob.color },
+      { id: "cam", name: "Cam", color: players.cam.color },
+    ],
     completedAt: 1,
     createdAt: 0,
     lastActivityAt: 1,
@@ -498,6 +504,7 @@ function makeCompletedGame(overrides: Partial<CompletedGame> = {}): CompletedGam
 
 function makeRound(roundNumber: number, roundWinnerId: string, scores: Round["scores"]): Round {
   return {
+    scorekeeper: "phase10",
     gameId: "game-1",
     roundNumber,
     roundWinnerId,

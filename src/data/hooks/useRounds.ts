@@ -7,7 +7,7 @@ type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
 
 export const roundKeys = {
   all: ["rounds"] as const,
-  lists: () => [...roundKeys.all, "list"] as const,
+  lists: () => [...roundKeys.all, "phase10", "list"] as const,
   list: (gameId: GameId) => [...roundKeys.lists(), gameId] as const,
 };
 

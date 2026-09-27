@@ -53,6 +53,7 @@ describe("resolveGameCompletion", () => {
     expect(resolution).toEqual({
       completedGame: {
         id: game.id,
+        scorekeeper: "phase10",
         status: "completed",
         phaseSet: game.phaseSet,
         players: [players.amy.id, players.bob.id],
@@ -60,8 +61,12 @@ describe("resolveGameCompletion", () => {
         createdAt: game.createdAt,
         lastActivityAt: 456,
         completedAt: 456,
-        winnerId: players.amy.id,
-        winnerName: players.amy.name,
+        completionType: "normal",
+        winnerIds: [players.amy.id],
+        playerSnapshots: [
+          { id: "amy", name: "Amy", color: "Jam" },
+          { id: "bob", name: "Bob", color: "Jam" },
+        ],
       },
       gameWinner: players.amy,
     });
@@ -91,7 +96,7 @@ describe("resolveGameCompletion", () => {
       completedAt: 456,
     });
 
-    expect(resolution?.completedGame.winnerId).toBe(expectedWinnerId);
+    expect(resolution?.completedGame.winnerIds).toEqual([expectedWinnerId]);
     expect(resolution?.gameWinner.id).toBe(expectedWinnerId);
   });
 });

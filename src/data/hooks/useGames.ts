@@ -1,12 +1,12 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ActiveGame, GameId } from "../../types";
+import type { CreateGameInput, GameId } from "../../types";
 import { gamesApi } from "../api/games";
 
 export const gameKeys = {
   all: ["games"] as const,
-  lists: () => [...gameKeys.all, "list"] as const,
+  lists: () => [...gameKeys.all, "phase10", "list"] as const,
   active: () => [...gameKeys.lists(), "active"] as const,
-  details: () => [...gameKeys.all, "detail"] as const,
+  details: () => [...gameKeys.all, "phase10", "detail"] as const,
   detail: (id: GameId) => [...gameKeys.details(), id] as const,
 };
 
@@ -28,9 +28,7 @@ export function activeGamesOptions() {
 export function useCreateGame() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (
-      data: Omit<ActiveGame, "id" | "createdAt" | "lastActivityAt" | "status" | "activePlayers">,
-    ) => gamesApi.create(data),
+    mutationFn: (data: CreateGameInput) => gamesApi.create(data),
     onSuccess: (game) => {
       queryClient.invalidateQueries({ queryKey: gameKeys.lists() });
       queryClient.setQueryData(gameKeys.detail(game.id), game);

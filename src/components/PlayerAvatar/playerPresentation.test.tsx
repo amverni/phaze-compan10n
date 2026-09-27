@@ -15,10 +15,12 @@ const identity: PlayerIdentity = { id: "amy", name: "Amy Jones", color: "#123456
 const game: CompletedGame = {
   ...makePhaseGraphGame(),
   players: [identity.id],
+  scorekeeper: "phase10",
   status: "completed",
+  completionType: "normal",
   completedAt: 1,
-  winnerId: identity.id,
-  winnerName: identity.name,
+  winnerIds: [identity.id],
+  playerSnapshots: [identity],
 };
 
 function renderPresentation(players: PlayerIdentity[]) {

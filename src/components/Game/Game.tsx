@@ -29,7 +29,12 @@ export function Game({ gameId }: GameProps) {
   const checkedInitialStandingsGameId = useRef<GameId | null>(null);
   const { data: game } = useQuery(gameDetailOptions(gameId));
   const playerIds = game?.players ?? [];
-  const { data: players } = useQuery(playersByIdsOptions(playerIds));
+  const completedPlayers = game?.status === "completed" ? game.playerSnapshots : null;
+  const { data: livePlayers } = useQuery({
+    ...playersByIdsOptions(playerIds),
+    enabled: playerIds.length > 0 && game?.status === "active",
+  });
+  const players = completedPlayers ?? livePlayers;
   const { data: rounds } = useQuery(roundsListOptions(gameId));
   const standingsReady = Boolean(game && players && rounds);
   const showPhasesCardEntryButton = game ? shouldShowPhasesCardEntryButton(game.status) : true;

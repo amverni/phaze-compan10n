@@ -18,6 +18,7 @@ export interface PlayersSearchProps {
   renderRow: (player: Player) => ReactNode;
   /** Optional render function for extra action buttons. Receives the current search term. */
   actions?: (searchTerm: string) => ReactNode;
+  error?: string;
 }
 
 /**
@@ -29,6 +30,7 @@ export function PlayersSearch({
   inputRef: externalInputRef,
   renderRow,
   actions,
+  error,
 }: PlayersSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const internalInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +66,11 @@ export function PlayersSearch({
 
       {/* Results - negative margin lets shadow bleed, inner padding restores layout */}
       <ScrollFade className="min-h-0 flex-1 -mx-6 px-6 pt-2 pb-[calc(0.5rem+var(--slant))]">
+        {error && (
+          <div className="mb-2">
+            <InlineError message={error} />
+          </div>
+        )}
         {isError ? (
           <InlineError message="Unable to load players." onRetry={() => refetch()} />
         ) : (

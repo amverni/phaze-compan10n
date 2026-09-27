@@ -1,9 +1,10 @@
+import type { ActiveGameMetadata, CompletedGameMetadata } from "./gameLifecycle";
 import type { TemporaryPhaseSet } from "./phaseSet";
 import type { PlayerId } from "./player";
 
-export type Game = ActiveGame | CompletedGame;
-
-export type GameId = string;
+export type PhaseGame = ActiveGame | CompletedGame;
+export type Game = PhaseGame;
+export type { GameId } from "./gameLifecycle";
 
 export type GameTiebreaker =
   | "lowestPoints"
@@ -19,23 +20,16 @@ export interface GameSettings {
   sitOutPenalty: number; // Default 0. Points added when player Sits Out.
 }
 
-export interface ActiveGame extends BaseGame {
-  status: "active";
+export interface ActiveGame extends ActiveGameMetadata, PhaseGameFields {
   activePlayers: PlayerId[]; // Players actively playing, allows players to be added/removed mid-game
 }
 
-export interface CompletedGame extends BaseGame {
-  status: "completed";
-  completedAt: number;
-  winnerId: PlayerId;
-  winnerName: string; // @todo: do we need this to keep track of a winner who was deleted from db? this instead of id?
+export interface CompletedGame extends CompletedGameMetadata, PhaseGameFields {}
+
+interface PhaseGameFields {
+  scorekeeper: "phase10";
+  phaseSet: TemporaryPhaseSet;
+  settings: GameSettings;
 }
 
-interface BaseGame {
-  id: GameId;
-  phaseSet: TemporaryPhaseSet;
-  players: PlayerId[];
-  settings: GameSettings;
-  createdAt: number;
-  lastActivityAt: number;
-}
+export type CreateGameInput = Pick<ActiveGame, "players" | "phaseSet" | "settings">;

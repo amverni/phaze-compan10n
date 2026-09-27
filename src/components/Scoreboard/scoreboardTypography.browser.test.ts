@@ -63,10 +63,11 @@ async function seedGame(page: Page) {
     }));
     return {
       gameId: game.id,
+      scorekeeper: "phase10",
       roundNumber: index + 1,
       roundWinnerId: players[index % players.length].id,
       scores: [scores[0], ...scores.slice(1)],
-    };
+    } as Round;
   });
 
   await page.goto(`${appUrl}#/players`);

@@ -8,6 +8,7 @@ import { useCreatePlayer, useDeletePlayer, useUpdatePlayer } from "../../data/ho
 import type { Player } from "../../types";
 import { Button } from "../ui/Button/Button";
 import { ColorPicker } from "../ui/ColorPicker/ColorPicker";
+import { InlineError } from "../ui/InlineError/InlineError";
 import { Input } from "../ui/Input/Input";
 import { List } from "../ui/List/List";
 import { Switch } from "../ui/Switch/Switch";
@@ -38,7 +39,6 @@ export function PlayerEditor({
   const deletePlayer = useDeletePlayer();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const nameErrorId = useId();
-  const submitErrorId = useId();
 
   const form = useForm({
     defaultValues: {
@@ -81,12 +81,17 @@ export function PlayerEditor({
     },
   });
 
-  async function handleDelete() {
-    if (!player) return;
+  function handleDelete() {
+    if (!player || deletePlayer.isPending) return;
     if (!window.confirm(`Delete ${player.name}?`)) return;
-    await deletePlayer.mutateAsync(player.id);
-    onDeleted?.();
-    onBack();
+    setSubmitError(null);
+    deletePlayer.mutate(player.id, {
+      onSuccess: () => {
+        onDeleted?.();
+        onBack();
+      },
+      onError: (error) => setSubmitError(error.message),
+    });
   }
 
   return (
@@ -188,15 +193,7 @@ export function PlayerEditor({
 
           {/* Actions */}
           <div className="flex flex-col gap-2">
-            {submitError && (
-              <p
-                id={submitErrorId}
-                className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
-                role="alert"
-              >
-                {submitError}
-              </p>
-            )}
+            {submitError && <InlineError message={submitError} />}
             <div className="flex gap-2">
               {isEditing && (
                 <Button
@@ -204,6 +201,7 @@ export function PlayerEditor({
                   onClick={handleDelete}
                   className="glass-danger px-4 py-2 text-sm text-white"
                   aria-label="Delete player"
+                  disabled={deletePlayer.isPending}
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
@@ -219,7 +217,6 @@ export function PlayerEditor({
                     type="submit"
                     disabled={!canSubmit || isSubmitting}
                     className="w-full px-4 py-2 text-sm active:scale-102!"
-                    aria-describedby={submitError ? submitErrorId : undefined}
                   >
                     {isSubmitting ? "Saving..." : "Save"}
                   </Button>

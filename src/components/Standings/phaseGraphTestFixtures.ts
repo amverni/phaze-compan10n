@@ -7,8 +7,9 @@ export const phaseGraphPlayers = {
 };
 
 export function makePhaseGraphGame(overrides: Partial<ActiveGame> = {}): ActiveGame {
-  return {
+  const game = {
     id: "game-1",
+    scorekeeper: "phase10",
     status: "active",
     players: [phaseGraphPlayers.amy.id, phaseGraphPlayers.bob.id, phaseGraphPlayers.cam.id],
     activePlayers: [phaseGraphPlayers.amy.id, phaseGraphPlayers.bob.id, phaseGraphPlayers.cam.id],
@@ -27,6 +28,7 @@ export function makePhaseGraphGame(overrides: Partial<ActiveGame> = {}): ActiveG
     lastActivityAt: 0,
     ...overrides,
   };
+  return game as ActiveGame;
 }
 
 export function makePhaseGraphRound(
@@ -36,10 +38,11 @@ export function makePhaseGraphRound(
 ): Round {
   return {
     gameId: "game-1",
+    scorekeeper: "phase10",
     roundNumber,
     roundWinnerId,
     scores,
-  };
+  } as Round;
 }
 
 export function makePhaseGraphSeries(

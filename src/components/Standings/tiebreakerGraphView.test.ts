@@ -169,6 +169,7 @@ function makeDenseTiebreakerSeries(
 function makeRound(roundNumber: number, roundWinnerId: string): Round {
   return {
     gameId: "game-1",
+    scorekeeper: "phase10",
     roundNumber,
     roundWinnerId,
     scores: [
@@ -179,5 +180,5 @@ function makeRound(roundNumber: number, roundWinnerId: string): Round {
         score: 0,
       },
     ],
-  };
+  } as Round;
 }

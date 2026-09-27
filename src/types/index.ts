@@ -1,5 +1,21 @@
 export type { ColorEntry } from "./color";
-export type { ActiveGame, CompletedGame, Game, GameId, GameSettings, GameTiebreaker } from "./game";
+export type {
+  ActiveGame,
+  CompletedGame,
+  CreateGameInput,
+  Game,
+  GameId,
+  GameSettings,
+  GameTiebreaker,
+  PhaseGame,
+} from "./game";
+export type {
+  ActiveGameMetadata,
+  CompletedGameMetadata,
+  GameMetadata,
+  RoundMetadata,
+  ScorekeeperId,
+} from "./gameLifecycle";
 export type {
   BuiltInPhase,
   ColorMeld,
@@ -26,7 +42,7 @@ export type {
   PhasesCardShareTarget,
 } from "./phasesCard";
 export type { Player, PlayerId, PlayerIdentity } from "./player";
-export type { PhaseStatus, Round, RoundScore } from "./round";
+export type { PhaseRound, PhaseStatus, Round, RoundScore } from "./round";
 export type { AppGameDefaults, AppSettings, AppSettingsId } from "./settings";
 export type {
   PhaseGraphPoint,

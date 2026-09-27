@@ -1,5 +1,6 @@
 import type { Player, PlayerId } from "../../types";
 import { getDB } from "../db";
+import { withGameTransaction } from "./gameLifecycle";
 import { nameMatchScore } from "./utils";
 
 export const playersApi = {
@@ -90,15 +91,7 @@ export const playersApi = {
     data: Omit<Player, "id" | "createdAt">,
     excludeId?: PlayerId,
   ): Promise<Partial<Record<keyof Omit<Player, "id" | "createdAt">, string>> | undefined> {
-    const errors: Partial<Record<keyof Omit<Player, "id" | "createdAt">, string>> = {};
-
-    if (!data.name.trim()) {
-      errors.name = "Name is required";
-    } else if (await this.nameExists(data.name, excludeId)) {
-      errors.name = "A player with this name already exists";
-    }
-
-    return Object.keys(errors).length > 0 ? errors : undefined;
+    return playerValidationErrors(data.name, await this.nameExists(data.name, excludeId));
   },
 
   /**
@@ -137,19 +130,22 @@ export const playersApi = {
    * @returns The full updated player record.
    * @throws {Error} If no player exists with the given ID.
    */
-  async update(id: PlayerId, updates: Partial<Omit<Player, "id" | "createdAt">>): Promise<Player> {
-    const db = await getDB();
-    const existing = await db.get("players", id);
-    if (!existing) throw new Error("Player not found");
-
-    const updated: Player = { ...existing, ...updates };
-    const errors = await this.validate(updated, id);
-    if (errors) {
-      throw new Error(Object.values(errors).join(", "));
-    }
-
-    await db.put("players", updated);
-    return updated;
+  update(id: PlayerId, updates: Partial<Omit<Player, "id" | "createdAt">>): Promise<Player> {
+    return withGameTransaction(async (tx) => {
+      const store = tx.objectStore("players");
+      const existing = await store.get(id);
+      if (!existing) throw new Error("Player not found");
+      const updated: Player = { ...existing, ...updates };
+      const all = await store.getAll();
+      const nameExists = all.some(
+        (player) =>
+          player.id !== id && player.name.toLowerCase() === updated.name.trim().toLowerCase(),
+      );
+      const errors = playerValidationErrors(updated.name, nameExists);
+      if (errors) throw new Error(Object.values(errors).join(", "));
+      await store.put(updated);
+      return updated;
+    });
   },
 
   /**
@@ -161,7 +157,18 @@ export const playersApi = {
    * @param id - The unique identifier of the player to delete.
    */
   async delete(id: PlayerId): Promise<void> {
-    const db = await getDB();
-    await db.delete("players", id);
+    await withGameTransaction(async (tx) => {
+      const activeGames = await tx.objectStore("games").index("by-status").getAll("active");
+      if (activeGames.some((game) => game.players.includes(id))) {
+        throw new Error("Cannot delete this Player while an Active Game references them.");
+      }
+      await tx.objectStore("players").delete(id);
+    });
   },
 };
+
+function playerValidationErrors(name: string, nameExists: boolean): { name: string } | undefined {
+  if (!name.trim()) return { name: "Name is required" };
+  if (nameExists) return { name: "A player with this name already exists" };
+  return undefined;
+}
