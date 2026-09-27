@@ -16,16 +16,30 @@ interface GenericAddRoundDialogProps {
   gameId: GameId;
   players: PlayerIdentity[];
   mode: "points" | "singleRoundWinner";
+  tiebreakerEnabled: boolean;
 }
 
-function pointsError(value: string): string | undefined {
+function pointsError(
+  value: string,
+  metric: "Points" | "Tiebreaker" = "Points",
+): string | undefined {
   try {
-    parseGenericPoints(value);
+    parseGenericPoints(value, metric);
     return undefined;
   } catch (error) {
     if (error instanceof Error) return error.message;
     throw error;
   }
+}
+
+function entryError(
+  score: { points: string; tiebreaker: string },
+  tiebreakerEnabled: boolean,
+): string | undefined {
+  return (
+    pointsError(score.points) ||
+    (tiebreakerEnabled ? pointsError(score.tiebreaker, "Tiebreaker") : undefined)
+  );
 }
 
 export function GenericAddRoundDialog({
@@ -34,6 +48,7 @@ export function GenericAddRoundDialog({
   gameId,
   players,
   mode,
+  tiebreakerEnabled,
 }: GenericAddRoundDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -42,13 +57,20 @@ export function GenericAddRoundDialog({
   const addRound = useAddGenericRound();
   const form = useForm({
     defaultValues: {
-      scores: players.map((player) => ({ playerId: player.id, points: "" })),
+      scores: players.map((player) => ({ playerId: player.id, points: "", tiebreaker: "" })),
       winnerId: null as PlayerId | null,
     },
     onSubmit: async ({ value }) => {
       await addRound.mutateAsync(
         mode === "points"
-          ? { gameId, scores: value.scores }
+          ? {
+              gameId,
+              scores: value.scores.map(({ playerId, points, tiebreaker }) => ({
+                playerId,
+                points,
+                ...(tiebreakerEnabled ? { tiebreaker } : {}),
+              })),
+            }
           : {
               gameId,
               mode,
@@ -109,7 +131,7 @@ export function GenericAddRoundDialog({
                 {(scores) => (
                   <TabList className="w-max! min-w-full max-w-none!">
                     {players.map((player, index) => {
-                      const complete = !pointsError(scores[index].points);
+                      const complete = !entryError(scores[index], tiebreakerEnabled);
                       return (
                         <Tab
                           key={player.id}
@@ -145,19 +167,39 @@ export function GenericAddRoundDialog({
               {players.map((player, index) => (
                 <TabPanel key={player.id} className="px-2">
                   <form.Field
-                    name={`scores[${index}].points`}
-                    validators={{ onChange: ({ value }) => pointsError(value) }}
+                    name={`scores[${index}]`}
+                    validators={{
+                      onChange: ({ value }) => entryError(value, tiebreakerEnabled),
+                    }}
                   >
                     {(field) => (
                       <PointsEntry
                         name={player.name}
-                        value={field.state.value}
-                        error={field.state.value ? pointsError(field.state.value) : undefined}
-                        disabled={addRound.isPending}
-                        onChange={(value) => {
-                          setSubmitError(null);
-                          field.handleChange(value);
+                        points={{
+                          value: field.state.value.points,
+                          error: field.state.value.points
+                            ? pointsError(field.state.value.points)
+                            : undefined,
+                          onChange: (points) => {
+                            setSubmitError(null);
+                            field.handleChange({ ...field.state.value, points });
+                          },
                         }}
+                        tiebreaker={
+                          tiebreakerEnabled
+                            ? {
+                                value: field.state.value.tiebreaker,
+                                error: field.state.value.tiebreaker
+                                  ? pointsError(field.state.value.tiebreaker, "Tiebreaker")
+                                  : undefined,
+                                onChange: (tiebreaker) => {
+                                  setSubmitError(null);
+                                  field.handleChange({ ...field.state.value, tiebreaker });
+                                },
+                              }
+                            : undefined
+                        }
+                        disabled={addRound.isPending}
                       />
                     )}
                   </form.Field>
@@ -172,7 +214,8 @@ export function GenericAddRoundDialog({
             selector={(state) => ({
               complete:
                 mode === "points"
-                  ? state.values.scores.filter((score) => !pointsError(score.points)).length
+                  ? state.values.scores.filter((score) => !entryError(score, tiebreakerEnabled))
+                      .length
                   : Number(state.values.winnerId !== null),
               submitting: state.isSubmitting,
             })}

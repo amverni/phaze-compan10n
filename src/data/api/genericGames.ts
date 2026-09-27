@@ -67,7 +67,7 @@ export const genericGamesApi = {
           ? {
               mode: "points",
               pointsDirection: settings.pointsDirection,
-              tiebreaker: null,
+              tiebreaker: settings.tiebreaker ? { direction: settings.tiebreaker.direction } : null,
               dealer: settings.dealer,
             }
           : { mode: settings.mode, tiebreaker: null, dealer: settings.dealer },

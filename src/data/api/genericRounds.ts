@@ -36,9 +36,10 @@ export const genericRoundsApi = {
             }
           : {
               mode: "points" as const,
-              scores: input.scores.map(({ playerId, points }) => ({
+              scores: input.scores.map(({ playerId, points, tiebreaker }) => ({
                 playerId,
                 points: parseGenericPoints(points),
+                tiebreaker,
               })),
             };
     return await withGameTransaction(async (tx) => {
@@ -74,7 +75,18 @@ export const genericRoundsApi = {
             : {
                 ...metadata,
                 mode: "points",
-                scores: orderGenericScores(game.players, draft.scores),
+                scores: orderGenericScores(
+                  game.players,
+                  draft.scores.map(({ playerId, points, tiebreaker }) =>
+                    game.settings.mode === "points" && game.settings.tiebreaker
+                      ? {
+                          playerId,
+                          points,
+                          tiebreaker: parseGenericPoints(tiebreaker ?? "", "Tiebreaker"),
+                        }
+                      : { playerId, points },
+                  ),
+                ),
               };
       deriveGenericScoreboard(game, players, [...existing, round]);
       await rounds.add(round);

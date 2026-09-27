@@ -1,4 +1,4 @@
-import { Field, Label, Radio, RadioGroup, Tab, TabGroup, TabPanel } from "@headlessui/react";
+import { Field, Label, Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Play, Settings, Users, X } from "lucide-react";
@@ -24,25 +24,17 @@ import {
   TabList,
   tabClasses,
 } from "../ui";
+import { ScoreDirectionSetting } from "./ScoreDirectionSetting";
 
 const tabs = [
   { label: "Players", icon: Users },
   { label: "Settings", icon: Settings },
 ];
-const directions = [
-  { value: "high", label: "High wins" },
-  { value: "low", label: "Low wins" },
-] as const;
 const modes = [
   { value: "points", label: "Points" },
   { value: "singleRoundWinner", label: "Single Round Winner" },
   { value: "passFail", label: "Pass/Fail" },
 ] as const;
-const directionClasses = [
-  "relative cursor-pointer rounded-full px-3 py-2 text-sm outline-none",
-  "data-checked:bg-text-secondary/15 data-checked:font-semibold",
-  "data-focus:outline-2 data-focus:outline-text-secondary",
-].join(" ");
 
 export function GenericCreateGame() {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -53,11 +45,15 @@ export function GenericCreateGame() {
     players: Player[];
     mode: GenericGameSettings["mode"];
     pointsDirection: GenericPointsSettings["pointsDirection"];
+    tiebreakerEnabled: boolean;
+    tiebreakerDirection: GenericPointsSettings["pointsDirection"];
     dealer: boolean;
   } = {
     players: [],
     mode: "points",
     pointsDirection: "high",
+    tiebreakerEnabled: false,
+    tiebreakerDirection: "high",
     dealer: false,
   };
   const form = useForm({
@@ -70,7 +66,9 @@ export function GenericCreateGame() {
             ? {
                 mode: "points",
                 pointsDirection: value.pointsDirection,
-                tiebreaker: null,
+                tiebreaker: value.tiebreakerEnabled
+                  ? { direction: value.tiebreakerDirection }
+                  : null,
                 dealer: value.dealer,
               }
             : { mode: value.mode, tiebreaker: null, dealer: value.dealer },
@@ -161,8 +159,13 @@ export function GenericCreateGame() {
               </TabPanel>
               <TabPanel className="h-full px-4">
                 <ScrollFade className="h-full -mx-6 px-6 py-4">
-                  <form.Subscribe selector={(state) => state.values.mode}>
-                    {(mode) => (
+                  <form.Subscribe
+                    selector={(state) => ({
+                      mode: state.values.mode,
+                      tiebreakerEnabled: state.values.tiebreakerEnabled,
+                    })}
+                  >
+                    {({ mode, tiebreakerEnabled }) => (
                       <List rowVariant="content">
                         <form.Field key="mode" name="mode">
                           {(field) => (
@@ -200,26 +203,57 @@ export function GenericCreateGame() {
                               currentMode === "points" && (
                                 <form.Field name="pointsDirection">
                                   {(field) => (
-                                    <RadioGroup
+                                    <ScoreDirectionSetting
+                                      label="Points Direction"
                                       value={field.state.value}
                                       onChange={field.handleChange}
                                       onBlur={field.handleBlur}
-                                      className="w-full"
-                                    >
-                                      <SettingListRow label={<Label>Points Direction</Label>}>
-                                        <div className="glass relative flex shrink-0 rounded-full p-1">
-                                          {directions.map(({ value, label }) => (
-                                            <Radio
-                                              key={value}
-                                              value={value}
-                                              className={directionClasses}
-                                            >
-                                              {label}
-                                            </Radio>
-                                          ))}
-                                        </div>
+                                    />
+                                  )}
+                                </form.Field>
+                              )
+                            }
+                          </form.Subscribe>
+                        )}
+                        {mode === "points" && (
+                          <form.Subscribe key="tiebreaker" selector={(state) => state.values.mode}>
+                            {(currentMode) =>
+                              currentMode === "points" && (
+                                <form.Field name="tiebreakerEnabled">
+                                  {(field) => (
+                                    <Field className="w-full">
+                                      <SettingListRow label={<Label>Enable Tiebreaker</Label>}>
+                                        <Switch
+                                          checked={field.state.value}
+                                          onChange={field.handleChange}
+                                          onBlur={field.handleBlur}
+                                          className="data-focus:outline-text-secondary!"
+                                        />
                                       </SettingListRow>
-                                    </RadioGroup>
+                                    </Field>
+                                  )}
+                                </form.Field>
+                              )
+                            }
+                          </form.Subscribe>
+                        )}
+                        {mode === "points" && tiebreakerEnabled && (
+                          <form.Subscribe
+                            key="tiebreakerDirection"
+                            selector={(state) =>
+                              state.values.mode === "points" && state.values.tiebreakerEnabled
+                            }
+                          >
+                            {(enabled) =>
+                              enabled && (
+                                <form.Field name="tiebreakerDirection">
+                                  {(field) => (
+                                    <ScoreDirectionSetting
+                                      label="Tiebreaker Direction"
+                                      value={field.state.value}
+                                      onChange={field.handleChange}
+                                      onBlur={field.handleBlur}
+                                    />
                                   )}
                                 </form.Field>
                               )

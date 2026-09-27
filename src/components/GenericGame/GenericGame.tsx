@@ -74,6 +74,14 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
                     : view.game.settings.mode === "singleRoundWinner"
                       ? "Single Round Winner - Most wins"
                       : "Pass/Fail - Most passes"}
+                  {view.game.settings.mode === "points" && view.game.settings.tiebreaker && (
+                    <span className="block text-xs">
+                      Tiebreaker -{" "}
+                      {view.game.settings.tiebreaker.direction === "high"
+                        ? "High wins"
+                        : "Low wins"}
+                    </span>
+                  )}
                 </p>
                 <GenericScoreboard key={view.game.id} view={view} />
                 <GenericStandingsDialog

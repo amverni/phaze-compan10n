@@ -17,7 +17,7 @@ export interface GenericScoringSettings {
 export interface GenericPointsSettings extends GenericScoringSettings {
   mode: "points";
   pointsDirection: GenericScoreDirection;
-  tiebreaker: null;
+  tiebreaker: GenericTiebreakerSettings | null;
 }
 
 export interface GenericPassFailSettings extends GenericScoringSettings {
@@ -59,7 +59,7 @@ export interface GenericGameView {
 }
 
 export type GenericScoreTotal =
-  | { totalPoints: number }
+  | { totalPoints: number; totalTiebreaker?: number }
   | { totalWins: number }
   | { totalPasses: number };
 
@@ -71,7 +71,13 @@ export interface GenericScoreboardView {
     roundNumber: number;
     dealerId: PlayerId | null;
     scores: Array<
-      | { playerId: PlayerId; points: number; totalPoints: number }
+      | {
+          playerId: PlayerId;
+          points: number;
+          totalPoints: number;
+          tiebreaker?: number;
+          totalTiebreaker?: number;
+        }
       | { playerId: PlayerId; won: boolean; totalWins: number }
       | { playerId: PlayerId; passed: boolean; totalPasses: number }
     >;
