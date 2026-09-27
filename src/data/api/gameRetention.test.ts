@@ -1,9 +1,17 @@
 import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { ActiveGame, Player, TemporaryPhaseSet } from "../../types";
+import type {
+  ActiveGame,
+  CompletedGenericGame,
+  GenericRound,
+  Player,
+  TemporaryPhaseSet,
+} from "../../types";
 import { closeDB, getDB } from "../db";
 import { gamesApi } from "./games";
+import { genericGamesApi } from "./genericGames";
+import { genericRoundsApi } from "./genericRounds";
 import { phaseSetsApi } from "./phaseSets";
 import { phasesApi } from "./phases";
 import { playersApi } from "./players";
@@ -68,6 +76,59 @@ it("preserves actual completion order across reloads when completion timestamps 
   for (const game of retained) {
     expect(game).toMatchObject({ status: "completed", completedAt: 100, lastActivityAt: 100 });
   }
+});
+
+it("keeps Generic Games and their Rounds outside Phase completion retention and listing", async () => {
+  const players = await createPlayers();
+  const input = {
+    players: players.map((player) => player.id),
+    settings: {
+      mode: "points",
+      pointsDirection: "high",
+      tiebreaker: null,
+      dealer: false,
+    },
+  } as const;
+  const active = await genericGamesApi.create(input);
+  const generic = await genericGamesApi.create(input);
+  const completed: CompletedGenericGame = {
+    ...generic,
+    status: "completed",
+    completedAt: 1,
+    completionType: "manual",
+    winnerIds: [players[0].id],
+    playerSnapshots: players.map(({ id, name, color }) => ({ id, name, color })),
+  };
+  const round: GenericRound = {
+    scorekeeper: "generic",
+    gameId: generic.id,
+    roundNumber: 1,
+    mode: "points",
+    scores: [
+      { playerId: players[0].id, points: 10 },
+      { playerId: players[1].id, points: 0 },
+    ],
+  };
+  // Generic finalization is a later slice; seed its supported persisted result shape.
+  const db = await getDB();
+  const tx = db.transaction(["games", "rounds"], "readwrite");
+  await tx.objectStore("games").put(completed);
+  await tx.objectStore("rounds").put(round);
+  await tx.done;
+  for (let index = 0; index < 21; index++) {
+    await finishGame(await createGame(players));
+  }
+
+  closeDB();
+  expect(await genericGamesApi.getById(active.id)).toEqual(active);
+  expect(await genericGamesApi.getById(generic.id)).toEqual(completed);
+  expect(await genericRoundsApi.getByGameId(generic.id)).toEqual([round]);
+  const phaseRows = await gamesApi.getList();
+  expect(phaseRows).toHaveLength(20);
+  expect(phaseRows.some((game) => game.id === active.id || game.id === generic.id)).toBe(false);
+  await genericGamesApi.delete(generic.id);
+  expect(await genericRoundsApi.getByGameId(generic.id)).toEqual([]);
+  expect(await gamesApi.getList()).toEqual(phaseRows);
 });
 
 it("keeps the oldest-created Game when it finishes last and viewing does not refresh retention", async () => {

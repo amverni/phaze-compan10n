@@ -1,5 +1,5 @@
 import type { IDBPTransaction } from "idb";
-import type { ActiveGame, CompletedGame, GameId, Player, PlayerId } from "../../types";
+import type { ActiveGame, GameId, Player, PlayerId, StoredGame } from "../../types";
 import { getDB } from "../db";
 import type { Phase10DB } from "../db/schema";
 
@@ -36,14 +36,14 @@ export async function withGameTransaction<T>(
 
 export async function finalizeGame(
   tx: GameLifecycleTransaction,
-  completed: CompletedGame,
+  completed: Extract<StoredGame, { status: "completed" }>,
 ): Promise<void> {
   if ((await tx.objectStore("rounds").index("by-game").count(completed.id)) === 0) {
     throw new Error("A Game needs at least one saved Round before completion");
   }
   const completedGames = (await tx.objectStore("games").index("by-status").getAll("completed"))
     .filter(
-      (game): game is CompletedGame =>
+      (game): game is Extract<StoredGame, { status: "completed" }> =>
         game.status === "completed" && game.scorekeeper === completed.scorekeeper,
     )
     .sort((a, b) => (b.completionOrder ?? b.completedAt) - (a.completionOrder ?? a.completedAt));

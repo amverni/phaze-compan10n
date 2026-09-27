@@ -1,16 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { playerListOptions } from "../../../data/hooks/usePlayers";
-import { List } from "../../ui";
-import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
+import { InlineError, List } from "../../ui";
+import { useAddPlayer, useGamePlayers } from "../PlayerSelectionContext";
 import { AddPlayerRow } from "./AddPlayerRow";
 
 export function FavoritePlayers() {
   const addPlayer = useAddPlayer();
   const gamePlayers = useGamePlayers();
   const gamePlayerIds = new Set(gamePlayers.map((p) => p.id));
-  const { data: favorites = [], isLoading } = useQuery(playerListOptions({ isFavorite: 1 }));
+  const {
+    data: favorites = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery(playerListOptions({ isFavorite: 1 }));
 
-  if (!favorites.length) {
+  if (isError) {
+    return <InlineError message="Unable to load favorite Players." onRetry={() => refetch()} />;
+  }
+
+  if (!isLoading && !favorites.length) {
     return null;
   }
 

@@ -1,22 +1,24 @@
 import type { PlayerId, PlayerIdentity } from "./player";
 import type { ArrayAtLeastOne } from "./utils";
 
-export type ScorekeeperId = "phase10";
+export type ScorekeeperId = "phase10" | "generic";
 export type GameId = string;
 
-export interface GameMetadata {
+export interface GameMetadata<TOwner extends ScorekeeperId = ScorekeeperId> {
   id: GameId;
-  scorekeeper: ScorekeeperId;
+  scorekeeper: TOwner;
   players: PlayerId[];
   createdAt: number;
   lastActivityAt: number;
 }
 
-export interface ActiveGameMetadata extends GameMetadata {
+export interface ActiveGameMetadata<TOwner extends ScorekeeperId = ScorekeeperId>
+  extends GameMetadata<TOwner> {
   status: "active";
 }
 
-export interface CompletedGameMetadata extends GameMetadata {
+export interface CompletedGameMetadata<TOwner extends ScorekeeperId = ScorekeeperId>
+  extends GameMetadata<TOwner> {
   status: "completed";
   completedAt: number;
   /** Monotonic per-Scorekeeper retention key; older records fall back to completedAt. */

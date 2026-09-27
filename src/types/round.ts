@@ -1,8 +1,10 @@
 import type { RoundMetadata } from "./gameLifecycle";
+import type { GenericRound } from "./genericRound";
 import type { PlayerId } from "./player";
 import type { ArrayAtLeastOne } from "./utils";
 
 export type Round = PhaseRound;
+export type StoredRound = PhaseRound | GenericRound;
 
 export interface PhaseRound extends RoundMetadata {
   scorekeeper: "phase10";

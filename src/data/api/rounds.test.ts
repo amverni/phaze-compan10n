@@ -61,7 +61,9 @@ describe("roundsApi.add", () => {
 
     const db = await getDB();
     const storedGame = await db.get("games", game.id);
-    const storedRound = await db.get("rounds", [game.id, 2]);
+    const storedRound = (await roundsApi.getByGameId(game.id)).find(
+      (round) => round.roundNumber === 2,
+    );
 
     expect(result.outcome).toBe("gameCompleted");
     if (result.outcome !== "gameCompleted") throw new Error("Expected Game completion");

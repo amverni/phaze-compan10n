@@ -54,7 +54,7 @@ export function useCreatePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<Player, "id" | "createdAt">) => playersApi.create(data),
-    onSuccess: () => invalidatePlayerQueries(queryClient),
+    onSuccess: () => invalidatePlayerViews(queryClient),
   });
 }
 
@@ -68,7 +68,7 @@ export function useUpdatePlayer() {
       id: PlayerId;
       updates: Partial<Omit<Player, "id" | "createdAt">>;
     }) => playersApi.update(id, updates),
-    onSuccess: () => invalidatePlayerQueries(queryClient),
+    onSuccess: () => invalidatePlayerViews(queryClient),
   });
 }
 
@@ -76,13 +76,13 @@ export function useDeletePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: PlayerId) => playersApi.delete(id),
-    onSuccess: () => invalidatePlayerQueries(queryClient),
+    onSuccess: () => invalidatePlayerViews(queryClient),
   });
 }
 
-function invalidatePlayerQueries(queryClient: QueryClient) {
+function invalidatePlayerViews(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: playerKeys.all }),
-    queryClient.invalidateQueries({ queryKey: gameKeys.lists() }),
+    queryClient.invalidateQueries({ queryKey: gameKeys.all }),
   ]);
 }

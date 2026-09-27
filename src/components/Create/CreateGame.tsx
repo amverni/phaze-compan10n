@@ -8,8 +8,9 @@ import type { ArrayAtLeastOne, PhaseId, TemporaryPhaseSet } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { HeaderLogo } from "../Logo/HeaderLogo";
 import { Button, ScrollFade, SwipeableTabPanels, TabList } from "../ui";
-import { useGamePhases, useGamePlayers, useGameSettings } from "./CreateGameContext";
+import { useGamePhases, useGameSettings } from "./CreateGameContext";
 import { Phases } from "./Phases";
+import { useGamePlayers } from "./PlayerSelectionContext";
 import { Players } from "./Players";
 import { Settings } from "./Settings";
 
