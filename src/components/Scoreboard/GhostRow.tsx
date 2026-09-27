@@ -1,11 +1,11 @@
-import type { ActiveGame, Player, Round } from "../../types";
+import type { ActiveGame, PlayerIdentity, Round } from "../../types";
 import { PlayerResultCell } from "./PlayerResultCell";
 import { getCurrentPhase, getDealerId } from "./scoreboardUtils";
 
 interface GhostRowProps {
   game: ActiveGame;
   rounds: Round[];
-  players: Player[];
+  players: PlayerIdentity[];
   totalPhases: number;
   onOpenAddRound: () => void;
 }

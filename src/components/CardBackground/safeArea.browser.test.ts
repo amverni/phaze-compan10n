@@ -88,15 +88,13 @@ describe("safe-area layout in WebKit", () => {
         const resting = await button.boundingBox();
         expect(resting?.width).toBe(size);
         expect(resting?.height).toBe(resting?.width);
-        const footer = await bounds(page, ".card-panel-bottom-content");
+        const footer = await bounds(page, ".page-shell-footer");
         expect(footer.height).toBeCloseTo(Math.max(height * 0.15, 50 + size + 6 + 8), 1);
         expect(
-          await page
-            .locator(".card-panel-bottom-content > .content-container")
-            .evaluate((element) => {
-              const style = getComputedStyle(element);
-              return [style.paddingLeft, style.paddingRight];
-            }),
+          await page.locator(".page-shell-footer > .content-container").evaluate((element) => {
+            const style = getComputedStyle(element);
+            return [style.paddingLeft, style.paddingRight];
+          }),
         ).toEqual(["16px", "16px"]);
         expect(await button.evaluate((element) => getComputedStyle(element).boxShadow)).toContain(
           colorScheme === "light" ? "0px 2px 10px" : "0px 8px 28px",
@@ -115,7 +113,7 @@ describe("safe-area layout in WebKit", () => {
         expect(pressed.y + pressed.height).toBeLessThanOrEqual(disclaimer.y);
         expect(pressed.x).toBeGreaterThanOrEqual(0);
         expect(pressed.x + pressed.width).toBeLessThanOrEqual(width);
-        expect(await bounds(page, ".card-panel-bottom-content")).toEqual(footer);
+        expect(await bounds(page, ".page-shell-footer")).toEqual(footer);
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       } finally {
         await page.close();
@@ -143,7 +141,7 @@ describe("safe-area layout in WebKit", () => {
               ":root { --safe-area-inset-top: 47px; --safe-area-inset-bottom: 34px; --safe-area-inset-left: 44px; --safe-area-inset-right: 44px; }",
           });
           const size = height <= 700 ? 44 : 56;
-          const footer = await bounds(page, ".card-panel-bottom-content");
+          const footer = await bounds(page, ".page-shell-footer");
           expect(footer.height).toBeCloseTo(Math.max(height * 0.15, 50 + size + 6 + 8) + 34, 1);
           await button.hover();
           await page.mouse.down();
@@ -268,7 +266,7 @@ describe("safe-area layout in WebKit", () => {
       await page.getByRole("tab", { name: "Phases", exact: true }).click();
       const row = page.getByText("1 run of 9", { exact: true });
       await row.waitFor();
-      const footer = await bounds(page, ".card-panel-bottom-content");
+      const footer = await bounds(page, ".page-shell-footer");
       const clickY = footer.y + 25;
       await row.evaluate((element, y) => {
         let parent = element.parentElement;
@@ -323,7 +321,7 @@ describe("responsive header logos in WebKit", () => {
       expect(logo.height).toBeLessThanOrEqual(100);
       expect(logo.width).toBeCloseTo(width, 1);
       expect(logo.y + logo.height).toBeLessThanOrEqual(height * 0.15);
-      expect((await bounds(page, ".card-panel-top-content")).height).toBeCloseTo(height * 0.15, 1);
+      expect((await bounds(page, ".page-shell-header")).height).toBeCloseTo(height * 0.15, 1);
       const tips = await bounds(page, 'button[aria-label="Tips"]');
       expect(tips.y + tips.height / 2).toBeCloseTo(logo.y + logo.height / 2, 1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
@@ -397,11 +395,11 @@ describe("responsive header logos in WebKit", () => {
       for (const route of ["/create", "/players", "/phases", "/settings", "/phasescard"]) {
         await page.goto(`${appUrl}#${route}`);
         await expect
-          .poll(async () => (await bounds(page, '.card-panel-top-content svg[role="img"]')).height)
+          .poll(async () => (await bounds(page, '.page-shell-header svg[role="img"]')).height)
           .toBe(59);
       }
       await page.goto(`${appUrl}#/`);
-      expect((await bounds(page, '.card-panel-main svg[role="img"]')).height).toBe(120);
+      expect((await bounds(page, '.page-shell-main svg[role="img"]')).height).toBe(120);
     } finally {
       await page.close();
     }

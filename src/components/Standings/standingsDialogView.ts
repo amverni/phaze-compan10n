@@ -1,7 +1,7 @@
-import type { Player, StandingsDerivation } from "../../types";
+import type { PlayerIdentity, StandingsDerivation } from "../../types";
 
 export interface StandingsDisplayRow {
-  player: Player;
+  player: PlayerIdentity;
   place: number;
   showPlace: boolean;
   phaseNumber: number;

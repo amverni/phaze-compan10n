@@ -1,4 +1,4 @@
-import type { Player } from "../../types";
+import type { PlayerIdentity } from "../../types";
 import { getPlayerAvatarBoxSize, PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 
 const LATEST_AVATAR_ICON_SIZE = 16;
@@ -8,7 +8,7 @@ const LATEST_AVATAR_OVERLAP = 6;
 
 interface GraphEndpointAvatarGroupProps {
   label: string;
-  players: readonly Player[];
+  players: readonly PlayerIdentity[];
   x: number;
   y: number;
   graphWidth: number;

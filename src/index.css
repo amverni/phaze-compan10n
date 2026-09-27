@@ -249,38 +249,45 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
 }
 
-.card-background {
-  --card-viewport-height: 100vh;
-  --card-panel-height: 15vh;
-  --card-footer-button-size: 3.5rem;
+.page-shell {
+  --page-shell-viewport-height: 100vh;
+  --page-shell-panel-height: 15vh;
+  --page-shell-footer-control-size: 3.5rem;
+  --page-shell-edge-offset: 0px;
+  --page-shell-footer-note-height: 0px;
   /* Covers each edge of the 10% press growth at both footer button sizes. */
-  --card-footer-press-clearance: 0.1875rem;
+  --page-shell-press-clearance: 0.1875rem;
 
-  height: var(--card-viewport-height);
+  height: var(--page-shell-viewport-height);
 }
 
 @media (max-height: 700px) {
-  .card-background {
-    --card-footer-button-size: 2.75rem;
+  .page-shell {
+    --page-shell-footer-control-size: 2.75rem;
   }
 }
 
 @supports (height: 100svh) {
-  .card-background {
-    --card-viewport-height: 100svh;
-    --card-panel-height: 15svh;
+  .page-shell {
+    --page-shell-viewport-height: 100svh;
+    --page-shell-panel-height: 15svh;
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .card-background {
-    --card-viewport-height: 100vh;
-    --card-panel-height: 15vh;
+  .page-shell {
+    --page-shell-viewport-height: 100vh;
+    --page-shell-panel-height: 15vh;
   }
 }
 
+.card-background {
+  --page-shell-edge-offset: var(--slant);
+  --page-shell-footer-note-height: 8px;
+}
+
 .card-panel-edge-height {
-  height: var(--card-panel-height, 15vh);
+  height: var(--page-shell-panel-height, 15vh);
 }
 
 .card-panel-shadow {
@@ -308,8 +315,8 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   min-height: fit-content;
 }
 
-.card-panel-top-content,
-.card-panel-bottom-content {
+.page-shell-header,
+.page-shell-footer {
   box-sizing: border-box;
   padding-right: var(--safe-area-inset-right);
   padding-left: var(--safe-area-inset-left);
@@ -317,23 +324,30 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 
 @layer components {
   /* Only controls catch taps; transparent space above the diagonals does not. */
-  .card-panel-top-content :is(button, a),
-  .card-panel-bottom-content :is(button, a) {
+  .card-background .page-shell-header :is(button, a),
+  .card-background .page-shell-footer :is(button, a) {
     pointer-events: auto;
   }
 }
 
-.card-panel-top-content {
+.card-background .page-shell-header,
+.card-background .page-shell-footer {
+  pointer-events: none;
+}
+
+.card-background .page-shell-header {
   /* Align independent logo and control layers above the diagonal. */
   --card-header-alignment-height: max(
     0px,
-    calc(var(--card-panel-height) - var(--slant) + 1.5rem - 5px)
+    calc(var(--page-shell-panel-height) - var(--slant) + 1.5rem - 5px)
   );
+}
 
-  height: calc(var(--card-panel-height) + var(--safe-area-inset-top));
+.page-shell-header {
+  height: calc(var(--page-shell-panel-height) + var(--safe-area-inset-top));
   min-height: fit-content;
   padding-top: var(--safe-area-inset-top);
-  padding-bottom: var(--slant);
+  padding-bottom: var(--page-shell-edge-offset);
 }
 
 .card-header-logo,
@@ -341,13 +355,13 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   height: var(--card-header-alignment-height);
 }
 
-.card-panel-bottom-content {
-  /* Reserve pressed controls and the disclaimer, not decorative shadow tails. */
-  --footer-top: calc(var(--slant) + var(--card-footer-press-clearance));
-  --footer-bottom: calc(var(--card-footer-press-clearance) + 8px);
-  height: calc(var(--card-panel-height) + var(--safe-area-inset-bottom));
+.page-shell-footer {
+  /* Reserve pressed controls and footer notes, not decorative shadow tails. */
+  --footer-top: calc(var(--page-shell-edge-offset) + var(--page-shell-press-clearance));
+  --footer-bottom: calc(var(--page-shell-press-clearance) + var(--page-shell-footer-note-height));
+  height: calc(var(--page-shell-panel-height) + var(--safe-area-inset-bottom));
   min-height: calc(
-    var(--footer-top) + var(--card-footer-button-size) + var(--footer-bottom) +
+    var(--footer-top) + var(--page-shell-footer-control-size) + var(--footer-bottom) +
     var(--safe-area-inset-bottom)
   );
   padding-top: var(--footer-top);
@@ -355,12 +369,12 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 }
 
 .card-footer-button {
-  width: var(--card-footer-button-size, 3.5rem);
-  height: var(--card-footer-button-size, 3.5rem);
+  width: var(--page-shell-footer-control-size, 3.5rem);
+  height: var(--page-shell-footer-control-size, 3.5rem);
   flex-shrink: 0;
 }
 
-.card-panel-bottom-bleed {
+.page-shell-bottom-bleed {
   position: absolute;
   inset: 100% 0 auto;
   height: 100lvh;
@@ -375,10 +389,10 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   padding-left: calc(1rem + var(--safe-area-inset-left));
 }
 
-.card-panel-main {
-  margin-top: calc(var(--slant) * -1);
-  margin-bottom: calc(var(--slant) * -1);
-  padding-top: var(--slant);
+.page-shell-main {
+  margin-top: calc(var(--page-shell-edge-offset) * -1);
+  margin-bottom: calc(var(--page-shell-edge-offset) * -1);
+  padding-top: var(--page-shell-edge-offset);
   padding-right: var(--safe-area-inset-right);
   padding-left: var(--safe-area-inset-left);
 }

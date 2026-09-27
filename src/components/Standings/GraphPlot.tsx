@@ -1,7 +1,7 @@
-import type { Player } from "../../types";
+import type { PlayerIdentity } from "../../types";
 
 interface GraphPlotSeries {
-  player: Pick<Player, "id">;
+  player: Pick<PlayerIdentity, "id">;
   color: string;
   path: string;
 }

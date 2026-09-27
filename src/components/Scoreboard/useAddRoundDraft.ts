@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { GameSettings, PhaseStatus, Player, PlayerId } from "../../types";
+import type { GameSettings, PhaseStatus, PlayerId, PlayerIdentity } from "../../types";
 import * as draftHelpers from "./addRoundDraft";
 
 export interface UseAddRoundDraft {
@@ -17,7 +17,10 @@ export interface UseAddRoundDraft {
 
 const POINTS_MAX = 250;
 
-export function useAddRoundDraft(players: Player[], settings: GameSettings): UseAddRoundDraft {
+export function useAddRoundDraft(
+  players: PlayerIdentity[],
+  settings: GameSettings,
+): UseAddRoundDraft {
   const [draft, setDraft] = useState(() => draftHelpers.createInitialDraft(players));
   const draftRef = useRef(draft);
 

@@ -1,9 +1,9 @@
-import type { GameTiebreaker, Player, Round } from "../../types";
+import type { GameTiebreaker, PlayerIdentity, Round } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { formatTiebreaker, getCurrentPhase, getRunningTiebreakerTotal } from "./scoreboardUtils";
 
 interface ScoreboardHeaderProps {
-  players: Player[];
+  players: PlayerIdentity[];
   rounds: Round[];
   totalPhases: number;
   tiebreaker: GameTiebreaker;

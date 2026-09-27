@@ -1,8 +1,8 @@
 import type {
   Game,
   GameTiebreaker,
-  Player,
   PlayerId,
+  PlayerIdentity,
   Round,
   StandingsDerivation,
   StandingsInput,
@@ -17,7 +17,11 @@ import {
   toTiebreakerStandingValue,
 } from "../../utils";
 
-export function deriveStandings({ game, players, rounds }: StandingsInput): StandingsDerivation {
+export function deriveStandings<TPlayer extends PlayerIdentity>({
+  game,
+  players,
+  rounds,
+}: StandingsInput<TPlayer>): StandingsDerivation<TPlayer> {
   const includedPlayers = getIncludedPlayers(game, players);
   const sortedRounds = rounds.slice().sort((a, b) => a.roundNumber - b.roundNumber);
   const totalPhases = game.phaseSet.phases.length;
@@ -120,14 +124,17 @@ export function deriveStandings({ game, players, rounds }: StandingsInput): Stan
   };
 }
 
-function getIncludedPlayers(game: Game, players: readonly Player[]): Player[] {
+function getIncludedPlayers<TPlayer extends PlayerIdentity>(
+  game: Game,
+  players: readonly TPlayer[],
+): TPlayer[] {
   const includedIds = new Set(game.status === "active" ? game.activePlayers : game.players);
   const playerById = new Map(players.map((player) => [player.id, player]));
 
   return game.players
     .filter((playerId) => includedIds.has(playerId))
     .map((playerId) => playerById.get(playerId))
-    .filter((player): player is Player => player !== undefined);
+    .filter((player): player is TPlayer => player !== undefined);
 }
 
 function compareTiebreakerTotals(
@@ -153,7 +160,9 @@ function getMostRecentRoundWin(playerId: PlayerId, rounds: readonly Round[]): nu
   return mostRecent;
 }
 
-function applyCompetitionPlaces(rows: StandingsRow[]): StandingsRow[] {
+function applyCompetitionPlaces<TPlayer extends PlayerIdentity>(
+  rows: StandingsRow<TPlayer>[],
+): StandingsRow<TPlayer>[] {
   return rows.map((row, index) => {
     const previous = rows[index - 1];
     if (

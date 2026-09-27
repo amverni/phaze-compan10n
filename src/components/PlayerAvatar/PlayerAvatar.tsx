@@ -1,12 +1,12 @@
 import { TriangleAlert } from "lucide-react";
 import { getColorEntry } from "../../data/constants/colors";
-import type { Player } from "../../types";
+import type { PlayerIdentity } from "../../types";
 import { getContrastColor } from "../../utils";
 
 export type PlayerAvatarVariant = "icon" | "initials" | "icon-initials";
 
 export interface PlayerAvatarProps {
-  player: Pick<Player, "color" | "name">;
+  player: Pick<PlayerIdentity, "color" | "name">;
   size?: number;
   /** What to render inside the badge. Defaults to `"icon"`. */
   variant?: PlayerAvatarVariant;
