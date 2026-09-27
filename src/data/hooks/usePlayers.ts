@@ -1,5 +1,6 @@
-import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Player, PlayerId } from "../../types";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Game, Player, PlayerId } from "../../types";
+import { getGamePlayers } from "../api/gameResults";
 import { playersApi } from "../api/players";
 
 export const playerKeys = {
@@ -25,6 +26,15 @@ export function playersByIdsOptions(ids: PlayerId[]) {
     queryFn: () => playersApi.getByIds(ids),
     enabled: ids.length > 0,
   });
+}
+
+export function useGamePlayers(game: Game | undefined) {
+  const { data: livePlayers } = useQuery({
+    ...playersByIdsOptions(game?.players ?? []),
+    enabled: game?.status === "active",
+  });
+  if (!game || (game.status === "active" && !livePlayers)) return undefined;
+  return getGamePlayers(game, livePlayers ?? []);
 }
 
 export function useCreatePlayer() {

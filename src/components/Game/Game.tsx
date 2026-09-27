@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ChartNoAxesColumn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { gameDetailOptions } from "../../data/hooks/useGames";
-import { playersByIdsOptions } from "../../data/hooks/usePlayers";
+import { useGamePlayers } from "../../data/hooks/usePlayers";
 import { roundsListOptions } from "../../data/hooks/useRounds";
 import type { GameId } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
@@ -28,13 +28,7 @@ export function Game({ gameId }: GameProps) {
   const [standingsOpen, setStandingsOpen] = useState(false);
   const checkedInitialStandingsGameId = useRef<GameId | null>(null);
   const { data: game } = useQuery(gameDetailOptions(gameId));
-  const playerIds = game?.players ?? [];
-  const completedPlayers = game?.status === "completed" ? game.playerSnapshots : null;
-  const { data: livePlayers } = useQuery({
-    ...playersByIdsOptions(playerIds),
-    enabled: playerIds.length > 0 && game?.status === "active",
-  });
-  const players = completedPlayers ?? livePlayers;
+  const players = useGamePlayers(game);
   const { data: rounds } = useQuery(roundsListOptions(gameId));
   const standingsReady = Boolean(game && players && rounds);
   const showPhasesCardEntryButton = game ? shouldShowPhasesCardEntryButton(game.status) : true;
