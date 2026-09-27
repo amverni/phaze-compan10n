@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { GenericScoreboardView } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import { Button } from "../ui";
+import { Button, DealerMarker } from "../ui";
 import { GenericAddRoundDialog } from "./GenericAddRoundDialog";
 
 const cellClasses = "border-r border-b border-text-secondary/20 bg-app-background px-3 py-3";
@@ -80,10 +80,17 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                 {round.scores.map((score, index) => (
                   <td
                     key={score.playerId}
-                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${score.points} Points`}
+                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${score.points} Points${round.dealerId === score.playerId ? ", Dealer" : ""}`}
                     className={[cellClasses, "whitespace-nowrap tabular-nums"].join(" ")}
                   >
-                    {score.points}
+                    <div
+                      className={["relative", view.game.settings.dealer ? "px-6" : ""].join(" ")}
+                    >
+                      {round.dealerId === score.playerId && (
+                        <DealerMarker className="absolute top-1/2 left-0 -translate-y-1/2" />
+                      )}
+                      <span>{score.points}</span>
+                    </div>
                     {expandedRound === round.roundNumber && (
                       <div className="pt-2 text-sm text-text-secondary">
                         <span className="sr-only">Accumulated Points: </span>
@@ -97,18 +104,37 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
             {view.game.status === "active" && (
               <tr>
                 <td
-                  colSpan={view.players.length + 1}
-                  className="border-t border-dashed border-text-secondary/50 text-left"
+                  colSpan={view.game.settings.dealer ? 1 : view.players.length + 1}
+                  className={[
+                    "border-t border-dashed border-text-secondary/50 text-left",
+                    view.game.settings.dealer ? "sticky left-0 z-10 bg-app-background" : "",
+                  ].join(" ")}
                 >
                   <Button
                     type="button"
+                    aria-label="Add Round"
                     onClick={() => setAddOpen(true)}
-                    className="sticky left-3 my-3 ml-3 min-h-11 gap-2 px-4 text-sm data-focus:outline-text-secondary!"
+                    className={[
+                      "my-3 min-h-11 gap-2 text-sm data-focus:outline-text-secondary!",
+                      view.game.settings.dealer ? "mx-auto size-11" : "sticky left-3 ml-3 px-4",
+                    ].join(" ")}
                   >
                     <Plus className="size-4" aria-hidden />
-                    Add Round
+                    {!view.game.settings.dealer && "Add Round"}
                   </Button>
                 </td>
+                {view.game.settings.dealer &&
+                  view.players.map((player) => (
+                    <td
+                      key={player.id}
+                      aria-label={`${player.name}, upcoming Round${view.upcomingDealerId === player.id ? ": Dealer" : ""}`}
+                      className="border-t border-dashed border-text-secondary/50 px-3 py-3"
+                    >
+                      {view.upcomingDealerId === player.id && (
+                        <DealerMarker className="opacity-60" />
+                      )}
+                    </td>
+                  ))}
               </tr>
             )}
           </tbody>

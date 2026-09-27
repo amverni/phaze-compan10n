@@ -8,13 +8,14 @@ import type {
   PlayerIdentity,
   StoredRound,
 } from "../../types";
+import { getDealerId } from "../../utils";
 
 export function assertGenericPointsSettings(settings: GenericPointsSettings): void {
   if (
     settings?.mode !== "points" ||
     (settings.pointsDirection !== "high" && settings.pointsDirection !== "low") ||
     settings.tiebreaker !== null ||
-    settings.dealer !== false
+    typeof settings.dealer !== "boolean"
   ) {
     throw new Error("Unsupported Generic Game settings");
   }
@@ -75,6 +76,7 @@ export function deriveGenericScoreboard(
       }
       return {
         roundNumber: round.roundNumber,
+        dealerId: game.settings.dealer ? getDealerId(round.roundNumber, game.players) : null,
         scores: orderGenericScores(game.players, round.scores).map(({ playerId, points }) => {
           const previous = totals.get(playerId);
           if (previous === undefined) throw new Error("Player does not belong to the Game");
@@ -107,5 +109,10 @@ export function deriveGenericScoreboard(
     if (index > 0 && ranked[index - 1].totalPoints !== totalPoints) place = index + 1;
     return { player, totalPoints, place };
   });
-  return { game, players, rounds, standings };
+  const nextRoundNumber = (rounds.at(-1)?.roundNumber ?? 0) + 1;
+  const upcomingDealerId =
+    game.status === "active" && game.settings.dealer
+      ? getDealerId(nextRoundNumber, game.players)
+      : null;
+  return { game, players, rounds, standings, upcomingDealerId };
 }

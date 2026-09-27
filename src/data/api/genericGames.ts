@@ -37,7 +37,7 @@ export const genericGamesApi = {
         mode: "points",
         pointsDirection: settings.pointsDirection,
         tiebreaker: null,
-        dealer: false,
+        dealer: settings.dealer,
       },
       createdAt: now,
       lastActivityAt: now,

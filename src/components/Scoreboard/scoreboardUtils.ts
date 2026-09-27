@@ -1,23 +1,7 @@
 import type { GameTiebreaker, PlayerId, Round } from "../../types";
 import { formatTiebreakerValue, getNextCurrentPhase, getRoundTiebreakerValue } from "../../utils";
 
-/**
- * Returns the player id whose turn it is to deal round `roundNumber` (1-indexed).
- * Dealer rotation is deterministic from `activePlayers` order: round 1 → first
- * player, round 2 → second, … wrapping when it reaches the end of the list.
- *
- * If `activePlayers` is empty the function returns `null` (caller should treat
- * as "no dealer chip").
- */
-export function getDealerId(
-  roundNumber: number,
-  activePlayers: readonly PlayerId[],
-): PlayerId | null {
-  if (activePlayers.length === 0) return null;
-  const idx =
-    (((roundNumber - 1) % activePlayers.length) + activePlayers.length) % activePlayers.length;
-  return activePlayers[idx];
-}
+export { getDealerId } from "../../utils";
 
 /**
  * Returns the phase a player will be on for the next (not-yet-played) round.

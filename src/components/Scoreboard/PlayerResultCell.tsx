@@ -1,5 +1,6 @@
 import { Check, type LucideIcon, Minus, Redo, X } from "lucide-react";
 import type { PhaseStatus, RoundScore } from "../../types";
+import { DealerMarker } from "../ui";
 
 interface PlayerResultCellProps {
   /** RoundScore for the player in this round. Omitted for the ghost row. */
@@ -54,15 +55,7 @@ export function PlayerResultCell({
     <div className={`relative flex w-full flex-col items-center ${isGhost ? "opacity-55" : ""}`}>
       <div className="flex w-full items-center justify-center">
         {isDealer && (
-          <span
-            aria-hidden
-            className={`absolute left-0.75 inline-flex size-4.25 items-center justify-center rounded-full text-xs font-medium leading-none ${
-              isGhost ? "opacity-60" : ""
-            }`}
-            style={{ backgroundColor: "#FAC775", color: "#412402" }}
-          >
-            D
-          </span>
+          <DealerMarker className={["absolute left-0.75", isGhost ? "opacity-60" : ""].join(" ")} />
         )}
         <span className={`relative text-base font-medium leading-none tabular-nums ${phaseColor}`}>
           {isRoundWinner && (

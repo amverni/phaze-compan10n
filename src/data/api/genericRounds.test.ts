@@ -249,6 +249,7 @@ it("starts an empty Game with explicit zero totals and shared first place, witho
   } = await createPointsGame();
   expect(await genericGamesApi.getScoreboard(game.id)).toEqual({
     game,
+    upcomingDealerId: null,
     players: [
       { ...identity(zed), totalPoints: 0 },
       { ...identity(amy), totalPoints: 0 },
@@ -266,7 +267,7 @@ it.each([
   { mode: "passFail" },
   { pointsDirection: "sideways" },
   { tiebreaker: { direction: "high" } },
-  { dealer: true },
+  { dealer: "true" },
 ])("refuses unsupported persisted Game settings rather than recording a Points Round (%j)", async (invalid) => {
   const {
     game,
