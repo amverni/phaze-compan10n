@@ -1,8 +1,9 @@
 import type {
   ArrayAtLeastOne,
   GenericGame,
+  GenericGameSettings,
+  GenericPassFailScore,
   GenericPointsScore,
-  GenericPointsSettings,
   GenericScoreboardView,
   PlayerId,
   PlayerIdentity,
@@ -10,10 +11,14 @@ import type {
 } from "../../types";
 import { getDealerId } from "../../utils";
 
-export function assertGenericPointsSettings(settings: GenericPointsSettings): void {
+export function assertGenericSettings(settings: GenericGameSettings): void {
   if (
-    settings?.mode !== "points" ||
-    (settings.pointsDirection !== "high" && settings.pointsDirection !== "low") ||
+    !settings ||
+    (settings.mode !== "points" && settings.mode !== "passFail") ||
+    (settings.mode === "points" &&
+      settings.pointsDirection !== "high" &&
+      settings.pointsDirection !== "low") ||
+    (settings.mode === "passFail" && "pointsDirection" in settings) ||
     settings.tiebreaker !== null ||
     typeof settings.dealer !== "boolean"
   ) {
@@ -21,8 +26,8 @@ export function assertGenericPointsSettings(settings: GenericPointsSettings): vo
   }
 }
 
-export function assertGenericPointsGame(game: GenericGame): void {
-  assertGenericPointsSettings(game.settings);
+export function assertGenericGame(game: GenericGame): void {
+  assertGenericSettings(game.settings);
   if (
     !Array.isArray(game.players) ||
     game.players.length === 0 ||
@@ -33,10 +38,10 @@ export function assertGenericPointsGame(game: GenericGame): void {
   }
 }
 
-export function orderGenericScores(
+export function orderGenericScores<T extends { playerId: PlayerId }>(
   playerIds: PlayerId[],
-  scores: GenericPointsScore[],
-): ArrayAtLeastOne<GenericPointsScore> {
+  scores: T[],
+): ArrayAtLeastOne<T> {
   if (
     playerIds.length === 0 ||
     !Array.isArray(scores) ||
@@ -51,7 +56,7 @@ export function orderGenericScores(
     const score = byPlayer.get(id);
     if (!score) throw new Error("A Round must include every Player exactly once.");
     return score;
-  }) as ArrayAtLeastOne<GenericPointsScore>;
+  }) as ArrayAtLeastOne<T>;
 }
 
 export function deriveGenericScoreboard(
@@ -68,51 +73,73 @@ export function deriveGenericScoreboard(
       }
       if (
         round.gameId !== game.id ||
-        round.mode !== "points" ||
+        round.mode !== game.settings.mode ||
         !Number.isSafeInteger(round.roundNumber) ||
         round.roundNumber < 1
       ) {
-        throw new Error("Invalid Generic Points Round.");
+        throw new Error("Invalid Generic Round.");
       }
+      const scores: Array<GenericPointsScore | GenericPassFailScore> = round.scores;
       return {
         roundNumber: round.roundNumber,
         dealerId: game.settings.dealer ? getDealerId(round.roundNumber, game.players) : null,
-        scores: orderGenericScores(game.players, round.scores).map(({ playerId, points }) => {
+        scores: orderGenericScores(game.players, scores).map((score) => {
+          const { playerId } = score;
           const previous = totals.get(playerId);
           if (previous === undefined) throw new Error("Player does not belong to the Game");
-          if (!Number.isSafeInteger(points)) throw new Error("Round contains invalid Points.");
-          const exactTotal = BigInt(previous) + BigInt(points);
+          let value: number;
+          if (round.mode === "passFail") {
+            if (!("passed" in score) || typeof score.passed !== "boolean") {
+              throw new Error("Round contains an invalid Pass/Fail outcome.");
+            }
+            value = score.passed ? 1 : 0;
+          } else {
+            if (!("points" in score) || !Number.isSafeInteger(score.points)) {
+              throw new Error("Round contains invalid Points.");
+            }
+            value = score.points;
+          }
+          const exactTotal = BigInt(previous) + BigInt(value);
           if (
             exactTotal < BigInt(Number.MIN_SAFE_INTEGER) ||
             exactTotal > BigInt(Number.MAX_SAFE_INTEGER)
           ) {
             throw new Error("Total Points must be between -9007199254740991 and 9007199254740991.");
           }
-          const totalPoints = Number(exactTotal);
-          totals.set(playerId, totalPoints);
-          return { playerId, points, totalPoints };
+          const total = Number(exactTotal);
+          totals.set(playerId, total);
+          return { ...score, total };
         }),
       };
     });
   const players = identities.map(({ id, name, color }) => {
-    const totalPoints = totals.get(id);
-    if (totalPoints === undefined) throw new Error("Player does not belong to the Game");
-    return { id, name, color, totalPoints };
+    const total = totals.get(id);
+    if (total === undefined) throw new Error("Player does not belong to the Game");
+    return { id, name, color, total };
   });
   const ranked = [...players].sort((a, b) => {
-    if (a.totalPoints === b.totalPoints) return 0;
-    const lower = a.totalPoints < b.totalPoints ? -1 : 1;
-    return game.settings.pointsDirection === "low" ? lower : -lower;
+    if (a.total === b.total) return 0;
+    const lower = a.total < b.total ? -1 : 1;
+    return game.settings.mode === "points" && game.settings.pointsDirection === "low"
+      ? lower
+      : -lower;
   });
   let place = 1;
-  const standings = ranked.map(({ totalPoints, ...player }, index) => {
-    if (index > 0 && ranked[index - 1].totalPoints !== totalPoints) place = index + 1;
-    return { player, totalPoints, place };
+  const standings = ranked.map(({ total, ...player }, index) => {
+    if (index > 0 && ranked[index - 1].total !== total) place = index + 1;
+    return { player, total, place };
   });
   const nextRoundNumber = (rounds.at(-1)?.roundNumber ?? 0) + 1;
   const upcomingDealerId =
     game.status === "active" && game.settings.dealer
       ? getDealerId(nextRoundNumber, game.players)
       : null;
-  return { game, players, rounds, standings, upcomingDealerId };
+  return {
+    game,
+    players,
+    rounds,
+    standings,
+    upcomingDealerId,
+    primaryLabel: game.settings.mode === "passFail" ? "Passes" : "Points",
+  };
 }

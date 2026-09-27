@@ -4,12 +4,16 @@ import type { GenericScoreboardView } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Button, DealerMarker } from "../ui";
 import { GenericAddRoundDialog } from "./GenericAddRoundDialog";
+import { GenericPassFailRoundDialog } from "./GenericPassFailRoundDialog";
+import { PassFailOutcome } from "./PassFailOutcome";
 
 const cellClasses = "border-r border-b border-text-secondary/20 bg-app-background px-3 py-3";
 
 export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   const [addOpen, setAddOpen] = useState(false);
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
+  const AddRoundDialog =
+    view.game.settings.mode === "passFail" ? GenericPassFailRoundDialog : GenericAddRoundDialog;
 
   return (
     <>
@@ -20,7 +24,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
         className="glass relative min-h-0 overflow-auto rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-secondary"
       >
         <table className="w-full border-separate border-spacing-0 text-center">
-          <caption className="sr-only">Points scoreboard</caption>
+          <caption className="sr-only">{view.primaryLabel} scoreboard</caption>
           <thead>
             <tr>
               <th
@@ -41,8 +45,8 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       {player.name}
                     </span>
                     <span className="whitespace-nowrap text-lg font-semibold tabular-nums">
-                      <span className="sr-only">Total Points: </span>
-                      {player.totalPoints}
+                      <span className="sr-only">Total {view.primaryLabel}: </span>
+                      {player.total}
                     </span>
                   </span>
                 </th>
@@ -80,7 +84,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                 {round.scores.map((score, index) => (
                   <td
                     key={score.playerId}
-                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${score.points} Points${round.dealerId === score.playerId ? ", Dealer" : ""}`}
+                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"passed" in score ? (score.passed ? "Passed" : "Failed") : `${score.points} Points`}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
                     className={[cellClasses, "whitespace-nowrap tabular-nums"].join(" ")}
                   >
                     <div
@@ -89,12 +93,16 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       {round.dealerId === score.playerId && (
                         <DealerMarker className="absolute top-1/2 left-0 -translate-y-1/2" />
                       )}
-                      <span>{score.points}</span>
+                      {"passed" in score ? (
+                        <PassFailOutcome passed={score.passed} />
+                      ) : (
+                        <span>{score.points}</span>
+                      )}
                     </div>
                     {expandedRound === round.roundNumber && (
                       <div className="pt-2 text-sm text-text-secondary">
-                        <span className="sr-only">Accumulated Points: </span>
-                        {score.totalPoints}
+                        <span className="sr-only">Accumulated {view.primaryLabel}: </span>
+                        {score.total}
                       </div>
                     )}
                   </td>
@@ -141,7 +149,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
         </table>
       </section>
       {view.game.status === "active" && (
-        <GenericAddRoundDialog
+        <AddRoundDialog
           open={addOpen}
           onClose={setAddOpen}
           gameId={view.game.id}

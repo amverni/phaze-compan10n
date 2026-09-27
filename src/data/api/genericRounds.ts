@@ -2,11 +2,7 @@ import type { AddGenericRoundInput, GameId, GenericRound } from "../../types";
 import { parseGenericPoints } from "../../utils/genericPoints";
 import { getDB } from "../db";
 import { requirePlayers, withGameTransaction } from "./gameLifecycle";
-import {
-  assertGenericPointsGame,
-  deriveGenericScoreboard,
-  orderGenericScores,
-} from "./genericScoring";
+import { assertGenericGame, deriveGenericScoreboard, orderGenericScores } from "./genericScoring";
 
 export const genericRoundsApi = {
   async add(input: AddGenericRoundInput): Promise<GenericRound> {
@@ -14,26 +10,56 @@ export const genericRoundsApi = {
     if (!Array.isArray(input.scores)) {
       throw new Error("A Round must include every Player exactly once.");
     }
-    const scores = input.scores.map(({ playerId, points }) => ({
-      playerId,
-      points: parseGenericPoints(points),
-    }));
+    if (input.mode !== undefined && input.mode !== "points" && input.mode !== "passFail") {
+      throw new Error("Unsupported Round Scoring Mode.");
+    }
+    const entry =
+      input.mode === "passFail"
+        ? {
+            mode: "passFail" as const,
+            scores: input.scores.map(({ playerId, passed }) => {
+              if (typeof passed !== "boolean") {
+                throw new Error("Round contains an invalid Pass/Fail outcome.");
+              }
+              return { playerId, passed };
+            }),
+          }
+        : {
+            mode: "points" as const,
+            scores: input.scores.map(({ playerId, points }) => ({
+              playerId,
+              points: parseGenericPoints(points),
+            })),
+          };
     return await withGameTransaction(async (tx) => {
       const games = tx.objectStore("games");
       const game = await games.get(gameId);
       if (!game || game.scorekeeper !== "generic") throw new Error("Generic Game not found");
       if (game.status !== "active") throw new Error("Cannot add a Round to a Completed Game");
-      assertGenericPointsGame(game);
+      assertGenericGame(game);
+      if (entry.mode !== game.settings.mode) {
+        throw new Error("Round Scoring Mode must match the Game.");
+      }
       const players = await requirePlayers(tx, game.players);
       const rounds = tx.objectStore("rounds");
       const existing = await rounds.index("by-game").getAll(gameId);
-      const round: GenericRound = {
+      const metadata = {
         gameId,
-        scorekeeper: "generic",
-        mode: "points",
+        scorekeeper: "generic" as const,
         roundNumber: existing.reduce((latest, saved) => Math.max(latest, saved.roundNumber), 0) + 1,
-        scores: orderGenericScores(game.players, scores),
       };
+      const round: GenericRound =
+        entry.mode === "passFail"
+          ? {
+              ...metadata,
+              mode: "passFail",
+              scores: orderGenericScores(game.players, entry.scores),
+            }
+          : {
+              ...metadata,
+              mode: "points",
+              scores: orderGenericScores(game.players, entry.scores),
+            };
       deriveGenericScoreboard(game, players, [...existing, round]);
       await rounds.add(round);
       await games.put({ ...game, lastActivityAt: Date.now() });

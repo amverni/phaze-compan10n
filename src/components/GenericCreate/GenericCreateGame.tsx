@@ -4,7 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Play, Settings, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useCreateGenericGame } from "../../data/hooks/useGenericGames";
-import type { GenericPointsSettings, Player } from "../../types";
+import type { GenericGameSettings, GenericPointsSettings, Player } from "../../types";
 import { PlayerSelectionProvider } from "../Create/PlayerSelectionContext";
 import { Players } from "../Create/Players";
 import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
@@ -12,6 +12,11 @@ import {
   Button,
   InlineError,
   List,
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
   ScrollFade,
   SettingListRow,
   SwipeableTabPanels,
@@ -28,6 +33,10 @@ const directions = [
   { value: "high", label: "High wins" },
   { value: "low", label: "Low wins" },
 ] as const;
+const modes = [
+  { value: "points", label: "Points" },
+  { value: "passFail", label: "Pass/Fail" },
+] as const;
 const directionClasses = [
   "relative cursor-pointer rounded-full px-3 py-2 text-sm outline-none",
   "data-checked:bg-text-secondary/15 data-checked:font-semibold",
@@ -41,10 +50,12 @@ export function GenericCreateGame() {
   const navigate = useNavigate();
   const defaultValues: {
     players: Player[];
+    mode: GenericGameSettings["mode"];
     pointsDirection: GenericPointsSettings["pointsDirection"];
     dealer: boolean;
   } = {
     players: [],
+    mode: "points",
     pointsDirection: "high",
     dealer: false,
   };
@@ -53,12 +64,19 @@ export function GenericCreateGame() {
     onSubmit: async ({ value }) => {
       const game = await createGame.mutateAsync({
         players: value.players.map((player) => player.id),
-        settings: {
-          mode: "points",
-          pointsDirection: value.pointsDirection,
-          tiebreaker: null,
-          dealer: value.dealer,
-        },
+        settings:
+          value.mode === "passFail"
+            ? {
+                mode: "passFail",
+                tiebreaker: null,
+                dealer: value.dealer,
+              }
+            : {
+                mode: "points",
+                pointsDirection: value.pointsDirection,
+                tiebreaker: null,
+                dealer: value.dealer,
+              },
       });
       await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
     },
@@ -146,45 +164,74 @@ export function GenericCreateGame() {
               </TabPanel>
               <TabPanel className="h-full px-4">
                 <ScrollFade className="h-full -mx-6 px-6 py-4">
-                  <List rowVariant="content">
-                    <SettingListRow key="mode" label="Scoring Mode">
-                      <span>Points</span>
-                    </SettingListRow>
-                    <form.Field key="direction" name="pointsDirection">
-                      {(field) => (
-                        <RadioGroup
-                          value={field.state.value}
-                          onChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                          className="w-full"
-                        >
-                          <SettingListRow label={<Label>Points Direction</Label>}>
-                            <div className="glass relative flex shrink-0 rounded-full p-1">
-                              {directions.map(({ value, label }) => (
-                                <Radio key={value} value={value} className={directionClasses}>
-                                  {label}
-                                </Radio>
-                              ))}
-                            </div>
-                          </SettingListRow>
-                        </RadioGroup>
-                      )}
-                    </form.Field>
-                    <form.Field key="dealer" name="dealer">
-                      {(field) => (
-                        <Field className="w-full">
-                          <SettingListRow label={<Label>Dealer</Label>}>
-                            <Switch
-                              checked={field.state.value}
+                  <form.Subscribe selector={(state) => state.values.mode}>
+                    {(mode) => (
+                      <List rowVariant="content">
+                        <form.Field key="mode" name="mode">
+                          {(field) => (
+                            <Listbox
+                              value={field.state.value}
                               onChange={field.handleChange}
-                              onBlur={field.handleBlur}
-                              className="data-focus:outline-text-secondary!"
-                            />
-                          </SettingListRow>
-                        </Field>
-                      )}
-                    </form.Field>
-                  </List>
+                              className="w-full min-w-0"
+                            >
+                              <SettingListRow label={<ListboxLabel>Scoring Mode</ListboxLabel>}>
+                                <ListboxButton variant="plain" className="shrink-0">
+                                  {modes.find(({ value }) => value === field.state.value)?.label}
+                                </ListboxButton>
+                                <ListboxOptions
+                                  align="right"
+                                  anchor={{ to: "bottom end", gap: "0.25rem", padding: "1rem" }}
+                                  transformOrigin="top-right"
+                                >
+                                  {modes.map(({ value, label }) => (
+                                    <ListboxOption key={value} value={value}>
+                                      {label}
+                                    </ListboxOption>
+                                  ))}
+                                </ListboxOptions>
+                              </SettingListRow>
+                            </Listbox>
+                          )}
+                        </form.Field>
+                        {mode === "points" && (
+                          <form.Field key="direction" name="pointsDirection">
+                            {(field) => (
+                              <RadioGroup
+                                value={field.state.value}
+                                onChange={field.handleChange}
+                                onBlur={field.handleBlur}
+                                className="w-full"
+                              >
+                                <SettingListRow label={<Label>Points Direction</Label>}>
+                                  <div className="glass relative flex shrink-0 rounded-full p-1">
+                                    {directions.map(({ value, label }) => (
+                                      <Radio key={value} value={value} className={directionClasses}>
+                                        {label}
+                                      </Radio>
+                                    ))}
+                                  </div>
+                                </SettingListRow>
+                              </RadioGroup>
+                            )}
+                          </form.Field>
+                        )}
+                        <form.Field key="dealer" name="dealer">
+                          {(field) => (
+                            <Field className="w-full">
+                              <SettingListRow label={<Label>Dealer</Label>}>
+                                <Switch
+                                  checked={field.state.value}
+                                  onChange={field.handleChange}
+                                  onBlur={field.handleBlur}
+                                  className="data-focus:outline-text-secondary!"
+                                />
+                              </SettingListRow>
+                            </Field>
+                          )}
+                        </form.Field>
+                      </List>
+                    )}
+                  </form.Subscribe>
                 </ScrollFade>
               </TabPanel>
             </SwipeableTabPanels>
