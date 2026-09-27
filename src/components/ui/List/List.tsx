@@ -438,7 +438,11 @@ export function List({
   }
 
   function cancelActiveAnimations() {
-    const exitingKeys = exitingAnimationKeysRef.current;
+    const currentKeys = new Set(currentRowsRef.current.map((row) => row.key));
+    // A row restored mid-exit must recover its natural height, not stay collapsed.
+    const exitingKeys = new Set(
+      [...exitingAnimationKeysRef.current].filter((key) => !currentKeys.has(key)),
+    );
     lockExitingRowsAtZero(exitingKeys);
     for (const animation of activeAnimationsRef.current) {
       animation.cancel();

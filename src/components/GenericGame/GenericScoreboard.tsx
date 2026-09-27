@@ -58,6 +58,12 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                           ? player.totalWins
                           : player.totalPasses}
                     </span>
+                    {"totalTiebreaker" in player && player.totalTiebreaker !== undefined && (
+                      <span className="whitespace-nowrap text-sm font-normal text-text-secondary tabular-nums">
+                        <span className="sr-only">Total Tiebreaker: </span>
+                        {player.totalTiebreaker}
+                      </span>
+                    )}
                   </span>
                 </th>
               ))}
@@ -94,7 +100,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                 {round.scores.map((score, index) => (
                   <td
                     key={score.playerId}
-                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"points" in score ? `${score.points} Points` : "passed" in score ? (score.passed ? "Passed" : "Failed") : score.won ? "Won" : "Lost"}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
+                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"points" in score ? `${score.points} Points${score.tiebreaker !== undefined ? `, ${score.tiebreaker} Tiebreaker` : ""}` : "passed" in score ? (score.passed ? "Passed" : "Failed") : score.won ? "Won" : "Lost"}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
                     className={[cellClasses, "whitespace-nowrap tabular-nums"].join(" ")}
                   >
                     <div
@@ -106,7 +112,14 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       {"passed" in score ? (
                         <PassFailOutcome passed={score.passed} />
                       ) : "points" in score ? (
-                        <span>{score.points}</span>
+                        <>
+                          <span>{score.points}</span>
+                          {score.tiebreaker !== undefined && (
+                            <span className="block text-sm text-text-secondary">
+                              {score.tiebreaker}
+                            </span>
+                          )}
+                        </>
                       ) : score.won ? (
                         <Check className="mx-auto size-5 text-pt-green-500" aria-hidden />
                       ) : (
@@ -121,6 +134,12 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                           : "totalWins" in score
                             ? score.totalWins
                             : score.totalPasses}
+                        {"totalTiebreaker" in score && score.totalTiebreaker !== undefined && (
+                          <div className="text-xs">
+                            <span className="sr-only">Accumulated Tiebreaker: </span>
+                            {score.totalTiebreaker}
+                          </div>
+                        )}
                       </div>
                     )}
                   </td>
@@ -181,6 +200,9 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
             gameId={view.game.id}
             players={view.players}
             mode={view.game.settings.mode}
+            tiebreakerEnabled={
+              view.game.settings.mode === "points" && view.game.settings.tiebreaker !== null
+            }
           />
         ))}
     </>

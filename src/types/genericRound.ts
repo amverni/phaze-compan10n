@@ -5,6 +5,7 @@ import type { ArrayAtLeastOne } from "./utils";
 export interface GenericPointsScore {
   playerId: PlayerId;
   points: number;
+  tiebreaker?: number;
 }
 
 export interface GenericPassFailScore {
@@ -43,7 +44,7 @@ export type GenericRound =
 export interface AddGenericPointsRoundInput {
   gameId: GameId;
   mode?: "points";
-  scores: { playerId: PlayerId; points: string }[];
+  scores: { playerId: PlayerId; points: string; tiebreaker?: string }[];
 }
 
 export interface AddGenericPassFailRoundInput {

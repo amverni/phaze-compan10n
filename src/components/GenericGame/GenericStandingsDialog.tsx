@@ -32,13 +32,19 @@ export function GenericStandingsDialog({
                 <span className="min-w-0 flex-1 truncate font-medium" title={row.player.name}>
                   {row.player.name}
                 </span>
-                <span className="shrink-0 font-semibold tabular-nums">
+                <span className="shrink-0 text-right font-semibold tabular-nums">
                   <span className="sr-only">Total {metric}: </span>
                   {"totalPoints" in row
                     ? row.totalPoints
                     : "totalWins" in row
                       ? row.totalWins
                       : row.totalPasses}
+                  {"totalTiebreaker" in row && row.totalTiebreaker !== undefined && (
+                    <span className="block text-xs font-normal text-text-secondary">
+                      <span className="sr-only">Total Tiebreaker: </span>
+                      {row.totalTiebreaker}
+                    </span>
+                  )}
                 </span>
               </li>
             ))}

@@ -15,11 +15,15 @@ import { getDealerId } from "../../utils";
 export function assertGenericSettings(settings: GenericGameSettings): void {
   if (
     !settings ||
-    settings.tiebreaker !== null ||
     typeof settings.dealer !== "boolean" ||
     (settings.mode === "points"
-      ? settings.pointsDirection !== "high" && settings.pointsDirection !== "low"
+      ? (settings.pointsDirection !== "high" && settings.pointsDirection !== "low") ||
+        (settings.tiebreaker !== null &&
+          (typeof settings.tiebreaker !== "object" ||
+            Array.isArray(settings.tiebreaker) ||
+            (settings.tiebreaker.direction !== "high" && settings.tiebreaker.direction !== "low")))
       : (settings.mode !== "singleRoundWinner" && settings.mode !== "passFail") ||
+        settings.tiebreaker !== null ||
         "pointsDirection" in settings)
   ) {
     throw new Error("Unsupported Generic Game settings");
@@ -65,6 +69,8 @@ export function deriveGenericScoreboard(
   storedRounds: StoredRound[],
 ): GenericScoreboardView {
   const totals = new Map(game.players.map((id) => [id, 0]));
+  const tiebreakerTotals = new Map(game.players.map((id) => [id, 0]));
+  const tiebreaker = game.settings.mode === "points" ? game.settings.tiebreaker : null;
   const rounds: GenericScoreboardView["rounds"] = [...storedRounds]
     .sort((a, b) => a.roundNumber - b.roundNumber)
     .map((round) => {
@@ -81,10 +87,9 @@ export function deriveGenericScoreboard(
       }
       const ordered =
         round.mode === "points"
-          ? orderGenericScores(game.players, round.scores).map(({ playerId, points }) => ({
-              playerId,
-              points,
-            }))
+          ? orderGenericScores(game.players, round.scores).map(
+              ({ playerId, points, tiebreaker }) => ({ playerId, points, tiebreaker }),
+            )
           : round.mode === "singleRoundWinner"
             ? orderWinnerScores(game.players, round.scores)
             : orderPassFailScores(game.players, round.scores);
@@ -106,16 +111,17 @@ export function deriveGenericScoreboard(
             return { playerId, won: score.won, totalWins };
           }
           const { points } = score;
-          if (!Number.isSafeInteger(points)) throw new Error("Round contains invalid Points.");
-          const exactTotal = BigInt(previous) + BigInt(points);
-          if (
-            exactTotal < BigInt(Number.MIN_SAFE_INTEGER) ||
-            exactTotal > BigInt(Number.MAX_SAFE_INTEGER)
-          ) {
-            throw new Error("Total Points must be between -9007199254740991 and 9007199254740991.");
-          }
-          const totalPoints = Number(exactTotal);
+          const totalPoints = addNumericScore(previous, points, "Points");
           totals.set(playerId, totalPoints);
+          if (tiebreaker) {
+            const totalTiebreaker = addNumericScore(
+              tiebreakerTotals.get(playerId) ?? 0,
+              score.tiebreaker,
+              "Tiebreaker",
+            );
+            tiebreakerTotals.set(playerId, totalTiebreaker);
+            return { playerId, points, totalPoints, tiebreaker: score.tiebreaker, totalTiebreaker };
+          }
           return { playerId, points, totalPoints };
         }),
       };
@@ -123,25 +129,39 @@ export function deriveGenericScoreboard(
   const players = identities.map(({ id, name, color }) => {
     const total = totals.get(id);
     if (total === undefined) throw new Error("Player does not belong to the Game");
-    return { id, name, color, ...scoreTotal(game.settings, total) };
+    return { id, name, color, ...scoreTotal(game.settings, total, tiebreakerTotals.get(id)) };
   });
   const ranked = identities
     .map((player) => {
       const total = totals.get(player.id);
       if (total === undefined) throw new Error("Player does not belong to the Game");
-      return { player, total };
+      return { player, total, totalTiebreaker: tiebreakerTotals.get(player.id) ?? 0 };
     })
     .sort((a, b) => {
-      if (a.total === b.total) return 0;
+      if (a.total === b.total) {
+        if (!tiebreaker || a.totalTiebreaker === b.totalTiebreaker) return 0;
+        const lower = a.totalTiebreaker < b.totalTiebreaker ? -1 : 1;
+        return tiebreaker.direction === "low" ? lower : -lower;
+      }
       const lower = a.total < b.total ? -1 : 1;
       return game.settings.mode === "points" && game.settings.pointsDirection === "low"
         ? lower
         : -lower;
     });
   let place = 1;
-  const standings = ranked.map(({ total, player: { id, name, color } }, index) => {
-    if (index > 0 && ranked[index - 1].total !== total) place = index + 1;
-    return { player: { id, name, color }, ...scoreTotal(game.settings, total), place };
+  const standings = ranked.map(({ total, totalTiebreaker, player: { id, name, color } }, index) => {
+    if (
+      index > 0 &&
+      (ranked[index - 1].total !== total ||
+        (tiebreaker && ranked[index - 1].totalTiebreaker !== totalTiebreaker))
+    ) {
+      place = index + 1;
+    }
+    return {
+      player: { id, name, color },
+      ...scoreTotal(game.settings, total, totalTiebreaker),
+      place,
+    };
   });
   const nextRoundNumber = (rounds.at(-1)?.roundNumber ?? 0) + 1;
   const upcomingDealerId =
@@ -157,9 +177,32 @@ export function deriveGenericScoreboard(
   };
 }
 
-function scoreTotal(settings: GenericGameSettings, total: number): GenericScoreTotal {
+function scoreTotal(
+  settings: GenericGameSettings,
+  total: number,
+  totalTiebreaker = 0,
+): GenericScoreTotal {
   if (settings.mode === "passFail") return { totalPasses: total };
-  return settings.mode === "points" ? { totalPoints: total } : { totalWins: total };
+  if (settings.mode === "singleRoundWinner") return { totalWins: total };
+  return settings.tiebreaker ? { totalPoints: total, totalTiebreaker } : { totalPoints: total };
+}
+
+function addNumericScore(
+  previous: number,
+  value: number | undefined,
+  metric: "Points" | "Tiebreaker",
+): number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
+    throw new Error(`Round contains invalid ${metric}.`);
+  }
+  const exactTotal = BigInt(previous) + BigInt(value);
+  if (
+    exactTotal < BigInt(Number.MIN_SAFE_INTEGER) ||
+    exactTotal > BigInt(Number.MAX_SAFE_INTEGER)
+  ) {
+    throw new Error(`Total ${metric} must be between -9007199254740991 and 9007199254740991.`);
+  }
+  return Number(exactTotal);
 }
 
 function orderPassFailScores(playerIds: PlayerId[], scores: GenericPassFailScore[]) {

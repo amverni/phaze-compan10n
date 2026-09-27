@@ -266,7 +266,7 @@ it.each([
   { mode: "singleRoundWinner" },
   { mode: "passFail" },
   { pointsDirection: "sideways" },
-  { tiebreaker: { direction: "high" } },
+  { tiebreaker: { direction: "sideways" } },
   { dealer: "true" },
 ])("refuses unsupported persisted Game settings rather than recording a Points Round (%j)", async (invalid) => {
   const {
