@@ -40,7 +40,7 @@ it("opens final Standings after a finishing Round and retains only the individua
       },
       settings: { tiebreaker: "roundsWon", roundSkipPenalty: 100, sitOutPenalty: 0 },
     });
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     await page.evaluate(
       ({ game, players }) =>
@@ -64,7 +64,7 @@ it("opens final Standings after a finishing Round and retains only the individua
         }),
       { game, players },
     );
-    await page.goto(`${appUrl}#/game/${game.id}`);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
     await page.getByRole("button", { name: "Add round 1", exact: true }).click();
     const entry = page.getByRole("dialog");
     await entry.getByRole("button", { name: /Round Winner/ }).click();
