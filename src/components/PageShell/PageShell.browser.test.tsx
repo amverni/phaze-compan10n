@@ -37,7 +37,7 @@ describe.each(["light", "dark"] as const)("neutral page layout in %s mode", (col
     ]) {
       const page = await browser.newPage({ viewport: { width, height }, colorScheme });
       try {
-        await page.goto(appUrl);
+        await page.goto(`${appUrl}#/phaseCompan10n`);
         await page.getByRole("link", { name: "Create Game" }).waitFor();
         const markup = renderToStaticMarkup(
           <PageShell

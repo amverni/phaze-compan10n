@@ -13,7 +13,7 @@ export const Home: React.FC = () => {
       headerContent={
         <div className="relative z-10 mx-auto flex h-full w-full items-center justify-between px-4">
           <PhasesCardButton />
-          <HomeMenu />
+          <HomeMenu experience="phaseCompan10n" />
         </div>
       }
       mainContent={

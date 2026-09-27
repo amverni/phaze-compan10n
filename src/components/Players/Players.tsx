@@ -1,15 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
-import type { Player } from "../../types";
+import type { Player, ScorekeeperExperience } from "../../types";
 import { CardBackground } from "../CardBackground/CardBackground";
 import { HeaderLogo } from "../Logo/HeaderLogo";
+import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
 import { Button, Dialog } from "../ui";
 import { PlayerEditor } from "./PlayerEditor";
 import { PlayerListRow } from "./PlayerListRow";
 import { PlayersSearch } from "./PlayersSearch";
 
-export function Players() {
+export function Players({ experience }: { experience: ScorekeeperExperience }) {
+  const isPhase = experience === "phaseCompan10n";
+  const Shell = isPhase ? CardBackground : ScorekeeperShell;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [defaultName, setDefaultName] = useState("");
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
@@ -29,11 +32,13 @@ export function Players() {
   }
 
   return (
-    <CardBackground
+    <Shell
       headerContent={
-        <div className="relative flex h-full items-center">
-          <HeaderLogo />
-        </div>
+        isPhase ? (
+          <div className="relative flex h-full items-center">
+            <HeaderLogo />
+          </div>
+        ) : undefined
       }
       mainContent={
         <div className="content-container h-full">
@@ -71,7 +76,12 @@ export function Players() {
       }
       footerContent={
         <div className="content-container flex h-full">
-          <Button as={Link} to="/" className="card-footer-button p-0" aria-label="Go home">
+          <Button
+            as={Link}
+            to={isPhase ? "/phaseCompan10n" : "/"}
+            className="page-shell-footer-button p-0"
+            aria-label="Go home"
+          >
             <ArrowLeft className="size-8" />
           </Button>
         </div>

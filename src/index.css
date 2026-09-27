@@ -7,6 +7,9 @@
   --color-pt-red-500: oklch(48% 0.19 27);
   --color-pt-green-500: oklch(52% 0.17 142);
   --color-pt-yellow-500: oklch(90% 0.19 98);
+  --color-scorekeeper-gold: #c99a2e;
+  --color-scorekeeper-silver: #a6adb5;
+  --color-scorekeeper-bronze: #ad744c;
   --color-button-surface: #ffffff;
   --color-button-danger: #e60a0a;
 
@@ -368,6 +371,7 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   padding-bottom: calc(var(--footer-bottom) + var(--safe-area-inset-bottom));
 }
 
+.page-shell-footer-button,
 .card-footer-button {
   width: var(--page-shell-footer-control-size, 3.5rem);
   height: var(--page-shell-footer-control-size, 3.5rem);

@@ -1,24 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { PhasesCardPage } from "../../components/PhasesCard";
+import { PhasesCardPage } from "../../../components/PhasesCard";
 import {
   Listbox,
   ListboxButton,
   ListboxLabel,
   ListboxOption,
   ListboxOptions,
-} from "../../components/ui";
+} from "../../../components/ui";
 import {
   phaseSetDetailOptions,
   phaseSetListOptions,
   phaseSetPhasesStatusOptions,
-} from "../../data/hooks/usePhaseSets";
-import { appSettingsOptions } from "../../data/hooks/useSettings";
-import type { PhaseSetId } from "../../types";
-import "../../components/PhasesCard/PhasesCardSelector.css";
+} from "../../../data/hooks/usePhaseSets";
+import { appSettingsOptions } from "../../../data/hooks/useSettings";
+import type { PhaseSetId } from "../../../types";
+import "../../../components/PhasesCard/PhasesCardSelector.css";
 
-export const Route = createFileRoute("/phasescard/")({
+export const Route = createFileRoute("/phaseCompan10n/phasescard/")({
   component: PhasesCardIndexRoute,
 });
 

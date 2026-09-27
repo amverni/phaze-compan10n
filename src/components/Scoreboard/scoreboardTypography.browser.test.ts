@@ -69,7 +69,7 @@ async function seedGame(page: Page) {
     };
   });
 
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/phaseCompan10n/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   await page.evaluate(
     ({ game, players, rounds }) =>
@@ -94,7 +94,7 @@ async function seedGame(page: Page) {
       }),
     { game, players, rounds },
   );
-  await page.goto(`${appUrl}#/game/${game.id}`);
+  await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
   await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);
 }
@@ -167,7 +167,7 @@ describe.each([320, 1280])("approved typography at %ipx viewport width", (width)
   it("enlarges the Phase Set switch without overflowing its toolbar", async () => {
     const page = await browser.newPage({ viewport: { width, height: 844 } });
     try {
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/phaseCompan10n/create`);
       await page.getByRole("tab", { name: "Phases", exact: true }).click();
       const button = page.getByRole("button", { name: "Switch phase set", exact: true });
       await button.waitFor();

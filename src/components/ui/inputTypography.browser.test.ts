@@ -30,7 +30,7 @@ async function openPlayersPage(width: number) {
     viewport: { width, height: 844 },
     hasTouch: width < 768,
   });
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/phaseCompan10n/players`);
   await page.getByPlaceholder(/^Search players/).waitFor();
   await page.evaluate(() => document.fonts.ready);
   return page;

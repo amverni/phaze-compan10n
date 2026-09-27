@@ -7,7 +7,7 @@ export const PhasesCardButton: React.FC = () => {
   return (
     <Button
       as={Link}
-      to="/phasescard"
+      to="/phaseCompan10n/phasescard"
       aria-label="Open Phases Card"
       className={phasesCardEntryButtonClasses}
     >

@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { PhasesCardPage } from "../../components/PhasesCard";
-import { phaseSetDetailOptions, phaseSetPhasesStatusOptions } from "../../data/hooks/usePhaseSets";
+import { PhasesCardPage } from "../../../components/PhasesCard";
+import {
+  phaseSetDetailOptions,
+  phaseSetPhasesStatusOptions,
+} from "../../../data/hooks/usePhaseSets";
 
-export const Route = createFileRoute("/phasescard/$phaseSetId")({
+export const Route = createFileRoute("/phaseCompan10n/phasescard/$phaseSetId")({
   component: SpecificPhasesCardRoute,
 });
 

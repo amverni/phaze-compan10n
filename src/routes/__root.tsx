@@ -1,5 +1,11 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
 
 export const Route = createRootRoute({
-  component: () => <Outlet />,
+  head: () => ({ meta: [{ title: "Scorekeeper" }] }),
+  component: () => (
+    <>
+      <HeadContent />
+      <Outlet />
+    </>
+  ),
 });

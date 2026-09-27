@@ -3,13 +3,13 @@ import {
   decodePhasesCardPayload,
   PhasesCardPage,
   PhasesCardSaveButton,
-} from "../../components/PhasesCard";
+} from "../../../components/PhasesCard";
 
 interface CustomPhasesCardSearch {
   data?: string;
 }
 
-export const Route = createFileRoute("/phasescard/custom")({
+export const Route = createFileRoute("/phaseCompan10n/phasescard/custom")({
   validateSearch: (search): CustomPhasesCardSearch => ({
     data: typeof search.data === "string" ? search.data : undefined,
   }),

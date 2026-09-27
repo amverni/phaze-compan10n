@@ -21,7 +21,7 @@ export type DecodePhasesCardResult =
 export function buildPhasesCardShareUrl(target: PhasesCardShareTarget): string {
   const builtInId = getBuiltInShareId(target);
   if (builtInId) {
-    return buildAbsoluteHashUrl(`/phasescard/${builtInId}`);
+    return buildAbsoluteHashUrl(`/phaseCompan10n/phasescard/${builtInId}`);
   }
 
   const payload = validateOutboundPayload({
@@ -33,7 +33,7 @@ export function buildPhasesCardShareUrl(target: PhasesCardShareTarget): string {
   });
   const data = encodePhasesCardPayload(payload);
 
-  return buildAbsoluteHashUrl(`/phasescard/custom?data=${encodeURIComponent(data)}`);
+  return buildAbsoluteHashUrl(`/phaseCompan10n/phasescard/custom?data=${encodeURIComponent(data)}`);
 }
 
 function getBuiltInShareId(target: PhasesCardShareTarget): PhaseSetId | undefined {
