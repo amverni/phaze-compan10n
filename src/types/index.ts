@@ -23,15 +23,27 @@ export type {
   CompletedGenericGame,
   CreateGenericGameInput,
   GenericGame,
+  GenericGameSettings,
   GenericGameView,
   GenericPointsSettings,
   GenericScoreboardView,
   GenericScoreDirection,
+  GenericScoreTotal,
   GenericScoringMode,
   GenericScoringSettings,
+  GenericSingleRoundWinnerSettings,
   GenericTiebreakerSettings,
 } from "./genericGame";
-export type { AddGenericRoundInput, GenericPointsScore, GenericRound } from "./genericRound";
+export type {
+  AddGenericPointsRoundInput,
+  AddGenericRoundInput,
+  AddGenericWinnerRoundInput,
+  GenericPointsRound,
+  GenericPointsScore,
+  GenericRound,
+  GenericSingleRoundWinnerRound,
+  GenericWinnerScore,
+} from "./genericRound";
 export type {
   BuiltInPhase,
   ColorMeld,

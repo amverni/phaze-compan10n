@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { useState } from "react";
 import type { GenericScoreboardView } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
@@ -10,6 +10,7 @@ const cellClasses = "border-r border-b border-text-secondary/20 bg-app-backgroun
 export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   const [addOpen, setAddOpen] = useState(false);
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
+  const metric = view.game.settings.mode === "points" ? "Points" : "Wins";
 
   return (
     <>
@@ -20,7 +21,9 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
         className="glass relative min-h-0 overflow-auto rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-secondary"
       >
         <table className="w-full border-separate border-spacing-0 text-center">
-          <caption className="sr-only">Points scoreboard</caption>
+          <caption className="sr-only">
+            {metric === "Points" ? "Points" : "Rounds Won"} scoreboard
+          </caption>
           <thead>
             <tr>
               <th
@@ -41,8 +44,8 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       {player.name}
                     </span>
                     <span className="whitespace-nowrap text-lg font-semibold tabular-nums">
-                      <span className="sr-only">Total Points: </span>
-                      {player.totalPoints}
+                      <span className="sr-only">Total {metric}: </span>
+                      {"totalPoints" in player ? player.totalPoints : player.totalWins}
                     </span>
                   </span>
                 </th>
@@ -80,7 +83,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                 {round.scores.map((score, index) => (
                   <td
                     key={score.playerId}
-                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${score.points} Points${round.dealerId === score.playerId ? ", Dealer" : ""}`}
+                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"points" in score ? `${score.points} Points` : score.won ? "Won" : "Lost"}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
                     className={[cellClasses, "whitespace-nowrap tabular-nums"].join(" ")}
                   >
                     <div
@@ -89,12 +92,18 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       {round.dealerId === score.playerId && (
                         <DealerMarker className="absolute top-1/2 left-0 -translate-y-1/2" />
                       )}
-                      <span>{score.points}</span>
+                      {"points" in score ? (
+                        <span>{score.points}</span>
+                      ) : score.won ? (
+                        <Check className="mx-auto size-5 text-pt-green-500" aria-hidden />
+                      ) : (
+                        <X className="mx-auto size-5 text-pt-red-500" aria-hidden />
+                      )}
                     </div>
                     {expandedRound === round.roundNumber && (
                       <div className="pt-2 text-sm text-text-secondary">
-                        <span className="sr-only">Accumulated Points: </span>
-                        {score.totalPoints}
+                        <span className="sr-only">Accumulated {metric}: </span>
+                        {"totalPoints" in score ? score.totalPoints : score.totalWins}
                       </div>
                     )}
                   </td>
@@ -146,6 +155,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
           onClose={setAddOpen}
           gameId={view.game.id}
           players={view.players}
+          mode={view.game.settings.mode}
         />
       )}
     </>

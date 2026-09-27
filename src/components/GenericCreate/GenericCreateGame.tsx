@@ -4,7 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Play, Settings, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useCreateGenericGame } from "../../data/hooks/useGenericGames";
-import type { GenericPointsSettings, Player } from "../../types";
+import type { GenericGameSettings, GenericPointsSettings, Player } from "../../types";
 import { PlayerSelectionProvider } from "../Create/PlayerSelectionContext";
 import { Players } from "../Create/Players";
 import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
@@ -12,6 +12,11 @@ import {
   Button,
   InlineError,
   List,
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
   ScrollFade,
   SettingListRow,
   SwipeableTabPanels,
@@ -28,6 +33,10 @@ const directions = [
   { value: "high", label: "High wins" },
   { value: "low", label: "Low wins" },
 ] as const;
+const scoringModes = [
+  { value: "points", label: "Points" },
+  { value: "singleRoundWinner", label: "Single Round Winner" },
+] as const;
 const directionClasses = [
   "relative cursor-pointer rounded-full px-3 py-2 text-sm outline-none",
   "data-checked:bg-text-secondary/15 data-checked:font-semibold",
@@ -41,10 +50,12 @@ export function GenericCreateGame() {
   const navigate = useNavigate();
   const defaultValues: {
     players: Player[];
+    mode: GenericGameSettings["mode"];
     pointsDirection: GenericPointsSettings["pointsDirection"];
     dealer: boolean;
   } = {
     players: [],
+    mode: "points",
     pointsDirection: "high",
     dealer: false,
   };
@@ -53,12 +64,15 @@ export function GenericCreateGame() {
     onSubmit: async ({ value }) => {
       const game = await createGame.mutateAsync({
         players: value.players.map((player) => player.id),
-        settings: {
-          mode: "points",
-          pointsDirection: value.pointsDirection,
-          tiebreaker: null,
-          dealer: value.dealer,
-        },
+        settings:
+          value.mode === "points"
+            ? {
+                mode: "points",
+                pointsDirection: value.pointsDirection,
+                tiebreaker: null,
+                dealer: value.dealer,
+              }
+            : { mode: "singleRoundWinner", tiebreaker: null, dealer: value.dealer },
       });
       await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
     },
@@ -147,29 +161,54 @@ export function GenericCreateGame() {
               <TabPanel className="h-full px-4">
                 <ScrollFade className="h-full -mx-6 px-6 py-4">
                   <List rowVariant="content">
-                    <SettingListRow key="mode" label="Scoring Mode">
-                      <span>Points</span>
-                    </SettingListRow>
-                    <form.Field key="direction" name="pointsDirection">
+                    <form.Field key="mode" name="mode">
                       {(field) => (
-                        <RadioGroup
+                        <Listbox
                           value={field.state.value}
                           onChange={field.handleChange}
-                          onBlur={field.handleBlur}
                           className="w-full"
                         >
-                          <SettingListRow label={<Label>Points Direction</Label>}>
-                            <div className="glass relative flex shrink-0 rounded-full p-1">
-                              {directions.map(({ value, label }) => (
-                                <Radio key={value} value={value} className={directionClasses}>
+                          <SettingListRow label={<ListboxLabel>Scoring Mode</ListboxLabel>}>
+                            <ListboxButton className="data-focus:outline-solid data-focus:outline-text-secondary!">
+                              {scoringModes.find((mode) => mode.value === field.state.value)?.label}
+                            </ListboxButton>
+                            <ListboxOptions anchor="bottom end">
+                              {scoringModes.map(({ value, label }) => (
+                                <ListboxOption key={value} value={value}>
                                   {label}
-                                </Radio>
+                                </ListboxOption>
                               ))}
-                            </div>
+                            </ListboxOptions>
                           </SettingListRow>
-                        </RadioGroup>
+                        </Listbox>
                       )}
                     </form.Field>
+                    <form.Subscribe key="direction" selector={(state) => state.values.mode}>
+                      {(mode) =>
+                        mode === "points" && (
+                          <form.Field name="pointsDirection">
+                            {(field) => (
+                              <RadioGroup
+                                value={field.state.value}
+                                onChange={field.handleChange}
+                                onBlur={field.handleBlur}
+                                className="w-full"
+                              >
+                                <SettingListRow label={<Label>Points Direction</Label>}>
+                                  <div className="glass relative flex shrink-0 rounded-full p-1">
+                                    {directions.map(({ value, label }) => (
+                                      <Radio key={value} value={value} className={directionClasses}>
+                                        {label}
+                                      </Radio>
+                                    ))}
+                                  </div>
+                                </SettingListRow>
+                              </RadioGroup>
+                            )}
+                          </form.Field>
+                        )
+                      }
+                    </form.Subscribe>
                     <form.Field key="dealer" name="dealer">
                       {(field) => (
                         <Field className="w-full">

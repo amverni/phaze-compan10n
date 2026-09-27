@@ -19,8 +19,8 @@ import {
   withGameTransaction,
 } from "./gameLifecycle";
 import {
-  assertGenericPointsGame,
-  assertGenericPointsSettings,
+  assertGenericGame,
+  assertGenericSettings,
   deriveGenericScoreboard,
 } from "./genericScoring";
 
@@ -55,19 +55,22 @@ export const genericGamesApi = {
       throw new Error("Players must be unique");
     }
     const { settings } = input;
-    assertGenericPointsSettings(settings);
+    assertGenericSettings(settings);
     const now = Date.now();
     const game: ActiveGenericGame = {
       id: crypto.randomUUID(),
       scorekeeper: "generic",
       status: "active",
       players: [...input.players],
-      settings: {
-        mode: "points",
-        pointsDirection: settings.pointsDirection,
-        tiebreaker: null,
-        dealer: settings.dealer,
-      },
+      settings:
+        settings.mode === "points"
+          ? {
+              mode: "points",
+              pointsDirection: settings.pointsDirection,
+              tiebreaker: null,
+              dealer: settings.dealer,
+            }
+          : { mode: "singleRoundWinner", tiebreaker: null, dealer: settings.dealer },
       createdAt: now,
       lastActivityAt: now,
     };
@@ -99,7 +102,7 @@ export const genericGamesApi = {
     const tx = db.transaction(["games", "players", "rounds"]);
     const game = await tx.objectStore("games").get(id);
     if (!game || game.scorekeeper !== "generic") return null;
-    assertGenericPointsGame(game);
+    assertGenericGame(game);
     const [view, rounds] = await Promise.all([
       resolveView(game, (playerId) => tx.objectStore("players").get(playerId)),
       tx.objectStore("rounds").index("by-game").getAll(id),
@@ -129,7 +132,7 @@ export const genericGamesApi = {
       const game = await tx.objectStore("games").get(id);
       if (!game || game.scorekeeper !== "generic") throw new Error("Generic Game not found");
       if (game.status !== "active") throw new Error("Cannot finish a Completed Game");
-      assertGenericPointsGame(game);
+      assertGenericGame(game);
       const players = await requirePlayers(tx, game.players);
       const rounds = await tx.objectStore("rounds").index("by-game").getAll(id);
       const { standings } = deriveGenericScoreboard(game, players, rounds);
