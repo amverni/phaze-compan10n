@@ -1,5 +1,5 @@
 import { getColorEntry } from "../../data/constants/colors";
-import type { Player } from "../../types";
+import type { PlayerIdentity } from "../../types";
 
 export const GRAPH_LEFT = 64;
 export const GRAPH_TOP = 24;
@@ -68,7 +68,7 @@ export function shouldShowRoundLabel(
   return (roundCount - 1 - index) % stride === 0;
 }
 
-export function getGraphPlayerColor(player: Player): string {
+export function getGraphPlayerColor(player: PlayerIdentity): string {
   return getColorEntry(player.color)?.hex ?? player.color;
 }
 

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import type { Player } from "../../types";
+import type { PlayerIdentity } from "../../types";
 import {
   getPlayerAvatarBoxSize,
   PlayerAvatar,
@@ -9,7 +9,7 @@ import {
 const OVERLAP_PX = 6;
 
 export interface PlayerAvatarStackProps {
-  players: Player[];
+  players: readonly PlayerIdentity[];
   /**
    * Optional upper cap on visible avatars. When unset, the stack fits as many avatars
    * as it can in its own allocated width (place it as `flex-1` in a flex row).

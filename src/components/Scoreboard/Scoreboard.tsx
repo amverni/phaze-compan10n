@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Game, Player, Round } from "../../types";
+import type { Game, PlayerIdentity, Round } from "../../types";
 import { AddRoundDialog } from "./AddRoundDialog";
 import { GhostRow } from "./GhostRow";
 import { RoundRow } from "./RoundRow";
@@ -10,7 +10,7 @@ import "./scoreboard.css";
 interface ScoreboardProps {
   game: Game;
   rounds: Round[];
-  players: Player[];
+  players: PlayerIdentity[];
   onGameCompleted?: () => void;
 }
 
@@ -44,7 +44,7 @@ export function Scoreboard({ game, rounds, players, onGameCompleted }: Scoreboar
   const playerById = new Map(players.map((p) => [p.id, p]));
   const orderedPlayers = orderedIds
     .map((id) => playerById.get(id))
-    .filter((p): p is Player => p !== undefined);
+    .filter((p): p is PlayerIdentity => p !== undefined);
 
   const showGhost = isActive;
   const draft = useAddRoundDraft(orderedPlayers, game.settings);

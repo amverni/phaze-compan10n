@@ -3,8 +3,8 @@ import type {
   GameSettings,
   GameTiebreaker,
   PhaseStatus,
-  Player,
   PlayerId,
+  PlayerIdentity,
   RoundScore,
 } from "../../types";
 
@@ -397,7 +397,7 @@ function updatePlayer(
   };
 }
 
-export function createInitialDraft(players: Player[]): AddRoundDraft {
+export function createInitialDraft(players: PlayerIdentity[]): AddRoundDraft {
   return {
     players: players.map((p) => ({
       playerId: p.id,

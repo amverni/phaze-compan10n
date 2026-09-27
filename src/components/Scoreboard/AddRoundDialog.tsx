@@ -2,7 +2,7 @@ import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Check, Loader2, Minus, Redo, Trophy, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAddRound } from "../../data/hooks/useRounds";
-import type { ArrayAtLeastOne, Game, Player, RoundScore } from "../../types";
+import type { ArrayAtLeastOne, Game, PlayerIdentity, RoundScore } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import {
   Button,
@@ -29,7 +29,7 @@ interface AddRoundDialogProps {
   open: boolean;
   onClose: (open: boolean) => void;
   game: Game;
-  players: Player[];
+  players: PlayerIdentity[];
   draft: UseAddRoundDraft;
   onGameCompleted?: () => void;
 }

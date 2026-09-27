@@ -1,11 +1,11 @@
 import { Check, Minus, Redo, X } from "lucide-react";
-import type { GameTiebreaker, Player, PlayerId } from "../../types";
+import type { GameTiebreaker, PlayerId, PlayerIdentity } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Popover, PopoverButton, PopoverPanel } from "../ui/Popover/Popover";
 import { getScoreEntryCompletion, type PlayerDraft } from "./addRoundDraft";
 
 interface AddRoundProgressPopoverProps {
-  players: Player[];
+  players: PlayerIdentity[];
   playerDrafts: PlayerDraft[];
   tiebreaker: GameTiebreaker;
   roundWinnerId: PlayerId | null;

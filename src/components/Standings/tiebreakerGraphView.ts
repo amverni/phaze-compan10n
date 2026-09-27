@@ -1,7 +1,7 @@
 import type {
   GameTiebreaker,
-  Player,
   PlayerId,
+  PlayerIdentity,
   Round,
   TiebreakerGraphPoint,
   TiebreakerGraphSeries,
@@ -56,7 +56,7 @@ export interface TiebreakerValueLabel {
 }
 
 export interface TiebreakerGraphViewSeries {
-  player: Player;
+  player: PlayerIdentity;
   color: string;
   linePoints: PositionedTiebreakerGraphPoint[];
   path: string;
@@ -72,7 +72,7 @@ export interface TiebreakerEndpointGroup {
   label: string;
   x: number;
   y: number;
-  players: Player[];
+  players: PlayerIdentity[];
 }
 
 export function getTiebreakerGraphView({
