@@ -196,9 +196,11 @@ it("locks creation order, Low wins, and Dealer at creation and preserves them af
   };
   const creating = genericGamesApi.create(input);
   input.players.reverse();
+  if (input.settings.mode !== "points") throw new Error("Expected Points settings");
   input.settings.pointsDirection = "high";
   input.settings.dealer = false;
   const game = await creating;
+  if (game.settings.mode !== "points") throw new Error("Expected Points settings");
   expect(game.players).toEqual([bob.id, amy.id]);
   expect(game.settings.pointsDirection).toBe("low");
   expect(game.settings.dealer).toBe(true);

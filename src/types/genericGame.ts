@@ -20,9 +20,16 @@ export interface GenericPointsSettings extends GenericScoringSettings {
   tiebreaker: null;
 }
 
+export interface GenericSingleRoundWinnerSettings extends GenericScoringSettings {
+  mode: "singleRoundWinner";
+  tiebreaker: null;
+}
+
+export type GenericGameSettings = GenericPointsSettings | GenericSingleRoundWinnerSettings;
+
 interface GenericGameFields {
   scorekeeper: "generic";
-  settings: GenericPointsSettings;
+  settings: GenericGameSettings;
 }
 
 export interface ActiveGenericGame extends ActiveGameMetadata<"generic">, GenericGameFields {}
@@ -35,7 +42,7 @@ export type GenericGame = ActiveGenericGame | CompletedGenericGame;
 
 export interface CreateGenericGameInput {
   players: PlayerId[];
-  settings: GenericPointsSettings;
+  settings: GenericGameSettings;
 }
 
 export interface GenericGameView {
@@ -43,14 +50,19 @@ export interface GenericGameView {
   players: PlayerIdentity[];
 }
 
+export type GenericScoreTotal = { totalPoints: number } | { totalWins: number };
+
 export interface GenericScoreboardView {
   game: GenericGame;
   upcomingDealerId: PlayerId | null;
-  players: Array<PlayerIdentity & { totalPoints: number }>;
+  players: Array<PlayerIdentity & GenericScoreTotal>;
   rounds: Array<{
     roundNumber: number;
     dealerId: PlayerId | null;
-    scores: Array<{ playerId: PlayerId; points: number; totalPoints: number }>;
+    scores: Array<
+      | { playerId: PlayerId; points: number; totalPoints: number }
+      | { playerId: PlayerId; won: boolean; totalWins: number }
+    >;
   }>;
-  standings: Array<{ player: PlayerIdentity; totalPoints: number; place: number }>;
+  standings: Array<{ player: PlayerIdentity; place: number } & GenericScoreTotal>;
 }

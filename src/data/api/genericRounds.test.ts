@@ -487,7 +487,11 @@ it("uses monotonically increasing Round numbers and orders persisted scores inde
   ]);
   expect(scoreboard?.players.map((player) => player.id)).toEqual([zed.id, amy.id]);
   expect(
-    scoreboard?.standings.map(({ player, place, totalPoints }) => [player.id, place, totalPoints]),
+    scoreboard?.standings.map((row) => [
+      row.player.id,
+      row.place,
+      "totalPoints" in row ? row.totalPoints : undefined,
+    ]),
   ).toEqual([
     [amy.id, 1, 11],
     [zed.id, 2, 4],
@@ -637,6 +641,7 @@ it("snapshots Round input before awaits so caller edits cannot change a pending 
   input.scores[0].playerId = zed.id;
   input.scores.length = 0;
   const saved = await pending;
+  if (saved.mode !== "points") throw new Error("Expected Points Round");
   saved.scores[0].points = 42;
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
