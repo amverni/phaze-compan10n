@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateGameInput, GameId } from "../../types";
 import { gamesApi } from "../api/games";
+import { roundKeys } from "./useRounds";
 
 export const gameKeys = {
   all: ["games"] as const,
@@ -41,5 +42,19 @@ export function useDeleteGame() {
   return useMutation({
     mutationFn: (id: GameId) => gamesApi.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+  });
+}
+
+export function useFinishGame() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: GameId) => gamesApi.finish(id),
+    onSuccess: async (game) => {
+      queryClient.setQueryData(gameKeys.detail(game.id), game);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+        queryClient.invalidateQueries({ queryKey: roundKeys.all }),
+      ]);
+    },
   });
 }

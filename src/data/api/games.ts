@@ -1,4 +1,12 @@
-import type { ActiveGame, CreateGameInput, Game, GameId, PhaseId, PlayerId } from "../../types";
+import type {
+  ActiveGame,
+  CompletedGame,
+  CreateGameInput,
+  Game,
+  GameId,
+  PhaseId,
+  PlayerId,
+} from "../../types";
 import { getDB } from "../db";
 import {
   deleteGameRecords,
@@ -7,7 +15,7 @@ import {
   saveActiveGame,
   withGameTransaction,
 } from "./gameLifecycle";
-import { resolveGameCompletion } from "./roundCompletion";
+import { resolveEarlyGameCompletion, resolveGameCompletion } from "./roundCompletion";
 
 export const gamesApi = {
   async getAll(): Promise<Game[]> {
@@ -96,6 +104,23 @@ export const gamesApi = {
         throw new Error("Game has no matching normal completion winner");
       }
       await finalizeGame(tx, completion.completedGame);
+    });
+  },
+
+  finish(id: GameId): Promise<CompletedGame> {
+    return withGameTransaction(async (tx) => {
+      const game = await tx.objectStore("games").get(id);
+      assertActivePhaseGame(game);
+      const players = await requirePlayers(tx, game.players);
+      const rounds = await tx.objectStore("rounds").index("by-game").getAll(id);
+      const completed = resolveEarlyGameCompletion({
+        game,
+        players,
+        rounds,
+        completedAt: Date.now(),
+      });
+      await finalizeGame(tx, completed);
+      return completed;
     });
   },
 

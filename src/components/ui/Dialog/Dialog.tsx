@@ -11,6 +11,7 @@ import "./Dialog.css";
 interface AppDialogProps extends Omit<DialogProps<"div">, "children"> {
   children?: ReactNode;
   afterLeave?: () => void;
+  dismissible?: boolean;
 }
 
 const panelClasses = [
@@ -78,7 +79,7 @@ function findNearestVerticalScroller(target: EventTarget | null, contentNode: HT
  * ```
  */
 export function Dialog(props: AppDialogProps) {
-  const { children, open, onClose, className, afterLeave, ...rest } = props;
+  const { children, open, onClose, className, afterLeave, dismissible = true, ...rest } = props;
 
   const mergedPanelClasses = [panelClasses, className].filter(Boolean).join(" ");
 
@@ -120,7 +121,7 @@ export function Dialog(props: AppDialogProps) {
     const d = drag.current;
     const threshold = panel.offsetHeight * DISMISS_THRESHOLD;
 
-    if (d.offset > threshold) {
+    if (dismissible && d.offset > threshold) {
       panel.style.transition = "transform 200ms ease-out";
       panel.style.transform = `translateY(${panel.offsetHeight}px)`;
       let done = false;
@@ -150,29 +151,32 @@ export function Dialog(props: AppDialogProps) {
     d.decided = false;
     d.source = null;
     d.offset = 0;
-  }, [onClose]);
+  }, [dismissible, onClose]);
 
   // ── Handle bar: pointer events ──────────────────────────────
-  const onHandlePointerDown = useCallback((e: ReactPointerEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    const d = drag.current;
-    d.startY = e.clientY;
-    d.offset = 0;
-    d.active = true;
-    d.decided = true;
-    d.source = "handle";
-    if (e.target instanceof HTMLElement) {
-      e.target.setPointerCapture(e.pointerId);
-    }
-  }, []);
+  const onHandlePointerDown = useCallback(
+    (e: ReactPointerEvent) => {
+      if (!dismissible || e.button !== 0) return;
+      e.preventDefault();
+      const d = drag.current;
+      d.startY = e.clientY;
+      d.offset = 0;
+      d.active = true;
+      d.decided = true;
+      d.source = "handle";
+      if (e.target instanceof HTMLElement) {
+        e.target.setPointerCapture(e.pointerId);
+      }
+    },
+    [dismissible],
+  );
 
   const onHandlePointerMove = useCallback(
     (e: ReactPointerEvent) => {
-      if (drag.current.source !== "handle") return;
+      if (!dismissible || drag.current.source !== "handle") return;
       applyOffset(e.clientY - drag.current.startY);
     },
-    [applyOffset],
+    [applyOffset, dismissible],
   );
 
   const onHandlePointerUp = useCallback(() => {
@@ -196,6 +200,7 @@ export function Dialog(props: AppDialogProps) {
       if (!node) return;
 
       const onTouchStart = (e: TouchEvent) => {
+        if (!dismissible) return;
         const d = drag.current;
         if (d.source === "handle") return;
         d.startX = e.touches[0].clientX;
@@ -207,6 +212,7 @@ export function Dialog(props: AppDialogProps) {
       };
 
       const onTouchMove = (e: TouchEvent) => {
+        if (!dismissible) return;
         const d = drag.current;
         if (d.source === "handle") return;
         const deltaX = e.touches[0].clientX - d.startX;
@@ -252,12 +258,18 @@ export function Dialog(props: AppDialogProps) {
         node.removeEventListener("touchend", onTouchEnd);
       };
     },
-    [applyOffset, finishGesture],
+    [applyOffset, dismissible, finishGesture],
   );
 
   return (
     <Transition show={open} afterLeave={afterLeave}>
-      <HeadlessDialog {...rest} onClose={onClose} className="relative z-50">
+      <HeadlessDialog
+        {...rest}
+        onClose={(value) => {
+          if (dismissible) onClose?.(value);
+        }}
+        className="relative z-50"
+      >
         {/* Dim overlay */}
         <TransitionChild
           enter="dialog-backdrop-enter"
