@@ -24,7 +24,6 @@ export interface AddRoundCompletedResult {
   round: Round;
   completedGame: CompletedGame;
   gameWinner: Player;
-  updatedWinner: Player;
 }
 
 export type AddRoundResult = AddRoundAddedResult | AddRoundCompletedResult;
@@ -121,7 +120,6 @@ export const roundsApi = {
     await roundsStore.add(round);
     if (completion) {
       await gamesStore.put(completion.completedGame);
-      await playersStore.put(completion.incrementedWinner);
     } else {
       await gamesStore.put(activeGameWithActivity);
     }
@@ -133,7 +131,6 @@ export const roundsApi = {
         round,
         completedGame: completion.completedGame,
         gameWinner: completion.gameWinner,
-        updatedWinner: completion.incrementedWinner,
       };
     }
 

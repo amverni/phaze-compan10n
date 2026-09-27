@@ -55,7 +55,7 @@ describe("Player presentation contract", () => {
     expect(markup).toContain("Latest 0 pts: Amy Jones");
     expect(markup).not.toContain("Add round");
 
-    const savedPlayer: Player = { ...identity, createdAt: 10, wins: 7, isFavorite: 1 };
+    const savedPlayer: Player = { ...identity, createdAt: 10, isFavorite: 1 };
     expect(renderPresentation([savedPlayer])).toBe(markup);
   });
 });

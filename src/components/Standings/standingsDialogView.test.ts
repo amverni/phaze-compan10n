@@ -70,7 +70,6 @@ function makePlayer(id: string, name: string): Player {
     name,
     color: "Jam",
     createdAt: 0,
-    wins: 0,
     isFavorite: 0,
   };
 }

@@ -52,7 +52,6 @@ export function PlayerEditor({
           {
             name: value.name.trim(),
             color: value.color,
-            wins: player?.wins ?? 0,
             isFavorite: value.isFavorite,
           },
           player?.id,
@@ -68,7 +67,6 @@ export function PlayerEditor({
       const data = {
         name: value.name.trim(),
         color: value.color,
-        wins: player?.wins ?? 0,
         isFavorite: value.isFavorite,
       };
 

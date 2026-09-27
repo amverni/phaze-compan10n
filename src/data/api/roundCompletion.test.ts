@@ -27,7 +27,7 @@ describe("resolveGameCompletion", () => {
     ).toBeNull();
   });
 
-  it("completes an Active Game with the Standings Game Winner and increments their Win Count", () => {
+  it("completes an Active Game with its Standings Game Winner", () => {
     const game = makeActiveGame({
       players: [players.amy.id, players.bob.id, players.cam.id],
       activePlayers: [players.amy.id, players.bob.id],
@@ -64,10 +64,34 @@ describe("resolveGameCompletion", () => {
         winnerName: players.amy.name,
       },
       gameWinner: players.amy,
-      incrementedWinner: {
-        ...players.amy,
-        wins: players.amy.wins + 1,
-      },
     });
+  });
+
+  it.each([
+    { fallback: "most recent Round Winner", roundWinnerId: "amy", expectedWinnerId: "amy" },
+    { fallback: "Game Creation Order", roundWinnerId: "cam", expectedWinnerId: "bob" },
+  ])("uses $fallback when Finished Players tie on their Tiebreaker", ({
+    roundWinnerId,
+    expectedWinnerId,
+  }) => {
+    const game = makeActiveGame({
+      players: [players.bob.id, players.amy.id, players.cam.id],
+      activePlayers: [players.amy.id, players.bob.id, players.cam.id],
+    });
+    const resolution = resolveGameCompletion({
+      game,
+      players: [players.amy, players.bob, players.cam],
+      rounds: [
+        makeRound(2, roundWinnerId, [
+          { playerId: players.amy.id, currentPhase: 2, phaseStatus: "completed", score: 0 },
+          { playerId: players.bob.id, currentPhase: 2, phaseStatus: "completed", score: 0 },
+          { playerId: players.cam.id, currentPhase: 1, phaseStatus: "completed", score: 0 },
+        ]),
+      ],
+      completedAt: 456,
+    });
+
+    expect(resolution?.completedGame.winnerId).toBe(expectedWinnerId);
+    expect(resolution?.gameWinner.id).toBe(expectedWinnerId);
   });
 });

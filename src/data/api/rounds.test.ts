@@ -8,6 +8,7 @@ import {
   completionPlayers as players,
 } from "./gameCompletionTestFixtures";
 import { gamesApi } from "./games";
+import { playersApi } from "./players";
 import { roundsApi } from "./rounds";
 
 describe("roundsApi.add", () => {
@@ -29,7 +30,6 @@ describe("roundsApi.add", () => {
 
     const db = await getDB();
     const storedGame = await db.get("games", game.id);
-    const storedWinner = await db.get("players", players.amy.id);
 
     expect(result.outcome).toBe("roundAdded");
     expect(result.round).toMatchObject({
@@ -38,10 +38,10 @@ describe("roundsApi.add", () => {
       roundWinnerId: players.amy.id,
     });
     expect(storedGame?.status).toBe("active");
-    expect(storedWinner?.wins).toBe(players.amy.wins);
+    expect(await playersApi.getAll()).toEqual([players.amy, players.bob]);
   });
 
-  it("completes the Game and increments the Game Winner Win Count after adding a finishing Round", async () => {
+  it("completes the Game with its Game Winner without changing saved Players", async () => {
     const game = makeActiveGame();
     await seedGame(game, [
       makeRound(1, players.bob.id, [
@@ -61,20 +61,20 @@ describe("roundsApi.add", () => {
 
     const db = await getDB();
     const storedGame = await db.get("games", game.id);
-    const storedWinner = await db.get("players", players.amy.id);
     const storedRound = await db.get("rounds", [game.id, 2]);
 
     expect(result.outcome).toBe("gameCompleted");
     if (result.outcome !== "gameCompleted") throw new Error("Expected Game completion");
     expect(result.completedGame.winnerId).toBe(players.amy.id);
-    expect(result.updatedWinner.wins).toBe(players.amy.wins + 1);
+    expect(result.gameWinner).toEqual(players.amy);
+    expect(result).not.toHaveProperty("updatedWinner");
     expect(storedGame).toMatchObject({
       status: "completed",
       winnerId: players.amy.id,
       winnerName: players.amy.name,
       players: [players.amy.id, players.bob.id],
     });
-    expect(storedWinner?.wins).toBe(players.amy.wins + 1);
+    expect(await playersApi.getAll()).toEqual([players.amy, players.bob]);
     expect(storedRound?.scores.map((score) => score.currentPhase)).toEqual([2, 2]);
   });
 
@@ -117,7 +117,7 @@ describe("roundsApi.add", () => {
     });
   });
 
-  it("does not decrement the Game Winner Win Count when deleting the Completed Game", async () => {
+  it("leaves saved Players unchanged when deleting a Completed Game", async () => {
     const game = makeActiveGame();
     await seedGame(game, [
       makeRound(1, players.bob.id, [
@@ -136,10 +136,37 @@ describe("roundsApi.add", () => {
     });
     await gamesApi.delete(game.id);
 
-    const db = await getDB();
-    const storedWinner = await db.get("players", players.amy.id);
+    expect(await playersApi.getAll()).toEqual([players.amy, players.bob]);
+    expect(await gamesApi.getById(game.id)).toBeUndefined();
+    expect(await roundsApi.getByGameId(game.id)).toEqual([]);
+  });
 
-    expect(storedWinner?.wins).toBe(players.amy.wins + 1);
+  it("ignores legacy Player Win Counts without migrating or incrementing them", async () => {
+    const game = makeActiveGame();
+    await seedGame({
+      ...game,
+      phaseSet: { ...game.phaseSet, phases: ["phase-1"] },
+    });
+    const legacyPlayer = { ...players.amy, wins: 37 };
+    const db = await getDB();
+    await db.put("players", legacyPlayer);
+
+    const result = await roundsApi.add({
+      gameId: game.id,
+      roundWinnerId: players.amy.id,
+      scores: [
+        { playerId: players.amy.id, phaseStatus: "completed", score: 0 },
+        { playerId: players.bob.id, phaseStatus: "failed", score: 20 },
+      ],
+    });
+
+    expect(result.outcome).toBe("gameCompleted");
+    expect(await gamesApi.getById(game.id)).toMatchObject({
+      status: "completed",
+      winnerId: players.amy.id,
+      winnerName: "Amy",
+    });
+    expect(await playersApi.getAll()).toEqual([legacyPlayer, players.bob]);
   });
 });
 

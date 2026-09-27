@@ -63,7 +63,6 @@ function makePhaseGraphPlayer(id: string, name: string, color: string, index: nu
     name,
     color,
     createdAt: index,
-    wins: 0,
     isFavorite: 0,
   };
 }

@@ -11,7 +11,6 @@ interface ResolveGameCompletionInput {
 export interface GameCompletionResolution {
   completedGame: CompletedGame;
   gameWinner: Player;
-  incrementedWinner: Player;
 }
 
 export function resolveGameCompletion(
@@ -42,9 +41,5 @@ export function resolveGameCompletion(
       winnerName: gameWinner.name,
     },
     gameWinner,
-    incrementedWinner: {
-      ...gameWinner,
-      wins: gameWinner.wins + 1,
-    },
   };
 }
