@@ -20,12 +20,20 @@ export interface GenericPointsSettings extends GenericScoringSettings {
   tiebreaker: null;
 }
 
+export interface GenericPassFailSettings extends GenericScoringSettings {
+  mode: "passFail";
+  tiebreaker: null;
+}
+
 export interface GenericSingleRoundWinnerSettings extends GenericScoringSettings {
   mode: "singleRoundWinner";
   tiebreaker: null;
 }
 
-export type GenericGameSettings = GenericPointsSettings | GenericSingleRoundWinnerSettings;
+export type GenericGameSettings =
+  | GenericPointsSettings
+  | GenericSingleRoundWinnerSettings
+  | GenericPassFailSettings;
 
 interface GenericGameFields {
   scorekeeper: "generic";
@@ -50,7 +58,10 @@ export interface GenericGameView {
   players: PlayerIdentity[];
 }
 
-export type GenericScoreTotal = { totalPoints: number } | { totalWins: number };
+export type GenericScoreTotal =
+  | { totalPoints: number }
+  | { totalWins: number }
+  | { totalPasses: number };
 
 export interface GenericScoreboardView {
   game: GenericGame;
@@ -62,6 +73,7 @@ export interface GenericScoreboardView {
     scores: Array<
       | { playerId: PlayerId; points: number; totalPoints: number }
       | { playerId: PlayerId; won: boolean; totalWins: number }
+      | { playerId: PlayerId; passed: boolean; totalPasses: number }
     >;
   }>;
   standings: Array<{ player: PlayerIdentity; place: number } & GenericScoreTotal>;

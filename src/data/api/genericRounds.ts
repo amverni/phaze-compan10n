@@ -7,22 +7,40 @@ import { assertGenericGame, deriveGenericScoreboard, orderGenericScores } from "
 export const genericRoundsApi = {
   async add(input: AddGenericRoundInput): Promise<GenericRound> {
     const gameId = input.gameId;
-    if (input.mode !== undefined && input.mode !== "points" && input.mode !== "singleRoundWinner") {
+    if (
+      input.mode !== undefined &&
+      input.mode !== "points" &&
+      input.mode !== "singleRoundWinner" &&
+      input.mode !== "passFail"
+    ) {
       throw new Error("Unsupported Round Scoring Mode.");
     }
     if (!Array.isArray(input.scores)) {
       throw new Error("A Round must include every Player exactly once.");
     }
     const draft =
-      input.mode === "singleRoundWinner"
-        ? { mode: input.mode, scores: input.scores.map(({ playerId, won }) => ({ playerId, won })) }
-        : {
-            mode: "points" as const,
-            scores: input.scores.map(({ playerId, points }) => ({
-              playerId,
-              points: parseGenericPoints(points),
-            })),
-          };
+      input.mode === "passFail"
+        ? {
+            mode: "passFail" as const,
+            scores: input.scores.map(({ playerId, passed }) => {
+              if (typeof passed !== "boolean") {
+                throw new Error("Round contains an invalid Pass/Fail outcome.");
+              }
+              return { playerId, passed };
+            }),
+          }
+        : input.mode === "singleRoundWinner"
+          ? {
+              mode: input.mode,
+              scores: input.scores.map(({ playerId, won }) => ({ playerId, won })),
+            }
+          : {
+              mode: "points" as const,
+              scores: input.scores.map(({ playerId, points }) => ({
+                playerId,
+                points: parseGenericPoints(points),
+              })),
+            };
     return await withGameTransaction(async (tx) => {
       const games = tx.objectStore("games");
       const game = await games.get(gameId);
@@ -41,17 +59,23 @@ export const genericRoundsApi = {
         roundNumber: existing.reduce((latest, saved) => Math.max(latest, saved.roundNumber), 0) + 1,
       };
       const round: GenericRound =
-        draft.mode === "singleRoundWinner"
+        draft.mode === "passFail"
           ? {
               ...metadata,
-              mode: "singleRoundWinner",
+              mode: "passFail",
               scores: orderGenericScores(game.players, draft.scores),
             }
-          : {
-              ...metadata,
-              mode: "points",
-              scores: orderGenericScores(game.players, draft.scores),
-            };
+          : draft.mode === "singleRoundWinner"
+            ? {
+                ...metadata,
+                mode: "singleRoundWinner",
+                scores: orderGenericScores(game.players, draft.scores),
+              }
+            : {
+                ...metadata,
+                mode: "points",
+                scores: orderGenericScores(game.players, draft.scores),
+              };
       deriveGenericScoreboard(game, players, [...existing, round]);
       await rounds.add(round);
       await games.put({ ...game, lastActivityAt: Date.now() });

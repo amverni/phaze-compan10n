@@ -70,7 +70,7 @@ export const genericGamesApi = {
               tiebreaker: null,
               dealer: settings.dealer,
             }
-          : { mode: "singleRoundWinner", tiebreaker: null, dealer: settings.dealer },
+          : { mode: settings.mode, tiebreaker: null, dealer: settings.dealer },
       createdAt: now,
       lastActivityAt: now,
     };

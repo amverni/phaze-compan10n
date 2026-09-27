@@ -71,14 +71,22 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
                 <p className="pb-4 text-center text-sm text-text-secondary">
                   {view.game.settings.mode === "points"
                     ? `Points - ${view.game.settings.pointsDirection === "high" ? "High wins" : "Low wins"}`
-                    : "Single Round Winner - Most wins"}
+                    : view.game.settings.mode === "singleRoundWinner"
+                      ? "Single Round Winner - Most wins"
+                      : "Pass/Fail - Most passes"}
                 </p>
                 <GenericScoreboard key={view.game.id} view={view} />
                 <GenericStandingsDialog
                   open={standingsOpen}
                   onClose={setStandingsOpen}
                   standings={view.standings}
-                  metric={view.game.settings.mode === "points" ? "Points" : "Wins"}
+                  metric={
+                    view.game.settings.mode === "points"
+                      ? "Points"
+                      : view.game.settings.mode === "singleRoundWinner"
+                        ? "Wins"
+                        : "Passes"
+                  }
                 />
               </>
             )}

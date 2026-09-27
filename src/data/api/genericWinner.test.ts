@@ -136,7 +136,6 @@ it.each([
 });
 
 it.each([
-  "passFail",
   "unknown",
   "",
   null,

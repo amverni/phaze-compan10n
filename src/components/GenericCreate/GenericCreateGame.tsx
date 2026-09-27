@@ -33,9 +33,10 @@ const directions = [
   { value: "high", label: "High wins" },
   { value: "low", label: "Low wins" },
 ] as const;
-const scoringModes = [
+const modes = [
   { value: "points", label: "Points" },
   { value: "singleRoundWinner", label: "Single Round Winner" },
+  { value: "passFail", label: "Pass/Fail" },
 ] as const;
 const directionClasses = [
   "relative cursor-pointer rounded-full px-3 py-2 text-sm outline-none",
@@ -72,7 +73,7 @@ export function GenericCreateGame() {
                 tiebreaker: null,
                 dealer: value.dealer,
               }
-            : { mode: "singleRoundWinner", tiebreaker: null, dealer: value.dealer },
+            : { mode: value.mode, tiebreaker: null, dealer: value.dealer },
       });
       await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
     },
@@ -160,70 +161,88 @@ export function GenericCreateGame() {
               </TabPanel>
               <TabPanel className="h-full px-4">
                 <ScrollFade className="h-full -mx-6 px-6 py-4">
-                  <List rowVariant="content">
-                    <form.Field key="mode" name="mode">
-                      {(field) => (
-                        <Listbox
-                          value={field.state.value}
-                          onChange={field.handleChange}
-                          className="w-full"
-                        >
-                          <SettingListRow label={<ListboxLabel>Scoring Mode</ListboxLabel>}>
-                            <ListboxButton className="data-focus:outline-solid data-focus:outline-text-secondary!">
-                              {scoringModes.find((mode) => mode.value === field.state.value)?.label}
-                            </ListboxButton>
-                            <ListboxOptions anchor="bottom end">
-                              {scoringModes.map(({ value, label }) => (
-                                <ListboxOption key={value} value={value}>
-                                  {label}
-                                </ListboxOption>
-                              ))}
-                            </ListboxOptions>
-                          </SettingListRow>
-                        </Listbox>
-                      )}
-                    </form.Field>
-                    <form.Subscribe key="direction" selector={(state) => state.values.mode}>
-                      {(mode) =>
-                        mode === "points" && (
-                          <form.Field name="pointsDirection">
-                            {(field) => (
-                              <RadioGroup
-                                value={field.state.value}
-                                onChange={field.handleChange}
-                                onBlur={field.handleBlur}
-                                className="w-full"
-                              >
-                                <SettingListRow label={<Label>Points Direction</Label>}>
-                                  <div className="glass relative flex shrink-0 rounded-full p-1">
-                                    {directions.map(({ value, label }) => (
-                                      <Radio key={value} value={value} className={directionClasses}>
-                                        {label}
-                                      </Radio>
-                                    ))}
-                                  </div>
-                                </SettingListRow>
-                              </RadioGroup>
-                            )}
-                          </form.Field>
-                        )
-                      }
-                    </form.Subscribe>
-                    <form.Field key="dealer" name="dealer">
-                      {(field) => (
-                        <Field className="w-full">
-                          <SettingListRow label={<Label>Dealer</Label>}>
-                            <Switch
-                              checked={field.state.value}
+                  <form.Subscribe selector={(state) => state.values.mode}>
+                    {(mode) => (
+                      <List rowVariant="content">
+                        <form.Field key="mode" name="mode">
+                          {(field) => (
+                            <Listbox
+                              value={field.state.value}
                               onChange={field.handleChange}
-                              onBlur={field.handleBlur}
-                              className="data-focus:outline-text-secondary!"
-                            />
-                          </SettingListRow>
-                        </Field>
-                      )}
-                    </form.Field>
-                  </List>
+                              className="w-full min-w-0"
+                            >
+                              <SettingListRow label={<ListboxLabel>Scoring Mode</ListboxLabel>}>
+                                <ListboxButton
+                                  variant="plain"
+                                  className="shrink-0 data-focus:outline-2 data-focus:outline-solid data-focus:outline-text-secondary!"
+                                >
+                                  {modes.find(({ value }) => value === field.state.value)?.label}
+                                </ListboxButton>
+                                <ListboxOptions
+                                  align="right"
+                                  anchor={{ to: "bottom end", gap: "0.25rem", padding: "1rem" }}
+                                  transformOrigin="top-right"
+                                >
+                                  {modes.map(({ value, label }) => (
+                                    <ListboxOption key={value} value={value}>
+                                      {label}
+                                    </ListboxOption>
+                                  ))}
+                                </ListboxOptions>
+                              </SettingListRow>
+                            </Listbox>
+                          )}
+                        </form.Field>
+                        {mode === "points" && (
+                          <form.Subscribe key="direction" selector={(state) => state.values.mode}>
+                            {(currentMode) =>
+                              // List retains exiting rows; stop exposing inactive controls immediately.
+                              currentMode === "points" && (
+                                <form.Field name="pointsDirection">
+                                  {(field) => (
+                                    <RadioGroup
+                                      value={field.state.value}
+                                      onChange={field.handleChange}
+                                      onBlur={field.handleBlur}
+                                      className="w-full"
+                                    >
+                                      <SettingListRow label={<Label>Points Direction</Label>}>
+                                        <div className="glass relative flex shrink-0 rounded-full p-1">
+                                          {directions.map(({ value, label }) => (
+                                            <Radio
+                                              key={value}
+                                              value={value}
+                                              className={directionClasses}
+                                            >
+                                              {label}
+                                            </Radio>
+                                          ))}
+                                        </div>
+                                      </SettingListRow>
+                                    </RadioGroup>
+                                  )}
+                                </form.Field>
+                              )
+                            }
+                          </form.Subscribe>
+                        )}
+                        <form.Field key="dealer" name="dealer">
+                          {(field) => (
+                            <Field className="w-full">
+                              <SettingListRow label={<Label>Dealer</Label>}>
+                                <Switch
+                                  checked={field.state.value}
+                                  onChange={field.handleChange}
+                                  onBlur={field.handleBlur}
+                                  className="data-focus:outline-text-secondary!"
+                                />
+                              </SettingListRow>
+                            </Field>
+                          )}
+                        </form.Field>
+                      </List>
+                    )}
+                  </form.Subscribe>
                 </ScrollFade>
               </TabPanel>
             </SwipeableTabPanels>

@@ -25,6 +25,7 @@ export type {
   GenericGame,
   GenericGameSettings,
   GenericGameView,
+  GenericPassFailSettings,
   GenericPointsSettings,
   GenericScoreboardView,
   GenericScoreDirection,
@@ -35,9 +36,12 @@ export type {
   GenericTiebreakerSettings,
 } from "./genericGame";
 export type {
+  AddGenericPassFailRoundInput,
   AddGenericPointsRoundInput,
   AddGenericRoundInput,
   AddGenericWinnerRoundInput,
+  GenericPassFailRound,
+  GenericPassFailScore,
   GenericPointsRound,
   GenericPointsScore,
   GenericRound,

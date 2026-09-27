@@ -2,6 +2,7 @@ import type {
   ArrayAtLeastOne,
   GenericGame,
   GenericGameSettings,
+  GenericPassFailScore,
   GenericScoreboardView,
   GenericScoreTotal,
   GenericWinnerScore,
@@ -18,7 +19,8 @@ export function assertGenericSettings(settings: GenericGameSettings): void {
     typeof settings.dealer !== "boolean" ||
     (settings.mode === "points"
       ? settings.pointsDirection !== "high" && settings.pointsDirection !== "low"
-      : settings.mode !== "singleRoundWinner" || "pointsDirection" in settings)
+      : (settings.mode !== "singleRoundWinner" && settings.mode !== "passFail") ||
+        "pointsDirection" in settings)
   ) {
     throw new Error("Unsupported Generic Game settings");
   }
@@ -83,7 +85,9 @@ export function deriveGenericScoreboard(
               playerId,
               points,
             }))
-          : orderWinnerScores(game.players, round.scores);
+          : round.mode === "singleRoundWinner"
+            ? orderWinnerScores(game.players, round.scores)
+            : orderPassFailScores(game.players, round.scores);
       return {
         roundNumber: round.roundNumber,
         dealerId: game.settings.dealer ? getDealerId(round.roundNumber, game.players) : null,
@@ -91,6 +95,11 @@ export function deriveGenericScoreboard(
           const { playerId } = score;
           const previous = totals.get(playerId);
           if (previous === undefined) throw new Error("Player does not belong to the Game");
+          if ("passed" in score) {
+            const totalPasses = previous + (score.passed ? 1 : 0);
+            totals.set(playerId, totalPasses);
+            return { playerId, passed: score.passed, totalPasses };
+          }
           if ("won" in score) {
             const totalWins = previous + (score.won ? 1 : 0);
             totals.set(playerId, totalWins);
@@ -139,11 +148,27 @@ export function deriveGenericScoreboard(
     game.status === "active" && game.settings.dealer
       ? getDealerId(nextRoundNumber, game.players)
       : null;
-  return { game, players, rounds, standings, upcomingDealerId };
+  return {
+    game,
+    players,
+    rounds,
+    standings,
+    upcomingDealerId,
+  };
 }
 
 function scoreTotal(settings: GenericGameSettings, total: number): GenericScoreTotal {
+  if (settings.mode === "passFail") return { totalPasses: total };
   return settings.mode === "points" ? { totalPoints: total } : { totalWins: total };
+}
+
+function orderPassFailScores(playerIds: PlayerId[], scores: GenericPassFailScore[]) {
+  return orderGenericScores(playerIds, scores).map(({ playerId, passed }) => {
+    if (typeof passed !== "boolean") {
+      throw new Error("Round contains an invalid Pass/Fail outcome.");
+    }
+    return { playerId, passed };
+  });
 }
 
 function orderWinnerScores(playerIds: PlayerId[], scores: GenericWinnerScore[]) {

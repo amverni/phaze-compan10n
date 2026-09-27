@@ -363,7 +363,7 @@ it("keeps the mode dropdown and hidden Points direction usable within a narrow s
     await mode.focus();
     await page.keyboard.press("Space");
     await page.getByRole("option", { name: "Single Round Winner", exact: true }).waitFor();
-    await page.keyboard.press("End");
+    await page.keyboard.type("Single Round Winner");
     await page.keyboard.press("Enter");
     expect(await mode.innerText()).toContain("Single Round Winner");
     await expect

@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { Check, Loader2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useAddGenericRound } from "../../data/hooks/useGenericGames";
-import type { GameId, GenericGameSettings, PlayerId, PlayerIdentity } from "../../types";
+import type { GameId, PlayerId, PlayerIdentity } from "../../types";
 import { parseGenericPoints } from "../../utils/genericPoints";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Button, Dialog, InlineError, SwipeableTabPanels, TabList, tabClasses } from "../ui";
@@ -15,7 +15,7 @@ interface GenericAddRoundDialogProps {
   onClose: (open: boolean) => void;
   gameId: GameId;
   players: PlayerIdentity[];
-  mode: GenericGameSettings["mode"];
+  mode: "points" | "singleRoundWinner";
 }
 
 function pointsError(value: string): string | undefined {
