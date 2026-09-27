@@ -43,3 +43,13 @@ export interface GenericGameView {
   game: GenericGame;
   players: PlayerIdentity[];
 }
+
+export interface GenericScoreboardView {
+  game: GenericGame;
+  players: Array<PlayerIdentity & { totalPoints: number }>;
+  rounds: Array<{
+    roundNumber: number;
+    scores: Array<{ playerId: PlayerId; points: number; totalPoints: number }>;
+  }>;
+  standings: Array<{ player: PlayerIdentity; totalPoints: number; place: number }>;
+}

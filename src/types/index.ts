@@ -24,12 +24,13 @@ export type {
   GenericGame,
   GenericGameView,
   GenericPointsSettings,
+  GenericScoreboardView,
   GenericScoreDirection,
   GenericScoringMode,
   GenericScoringSettings,
   GenericTiebreakerSettings,
 } from "./genericGame";
-export type { GenericPointsScore, GenericRound } from "./genericRound";
+export type { AddGenericRoundInput, GenericPointsScore, GenericRound } from "./genericRound";
 export type {
   BuiltInPhase,
   ColorMeld,
