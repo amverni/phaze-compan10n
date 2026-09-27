@@ -1,11 +1,11 @@
-import type { Player } from "../../types";
+import type { PlayerIdentity } from "../../types";
 
 interface GraphRoundLabel {
   roundNumber: number;
 }
 
 interface GraphTableSeries<TPoint extends { roundNumber: number }> {
-  player: Pick<Player, "id" | "name">;
+  player: Pick<PlayerIdentity, "id" | "name">;
   linePoints: readonly TPoint[];
 }
 

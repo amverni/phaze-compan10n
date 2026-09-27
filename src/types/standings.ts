@@ -1,24 +1,24 @@
 import type { Game } from "./game";
-import type { Player } from "./player";
+import type { PlayerIdentity } from "./player";
 import type { Round } from "./round";
 
-export interface StandingsInput {
+export interface StandingsInput<TPlayer extends PlayerIdentity = PlayerIdentity> {
   game: Game;
-  players: readonly Player[];
+  players: readonly TPlayer[];
   rounds: readonly Round[];
 }
 
-export interface StandingsDerivation {
-  includedPlayers: Player[];
-  rows: StandingsRow[];
+export interface StandingsDerivation<TPlayer extends PlayerIdentity = PlayerIdentity> {
+  includedPlayers: TPlayer[];
+  rows: StandingsRow<TPlayer>[];
   phaseGraphSeries: PhaseGraphSeries[];
   tiebreakerGraphSeries: TiebreakerGraphSeries[];
   hasFinishedPlayers: boolean;
-  gameWinner: StandingsRow | null;
+  gameWinner: StandingsRow<TPlayer> | null;
 }
 
-export interface StandingsRow {
-  player: Player;
+export interface StandingsRow<TPlayer extends PlayerIdentity = PlayerIdentity> {
+  player: TPlayer;
   place: number;
   showPlace: boolean;
   progress: PlayerProgress;
@@ -33,7 +33,7 @@ export interface PlayerProgress {
 }
 
 export interface PhaseGraphSeries {
-  player: Player;
+  player: PlayerIdentity;
   points: PhaseGraphPoint[];
 }
 
@@ -42,7 +42,7 @@ export interface PhaseGraphPoint extends PlayerProgress {
 }
 
 export interface TiebreakerGraphSeries {
-  player: Player;
+  player: PlayerIdentity;
   points: TiebreakerGraphPoint[];
 }
 

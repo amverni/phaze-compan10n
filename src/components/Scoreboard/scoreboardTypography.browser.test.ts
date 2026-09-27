@@ -113,8 +113,8 @@ it("centers the Phases control with the independent logo layer across viewport s
       includeHidden: true,
     });
     const logo = page.getByRole("img", { name: "Phaze Compan10n" });
-    const header = page.locator(".card-panel-top-content");
-    const main = page.locator(".card-panel-main");
+    const header = page.locator(".page-shell-header");
+    const main = page.locator(".page-shell-main");
     for (const { width, height, logoHeight, top, left } of [
       { width: 320, height: 568, logoHeight: 54.2, top: 0, left: 0 },
       { width: 390, height: 700, logoHeight: 74, top: 0, left: 0 },

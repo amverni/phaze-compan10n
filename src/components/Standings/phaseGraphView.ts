@@ -1,4 +1,4 @@
-import type { PhaseGraphPoint, PhaseGraphSeries, Player, StandingsRow } from "../../types";
+import type { PhaseGraphPoint, PhaseGraphSeries, PlayerIdentity, StandingsRow } from "../../types";
 import {
   GRAPH_BOTTOM,
   GRAPH_RIGHT,
@@ -51,7 +51,7 @@ export interface PhaseLabel {
 }
 
 export interface PhaseGraphViewSeries {
-  player: Player;
+  player: PlayerIdentity;
   color: string;
   linePoints: PositionedPhaseGraphPoint[];
   path: string;
@@ -67,7 +67,7 @@ export interface LatestPhaseEndpointGroup {
   label: string;
   x: number;
   y: number;
-  players: Player[];
+  players: PlayerIdentity[];
 }
 
 export function getPhaseGraphView({

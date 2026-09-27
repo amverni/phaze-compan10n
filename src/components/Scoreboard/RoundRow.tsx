@@ -1,4 +1,4 @@
-import type { Game, GameTiebreaker, Player, PlayerId, Round } from "../../types";
+import type { Game, GameTiebreaker, PlayerId, PlayerIdentity, Round } from "../../types";
 import { PlayerResultCell } from "./PlayerResultCell";
 import {
   formatTiebreaker,
@@ -10,7 +10,7 @@ import {
 interface RoundRowProps {
   round: Round;
   allRounds: Round[];
-  players: Player[];
+  players: PlayerIdentity[];
   game: Game;
   tiebreaker: GameTiebreaker;
   isExpanded: boolean;

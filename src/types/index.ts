@@ -25,7 +25,7 @@ export type {
   PhasesCardSharePayloadV1,
   PhasesCardShareTarget,
 } from "./phasesCard";
-export type { Player, PlayerId } from "./player";
+export type { Player, PlayerId, PlayerIdentity } from "./player";
 export type { PhaseStatus, Round, RoundScore } from "./round";
 export type { AppGameDefaults, AppSettings, AppSettingsId } from "./settings";
 export type {

@@ -1,7 +1,7 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { useEffect, useState } from "react";
 import { deriveStandings } from "../../data/api/standings";
-import type { Game, Player, Round } from "../../types";
+import type { Game, PlayerIdentity, Round } from "../../types";
 import { Dialog, DialogScrollArea, List, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PhaseGraph } from "./PhaseGraph";
 import { StandingsRow } from "./StandingsRow";
@@ -17,7 +17,7 @@ interface StandingsDialogProps {
   open: boolean;
   onClose: (open: boolean) => void;
   game: Game;
-  players: Player[];
+  players: PlayerIdentity[];
   rounds: Round[];
 }
 
