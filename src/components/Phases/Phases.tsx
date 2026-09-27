@@ -61,7 +61,12 @@ export function Phases() {
       }
       footerContent={
         <div className="content-container flex h-full">
-          <Button as={Link} to="/" className="card-footer-button p-0" aria-label="Go home">
+          <Button
+            as={Link}
+            to="/phaseCompan10n"
+            className="card-footer-button p-0"
+            aria-label="Go home"
+          >
             <ArrowLeft className="size-8" />
           </Button>
         </div>

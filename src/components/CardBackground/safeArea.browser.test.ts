@@ -36,7 +36,7 @@ async function openPage(
     colorScheme,
     hasTouch,
   });
-  await page.goto(`${appUrl}#/create`);
+  await page.goto(`${appUrl}#/phaseCompan10n/create`);
   await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);
   return page;
@@ -129,10 +129,10 @@ describe("safe-area layout in WebKit", () => {
       const page = await openPage(height, colorScheme);
       try {
         for (const { route, name } of [
-          { route: "create", name: "Cancel" },
+          { route: "/create", name: "Cancel" },
           { route: "", name: "Create Game" },
         ]) {
-          await page.goto(`${appUrl}#/${route}`);
+          await page.goto(`${appUrl}#/phaseCompan10n${route}`);
           const button = page.getByRole("link", { name, exact: true });
           await button.waitFor();
           // Desktop WebKit does not expose device cutouts; supply their layout variables.
@@ -177,8 +177,7 @@ describe("safe-area layout in WebKit", () => {
       });
       const logo = await page.getByRole("img", { name: "Phaze Compan10n" }).boundingBox();
       expect(logo).toEqual({ x: 44, y: 47, width: 302, height: 74 });
-      const tips = await page.getByRole("button", { name: "Tips" }).boundingBox();
-      expect(tips).toEqual({ x: 290, y: 64, width: 40, height: 40 });
+      expect(await page.getByRole("button", { name: /^(Tips|Info)$/ }).count()).toBe(0);
 
       const opaqueColors = await page.evaluate(() => {
         const canvas = document.createElement("canvas");
@@ -206,7 +205,12 @@ describe("safe-area layout in WebKit", () => {
         }
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-      await page.getByRole("button", { name: "Tips" }).click();
+      await page.getByRole("button", { name: "Add Player", exact: true }).click();
+      await page
+        .getByRole("dialog", { name: "Add player", exact: true })
+        .getByRole("button", { name: "Create new player", exact: true })
+        .waitFor();
+      expect(await bounds(page, '.card-header-logo svg[role="img"]')).toEqual(logo);
     } finally {
       await page.close();
     }
@@ -262,7 +266,7 @@ describe("safe-area layout in WebKit", () => {
   it("keeps rows exposed above the footer diagonal tappable while footer controls still work", async () => {
     const page = await openPage(500);
     try {
-      await page.goto(`${appUrl}#/phases`);
+      await page.goto(`${appUrl}#/phaseCompan10n/phases`);
       await page.getByRole("tab", { name: "Phases", exact: true }).click();
       const row = page.getByText("1 run of 9", { exact: true });
       await row.waitFor();
@@ -322,8 +326,10 @@ describe("responsive header logos in WebKit", () => {
       expect(logo.width).toBeCloseTo(width, 1);
       expect(logo.y + logo.height).toBeLessThanOrEqual(height * 0.15);
       expect((await bounds(page, ".page-shell-header")).height).toBeCloseTo(height * 0.15, 1);
-      const tips = await bounds(page, 'button[aria-label="Tips"]');
-      expect(tips.y + tips.height / 2).toBeCloseTo(logo.y + logo.height / 2, 1);
+      const logoLayer = await bounds(page, ".card-header-logo");
+      expect(logo.y + logo.height / 2).toBeCloseTo(logoLayer.y + logoLayer.height / 2, 1);
+      expect(logo.x + logo.width / 2).toBeCloseTo(width / 2, 1);
+      expect(await page.getByRole("button", { name: /^(Tips|Info)$/ }).count()).toBe(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     } finally {
       await page.close();
@@ -393,12 +399,12 @@ describe("responsive header logos in WebKit", () => {
     const page = await openPage(600, "light", 375);
     try {
       for (const route of ["/create", "/players", "/phases", "/settings", "/phasescard"]) {
-        await page.goto(`${appUrl}#${route}`);
+        await page.goto(`${appUrl}#/phaseCompan10n${route}`);
         await expect
           .poll(async () => (await bounds(page, '.page-shell-header svg[role="img"]')).height)
           .toBe(59);
       }
-      await page.goto(`${appUrl}#/`);
+      await page.goto(`${appUrl}#/phaseCompan10n`);
       expect((await bounds(page, '.page-shell-main svg[role="img"]')).height).toBe(120);
     } finally {
       await page.close();

@@ -31,12 +31,12 @@ it("opens final Standings after a finishing Round and keeps completed snapshot n
   try {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     const { game, players } = await seedCompletionGame(page);
     const [amy, bob] = players;
 
-    await page.goto(`${appUrl}#/game/${game.id}`);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
     await page.getByRole("button", { name: "Add round 1", exact: true }).click();
     const entry = page.getByRole("dialog");
     await entry.getByRole("button", { name: /Round Winner/ }).click();

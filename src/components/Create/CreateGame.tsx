@@ -1,7 +1,7 @@
 import { Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { Info, ListChecks, Play, Settings as SettingsIcon, Users, X } from "lucide-react";
+import { ListChecks, Play, Settings as SettingsIcon, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useCreateGame } from "../../data/hooks/useGames";
 import type { ArrayAtLeastOne, PhaseId, TemporaryPhaseSet } from "../../types";
@@ -47,7 +47,7 @@ export function CreateGame() {
         phaseSet,
         settings,
       });
-      await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
+      await navigate({ to: "/phaseCompan10n/game/$gameId", params: { gameId: game.id } });
     } catch (error) {
       setStartError(error instanceof Error ? error.message : "Unable to start game");
     }
@@ -56,13 +56,8 @@ export function CreateGame() {
   return (
     <CardBackground
       headerContent={
-        <div className="relative flex h-full items-center justify-end">
+        <div className="relative flex h-full items-center">
           <HeaderLogo />
-          <div className="card-header-controls absolute inset-x-0 top-0 z-10 flex items-center justify-end px-4">
-            <Button aria-label="Tips" className="size-10">
-              <Info className="size-6 relative z-10" />
-            </Button>
-          </div>
         </div>
       }
       mainContent={
@@ -124,7 +119,7 @@ export function CreateGame() {
       footerContent={
         <div className="content-container flex h-full justify-between">
           {/* Cancel — back to home */}
-          <Button as={Link} to="/" aria-label="Cancel" className="card-footer-button">
+          <Button as={Link} to="/phaseCompan10n" aria-label="Cancel" className="card-footer-button">
             <X className="size-8 relative z-10" />
           </Button>
 

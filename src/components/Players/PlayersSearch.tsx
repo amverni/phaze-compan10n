@@ -65,7 +65,7 @@ export function PlayersSearch({
       </SearchBar>
 
       {/* Results - negative margin lets shadow bleed, inner padding restores layout */}
-      <ScrollFade className="min-h-0 flex-1 -mx-6 px-6 pt-2 pb-[calc(0.5rem+var(--slant))]">
+      <ScrollFade className="min-h-0 flex-1 -mx-6 px-6 pt-2 pb-[calc(0.5rem+var(--page-shell-edge-offset,var(--slant)))]">
         {error && (
           <div className="mb-2">
             <InlineError message={error} />

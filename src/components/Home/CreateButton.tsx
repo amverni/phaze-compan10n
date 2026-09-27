@@ -5,7 +5,12 @@ import { Button } from "../ui";
 
 export const CreateButton: React.FC = () => {
   return (
-    <Button as={Link} to="/create" aria-label="Create Game" className="card-footer-button">
+    <Button
+      as={Link}
+      to="/phaseCompan10n/create"
+      aria-label="Create Game"
+      className="card-footer-button"
+    >
       <Plus className="size-8 relative z-10" />
     </Button>
   );

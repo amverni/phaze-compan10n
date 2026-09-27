@@ -26,7 +26,7 @@ afterAll(async () => {
 });
 
 async function startGame(page: Page) {
-  await page.goto(`${appUrl}#/create`);
+  await page.goto(`${appUrl}#/phaseCompan10n/create`);
   for (const name of ["Amy", "Ben"]) {
     await page.getByRole("button", { name: "Add Player", exact: true }).click();
     await page.getByRole("button", { name: "Create new player" }).click();
@@ -268,7 +268,7 @@ describe.each(["light", "dark"] as const)("dialog bottom fade in %s mode", (colo
         reducedMotion: "reduce",
       });
       try {
-        await page.goto(`${appUrl}#/create`);
+        await page.goto(`${appUrl}#/phaseCompan10n/create`);
         await page.getByRole("tab", { name: "Phases", exact: true }).click();
         await page.getByRole("button", { name: buttonName, exact: true }).click();
         const dialog = page.getByRole("dialog", { name: dialogName, exact: true });
@@ -330,7 +330,7 @@ describe.each(["light", "dark"] as const)("dialog bottom fade in %s mode", (colo
       reducedMotion: "reduce",
     });
     try {
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/phaseCompan10n/create`);
       await page.getByRole("button", { name: "Add Player", exact: true }).click();
       const search = page.getByRole("dialog", { name: "Add player", exact: true });
       const results = scrollAreaFor(search.getByText("No players yet", { exact: true }));
@@ -358,7 +358,7 @@ describe.each(["light", "dark"] as const)("dialog bottom fade in %s mode", (colo
       reducedMotion: "reduce",
     });
     try {
-      await page.goto(`${appUrl}#/phases`);
+      await page.goto(`${appUrl}#/phaseCompan10n/phases`);
       await page.getByRole("button", { name: "Original", exact: true }).click();
       const dialog = page.getByRole("dialog", { name: "Original", exact: true });
       const lastPhase = dialog.getByText("10", { exact: true }).locator("..");

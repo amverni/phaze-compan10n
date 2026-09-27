@@ -1,26 +1,29 @@
 import { CloseButton } from "@headlessui/react";
-import { Link } from "@tanstack/react-router";
+import { Link, type LinkOptions } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { ListChecks, Menu, Settings, Users } from "lucide-react";
-import type React from "react";
+import { AppWindow, ListChecks, Menu, Settings, Users } from "lucide-react";
+import type { ScorekeeperExperience } from "../../types";
 import { Popover, PopoverButton, PopoverPanel } from "../ui";
 
 interface MenuItem {
   label: string;
   icon: LucideIcon;
-  to?: string;
+  to: LinkOptions["to"];
 }
 
-const items: MenuItem[] = [
-  { label: "Players", icon: Users, to: "/players" },
-  { label: "Phases", icon: ListChecks, to: "/phases" },
-  { label: "Settings", icon: Settings, to: "/settings" },
+const phaseItems: MenuItem[] = [
+  { label: "Players", icon: Users, to: "/phaseCompan10n/players" },
+  { label: "Phases", icon: ListChecks, to: "/phaseCompan10n/phases" },
+  { label: "Settings", icon: Settings, to: "/phaseCompan10n/settings" },
 ];
+const genericItems: MenuItem[] = [{ label: "Players", icon: Users, to: "/players" }];
+const chooserItem: MenuItem = { label: "Scorekeepers", icon: AppWindow, to: "/scorekeepers" };
 
 const itemClassName =
   "flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-black/5 dark:hover:bg-white/10";
 
-export const HomeMenu: React.FC = () => {
+export function HomeMenu({ experience }: { experience: ScorekeeperExperience }) {
+  const items = [...(experience === "phaseCompan10n" ? phaseItems : genericItems), chooserItem];
   return (
     <Popover className="relative">
       {/* The outer button keeps a fixed 40×40 box so Headless UI's anchored
@@ -32,27 +35,20 @@ export const HomeMenu: React.FC = () => {
         className="relative size-10 rounded-full group cursor-pointer focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60"
       >
         <span className="absolute inset-0 inline-flex items-center justify-center rounded-full glass transition-transform group-hover:brightness-110 group-active:scale-110">
-          <Menu className="size-6 relative z-10" />
+          <Menu className="size-6 relative z-10" aria-hidden="true" />
         </span>
       </PopoverButton>
 
       <PopoverPanel anchor="bottom end" className="z-50 min-w-44 [--anchor-gap:8px]">
         <nav className="flex flex-col">
-          {items.map(({ label, icon: Icon, to }) =>
-            to ? (
-              <CloseButton key={label} as={Link} to={to} className={itemClassName}>
-                <Icon className="size-5 shrink-0" />
-                {label}
-              </CloseButton>
-            ) : (
-              <CloseButton key={label} as="button" type="button" className={itemClassName}>
-                <Icon className="size-5 shrink-0" />
-                {label}
-              </CloseButton>
-            ),
-          )}
+          {items.map(({ label, icon: Icon, to }) => (
+            <CloseButton key={label} as={Link} to={to} className={itemClassName}>
+              <Icon className="size-5 shrink-0" aria-hidden="true" />
+              {label}
+            </CloseButton>
+          ))}
         </nav>
       </PopoverPanel>
     </Popover>
   );
-};
+}

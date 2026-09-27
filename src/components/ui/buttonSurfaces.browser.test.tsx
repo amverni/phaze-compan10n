@@ -85,7 +85,7 @@ describe.each(["light", "dark"] as const)("opaque button surfaces in %s mode", (
     const background = colorScheme === "light" ? "rgb(255, 255, 255)" : "rgb(38, 38, 38)";
     const color = colorScheme === "light" ? "rgb(26, 26, 26)" : "rgb(255, 255, 255)";
     try {
-      await page.goto(appUrl);
+      await page.goto(`${appUrl}#/phaseCompan10n`);
       const phases = page.getByRole("link", { name: "Open Phases Card" });
       await phases.waitFor();
       await page.evaluate(() => document.fonts.ready);
@@ -147,7 +147,7 @@ describe.each(["light", "dark"] as const)("opaque button surfaces in %s mode", (
       colorScheme,
     });
     try {
-      await page.goto(appUrl);
+      await page.goto(`${appUrl}#/phaseCompan10n`);
       await page.getByRole("link", { name: "Open Phases Card" }).waitFor();
       await mountSurfaceExamples(page);
       const examples = page.locator("#button-surface-examples");
