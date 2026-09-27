@@ -64,6 +64,7 @@ describe("scorekeeper navigation", () => {
       expect(await page.title()).toBe("Phaze Compan10n");
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       for (const [label, path] of [
+        ["Games", "games"],
         ["Players", "players"],
         ["Phases", "phases"],
         ["Settings", "settings"],
@@ -72,7 +73,6 @@ describe("scorekeeper navigation", () => {
           await page.getByRole("link", { name: label, exact: true }).getAttribute("href"),
         ).toBe(`/phase-10-scoreboard/#/phaseCompan10n/${path}`);
       }
-      expect(await page.getByRole("link", { name: "Games", exact: true }).count()).toBe(0);
       await page.getByRole("link", { name: "Scorekeepers", exact: true }).click();
       await generic.click();
       await page.getByRole("img", { name: "Scorekeeper", exact: true }).waitFor();
@@ -85,7 +85,15 @@ describe("scorekeeper navigation", () => {
   it("opens and reloads every moved Phase page inside the deployment base", async () => {
     const page = await browser.newPage();
     try {
-      for (const route of ["", "/create", "/players", "/phases", "/settings", "/phasescard"]) {
+      for (const route of [
+        "",
+        "/create",
+        "/games",
+        "/players",
+        "/phases",
+        "/settings",
+        "/phasescard",
+      ]) {
         await page.goto(`${appUrl}#/phaseCompan10n${route}`);
         await expect.poll(() => page.locator(".card-background").count()).toBe(1);
         await page.reload();
@@ -203,6 +211,8 @@ describe("scorekeeper navigation", () => {
         0,
       );
       await page.goto(`${appUrl}#/phaseCompan10n/game/missing-game`);
+      await page.getByText("This Game is no longer available.", { exact: true }).waitFor();
+      await page.getByRole("link", { name: "Go home", exact: true }).click();
       await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
       expect(page.url()).toBe(`${appUrl}#/phaseCompan10n`);
     } finally {

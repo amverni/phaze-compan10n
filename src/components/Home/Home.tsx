@@ -1,8 +1,8 @@
 import type React from "react";
 import "./home.css";
 import { CardBackground } from "../CardBackground/CardBackground";
+import { PhaseGamesList } from "../Games/PhaseGamesList";
 import { Logo } from "../Logo/Logo";
-import { ActiveGames } from "./ActiveGames";
 import { CreateButton } from "./CreateButton";
 import { HomeMenu } from "./HomeMenu";
 import { PhasesCardButton } from "./PhasesCardButton";
@@ -21,7 +21,7 @@ export const Home: React.FC = () => {
           <Logo height={120} width="100%" />
           <div className="min-h-0 flex-1">
             <div className="content-container h-full">
-              <ActiveGames />
+              <PhaseGamesList activeOnly />
             </div>
           </div>
         </div>

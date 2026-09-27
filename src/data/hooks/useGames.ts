@@ -1,12 +1,15 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateGameInput, GameId } from "../../types";
 import { gamesApi } from "../api/games";
+import { phaseSetKeys } from "./usePhaseSets";
+import { phaseKeys } from "./usePhases";
 import { roundKeys } from "./useRounds";
 
 export const gameKeys = {
   all: ["games"] as const,
   lists: () => [...gameKeys.all, "phase10", "list"] as const,
   active: () => [...gameKeys.lists(), "active"] as const,
+  list: (activeOnly: boolean) => [...gameKeys.lists(), "rows", { activeOnly }] as const,
   details: () => [...gameKeys.all, "phase10", "detail"] as const,
   detail: (id: GameId) => [...gameKeys.details(), id] as const,
 };
@@ -26,6 +29,13 @@ export function activeGamesOptions() {
   });
 }
 
+export function gameListOptions(activeOnly = false) {
+  return queryOptions({
+    queryKey: gameKeys.list(activeOnly),
+    queryFn: () => gamesApi.getList({ activeOnly }),
+  });
+}
+
 export function useCreateGame() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -41,7 +51,13 @@ export function useDeleteGame() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: GameId) => gamesApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+        queryClient.invalidateQueries({ queryKey: roundKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: phaseKeys.all }),
+        queryClient.invalidateQueries({ queryKey: phaseSetKeys.all }),
+      ]),
   });
 }
 
@@ -54,6 +70,8 @@ export function useFinishGame() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gameKeys.all }),
         queryClient.invalidateQueries({ queryKey: roundKeys.all }),
+        queryClient.invalidateQueries({ queryKey: phaseKeys.all }),
+        queryClient.invalidateQueries({ queryKey: phaseSetKeys.all }),
       ]);
     },
   });

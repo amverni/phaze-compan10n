@@ -1,7 +1,7 @@
 import { CloseButton } from "@headlessui/react";
 import { Link, type LinkOptions } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { AppWindow, ListChecks, Menu, Settings, Users } from "lucide-react";
+import { AppWindow, History, ListChecks, Menu, Settings, Users } from "lucide-react";
 import type { ScorekeeperExperience } from "../../types";
 import { Popover, PopoverButton, PopoverPanel } from "../ui";
 
@@ -12,6 +12,7 @@ interface MenuItem {
 }
 
 const phaseItems: MenuItem[] = [
+  { label: "Games", icon: History, to: "/phaseCompan10n/games" },
   { label: "Players", icon: Users, to: "/phaseCompan10n/players" },
   { label: "Phases", icon: ListChecks, to: "/phaseCompan10n/phases" },
   { label: "Settings", icon: Settings, to: "/phaseCompan10n/settings" },

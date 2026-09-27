@@ -36,12 +36,18 @@ export function playersByIdsOptions(ids: PlayerId[]) {
 }
 
 export function useGamePlayers(game: Game | null | undefined) {
-  const { data: livePlayers } = useQuery({
+  const query = useQuery({
     ...playersByIdsOptions(game?.players ?? []),
     enabled: game?.status === "active",
   });
-  if (!game || (game.status === "active" && !livePlayers)) return undefined;
-  return getGamePlayers(game, livePlayers ?? []);
+  return {
+    ...query,
+    isError: game?.status === "active" && query.isError,
+    data:
+      !game || (game.status === "active" && !query.data)
+        ? undefined
+        : getGamePlayers(game, query.data ?? []),
+  };
 }
 
 export function useCreatePlayer() {

@@ -257,6 +257,8 @@ describe("generic Points Games", () => {
       await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
       expect(await page.getByRole("table").count()).toBe(0);
       await page.goto(genericUrl.replace("/game/", "/phaseCompan10n/game/"));
+      await page.getByText("This Game is no longer available.", { exact: true }).waitFor();
+      await page.getByRole("link", { name: "Go home", exact: true }).click();
       await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
       expect(page.url()).toBe(`${appUrl}#/phaseCompan10n`);
       await page.goto(`${appUrl}#/`);

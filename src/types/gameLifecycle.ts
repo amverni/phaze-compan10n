@@ -21,6 +21,8 @@ export interface CompletedGameMetadata<TOwner extends ScorekeeperId = Scorekeepe
   extends GameMetadata<TOwner> {
   status: "completed";
   completedAt: number;
+  /** Monotonic per-Scorekeeper retention key; older records fall back to completedAt. */
+  completionOrder?: number;
   completionType: "normal" | "manual";
   winnerIds: ArrayAtLeastOne<PlayerId>;
   playerSnapshots: PlayerIdentity[];
