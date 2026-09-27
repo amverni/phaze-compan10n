@@ -1,9 +1,9 @@
 import type { ActiveGame, Player, Round } from "../../types";
 
 export const completionPlayers = {
-  amy: makePlayer("amy", "Amy", 2),
-  bob: makePlayer("bob", "Bob", 5),
-  cam: makePlayer("cam", "Cam", 1),
+  amy: makePlayer("amy", "Amy"),
+  bob: makePlayer("bob", "Bob"),
+  cam: makePlayer("cam", "Cam"),
 };
 
 export function makeActiveGame(overrides: Partial<ActiveGame> = {}): ActiveGame {
@@ -43,13 +43,12 @@ export function makeRound(
   };
 }
 
-function makePlayer(id: string, name: string, wins: number): Player {
+function makePlayer(id: string, name: string): Player {
   return {
     id,
     name,
     color: "Jam",
     createdAt: 0,
-    wins,
     isFavorite: 0,
   };
 }

@@ -2,7 +2,6 @@ import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query
 import type { ArrayAtLeastOne, GameId, PlayerId, Round, RoundScore } from "../../types";
 import { roundsApi } from "../api/rounds";
 import { gameKeys } from "./useGames";
-import { playerKeys } from "./usePlayers";
 
 type AddRoundScoreInput = Omit<RoundScore, "currentPhase">;
 
@@ -39,9 +38,6 @@ export function useAddRound(gameId: GameId) {
       queryClient.invalidateQueries({ queryKey: roundKeys.lists() });
       // Adding a round bumps the game's `lastActivityAt`, so re-sort the home list.
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
-      if (result.outcome === "gameCompleted") {
-        queryClient.invalidateQueries({ queryKey: playerKeys.all });
-      }
     },
   });
 }

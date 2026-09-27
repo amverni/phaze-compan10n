@@ -444,7 +444,6 @@ function makePlayer(id: string, name: string, index: number): Player {
     name,
     color: `color-${index}`,
     createdAt: index,
-    wins: 0,
     isFavorite: 0,
   };
 }

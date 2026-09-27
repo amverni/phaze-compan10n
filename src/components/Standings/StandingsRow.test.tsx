@@ -60,7 +60,6 @@ function makePlayer(): Player {
     name: "Amy",
     color: "Jam",
     createdAt: 0,
-    wins: 0,
     isFavorite: 0,
   };
 }
