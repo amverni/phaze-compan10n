@@ -88,7 +88,17 @@ it("browses mixed Games with distinct actions and snapshot avatars, opens Standi
     await page.goto(new URL(destination, appUrl).href);
     await page.getByText("This Game is no longer available.", { exact: true }).waitFor();
     await page.getByRole("link", { name: "Go home", exact: true }).click();
-    await page.getByRole("link", { name: "Continue game with Dana", exact: true }).click();
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+    await page.getByRole("link", { name: "Players", exact: true }).click();
+    await page.getByRole("button", { name: "Dana", exact: true }).click();
+    const editor = page.getByRole("dialog", { name: "Edit player", exact: true });
+    await editor.getByRole("textbox", { name: "Name", exact: true }).fill("Dawn");
+    await editor.getByRole("button", { name: "Save", exact: true }).click();
+    await editor.waitFor({ state: "detached" });
+    await page.getByRole("link", { name: "Go home", exact: true }).click();
+    await page.getByRole("link", { name: "Continue game with Dawn", exact: true }).waitFor();
+    await openGames(page);
+    await page.getByRole("link", { name: "Continue game with Dawn", exact: true }).click();
     await page.getByRole("button", { name: "Add round 1", exact: true }).waitFor();
   } finally {
     await page.close();
