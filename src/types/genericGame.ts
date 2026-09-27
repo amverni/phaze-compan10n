@@ -1,5 +1,4 @@
 import type { ActiveGameMetadata, CompletedGameMetadata } from "./gameLifecycle";
-import type { GenericPassFailScore, GenericPointsScore } from "./genericRound";
 import type { PlayerId, PlayerIdentity } from "./player";
 
 export type GenericScoringMode = "points" | "singleRoundWinner" | "passFail";
@@ -26,7 +25,15 @@ export interface GenericPassFailSettings extends GenericScoringSettings {
   tiebreaker: null;
 }
 
-export type GenericGameSettings = GenericPointsSettings | GenericPassFailSettings;
+export interface GenericSingleRoundWinnerSettings extends GenericScoringSettings {
+  mode: "singleRoundWinner";
+  tiebreaker: null;
+}
+
+export type GenericGameSettings =
+  | GenericPointsSettings
+  | GenericSingleRoundWinnerSettings
+  | GenericPassFailSettings;
 
 interface GenericGameFields {
   scorekeeper: "generic";
@@ -51,15 +58,23 @@ export interface GenericGameView {
   players: PlayerIdentity[];
 }
 
+export type GenericScoreTotal =
+  | { totalPoints: number }
+  | { totalWins: number }
+  | { totalPasses: number };
+
 export interface GenericScoreboardView {
   game: GenericGame;
-  primaryLabel: "Points" | "Passes";
   upcomingDealerId: PlayerId | null;
-  players: Array<PlayerIdentity & { total: number }>;
+  players: Array<PlayerIdentity & GenericScoreTotal>;
   rounds: Array<{
     roundNumber: number;
     dealerId: PlayerId | null;
-    scores: Array<(GenericPointsScore | GenericPassFailScore) & { total: number }>;
+    scores: Array<
+      | { playerId: PlayerId; points: number; totalPoints: number }
+      | { playerId: PlayerId; won: boolean; totalWins: number }
+      | { playerId: PlayerId; passed: boolean; totalPasses: number }
+    >;
   }>;
-  standings: Array<{ player: PlayerIdentity; total: number; place: number }>;
+  standings: Array<{ player: PlayerIdentity; place: number } & GenericScoreTotal>;
 }

@@ -3,17 +3,19 @@ import { useForm } from "@tanstack/react-form";
 import { Check, Loader2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useAddGenericRound } from "../../data/hooks/useGenericGames";
-import type { GameId, PlayerIdentity } from "../../types";
+import type { GameId, PlayerId, PlayerIdentity } from "../../types";
 import { parseGenericPoints } from "../../utils/genericPoints";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
 import { Button, Dialog, InlineError, SwipeableTabPanels, TabList, tabClasses } from "../ui";
 import { PointsEntry } from "./PointsEntry";
+import { WinnerEntry } from "./WinnerEntry";
 
 interface GenericAddRoundDialogProps {
   open: boolean;
   onClose: (open: boolean) => void;
   gameId: GameId;
   players: PlayerIdentity[];
+  mode: "points" | "singleRoundWinner";
 }
 
 function pointsError(value: string): string | undefined {
@@ -31,6 +33,7 @@ export function GenericAddRoundDialog({
   onClose,
   gameId,
   players,
+  mode,
 }: GenericAddRoundDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -38,9 +41,23 @@ export function GenericAddRoundDialog({
   const id = useId();
   const addRound = useAddGenericRound();
   const form = useForm({
-    defaultValues: { scores: players.map((player) => ({ playerId: player.id, points: "" })) },
+    defaultValues: {
+      scores: players.map((player) => ({ playerId: player.id, points: "" })),
+      winnerId: null as PlayerId | null,
+    },
     onSubmit: async ({ value }) => {
-      await addRound.mutateAsync({ gameId, scores: value.scores });
+      await addRound.mutateAsync(
+        mode === "points"
+          ? { gameId, scores: value.scores }
+          : {
+              gameId,
+              mode,
+              scores: players.map((player) => ({
+                playerId: player.id,
+                won: player.id === value.winnerId,
+              })),
+            },
+      );
       form.reset();
       setSelectedIndex(0);
       onClose(false);
@@ -67,77 +84,96 @@ export function GenericAddRoundDialog({
         }}
       >
         <DialogTitle className="shrink-0 text-center text-lg font-semibold">Add Round</DialogTitle>
-        <TabGroup
-          selectedIndex={selectedIndex}
-          onChange={setSelectedIndex}
-          className="flex min-h-0 flex-1 flex-col"
-        >
-          <div ref={tabListRef} className="-mx-2 shrink-0 overflow-x-auto px-2 py-4">
-            <form.Subscribe selector={(state) => state.values.scores}>
-              {(scores) => (
-                <TabList className="w-max! min-w-full max-w-none!">
-                  {players.map((player, index) => {
-                    const complete = !pointsError(scores[index].points);
-                    return (
-                      <Tab
-                        key={player.id}
-                        aria-label={player.name}
-                        title={player.name}
-                        aria-describedby={`${id}-entry-${index}`}
-                        disabled={addRound.isPending}
-                        className={[
-                          tabClasses,
-                          "inline-flex min-h-10 min-w-24 items-center justify-center gap-2 px-3 data-focus:outline-text-secondary!",
-                        ].join(" ")}
-                      >
-                        <PlayerAvatar player={player} size={14} />
-                        <span className="max-w-40 truncate">{player.name}</span>
-                        <span className="inline-flex size-4 shrink-0" aria-hidden>
-                          {complete && <Check className="size-4 text-pt-green-500" aria-hidden />}
-                        </span>
-                        <span id={`${id}-entry-${index}`} className="sr-only">
-                          {complete ? "Score entry complete" : "Score entry incomplete"}
-                        </span>
-                      </Tab>
-                    );
-                  })}
-                </TabList>
-              )}
-            </form.Subscribe>
-          </div>
-          <SwipeableTabPanels
+        {mode === "singleRoundWinner" ? (
+          <form.Field name="winnerId">
+            {(field) => (
+              <WinnerEntry
+                players={players}
+                value={field.state.value}
+                disabled={addRound.isPending}
+                onChange={(value) => {
+                  setSubmitError(null);
+                  field.handleChange(value);
+                }}
+              />
+            )}
+          </form.Field>
+        ) : (
+          <TabGroup
             selectedIndex={selectedIndex}
             onChange={setSelectedIndex}
-            className="dialog-scroll -mx-2 min-h-0 flex-1 overflow-y-auto!"
+            className="flex min-h-0 flex-1 flex-col"
           >
-            {players.map((player, index) => (
-              <TabPanel key={player.id} className="px-2">
-                <form.Field
-                  name={`scores[${index}].points`}
-                  validators={{ onChange: ({ value }) => pointsError(value) }}
-                >
-                  {(field) => (
-                    <PointsEntry
-                      name={player.name}
-                      value={field.state.value}
-                      error={field.state.value ? pointsError(field.state.value) : undefined}
-                      disabled={addRound.isPending}
-                      onChange={(value) => {
-                        setSubmitError(null);
-                        field.handleChange(value);
-                      }}
-                    />
-                  )}
-                </form.Field>
-              </TabPanel>
-            ))}
-          </SwipeableTabPanels>
-        </TabGroup>
+            <div ref={tabListRef} className="-mx-2 shrink-0 overflow-x-auto px-2 py-4">
+              <form.Subscribe selector={(state) => state.values.scores}>
+                {(scores) => (
+                  <TabList className="w-max! min-w-full max-w-none!">
+                    {players.map((player, index) => {
+                      const complete = !pointsError(scores[index].points);
+                      return (
+                        <Tab
+                          key={player.id}
+                          aria-label={player.name}
+                          title={player.name}
+                          aria-describedby={`${id}-entry-${index}`}
+                          disabled={addRound.isPending}
+                          className={[
+                            tabClasses,
+                            "inline-flex min-h-10 min-w-24 items-center justify-center gap-2 px-3 data-focus:outline-text-secondary!",
+                          ].join(" ")}
+                        >
+                          <PlayerAvatar player={player} size={14} />
+                          <span className="max-w-40 truncate">{player.name}</span>
+                          <span className="inline-flex size-4 shrink-0" aria-hidden>
+                            {complete && <Check className="size-4 text-pt-green-500" aria-hidden />}
+                          </span>
+                          <span id={`${id}-entry-${index}`} className="sr-only">
+                            {complete ? "Score entry complete" : "Score entry incomplete"}
+                          </span>
+                        </Tab>
+                      );
+                    })}
+                  </TabList>
+                )}
+              </form.Subscribe>
+            </div>
+            <SwipeableTabPanels
+              selectedIndex={selectedIndex}
+              onChange={setSelectedIndex}
+              className="dialog-scroll -mx-2 min-h-0 flex-1 overflow-y-auto!"
+            >
+              {players.map((player, index) => (
+                <TabPanel key={player.id} className="px-2">
+                  <form.Field
+                    name={`scores[${index}].points`}
+                    validators={{ onChange: ({ value }) => pointsError(value) }}
+                  >
+                    {(field) => (
+                      <PointsEntry
+                        name={player.name}
+                        value={field.state.value}
+                        error={field.state.value ? pointsError(field.state.value) : undefined}
+                        disabled={addRound.isPending}
+                        onChange={(value) => {
+                          setSubmitError(null);
+                          field.handleChange(value);
+                        }}
+                      />
+                    )}
+                  </form.Field>
+                </TabPanel>
+              ))}
+            </SwipeableTabPanels>
+          </TabGroup>
+        )}
         <div className="shrink-0 pt-3">
           {submitError && <InlineError message={submitError} />}
           <form.Subscribe
             selector={(state) => ({
-              complete: state.values.scores.filter((score) => !pointsError(score.points)).length,
+              complete:
+                mode === "points"
+                  ? state.values.scores.filter((score) => !pointsError(score.points)).length
+                  : Number(state.values.winnerId !== null),
               submitting: state.isSubmitting,
             })}
           >
@@ -152,11 +188,12 @@ export function GenericAddRoundDialog({
                   Close
                 </Button>
                 <output aria-live="polite" className="text-sm text-text-secondary">
-                  {complete}/{players.length} entered
+                  {complete}/{mode === "points" ? players.length : 1}{" "}
+                  {mode === "points" ? "entered" : "winner selected"}
                 </output>
                 <Button
                   type="submit"
-                  disabled={complete !== players.length || submitting}
+                  disabled={complete !== (mode === "points" ? players.length : 1) || submitting}
                   className="min-h-11 gap-2 px-5 text-sm font-semibold data-focus:outline-text-secondary!"
                 >
                   {submitting && (

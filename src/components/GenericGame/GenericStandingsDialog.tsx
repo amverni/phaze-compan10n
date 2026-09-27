@@ -7,20 +7,20 @@ interface GenericStandingsDialogProps {
   open: boolean;
   onClose: (open: boolean) => void;
   standings: GenericScoreboardView["standings"];
-  primaryLabel: GenericScoreboardView["primaryLabel"];
+  metric: "Points" | "Wins" | "Passes";
 }
 
 export function GenericStandingsDialog({
   open,
   onClose,
   standings,
-  primaryLabel,
+  metric,
 }: GenericStandingsDialogProps) {
   return (
     <Dialog open={open} onClose={onClose}>
       <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-2 pb-4">
         <DialogTitle className="shrink-0 text-center text-lg font-semibold">Standings</DialogTitle>
-        <DialogScrollArea aria-label={`${primaryLabel} Standings`}>
+        <DialogScrollArea aria-label={`${metric === "Wins" ? "Rounds Won" : metric} Standings`}>
           <List role="list" aria-label="Standings places">
             {standings.map((row) => (
               <li key={row.player.id} className="flex w-full min-w-0 items-center gap-2 text-sm">
@@ -33,8 +33,12 @@ export function GenericStandingsDialog({
                   {row.player.name}
                 </span>
                 <span className="shrink-0 font-semibold tabular-nums">
-                  <span className="sr-only">Total {primaryLabel}: </span>
-                  {row.total}
+                  <span className="sr-only">Total {metric}: </span>
+                  {"totalPoints" in row
+                    ? row.totalPoints
+                    : "totalWins" in row
+                      ? row.totalWins
+                      : row.totalPasses}
                 </span>
               </li>
             ))}

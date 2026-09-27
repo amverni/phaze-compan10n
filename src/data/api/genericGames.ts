@@ -63,18 +63,14 @@ export const genericGamesApi = {
       status: "active",
       players: [...input.players],
       settings:
-        settings.mode === "passFail"
+        settings.mode === "points"
           ? {
-              mode: "passFail",
-              tiebreaker: null,
-              dealer: settings.dealer,
-            }
-          : {
               mode: "points",
               pointsDirection: settings.pointsDirection,
               tiebreaker: null,
               dealer: settings.dealer,
-            },
+            }
+          : { mode: settings.mode, tiebreaker: null, dealer: settings.dealer },
       createdAt: now,
       lastActivityAt: now,
     };

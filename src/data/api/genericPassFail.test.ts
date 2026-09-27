@@ -31,7 +31,9 @@ it("saves an all-fail Round with explicit outcomes for every Player and reloads 
   closeDB();
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([round]);
   const view = await genericGamesApi.getScoreboard(game.id);
-  expect(view?.players.map((player) => player.total)).toEqual([0, 0, 0]);
+  expect(
+    view?.players.map((player) => ("totalPasses" in player ? player.totalPasses : undefined)),
+  ).toEqual([0, 0, 0]);
   expect(view?.standings.map((row) => row.place)).toEqual([1, 1, 1]);
 });
 
@@ -60,35 +62,34 @@ it("accumulates all-pass and mixed Rounds in creation order and awards tied lead
   });
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
-    primaryLabel: "Passes",
     upcomingDealerId: bob.id,
     players: [
-      { id: zed.id, total: 2 },
-      { id: amy.id, total: 2 },
-      { id: bob.id, total: 1 },
+      { id: zed.id, totalPasses: 2 },
+      { id: amy.id, totalPasses: 2 },
+      { id: bob.id, totalPasses: 1 },
     ],
     rounds: [
       {
         dealerId: zed.id,
         scores: [
-          { playerId: zed.id, passed: true, total: 1 },
-          { playerId: amy.id, passed: true, total: 1 },
-          { playerId: bob.id, passed: true, total: 1 },
+          { playerId: zed.id, passed: true, totalPasses: 1 },
+          { playerId: amy.id, passed: true, totalPasses: 1 },
+          { playerId: bob.id, passed: true, totalPasses: 1 },
         ],
       },
       {
         dealerId: amy.id,
         scores: [
-          { playerId: zed.id, passed: true, total: 2 },
-          { playerId: amy.id, passed: true, total: 2 },
-          { playerId: bob.id, passed: false, total: 1 },
+          { playerId: zed.id, passed: true, totalPasses: 2 },
+          { playerId: amy.id, passed: true, totalPasses: 2 },
+          { playerId: bob.id, passed: false, totalPasses: 1 },
         ],
       },
     ],
     standings: [
-      { player: { id: zed.id }, total: 2, place: 1 },
-      { player: { id: amy.id }, total: 2, place: 1 },
-      { player: { id: bob.id }, total: 1, place: 3 },
+      { player: { id: zed.id }, totalPasses: 2, place: 1 },
+      { player: { id: amy.id }, totalPasses: 2, place: 1 },
+      { player: { id: bob.id }, totalPasses: 1, place: 3 },
     ],
   });
   const completed = await genericGamesApi.finish(game.id);
@@ -215,7 +216,7 @@ it("keeps Pass/Fail and Points Round payloads distinct", async () => {
       gameId: game.id,
       scores: [{ playerId: player.id, points: "0" }],
     }),
-  ).rejects.toThrow("Scoring Mode");
+  ).rejects.toThrow("Round mode must match");
   const points = await genericGamesApi.create({
     players: [player.id],
     settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
@@ -226,7 +227,7 @@ it("keeps Pass/Fail and Points Round payloads distinct", async () => {
       mode: "passFail",
       scores: [{ playerId: player.id, passed: true }],
     }),
-  ).rejects.toThrow("Scoring Mode");
+  ).rejects.toThrow("Round mode must match");
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([]);
   expect(await genericRoundsApi.getByGameId(points.id)).toEqual([]);
 });
@@ -270,7 +271,7 @@ it("snapshots Pass/Fail selections before async persistence and keeps saved rule
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
     game: { settings: { mode: "passFail", dealer: true, tiebreaker: null } },
-    players: [{ id: player.id, total: 1 }],
+    players: [{ id: player.id, totalPasses: 1 }],
     rounds: [{ scores: [{ playerId: player.id, passed: true }] }],
   });
 });

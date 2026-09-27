@@ -242,13 +242,12 @@ it("saves all-fail, mixed, and all-pass full rosters with pass totals and rotati
         .innerText(),
     ).toContain("Accumulated Passes: 0");
     const view = await readScoreboard(page, game.id);
-    expect(view.primaryLabel).toBe("Passes");
     expect(
-      view.standings.map(({ player, total, place }) => ({ id: player.id, total, place })),
+      view.standings.map(({ player, place, ...total }) => ({ id: player.id, ...total, place })),
     ).toEqual([
-      { id: game.players[0], total: 2, place: 1 },
-      { id: game.players[1], total: 1, place: 2 },
-      { id: game.players[2], total: 1, place: 2 },
+      { id: game.players[0], totalPasses: 2, place: 1 },
+      { id: game.players[1], totalPasses: 1, place: 2 },
+      { id: game.players[2], totalPasses: 1, place: 2 },
     ]);
     expect((await readGame(page, game.id)).status).toBe("active");
     await page.reload();
@@ -358,7 +357,9 @@ it("allows solo all-fail completion only after a saved Round", async () => {
       status: "completed",
       winnerIds: game.players,
     });
-    expect((await readScoreboard(page, game.id)).standings).toMatchObject([{ total: 0, place: 1 }]);
+    expect((await readScoreboard(page, game.id)).standings).toMatchObject([
+      { totalPasses: 0, place: 1 },
+    ]);
   } finally {
     await page.close();
   }

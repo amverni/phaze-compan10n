@@ -81,8 +81,8 @@ it.each([
   closeDB();
   expect(await genericGamesApi.getById(game.id)).toEqual(completed);
   expect((await genericGamesApi.getScoreboard(game.id))?.players).toMatchObject([
-    { id: bob.id, total: -5 },
-    { id: amy.id, total: 10 },
+    { id: bob.id, totalPoints: -5 },
+    { id: amy.id, totalPoints: 10 },
   ]);
   expect(await genericGamesApi.getActive()).toEqual([]);
 });
@@ -116,9 +116,9 @@ it.each([
   ]);
   closeDB();
   expect((await genericGamesApi.getScoreboard(game.id))?.standings).toMatchObject([
-    { player: { id: cam.id }, place: 1, total: -5 },
-    { player: { id: amy.id }, place: 1, total: -5 },
-    { player: { id: bob.id }, place: 3, total: direction === "high" ? -10 : 0 },
+    { player: { id: cam.id }, place: 1, totalPoints: -5 },
+    { player: { id: amy.id }, place: 1, totalPoints: -5 },
+    { player: { id: bob.id }, place: 3, totalPoints: direction === "high" ? -10 : 0 },
   ]);
 });
 
@@ -502,12 +502,12 @@ it("keeps completed generic scoreboard, Standings and list identities independen
   expect(beforeDeletion).toMatchObject({
     game: { winnerIds: [amy.id] },
     players: [
-      { id: bob.id, name: "Bobby", color: "Moss", total: 20 },
-      { id: amy.id, name: "Amy", color: "Jam", total: -10 },
+      { id: bob.id, name: "Bobby", color: "Moss", totalPoints: 20 },
+      { id: amy.id, name: "Amy", color: "Jam", totalPoints: -10 },
     ],
     standings: [
-      { player: { id: amy.id, name: "Amy", color: "Jam" }, place: 1, total: -10 },
-      { player: { id: bob.id, name: "Bobby", color: "Moss" }, place: 2, total: 20 },
+      { player: { id: amy.id, name: "Amy", color: "Jam" }, place: 1, totalPoints: -10 },
+      { player: { id: bob.id, name: "Bobby", color: "Moss" }, place: 2, totalPoints: 20 },
     ],
   });
   expect(await genericGamesApi.getList()).toEqual([
@@ -695,7 +695,7 @@ it.each([
     players: [{ id: amy.id, name: "Amy", color: "Jam" }],
   });
   expect((await genericGamesApi.getScoreboard(game.id))?.standings).toEqual([
-    { player: { id: amy.id, name: "Amy", color: "Jam" }, place: 1, total: -10 },
+    { player: { id: amy.id, name: "Amy", color: "Jam" }, place: 1, totalPoints: -10 },
   ]);
 });
 

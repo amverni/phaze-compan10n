@@ -29,19 +29,24 @@ export type {
   GenericPointsSettings,
   GenericScoreboardView,
   GenericScoreDirection,
+  GenericScoreTotal,
   GenericScoringMode,
   GenericScoringSettings,
+  GenericSingleRoundWinnerSettings,
   GenericTiebreakerSettings,
 } from "./genericGame";
 export type {
   AddGenericPassFailRoundInput,
   AddGenericPointsRoundInput,
   AddGenericRoundInput,
+  AddGenericWinnerRoundInput,
   GenericPassFailRound,
   GenericPassFailScore,
   GenericPointsRound,
   GenericPointsScore,
   GenericRound,
+  GenericSingleRoundWinnerRound,
+  GenericWinnerScore,
 } from "./genericRound";
 export type {
   BuiltInPhase,

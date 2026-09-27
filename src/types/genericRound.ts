@@ -24,7 +24,21 @@ export interface GenericPassFailRound extends RoundMetadata {
   scores: ArrayAtLeastOne<GenericPassFailScore>;
 }
 
-export type GenericRound = GenericPointsRound | GenericPassFailRound;
+export interface GenericWinnerScore {
+  playerId: PlayerId;
+  won: boolean;
+}
+
+export interface GenericSingleRoundWinnerRound extends RoundMetadata {
+  scorekeeper: "generic";
+  mode: "singleRoundWinner";
+  scores: ArrayAtLeastOne<GenericWinnerScore>;
+}
+
+export type GenericRound =
+  | GenericPointsRound
+  | GenericSingleRoundWinnerRound
+  | GenericPassFailRound;
 
 export interface AddGenericPointsRoundInput {
   gameId: GameId;
@@ -38,4 +52,13 @@ export interface AddGenericPassFailRoundInput {
   scores: GenericPassFailScore[];
 }
 
-export type AddGenericRoundInput = AddGenericPointsRoundInput | AddGenericPassFailRoundInput;
+export interface AddGenericWinnerRoundInput {
+  gameId: GameId;
+  mode: "singleRoundWinner";
+  scores: GenericWinnerScore[];
+}
+
+export type AddGenericRoundInput =
+  | AddGenericPointsRoundInput
+  | AddGenericWinnerRoundInput
+  | AddGenericPassFailRoundInput;

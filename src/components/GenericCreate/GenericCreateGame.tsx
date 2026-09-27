@@ -35,6 +35,7 @@ const directions = [
 ] as const;
 const modes = [
   { value: "points", label: "Points" },
+  { value: "singleRoundWinner", label: "Single Round Winner" },
   { value: "passFail", label: "Pass/Fail" },
 ] as const;
 const directionClasses = [
@@ -65,18 +66,14 @@ export function GenericCreateGame() {
       const game = await createGame.mutateAsync({
         players: value.players.map((player) => player.id),
         settings:
-          value.mode === "passFail"
+          value.mode === "points"
             ? {
-                mode: "passFail",
-                tiebreaker: null,
-                dealer: value.dealer,
-              }
-            : {
                 mode: "points",
                 pointsDirection: value.pointsDirection,
                 tiebreaker: null,
                 dealer: value.dealer,
-              },
+              }
+            : { mode: value.mode, tiebreaker: null, dealer: value.dealer },
       });
       await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
     },
@@ -175,7 +172,10 @@ export function GenericCreateGame() {
                               className="w-full min-w-0"
                             >
                               <SettingListRow label={<ListboxLabel>Scoring Mode</ListboxLabel>}>
-                                <ListboxButton variant="plain" className="shrink-0">
+                                <ListboxButton
+                                  variant="plain"
+                                  className="shrink-0 data-focus:outline-2 data-focus:outline-solid data-focus:outline-text-secondary!"
+                                >
                                   {modes.find(({ value }) => value === field.state.value)?.label}
                                 </ListboxButton>
                                 <ListboxOptions
@@ -194,26 +194,37 @@ export function GenericCreateGame() {
                           )}
                         </form.Field>
                         {mode === "points" && (
-                          <form.Field key="direction" name="pointsDirection">
-                            {(field) => (
-                              <RadioGroup
-                                value={field.state.value}
-                                onChange={field.handleChange}
-                                onBlur={field.handleBlur}
-                                className="w-full"
-                              >
-                                <SettingListRow label={<Label>Points Direction</Label>}>
-                                  <div className="glass relative flex shrink-0 rounded-full p-1">
-                                    {directions.map(({ value, label }) => (
-                                      <Radio key={value} value={value} className={directionClasses}>
-                                        {label}
-                                      </Radio>
-                                    ))}
-                                  </div>
-                                </SettingListRow>
-                              </RadioGroup>
-                            )}
-                          </form.Field>
+                          <form.Subscribe key="direction" selector={(state) => state.values.mode}>
+                            {(currentMode) =>
+                              // List retains exiting rows; stop exposing inactive controls immediately.
+                              currentMode === "points" && (
+                                <form.Field name="pointsDirection">
+                                  {(field) => (
+                                    <RadioGroup
+                                      value={field.state.value}
+                                      onChange={field.handleChange}
+                                      onBlur={field.handleBlur}
+                                      className="w-full"
+                                    >
+                                      <SettingListRow label={<Label>Points Direction</Label>}>
+                                        <div className="glass relative flex shrink-0 rounded-full p-1">
+                                          {directions.map(({ value, label }) => (
+                                            <Radio
+                                              key={value}
+                                              value={value}
+                                              className={directionClasses}
+                                            >
+                                              {label}
+                                            </Radio>
+                                          ))}
+                                        </div>
+                                      </SettingListRow>
+                                    </RadioGroup>
+                                  )}
+                                </form.Field>
+                              )
+                            }
+                          </form.Subscribe>
                         )}
                         <form.Field key="dealer" name="dealer">
                           {(field) => (

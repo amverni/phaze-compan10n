@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { useState } from "react";
 import type { GenericScoreboardView } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
@@ -12,8 +12,12 @@ const cellClasses = "border-r border-b border-text-secondary/20 bg-app-backgroun
 export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   const [addOpen, setAddOpen] = useState(false);
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
-  const AddRoundDialog =
-    view.game.settings.mode === "passFail" ? GenericPassFailRoundDialog : GenericAddRoundDialog;
+  const metric =
+    view.game.settings.mode === "points"
+      ? "Points"
+      : view.game.settings.mode === "singleRoundWinner"
+        ? "Wins"
+        : "Passes";
 
   return (
     <>
@@ -24,7 +28,9 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
         className="glass relative min-h-0 overflow-auto rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-secondary"
       >
         <table className="w-full border-separate border-spacing-0 text-center">
-          <caption className="sr-only">{view.primaryLabel} scoreboard</caption>
+          <caption className="sr-only">
+            {metric === "Wins" ? "Rounds Won" : metric} scoreboard
+          </caption>
           <thead>
             <tr>
               <th
@@ -45,8 +51,12 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       {player.name}
                     </span>
                     <span className="whitespace-nowrap text-lg font-semibold tabular-nums">
-                      <span className="sr-only">Total {view.primaryLabel}: </span>
-                      {player.total}
+                      <span className="sr-only">Total {metric}: </span>
+                      {"totalPoints" in player
+                        ? player.totalPoints
+                        : "totalWins" in player
+                          ? player.totalWins
+                          : player.totalPasses}
                     </span>
                   </span>
                 </th>
@@ -84,7 +94,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                 {round.scores.map((score, index) => (
                   <td
                     key={score.playerId}
-                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"passed" in score ? (score.passed ? "Passed" : "Failed") : `${score.points} Points`}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
+                    aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"points" in score ? `${score.points} Points` : "passed" in score ? (score.passed ? "Passed" : "Failed") : score.won ? "Won" : "Lost"}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
                     className={[cellClasses, "whitespace-nowrap tabular-nums"].join(" ")}
                   >
                     <div
@@ -95,14 +105,22 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       )}
                       {"passed" in score ? (
                         <PassFailOutcome passed={score.passed} />
-                      ) : (
+                      ) : "points" in score ? (
                         <span>{score.points}</span>
+                      ) : score.won ? (
+                        <Check className="mx-auto size-5 text-pt-green-500" aria-hidden />
+                      ) : (
+                        <X className="mx-auto size-5 text-pt-red-500" aria-hidden />
                       )}
                     </div>
                     {expandedRound === round.roundNumber && (
                       <div className="pt-2 text-sm text-text-secondary">
-                        <span className="sr-only">Accumulated {view.primaryLabel}: </span>
-                        {score.total}
+                        <span className="sr-only">Accumulated {metric}: </span>
+                        {"totalPoints" in score
+                          ? score.totalPoints
+                          : "totalWins" in score
+                            ? score.totalWins
+                            : score.totalPasses}
                       </div>
                     )}
                   </td>
@@ -148,14 +166,23 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
           </tbody>
         </table>
       </section>
-      {view.game.status === "active" && (
-        <AddRoundDialog
-          open={addOpen}
-          onClose={setAddOpen}
-          gameId={view.game.id}
-          players={view.players}
-        />
-      )}
+      {view.game.status === "active" &&
+        (view.game.settings.mode === "passFail" ? (
+          <GenericPassFailRoundDialog
+            open={addOpen}
+            onClose={setAddOpen}
+            gameId={view.game.id}
+            players={view.players}
+          />
+        ) : (
+          <GenericAddRoundDialog
+            open={addOpen}
+            onClose={setAddOpen}
+            gameId={view.game.id}
+            players={view.players}
+            mode={view.game.settings.mode}
+          />
+        ))}
     </>
   );
 }

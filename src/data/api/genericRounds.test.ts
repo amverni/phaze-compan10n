@@ -66,22 +66,22 @@ it("saves explicit signed Points and reloads Round values and running totals in 
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
     game: { id: game.id, status: "active" },
     players: [
-      { id: zed.id, total: 7 },
-      { id: amy.id, total: -10 },
+      { id: zed.id, totalPoints: 7 },
+      { id: amy.id, totalPoints: -10 },
     ],
     rounds: [
       {
         roundNumber: 1,
         scores: [
-          { playerId: zed.id, points: 0, total: 0 },
-          { playerId: amy.id, points: -12, total: -12 },
+          { playerId: zed.id, points: 0, totalPoints: 0 },
+          { playerId: amy.id, points: -12, totalPoints: -12 },
         ],
       },
       {
         roundNumber: 2,
         scores: [
-          { playerId: zed.id, points: 7, total: 7 },
-          { playerId: amy.id, points: 2, total: -10 },
+          { playerId: zed.id, points: 7, totalPoints: 7 },
+          { playerId: amy.id, points: 2, totalPoints: -10 },
         ],
       },
     ],
@@ -142,8 +142,8 @@ it.each([
   });
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
-    players: [{ id: zed.id, total: expected }],
-    rounds: [{ scores: [{ playerId: zed.id, points: expected, total: expected }] }],
+    players: [{ id: zed.id, totalPoints: expected }],
+    rounds: [{ scores: [{ playerId: zed.id, points: expected, totalPoints: expected }] }],
   });
 });
 
@@ -234,9 +234,9 @@ it.each([
   const scoreboard = await genericGamesApi.getScoreboard(game.id);
   expect(scoreboard?.players.map((player) => player.id)).toEqual([zed.id, amy.id, bob.id]);
   expect(scoreboard?.standings).toEqual([
-    { player: identity(zed), total: direction === "high" ? 5 : -5, place: 1 },
-    { player: identity(amy), total: direction === "high" ? 5 : -5, place: 1 },
-    { player: identity(bob), total: direction === "high" ? -2 : 2, place: 3 },
+    { player: identity(zed), totalPoints: direction === "high" ? 5 : -5, place: 1 },
+    { player: identity(amy), totalPoints: direction === "high" ? 5 : -5, place: 1 },
+    { player: identity(bob), totalPoints: direction === "high" ? -2 : 2, place: 3 },
   ]);
   expect(scoreboard?.game.status).toBe("active");
   expect(scoreboard?.game).not.toHaveProperty("winnerIds");
@@ -249,16 +249,15 @@ it("starts an empty Game with explicit zero totals and shared first place, witho
   } = await createPointsGame();
   expect(await genericGamesApi.getScoreboard(game.id)).toEqual({
     game,
-    primaryLabel: "Points",
     upcomingDealerId: null,
     players: [
-      { ...identity(zed), total: 0 },
-      { ...identity(amy), total: 0 },
+      { ...identity(zed), totalPoints: 0 },
+      { ...identity(amy), totalPoints: 0 },
     ],
     rounds: [],
     standings: [
-      { player: identity(zed), total: 0, place: 1 },
-      { player: identity(amy), total: 0, place: 1 },
+      { player: identity(zed), totalPoints: 0, place: 1 },
+      { player: identity(amy), totalPoints: 0, place: 1 },
     ],
   });
 });
@@ -445,11 +444,11 @@ it("allows exact opposite-signed cancellation at the integer boundaries", async 
   }
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
-    players: [{ total: -9007199254740991 }],
+    players: [{ totalPoints: -9007199254740991 }],
     rounds: [
-      { scores: [{ total: 9007199254740991 }] },
-      { scores: [{ total: 0 }] },
-      { scores: [{ total: -9007199254740991 }] },
+      { scores: [{ totalPoints: 9007199254740991 }] },
+      { scores: [{ totalPoints: 0 }] },
+      { scores: [{ totalPoints: -9007199254740991 }] },
     ],
   });
 });
@@ -483,12 +482,16 @@ it("uses monotonically increasing Round numbers and orders persisted scores inde
   const scoreboard = await genericGamesApi.getScoreboard(game.id);
   expect(scoreboard?.rounds.map((saved) => saved.roundNumber)).toEqual([3, 9, 10]);
   expect(scoreboard?.rounds[0].scores).toEqual([
-    { playerId: zed.id, points: 2, total: 2 },
-    { playerId: amy.id, points: 5, total: 5 },
+    { playerId: zed.id, points: 2, totalPoints: 2 },
+    { playerId: amy.id, points: 5, totalPoints: 5 },
   ]);
   expect(scoreboard?.players.map((player) => player.id)).toEqual([zed.id, amy.id]);
   expect(
-    scoreboard?.standings.map(({ player, place, total }) => [player.id, place, total]),
+    scoreboard?.standings.map((row) => [
+      row.player.id,
+      row.place,
+      "totalPoints" in row ? row.totalPoints : undefined,
+    ]),
   ).toEqual([
     [amy.id, 1, 11],
     [zed.id, 2, 4],
@@ -592,8 +595,8 @@ it("reads Completed Game snapshot identities but never accepts another Round", a
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
     game: completed,
     players: [
-      { ...identity(zed), total: 7 },
-      { ...identity(amy), total: 2 },
+      { ...identity(zed), totalPoints: 7 },
+      { ...identity(amy), totalPoints: 2 },
     ],
   });
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([round]);
@@ -643,8 +646,8 @@ it("snapshots Round input before awaits so caller edits cannot change a pending 
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
     players: [
-      { id: zed.id, total: 2 },
-      { id: amy.id, total: 3 },
+      { id: zed.id, totalPoints: 2 },
+      { id: amy.id, totalPoints: 3 },
     ],
   });
 });
@@ -725,8 +728,12 @@ it("serializes concurrent additions into distinct Rounds without losing either s
   closeDB();
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual(saved);
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
-    players: [{ total: 9 }],
-    rounds: [{ scores: [{ total: 3 }] }, { scores: [{ total: 2 }] }, { scores: [{ total: 9 }] }],
+    players: [{ totalPoints: 9 }],
+    rounds: [
+      { scores: [{ totalPoints: 3 }] },
+      { scores: [{ totalPoints: 2 }] },
+      { scores: [{ totalPoints: 9 }] },
+    ],
   });
 });
 
@@ -751,7 +758,7 @@ it("rechecks cumulative bounds after a concurrent save instead of racing past th
   closeDB();
   expect(await genericRoundsApi.getByGameId(game.id)).toHaveLength(2);
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
-    players: [{ total: 9007199254740991 }],
+    players: [{ totalPoints: 9007199254740991 }],
   });
 });
 
@@ -766,11 +773,11 @@ it("reads each scoreboard from one transaction while a Round and activity update
     genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points: "4" }] }),
     genericGamesApi.getScoreboard(game.id),
   ]);
-  expect(before).toMatchObject({ game, players: [{ total: 0 }], rounds: [] });
+  expect(before).toMatchObject({ game, players: [{ totalPoints: 0 }], rounds: [] });
   expect(after).toMatchObject({
     game: { lastActivityAt: game.lastActivityAt + 1 },
-    players: [{ total: 4 }],
-    rounds: [{ roundNumber: 1, scores: [{ points: 4, total: 4 }] }],
+    players: [{ totalPoints: 4 }],
+    rounds: [{ roundNumber: 1, scores: [{ points: 4, totalPoints: 4 }] }],
   });
 });
 
@@ -815,7 +822,7 @@ it("invalidates generic scoreboard, detail and activity only after a successful 
     expect(client.getQueryState(playerListOptions().queryKey)?.isInvalidated).toBe(false);
     expect(client.getQueryState(roundKeys.list("unrelated-phase-game"))?.isInvalidated).toBe(false);
     expect(await client.fetchQuery(scoreboardOptions)).toMatchObject({
-      players: [{ id: zed.id, total: -5 }],
+      players: [{ id: zed.id, totalPoints: -5 }],
       rounds: [{ roundNumber: 1 }],
     });
     expect(await client.fetchQuery(genericGameScoreboardOptions("missing"))).toBeNull();
