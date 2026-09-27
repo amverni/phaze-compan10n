@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ChartNoAxesColumn } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, ChartNoAxesColumn, Flag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { gameDetailOptions } from "../../data/hooks/useGames";
+import { gameDetailOptions, useFinishGame } from "../../data/hooks/useGames";
 import { useGamePlayers } from "../../data/hooks/usePlayers";
 import { roundsListOptions } from "../../data/hooks/useRounds";
 import type { GameId } from "../../types";
@@ -16,6 +16,7 @@ import {
 import { Scoreboard } from "../Scoreboard";
 import { StandingsDialog } from "../Standings";
 import { Button, InlineError } from "../ui";
+import { FinishGameDialog } from "./FinishGameDialog";
 import { shouldShowPhasesCardEntryButton } from "./gameView";
 import { shouldAutoOpenStandings } from "./standingsAutoOpen";
 
@@ -26,6 +27,10 @@ interface GameProps {
 export function Game({ gameId }: GameProps) {
   const [phasesCardOpen, setPhasesCardOpen] = useState(false);
   const [standingsOpen, setStandingsOpen] = useState(false);
+  const [finishOpen, setFinishOpen] = useState(false);
+  const openFinalStandingsAfterFinish = useRef(false);
+  const finishGame = useFinishGame();
+  const navigate = useNavigate();
   const checkedInitialStandingsGameId = useRef<GameId | null>(null);
   const gameQuery = useQuery(gameDetailOptions(gameId));
   const { data: game } = gameQuery;
@@ -65,6 +70,15 @@ export function Game({ gameId }: GameProps) {
                   <PhasesCardEntryButtonContent />
                 </Button>
               )}
+              <Button
+                type="button"
+                className="ml-auto size-12 p-0"
+                aria-label="Open Standings"
+                disabled={!standingsReady}
+                onClick={() => setStandingsOpen(true)}
+              >
+                <ChartNoAxesColumn className="size-8" aria-hidden />
+              </Button>
             </div>
           </div>
         }
@@ -107,18 +121,45 @@ export function Game({ gameId }: GameProps) {
               className="card-footer-button p-0"
               aria-label="Go home"
             >
-              <ArrowLeft className="size-8" />
+              <ArrowLeft className="size-8" aria-hidden />
             </Button>
-            <Button
-              type="button"
-              className="card-footer-button p-0"
-              aria-label="Open Standings"
-              disabled={!standingsReady}
-              onClick={() => setStandingsOpen(true)}
-            >
-              <ChartNoAxesColumn className="size-8" aria-hidden />
-            </Button>
+            {game?.status === "active" && (
+              <Button
+                type="button"
+                className="card-footer-button p-0"
+                aria-label="Finish Game"
+                disabled={!standingsReady}
+                onClick={() => {
+                  finishGame.reset();
+                  setFinishOpen(true);
+                }}
+              >
+                <Flag className="size-8" aria-hidden />
+              </Button>
+            )}
           </div>
+        }
+      />
+      <FinishGameDialog
+        open={finishOpen}
+        canFinish={Boolean(rounds?.length)}
+        isPending={finishGame.isPending}
+        error={finishGame.error ? `Couldn't finish Game: ${finishGame.error.message}` : null}
+        onResume={() => setFinishOpen(false)}
+        onPause={() => navigate({ to: "/phaseCompan10n" })}
+        afterLeave={() => {
+          if (openFinalStandingsAfterFinish.current) {
+            openFinalStandingsAfterFinish.current = false;
+            setStandingsOpen(true);
+          }
+        }}
+        onFinish={() =>
+          finishGame.mutate(gameId, {
+            onSuccess: () => {
+              openFinalStandingsAfterFinish.current = true;
+              setFinishOpen(false);
+            },
+          })
         }
       />
       {game && (

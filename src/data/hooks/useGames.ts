@@ -60,3 +60,19 @@ export function useDeleteGame() {
       ]),
   });
 }
+
+export function useFinishGame() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: GameId) => gamesApi.finish(id),
+    onSuccess: async (game) => {
+      queryClient.setQueryData(gameKeys.detail(game.id), game);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+        queryClient.invalidateQueries({ queryKey: roundKeys.all }),
+        queryClient.invalidateQueries({ queryKey: phaseKeys.all }),
+        queryClient.invalidateQueries({ queryKey: phaseSetKeys.all }),
+      ]);
+    },
+  });
+}

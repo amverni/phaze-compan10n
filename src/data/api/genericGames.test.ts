@@ -196,6 +196,7 @@ it("prevents every Phase Game write from changing a Generic Game", async () => {
   await expect(gamesApi.addPhase(generic.id, "phase-1")).rejects.toThrow("not found");
   await expect(gamesApi.removePhase(generic.id, "phase-1")).rejects.toThrow("not found");
   await expect(gamesApi.complete(generic.id, amy.id)).rejects.toThrow("not found");
+  await expect(gamesApi.finish(generic.id)).rejects.toThrow("not found");
   await expect(gamesApi.delete(generic.id)).rejects.toThrow("another Scorekeeper");
   await expect(
     roundsApi.add({
@@ -257,6 +258,7 @@ it("rejects Phase mutation of wrong-owner Round data even under a Phase Game id"
   await expect(roundsApi.delete(phase.id, 1)).rejects.toThrow("another Scorekeeper");
   await expect(roundsApi.deleteByGameId(phase.id)).rejects.toThrow("another Scorekeeper");
   await expect(gamesApi.complete(phase.id, amy.id)).rejects.toThrow("another Scorekeeper");
+  await expect(gamesApi.finish(phase.id)).rejects.toThrow("another Scorekeeper");
 });
 
 it("rejects Generic ownership in the public Phase Standings boundary", async () => {

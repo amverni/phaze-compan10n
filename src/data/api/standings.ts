@@ -149,6 +149,7 @@ function getMostRecentRoundWin(playerId: PlayerId, rounds: readonly Round[]): nu
 function applyCompetitionPlaces<TPlayer extends PlayerIdentity>(
   rows: StandingsRow<TPlayer>[],
 ): StandingsRow<TPlayer>[] {
+  let place = 1;
   return rows.map((row, index) => {
     const previous = rows[index - 1];
     if (
@@ -159,14 +160,15 @@ function applyCompetitionPlaces<TPlayer extends PlayerIdentity>(
     ) {
       return {
         ...row,
-        place: previous.place,
+        place,
         showPlace: false,
       };
     }
 
+    place = index + 1;
     return {
       ...row,
-      place: index + 1,
+      place,
       showPlace: true,
     };
   });

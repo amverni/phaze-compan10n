@@ -23,15 +23,33 @@ afterEach(async () => {
   await resetDatabase();
 });
 
-it("retains only the latest 20 Completed Games and their Rounds without limiting Active Games", async () => {
+it.each([
+  "normal",
+  "early",
+] as const)("retains only the latest 20 Completed Games and their Rounds without limiting Active Games (%s completion)", async (method) => {
   const players = await createPlayers();
   const clock = vi.spyOn(Date, "now");
   const completedIds: string[] = [];
   const activeGames: ActiveGame[] = [];
   for (let index = 0; index < 21; index++) {
     clock.mockReturnValue(index + 1);
-    const game = await createGame(players);
-    await finishGame(game);
+    const game = await createGame(
+      players,
+      method === "normal"
+        ? undefined
+        : {
+            id: "longer",
+            type: "temporary",
+            name: "Longer",
+            phases: ["phase-1", "phase-2"],
+          },
+    );
+    if (method === "normal") {
+      await finishGame(game);
+    } else {
+      await addRound(game);
+      await gamesApi.finish(game.id);
+    }
     completedIds.push(game.id);
     activeGames.push(await createGame(players));
   }
@@ -304,6 +322,7 @@ it.each([
 it.each([
   "delete",
   "evict",
+  "finish",
 ] as const)("rolls back every write when Phase cleanup fails during %s", async (method) => {
   const players = await createPlayers();
   const firstPhase = await createTemporaryPhase();
@@ -329,7 +348,12 @@ it.each([
   await addRound(pending);
   const gamesBefore = await gamesApi.getAll();
   const roundsBefore = await Promise.all(gamesBefore.map((game) => roundsApi.getByGameId(game.id)));
-  const operation = () => (method === "delete" ? gamesApi.delete(victim.id) : addRound(pending));
+  const operation = () =>
+    method === "delete"
+      ? gamesApi.delete(victim.id)
+      : method === "finish"
+        ? gamesApi.finish(pending.id)
+        : addRound(pending);
   const remove = IDBObjectStore.prototype.delete;
   const failure = vi.spyOn(IDBObjectStore.prototype, "delete").mockImplementation(function (
     this: IDBObjectStore,
@@ -363,13 +387,13 @@ it.each([
   expect(await phaseSetsApi.getById(phaseSet.id)).toBeUndefined();
   expect(await phasesApi.getById(firstPhase.id)).toBeUndefined();
   expect(await phasesApi.getById(secondPhase.id)).toBeUndefined();
-  if (method === "evict") {
+  if (method !== "delete") {
     expect(await gamesApi.getById(pending.id)).toMatchObject({
       status: "completed",
       winnerIds: [players[0].id],
       playerSnapshots: players.map(({ id, name, color }) => ({ id, name, color })),
     });
-    expect(await roundsApi.getByGameId(pending.id)).toHaveLength(2);
+    expect(await roundsApi.getByGameId(pending.id)).toHaveLength(method === "finish" ? 1 : 2);
   }
 });
 
