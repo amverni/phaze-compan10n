@@ -34,7 +34,7 @@ This file adds Phase 10 scoreboard standards on top of Matt's fixed smell baseli
 
 - IndexedDB access goes through `src/data/api/`; components never touch the database directly.
 - Use `0 | 1` instead of `boolean` for boolean-like IndexedDB fields used in indexes. Plain non-indexed booleans are not covered by this rule.
-- In DB upgrades, guard `createObjectStore()` with `db.objectStoreNames.contains(...)`.
+- In DB upgrades, guard `createObjectStore()` with `db.objectStoreNames.contains(...)`. Exception: stores recreated immediately after a documented, deliberate full reset in the same upgrade transaction need no existence guards, because the reset guarantees they are absent.
 - Guard `createIndex()` additions to existing stores with `indexNames.contains(...)`.
 - Increment the DB version for schema changes.
 - Use transactions for batch operations and avoid unnecessary IndexedDB scans when an index or API-level selection is appropriate.
