@@ -91,7 +91,9 @@ describe("generic Points Games", () => {
       expect(await page.getByRole("radio", { name: "High wins", exact: true }).isChecked()).toBe(
         true,
       );
-      expect(await page.getByRole("switch").count()).toBe(0);
+      expect(await page.getByRole("switch", { name: "Dealer", exact: true }).isChecked()).toBe(
+        false,
+      );
       expect(await page.getByRole("combobox").count()).toBe(0);
       await page.getByRole("tab", { name: "Players", exact: true }).click();
       await createPlayerInSetup(page, "Maya");
@@ -157,13 +159,31 @@ describe("generic Points Games", () => {
       if (!direction) throw new Error("Missing Points Direction control");
       expect(direction.x).toBeGreaterThanOrEqual(0);
       expect(direction.x + direction.width).toBeLessThanOrEqual(320);
+      const dealer = page.getByRole("switch", { name: "Dealer", exact: true });
+      expect(await dealer.isChecked()).toBe(false);
+      await dealer.focus();
+      await page.keyboard.press("Space");
+      expect(await dealer.isChecked()).toBe(true);
+      await page.getByRole("tab", { name: "Players", exact: true }).click();
+      await page.getByRole("tab", { name: "Settings", exact: true }).click();
+      expect(await dealer.isChecked()).toBe(true);
       await page.getByRole("button", { name: "Start", exact: true }).click();
       await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
       const gameUrl = page.url();
       await expectScoreboardOrder(page, order);
+      expect(
+        await page
+          .getByRole("cell", { name: `${order[0]}, upcoming Round: Dealer`, exact: true })
+          .count(),
+      ).toBe(1);
       await page.reload();
       await page.getByText("Points - Low wins", { exact: true }).waitFor();
       await expectScoreboardOrder(page, order);
+      expect(
+        await page
+          .getByRole("cell", { name: `${order[0]}, upcoming Round: Dealer`, exact: true })
+          .count(),
+      ).toBe(1);
       const scoreboard = page.getByRole("region", { name: "Scoreboard", exact: true });
       await expect.poll(() => scoreboard.count()).toBe(1);
       await scoreboard.focus();
@@ -185,6 +205,9 @@ describe("generic Points Games", () => {
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       expect(await page.getByRole("radio", { name: "High wins", exact: true }).isChecked()).toBe(
         true,
+      );
+      expect(await page.getByRole("switch", { name: "Dealer", exact: true }).isChecked()).toBe(
+        false,
       );
       await page.getByRole("link", { name: "Cancel", exact: true }).click();
       const deleteButton = page.getByRole("button", {

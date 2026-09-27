@@ -1,4 +1,4 @@
-import { Label, Radio, RadioGroup, Tab, TabGroup, TabPanel } from "@headlessui/react";
+import { Field, Label, Radio, RadioGroup, Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Play, Settings, Users, X } from "lucide-react";
@@ -15,6 +15,7 @@ import {
   ScrollFade,
   SettingListRow,
   SwipeableTabPanels,
+  Switch,
   TabList,
   tabClasses,
 } from "../ui";
@@ -41,9 +42,11 @@ export function GenericCreateGame() {
   const defaultValues: {
     players: Player[];
     pointsDirection: GenericPointsSettings["pointsDirection"];
+    dealer: boolean;
   } = {
     players: [],
     pointsDirection: "high",
+    dealer: false,
   };
   const form = useForm({
     defaultValues,
@@ -54,7 +57,7 @@ export function GenericCreateGame() {
           mode: "points",
           pointsDirection: value.pointsDirection,
           tiebreaker: null,
-          dealer: false,
+          dealer: value.dealer,
         },
       });
       await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
@@ -165,6 +168,20 @@ export function GenericCreateGame() {
                             </div>
                           </SettingListRow>
                         </RadioGroup>
+                      )}
+                    </form.Field>
+                    <form.Field key="dealer" name="dealer">
+                      {(field) => (
+                        <Field className="w-full">
+                          <SettingListRow label={<Label>Dealer</Label>}>
+                            <Switch
+                              checked={field.state.value}
+                              onChange={field.handleChange}
+                              onBlur={field.handleBlur}
+                              className="data-focus:outline-text-secondary!"
+                            />
+                          </SettingListRow>
+                        </Field>
                       )}
                     </form.Field>
                   </List>

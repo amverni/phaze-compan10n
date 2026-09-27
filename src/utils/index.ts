@@ -1,3 +1,4 @@
+export { getDealerId } from "./dealer";
 export { formatPhaseDisplayName } from "./formatPhase";
 export { formatRelativeTime } from "./formatRelativeTime";
 export { parseGenericPoints } from "./genericPoints";
