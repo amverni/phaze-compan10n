@@ -11,6 +11,7 @@ import type {
   StoredRound,
 } from "../../types";
 import { getDealerId } from "../../utils";
+import { deriveGenericGraphs } from "./genericGraphs";
 
 export function assertGenericSettings(settings: GenericGameSettings): void {
   if (
@@ -174,6 +175,7 @@ export function deriveGenericScoreboard(
     rounds,
     standings,
     upcomingDealerId,
+    ...deriveGenericGraphs(game.settings, identities, rounds),
   };
 }
 

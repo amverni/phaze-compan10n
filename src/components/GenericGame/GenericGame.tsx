@@ -85,16 +85,10 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
                 </p>
                 <GenericScoreboard key={view.game.id} view={view} />
                 <GenericStandingsDialog
+                  key={view.game.id}
                   open={standingsOpen}
                   onClose={setStandingsOpen}
-                  standings={view.standings}
-                  metric={
-                    view.game.settings.mode === "points"
-                      ? "Points"
-                      : view.game.settings.mode === "singleRoundWinner"
-                        ? "Wins"
-                        : "Passes"
-                  }
+                  view={view}
                 />
               </>
             )}

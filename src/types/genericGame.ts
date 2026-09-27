@@ -63,8 +63,26 @@ export type GenericScoreTotal =
   | { totalWins: number }
   | { totalPasses: number };
 
+export interface GenericGraphPoint {
+  roundNumber: number;
+  value: number;
+}
+
+export interface GenericGraphSeries {
+  player: PlayerIdentity;
+  points: GenericGraphPoint[];
+}
+
+export interface GenericGraph {
+  metric: "Points" | "Rounds Won" | "Passes" | "Tiebreaker";
+  direction: GenericScoreDirection;
+  series: GenericGraphSeries[];
+}
+
 export interface GenericScoreboardView {
   game: GenericGame;
+  primaryGraph: GenericGraph;
+  tiebreakerGraph: GenericGraph | null;
   upcomingDealerId: PlayerId | null;
   players: Array<PlayerIdentity & GenericScoreTotal>;
   rounds: Array<{
