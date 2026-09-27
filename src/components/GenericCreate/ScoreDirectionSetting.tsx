@@ -16,7 +16,7 @@ const directions = [
 const directionClasses = [
   "relative cursor-pointer rounded-full px-3 py-2 text-sm outline-none",
   "data-checked:bg-text-secondary/15 data-checked:font-semibold",
-  "data-focus:outline-2 data-focus:outline-text-secondary",
+  "data-focus:outline-2 data-focus:outline-solid data-focus:outline-text-secondary",
 ].join(" ");
 
 export function ScoreDirectionSetting({
