@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import type { Game, Player, PlayerId } from "../../types";
 import { getGamePlayers } from "../api/gameResults";
 import { playersApi } from "../api/players";
+import { gameKeys } from "./useGames";
 
 export const playerKeys = {
   all: ["players"] as const,
@@ -28,20 +29,30 @@ export function playersByIdsOptions(ids: PlayerId[]) {
   });
 }
 
-export function useGamePlayers(game: Game | undefined) {
-  const { data: livePlayers } = useQuery({
+export function useGamePlayers(game: Game | null | undefined) {
+  const query = useQuery({
     ...playersByIdsOptions(game?.players ?? []),
     enabled: game?.status === "active",
   });
-  if (!game || (game.status === "active" && !livePlayers)) return undefined;
-  return getGamePlayers(game, livePlayers ?? []);
+  return {
+    ...query,
+    isError: game?.status === "active" && query.isError,
+    data:
+      !game || (game.status === "active" && !query.data)
+        ? undefined
+        : getGamePlayers(game, query.data ?? []),
+  };
 }
 
 export function useCreatePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<Player, "id" | "createdAt">) => playersApi.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+        queryClient.invalidateQueries({ queryKey: gameKeys.lists() }),
+      ]),
   });
 }
 
@@ -55,7 +66,11 @@ export function useUpdatePlayer() {
       id: PlayerId;
       updates: Partial<Omit<Player, "id" | "createdAt">>;
     }) => playersApi.update(id, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+        queryClient.invalidateQueries({ queryKey: gameKeys.lists() }),
+      ]),
   });
 }
 
@@ -63,6 +78,10 @@ export function useDeletePlayer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: PlayerId) => playersApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+        queryClient.invalidateQueries({ queryKey: gameKeys.lists() }),
+      ]),
   });
 }

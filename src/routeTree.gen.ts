@@ -18,6 +18,7 @@ import { Route as PhaseCompan10nSettingsRouteImport } from './routes/phaseCompan
 import { Route as PhaseCompan10nPlayersRouteImport } from './routes/phaseCompan10n/players'
 import { Route as PhaseCompan10nPhasescardRouteImport } from './routes/phaseCompan10n/phasescard'
 import { Route as PhaseCompan10nPhasesRouteImport } from './routes/phaseCompan10n/phases'
+import { Route as PhaseCompan10nGamesRouteImport } from './routes/phaseCompan10n/games'
 import { Route as PhaseCompan10nCreateRouteImport } from './routes/phaseCompan10n/create'
 import { Route as PhaseCompan10nPhasescardIndexRouteImport } from './routes/phaseCompan10n/phasescard/index'
 import { Route as PhaseCompan10nCreateIndexRouteImport } from './routes/phaseCompan10n/create/index'
@@ -71,6 +72,11 @@ const PhaseCompan10nPhasesRoute = PhaseCompan10nPhasesRouteImport.update({
   path: '/phases',
   getParentRoute: () => PhaseCompan10nRoute,
 } as any)
+const PhaseCompan10nGamesRoute = PhaseCompan10nGamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => PhaseCompan10nRoute,
+} as any)
 const PhaseCompan10nCreateRoute = PhaseCompan10nCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/players': typeof PlayersRoute
   '/scorekeepers': typeof ScorekeepersRoute
   '/phaseCompan10n/create': typeof PhaseCompan10nCreateRouteWithChildren
+  '/phaseCompan10n/games': typeof PhaseCompan10nGamesRoute
   '/phaseCompan10n/phases': typeof PhaseCompan10nPhasesRoute
   '/phaseCompan10n/phasescard': typeof PhaseCompan10nPhasescardRouteWithChildren
   '/phaseCompan10n/players': typeof PhaseCompan10nPlayersRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/players': typeof PlayersRoute
   '/scorekeepers': typeof ScorekeepersRoute
+  '/phaseCompan10n/games': typeof PhaseCompan10nGamesRoute
   '/phaseCompan10n/phases': typeof PhaseCompan10nPhasesRoute
   '/phaseCompan10n/players': typeof PhaseCompan10nPlayersRoute
   '/phaseCompan10n/settings': typeof PhaseCompan10nSettingsRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/players': typeof PlayersRoute
   '/scorekeepers': typeof ScorekeepersRoute
   '/phaseCompan10n/create': typeof PhaseCompan10nCreateRouteWithChildren
+  '/phaseCompan10n/games': typeof PhaseCompan10nGamesRoute
   '/phaseCompan10n/phases': typeof PhaseCompan10nPhasesRoute
   '/phaseCompan10n/phasescard': typeof PhaseCompan10nPhasescardRouteWithChildren
   '/phaseCompan10n/players': typeof PhaseCompan10nPlayersRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scorekeepers'
     | '/phaseCompan10n/create'
+    | '/phaseCompan10n/games'
     | '/phaseCompan10n/phases'
     | '/phaseCompan10n/phasescard'
     | '/phaseCompan10n/players'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/'
     | '/players'
     | '/scorekeepers'
+    | '/phaseCompan10n/games'
     | '/phaseCompan10n/phases'
     | '/phaseCompan10n/players'
     | '/phaseCompan10n/settings'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scorekeepers'
     | '/phaseCompan10n/create'
+    | '/phaseCompan10n/games'
     | '/phaseCompan10n/phases'
     | '/phaseCompan10n/phasescard'
     | '/phaseCompan10n/players'
@@ -279,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PhaseCompan10nPhasesRouteImport
       parentRoute: typeof PhaseCompan10nRoute
     }
+    '/phaseCompan10n/games': {
+      id: '/phaseCompan10n/games'
+      path: '/games'
+      fullPath: '/phaseCompan10n/games'
+      preLoaderRoute: typeof PhaseCompan10nGamesRouteImport
+      parentRoute: typeof PhaseCompan10nRoute
+    }
     '/phaseCompan10n/create': {
       id: '/phaseCompan10n/create'
       path: '/create'
@@ -356,6 +375,7 @@ const PhaseCompan10nPhasescardRouteWithChildren =
 
 interface PhaseCompan10nRouteChildren {
   PhaseCompan10nCreateRoute: typeof PhaseCompan10nCreateRouteWithChildren
+  PhaseCompan10nGamesRoute: typeof PhaseCompan10nGamesRoute
   PhaseCompan10nPhasesRoute: typeof PhaseCompan10nPhasesRoute
   PhaseCompan10nPhasescardRoute: typeof PhaseCompan10nPhasescardRouteWithChildren
   PhaseCompan10nPlayersRoute: typeof PhaseCompan10nPlayersRoute
@@ -366,6 +386,7 @@ interface PhaseCompan10nRouteChildren {
 
 const PhaseCompan10nRouteChildren: PhaseCompan10nRouteChildren = {
   PhaseCompan10nCreateRoute: PhaseCompan10nCreateRouteWithChildren,
+  PhaseCompan10nGamesRoute: PhaseCompan10nGamesRoute,
   PhaseCompan10nPhasesRoute: PhaseCompan10nPhasesRoute,
   PhaseCompan10nPhasescardRoute: PhaseCompan10nPhasescardRouteWithChildren,
   PhaseCompan10nPlayersRoute: PhaseCompan10nPlayersRoute,

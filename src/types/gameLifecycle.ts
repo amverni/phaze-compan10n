@@ -19,6 +19,8 @@ export interface ActiveGameMetadata extends GameMetadata {
 export interface CompletedGameMetadata extends GameMetadata {
   status: "completed";
   completedAt: number;
+  /** Monotonic per-Scorekeeper retention key; older records fall back to completedAt. */
+  completionOrder?: number;
   completionType: "normal" | "manual";
   winnerIds: ArrayAtLeastOne<PlayerId>;
   playerSnapshots: PlayerIdentity[];

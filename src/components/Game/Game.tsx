@@ -15,7 +15,7 @@ import {
 } from "../PhasesCard";
 import { Scoreboard } from "../Scoreboard";
 import { StandingsDialog } from "../Standings";
-import { Button } from "../ui";
+import { Button, InlineError } from "../ui";
 import { shouldShowPhasesCardEntryButton } from "./gameView";
 import { shouldAutoOpenStandings } from "./standingsAutoOpen";
 
@@ -27,9 +27,12 @@ export function Game({ gameId }: GameProps) {
   const [phasesCardOpen, setPhasesCardOpen] = useState(false);
   const [standingsOpen, setStandingsOpen] = useState(false);
   const checkedInitialStandingsGameId = useRef<GameId | null>(null);
-  const { data: game } = useQuery(gameDetailOptions(gameId));
-  const players = useGamePlayers(game);
-  const { data: rounds } = useQuery(roundsListOptions(gameId));
+  const gameQuery = useQuery(gameDetailOptions(gameId));
+  const { data: game } = gameQuery;
+  const playersQuery = useGamePlayers(game);
+  const { data: players } = playersQuery;
+  const roundsQuery = useQuery({ ...roundsListOptions(gameId), enabled: !!game });
+  const { data: rounds } = roundsQuery;
   const standingsReady = Boolean(game && players && rounds);
   const showPhasesCardEntryButton = game ? shouldShowPhasesCardEntryButton(game.status) : true;
 
@@ -67,7 +70,20 @@ export function Game({ gameId }: GameProps) {
         }
         mainContent={
           <div className="content-container flex h-full min-h-0 flex-col py-4 pb-[calc(0.5rem+var(--slant))]">
-            {game && players && rounds ? (
+            {gameQuery.isError || playersQuery.isError || roundsQuery.isError ? (
+              <InlineError
+                message="Unable to load this Game."
+                onRetry={() => {
+                  if (gameQuery.isError) gameQuery.refetch();
+                  if (playersQuery.isError) playersQuery.refetch();
+                  if (roundsQuery.isError) roundsQuery.refetch();
+                }}
+              />
+            ) : game === null ? (
+              <p className="text-text-secondary flex flex-1 items-center justify-center text-center">
+                This Game is no longer available.
+              </p>
+            ) : game && players && rounds ? (
               <div className="min-h-0 flex-1">
                 <Scoreboard
                   game={game}

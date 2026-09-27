@@ -16,6 +16,7 @@ export type {
   RoundMetadata,
   ScorekeeperId,
 } from "./gameLifecycle";
+export type { GameListItem } from "./gameList";
 export type {
   BuiltInPhase,
   ColorMeld,

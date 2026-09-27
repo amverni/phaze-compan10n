@@ -1,11 +1,15 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateGameInput, GameId } from "../../types";
 import { gamesApi } from "../api/games";
+import { phaseSetKeys } from "./usePhaseSets";
+import { phaseKeys } from "./usePhases";
+import { roundKeys } from "./useRounds";
 
 export const gameKeys = {
   all: ["games"] as const,
   lists: () => [...gameKeys.all, "phase10", "list"] as const,
   active: () => [...gameKeys.lists(), "active"] as const,
+  list: (activeOnly: boolean) => [...gameKeys.lists(), "rows", { activeOnly }] as const,
   details: () => [...gameKeys.all, "phase10", "detail"] as const,
   detail: (id: GameId) => [...gameKeys.details(), id] as const,
 };
@@ -13,7 +17,7 @@ export const gameKeys = {
 export function gameDetailOptions(id: GameId) {
   return queryOptions({
     queryKey: gameKeys.detail(id),
-    queryFn: () => gamesApi.getById(id),
+    queryFn: async () => (await gamesApi.getById(id)) ?? null,
     enabled: !!id,
   });
 }
@@ -22,6 +26,13 @@ export function activeGamesOptions() {
   return queryOptions({
     queryKey: gameKeys.active(),
     queryFn: () => gamesApi.getActive(),
+  });
+}
+
+export function gameListOptions(activeOnly = false) {
+  return queryOptions({
+    queryKey: gameKeys.list(activeOnly),
+    queryFn: () => gamesApi.getList({ activeOnly }),
   });
 }
 
@@ -40,6 +51,12 @@ export function useDeleteGame() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: GameId) => gamesApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+        queryClient.invalidateQueries({ queryKey: roundKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: phaseKeys.all }),
+        queryClient.invalidateQueries({ queryKey: phaseSetKeys.all }),
+      ]),
   });
 }

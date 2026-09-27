@@ -1,4 +1,12 @@
-import type { ActiveGame, CreateGameInput, Game, GameId, PhaseId, PlayerId } from "../../types";
+import type {
+  ActiveGame,
+  CreateGameInput,
+  Game,
+  GameId,
+  GameListItem,
+  PhaseId,
+  PlayerId,
+} from "../../types";
 import { getDB } from "../db";
 import {
   deleteGameRecords,
@@ -7,9 +15,30 @@ import {
   saveActiveGame,
   withGameTransaction,
 } from "./gameLifecycle";
+import { getGamePlayers } from "./gameResults";
 import { resolveGameCompletion } from "./roundCompletion";
 
 export const gamesApi = {
+  async getList({ activeOnly = false }: { activeOnly?: boolean } = {}): Promise<GameListItem[]> {
+    const db = await getDB();
+    const tx = db.transaction(["games", "players"]);
+    const store = tx.objectStore("games");
+    const [games, players] = await Promise.all([
+      activeOnly ? store.index("by-status").getAll("active") : store.getAll(),
+      tx.objectStore("players").getAll(),
+    ]);
+    await tx.done;
+    return games
+      .filter((game) => game.scorekeeper === "phase10")
+      .sort(byLastActivityDesc)
+      .map((game) => ({
+        id: game.id,
+        status: game.status,
+        lastActivityAt: game.lastActivityAt,
+        players: getGamePlayers(game, players),
+      }));
+  },
+
   async getAll(): Promise<Game[]> {
     const db = await getDB();
     const games = await db.getAll("games");
