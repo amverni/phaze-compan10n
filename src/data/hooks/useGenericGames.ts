@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CreateGenericGameInput, GameId } from "../../types";
+import type { AddGenericRoundInput, CreateGenericGameInput, GameId } from "../../types";
 import { genericGamesApi } from "../api/genericGames";
+import { genericRoundsApi } from "../api/genericRounds";
 import { playerKeys } from "./usePlayers";
 
 export const genericGameKeys = {
@@ -9,7 +10,24 @@ export const genericGameKeys = {
   active: () => [...genericGameKeys.lists(), "active"] as const,
   details: () => [...genericGameKeys.all, "detail"] as const,
   detail: (id: GameId) => [...genericGameKeys.details(), id] as const,
+  scoreboard: (id: GameId) => [...genericGameKeys.detail(id), "scoreboard"] as const,
 };
+
+export function genericGameScoreboardOptions(id: GameId) {
+  return queryOptions({
+    queryKey: genericGameKeys.scoreboard(id),
+    queryFn: () => genericGamesApi.getScoreboard(id),
+    enabled: !!id,
+  });
+}
+
+export function useAddGenericRound() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AddGenericRoundInput) => genericRoundsApi.add(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: genericGameKeys.all }),
+  });
+}
 
 export function genericGameDetailOptions(id: GameId) {
   return queryOptions({

@@ -4,12 +4,18 @@ import type {
   GameId,
   GenericGame,
   GenericGameView,
+  GenericScoreboardView,
   Player,
   PlayerId,
   StoredGame,
 } from "../../types";
 import { getDB } from "../db";
 import { deleteGameRecords, requirePlayers, withGameTransaction } from "./gameLifecycle";
+import {
+  assertGenericPointsGame,
+  assertGenericPointsSettings,
+  deriveGenericScoreboard,
+} from "./genericScoring";
 
 export const genericGamesApi = {
   async create(input: CreateGenericGameInput): Promise<ActiveGenericGame> {
@@ -20,14 +26,7 @@ export const genericGamesApi = {
       throw new Error("Players must be unique");
     }
     const { settings } = input;
-    if (
-      settings?.mode !== "points" ||
-      (settings.pointsDirection !== "high" && settings.pointsDirection !== "low") ||
-      settings.tiebreaker !== null ||
-      settings.dealer !== false
-    ) {
-      throw new Error("Unsupported Generic Game settings");
-    }
+    assertGenericPointsSettings(settings);
     const now = Date.now();
     const game: ActiveGenericGame = {
       id: crypto.randomUUID(),
@@ -64,6 +63,20 @@ export const genericGamesApi = {
     const view = await resolveView(game, (playerId) => tx.objectStore("players").get(playerId));
     await tx.done;
     return view;
+  },
+
+  async getScoreboard(id: GameId): Promise<GenericScoreboardView | null> {
+    const db = await getDB();
+    const tx = db.transaction(["games", "players", "rounds"]);
+    const game = await tx.objectStore("games").get(id);
+    if (!game || game.scorekeeper !== "generic") return null;
+    assertGenericPointsGame(game);
+    const [view, rounds] = await Promise.all([
+      resolveView(game, (playerId) => tx.objectStore("players").get(playerId)),
+      tx.objectStore("rounds").index("by-game").getAll(id),
+    ]);
+    await tx.done;
+    return deriveGenericScoreboard(game, view.players, rounds);
   },
 
   async getActive(): Promise<ActiveGenericGame[]> {

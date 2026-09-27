@@ -1,5 +1,6 @@
 export { formatPhaseDisplayName } from "./formatPhase";
 export { formatRelativeTime } from "./formatRelativeTime";
+export { parseGenericPoints } from "./genericPoints";
 export { getContrastColor } from "./getContrastColor";
 export {
   areMeldsEqual,
