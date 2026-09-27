@@ -1,13 +1,7 @@
 import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type {
-  ActiveGame,
-  CompletedGenericGame,
-  GenericRound,
-  Player,
-  TemporaryPhaseSet,
-} from "../../types";
+import type { ActiveGame, ActiveGenericGame, Player, TemporaryPhaseSet } from "../../types";
 import { closeDB, getDB } from "../db";
 import { gamesApi } from "./games";
 import { genericGamesApi } from "./genericGames";
@@ -96,57 +90,66 @@ it("preserves actual completion order across reloads when completion timestamps 
   }
 });
 
-it("keeps Generic Games and their Rounds outside Phase completion retention and listing", async () => {
+it("retains the latest 20 completions independently per Scorekeeper, preserving all Active Games and owned Rounds", async () => {
   const players = await createPlayers();
-  const input = {
-    players: players.map((player) => player.id),
-    settings: {
-      mode: "points",
-      pointsDirection: "high",
-      tiebreaker: null,
-      dealer: false,
-    },
-  } as const;
-  const active = await genericGamesApi.create(input);
-  const generic = await genericGamesApi.create(input);
-  const completed: CompletedGenericGame = {
-    ...generic,
-    status: "completed",
-    completedAt: 1,
-    completionType: "manual",
-    winnerIds: [players[0].id],
-    playerSnapshots: players.map(({ id, name, color }) => ({ id, name, color })),
-  };
-  const round: GenericRound = {
-    scorekeeper: "generic",
-    gameId: generic.id,
-    roundNumber: 1,
-    mode: "points",
-    scores: [
-      { playerId: players[0].id, points: 10 },
-      { playerId: players[1].id, points: 0 },
-    ],
-  };
-  // Generic finalization is a later slice; seed its supported persisted result shape.
-  const db = await getDB();
-  const tx = db.transaction(["games", "rounds"], "readwrite");
-  await tx.objectStore("games").put(completed);
-  await tx.objectStore("rounds").put(round);
-  await tx.done;
+  const clock = vi.spyOn(Date, "now");
+  const phaseGames: ActiveGame[] = [];
+  const genericGames: ActiveGenericGame[] = [];
+  const activePhase: ActiveGame[] = [];
+  const activeGeneric: ActiveGenericGame[] = [];
   for (let index = 0; index < 21; index++) {
-    await finishGame(await createGame(players));
+    clock.mockReturnValue(index + 1);
+    const phase = await createGame(players);
+    await finishGame(phase);
+    phaseGames.push(phase);
+    const generic = await createGenericGame(players);
+    await addGenericRound(generic);
+    await genericGamesApi.finish(generic.id);
+    genericGames.push(generic);
+    activePhase.push(await createGame(players));
+    activeGeneric.push(await createGenericGame(players));
   }
 
   closeDB();
-  expect(await genericGamesApi.getById(active.id)).toEqual(active);
-  expect(await genericGamesApi.getById(generic.id)).toEqual(completed);
-  expect(await genericRoundsApi.getByGameId(generic.id)).toEqual([round]);
   const phaseRows = await gamesApi.getList();
-  expect(phaseRows).toHaveLength(20);
-  expect(phaseRows.some((game) => game.id === active.id || game.id === generic.id)).toBe(false);
-  await genericGamesApi.delete(generic.id);
-  expect(await genericRoundsApi.getByGameId(generic.id)).toEqual([]);
+  const genericRows = await genericGamesApi.getList();
+  expect(phaseRows.filter((game) => game.status === "completed").map((game) => game.id)).toEqual(
+    phaseGames
+      .slice(1)
+      .reverse()
+      .map((game) => game.id),
+  );
+  expect(genericRows.filter((game) => game.status === "completed").map((game) => game.id)).toEqual(
+    genericGames
+      .slice(1)
+      .reverse()
+      .map((game) => game.id),
+  );
+  expect(await gamesApi.getActive()).toEqual([...activePhase].reverse());
+  expect(await genericGamesApi.getActive()).toEqual([...activeGeneric].reverse());
+  expect(await gamesApi.getById(phaseGames[0].id)).toBeUndefined();
+  expect(await genericGamesApi.getById(genericGames[0].id)).toBeUndefined();
+  for (const game of phaseGames.slice(1)) {
+    expect(await roundsApi.getByGameId(game.id)).toHaveLength(1);
+  }
+  for (const game of genericGames.slice(1)) {
+    expect(await genericRoundsApi.getByGameId(game.id)).toHaveLength(1);
+  }
+
+  // Reintroduce the evicted ids to expose any dangling Rounds through the public APIs.
+  const db = await getDB();
+  await db.put("games", phaseGames[0]);
+  await db.put("games", genericGames[0]);
+  expect(await roundsApi.getByGameId(phaseGames[0].id)).toEqual([]);
+  expect(await genericRoundsApi.getByGameId(genericGames[0].id)).toEqual([]);
+  await gamesApi.delete(phaseGames[0].id);
+  await genericGamesApi.delete(genericGames[0].id);
+  expect(await playersApi.getAll()).toEqual(players);
+  await genericGamesApi.delete(genericGames[1].id);
   expect(await gamesApi.getList()).toEqual(phaseRows);
+  expect(await genericGamesApi.getList()).toEqual(
+    genericRows.filter((game) => game.id !== genericGames[1].id),
+  );
 });
 
 it("keeps the oldest-created Game when it finishes last and viewing does not refresh retention", async () => {
@@ -187,6 +190,48 @@ it("keeps the oldest-created Game when it finishes last and viewing does not ref
   expect(await gamesApi.getById(longRunning.id)).toEqual(result.completedGame);
 });
 
+it.each([
+  100, 50,
+])("retains generic completion order across reloads and reads when the latest clock is %s", async (latestTime) => {
+  const players = await createPlayers();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1);
+  const longRunning = await createGenericGame(players);
+  await addGenericRound(longRunning);
+  const completedIds: string[] = [];
+  clock.mockReturnValue(100);
+  for (let index = 0; index < 20; index++) {
+    const game = await createGenericGame(players);
+    await addGenericRound(game);
+    await genericGamesApi.finish(game.id);
+    completedIds.push(game.id);
+    closeDB();
+  }
+  const first = await genericGamesApi.getById(completedIds[0]);
+  clock.mockReturnValue(1000);
+  await genericGamesApi.getDetail(completedIds[0]);
+  await genericGamesApi.getScoreboard(completedIds[0]);
+  await genericGamesApi.getList();
+  await genericGamesApi.getActiveViews();
+  await genericRoundsApi.getByGameId(completedIds[0]);
+  closeDB();
+  expect(await genericGamesApi.getById(completedIds[0])).toEqual(first);
+
+  clock.mockReturnValue(latestTime);
+  const completed = await genericGamesApi.finish(longRunning.id);
+  closeDB();
+  expect(await genericGamesApi.getById(completedIds[0])).toBeUndefined();
+  expect(await genericGamesApi.getById(longRunning.id)).toEqual(completed);
+  expect(completed).toMatchObject({
+    status: "completed",
+    createdAt: 1,
+    completedAt: latestTime,
+    lastActivityAt: latestTime,
+  });
+  expect((await genericGamesApi.getList()).map((game) => game.id).sort()).toEqual(
+    [longRunning.id, ...completedIds.slice(1)].sort(),
+  );
+});
+
 it("retains the latest completion even if the device clock moves backwards", async () => {
   const players = await createPlayers();
   const clock = vi.spyOn(Date, "now");
@@ -212,6 +257,92 @@ it("retains the latest completion even if the device clock moves backwards", asy
   expect((await gamesApi.getAll()).map((game) => game.id).sort()).toEqual(
     [latest.id, ...earlierIds.slice(1)].sort(),
   );
+});
+
+it.each([
+  "result",
+  "cleanup",
+] as const)("rolls back generic completion and retention together when the %s write fails", async (failurePoint) => {
+  const players = await createPlayers();
+  const phase = await createTemporaryPhase();
+  const phaseGame = await createGame(players, {
+    id: "phase-owner",
+    type: "temporary",
+    name: "Phase-owned",
+    phases: [phase.id],
+  });
+  await finishGame(phaseGame);
+  const phaseBefore = await gamesApi.getById(phaseGame.id);
+  const phaseRoundsBefore = await roundsApi.getByGameId(phaseGame.id);
+  const completedIds: string[] = [];
+  for (let index = 0; index < 20; index++) {
+    const game = await createGenericGame(players);
+    await addGenericRound(game);
+    await genericGamesApi.finish(game.id);
+    completedIds.push(game.id);
+  }
+  const pending = await createGenericGame(players);
+  const unplayedList = await genericGamesApi.getList();
+  await expect(genericGamesApi.finish(pending.id)).rejects.toThrow("at least one saved Round");
+  expect(await genericGamesApi.getList()).toEqual(unplayedList);
+  await addGenericRound(pending);
+  const ids = [...completedIds, pending.id];
+  const gamesBefore = await Promise.all(ids.map((id) => genericGamesApi.getById(id)));
+  const roundsBefore = await Promise.all(ids.map((id) => genericRoundsApi.getByGameId(id)));
+  const listBefore = await genericGamesApi.getList();
+  const put = IDBObjectStore.prototype.put;
+  const remove = IDBObjectStore.prototype.delete;
+  const failure =
+    failurePoint === "result"
+      ? vi.spyOn(IDBObjectStore.prototype, "put").mockImplementation(function (
+          this: IDBObjectStore,
+          value: unknown,
+          key?: IDBValidKey,
+        ) {
+          if (this.name === "games") {
+            throw new DOMException("Result write failed", "QuotaExceededError");
+          }
+          return put.call(this, value, key);
+        })
+      : vi.spyOn(IDBObjectStore.prototype, "delete").mockImplementation(function (
+          this: IDBObjectStore,
+          key: IDBValidKey | IDBKeyRange,
+        ) {
+          if (this.name === "games" && key === completedIds[0]) {
+            throw new DOMException("Retention cleanup failed", "UnknownError");
+          }
+          return remove.call(this, key);
+        });
+  try {
+    await expect(genericGamesApi.finish(pending.id)).rejects.toThrow(
+      failurePoint === "result" ? "Result write failed" : "Retention cleanup failed",
+    );
+  } finally {
+    failure.mockRestore();
+  }
+  closeDB();
+  expect(await Promise.all(ids.map((id) => genericGamesApi.getById(id)))).toEqual(gamesBefore);
+  expect(await Promise.all(ids.map((id) => genericRoundsApi.getByGameId(id)))).toEqual(
+    roundsBefore,
+  );
+  expect(await genericGamesApi.getList()).toEqual(listBefore);
+  expect(await gamesApi.getById(phaseGame.id)).toEqual(phaseBefore);
+  expect(await roundsApi.getByGameId(phaseGame.id)).toEqual(phaseRoundsBefore);
+  expect(await phasesApi.getById(phase.id)).toEqual(phase);
+  expect(await playersApi.getAll()).toEqual(players);
+  await expect(playersApi.delete(players[0].id)).rejects.toThrow("Active Game");
+
+  await genericGamesApi.finish(pending.id);
+  closeDB();
+  expect(await genericGamesApi.getById(completedIds[0])).toBeUndefined();
+  expect(await genericGamesApi.getById(pending.id)).toMatchObject({
+    status: "completed",
+    winnerIds: [players[0].id],
+    playerSnapshots: players.map(({ id, name, color }) => ({ id, name, color })),
+  });
+  expect(await genericRoundsApi.getByGameId(pending.id)).toHaveLength(1);
+  expect(await gamesApi.getById(phaseGame.id)).toEqual(phaseBefore);
+  expect(await phasesApi.getById(phase.id)).toEqual(phase);
 });
 
 it.each([
@@ -402,6 +533,20 @@ async function createPlayers() {
     await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 }),
     await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 }),
   ];
+}
+
+function createGenericGame(players: Player[]) {
+  return genericGamesApi.create({
+    players: players.map((player) => player.id),
+    settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+  });
+}
+
+function addGenericRound(game: ActiveGenericGame) {
+  return genericRoundsApi.add({
+    gameId: game.id,
+    scores: game.players.map((playerId, index) => ({ playerId, points: index === 0 ? "10" : "0" })),
+  });
 }
 
 function createGame(

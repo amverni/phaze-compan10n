@@ -8,6 +8,7 @@ export const genericGameKeys = {
   all: ["games", "generic"] as const,
   lists: () => [...genericGameKeys.all, "list"] as const,
   active: () => [...genericGameKeys.lists(), "active"] as const,
+  list: (activeOnly: boolean) => [...genericGameKeys.lists(), "rows", { activeOnly }] as const,
   details: () => [...genericGameKeys.all, "detail"] as const,
   detail: (id: GameId) => [...genericGameKeys.details(), id] as const,
   scoreboard: (id: GameId) => [...genericGameKeys.detail(id), "scoreboard"] as const,
@@ -44,6 +45,13 @@ export function activeGenericGamesOptions() {
   });
 }
 
+export function genericGameListOptions(activeOnly = false) {
+  return queryOptions({
+    queryKey: genericGameKeys.list(activeOnly),
+    queryFn: () => genericGamesApi.getList({ activeOnly }),
+  });
+}
+
 export function useCreateGenericGame() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -60,6 +68,18 @@ export function useDeleteGenericGame() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: GameId) => genericGamesApi.delete(id),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: genericGameKeys.all }),
+        queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+      ]),
+  });
+}
+
+export function useFinishGenericGame() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: GameId) => genericGamesApi.finish(id),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: genericGameKeys.all }),

@@ -1,7 +1,9 @@
 import type {
   ActiveGenericGame,
+  CompletedGenericGame,
   CreateGenericGameInput,
   GameId,
+  GameListItem,
   GenericGame,
   GenericGameView,
   GenericScoreboardView,
@@ -10,7 +12,12 @@ import type {
   StoredGame,
 } from "../../types";
 import { getDB } from "../db";
-import { deleteGameRecords, requirePlayers, withGameTransaction } from "./gameLifecycle";
+import {
+  deleteGameRecords,
+  finalizeGame,
+  requirePlayers,
+  withGameTransaction,
+} from "./gameLifecycle";
 import {
   assertGenericPointsGame,
   assertGenericPointsSettings,
@@ -18,6 +25,28 @@ import {
 } from "./genericScoring";
 
 export const genericGamesApi = {
+  async getList({ activeOnly = false }: { activeOnly?: boolean } = {}): Promise<GameListItem[]> {
+    const db = await getDB();
+    const tx = db.transaction(["games", "players"]);
+    const store = tx.objectStore("games");
+    const games = activeOnly
+      ? await store.index("by-status").getAll("active")
+      : await store.getAll();
+    const views = await Promise.all(
+      games
+        .filter((game) => game.scorekeeper === "generic")
+        .sort((a, b) => b.lastActivityAt - a.lastActivityAt || b.createdAt - a.createdAt)
+        .map((game) => resolveView(game, (playerId) => tx.objectStore("players").get(playerId))),
+    );
+    await tx.done;
+    return views.map(({ game, players }) => ({
+      id: game.id,
+      status: game.status,
+      lastActivityAt: game.lastActivityAt,
+      players,
+    }));
+  },
+
   async create(input: CreateGenericGameInput): Promise<ActiveGenericGame> {
     if (!Array.isArray(input.players) || input.players.length === 0) {
       throw new Error("A Generic Game requires at least one Player");
@@ -93,6 +122,32 @@ export const genericGamesApi = {
     );
     await tx.done;
     return views;
+  },
+
+  finish(id: GameId): Promise<CompletedGenericGame> {
+    return withGameTransaction(async (tx) => {
+      const game = await tx.objectStore("games").get(id);
+      if (!game || game.scorekeeper !== "generic") throw new Error("Generic Game not found");
+      if (game.status !== "active") throw new Error("Cannot finish a Completed Game");
+      assertGenericPointsGame(game);
+      const players = await requirePlayers(tx, game.players);
+      const rounds = await tx.objectStore("rounds").index("by-game").getAll(id);
+      const { standings } = deriveGenericScoreboard(game, players, rounds);
+      const [first, ...tied] = standings.filter((row) => row.place === 1);
+      if (!first) throw new Error("Cannot finish a Game without Players in Standings");
+      const now = Date.now();
+      const completed: CompletedGenericGame = {
+        ...game,
+        status: "completed",
+        completionType: "manual",
+        completedAt: now,
+        lastActivityAt: now,
+        winnerIds: [first.player.id, ...tied.map((row) => row.player.id)],
+        playerSnapshots: players.map(({ id, name, color }) => ({ id, name, color })),
+      };
+      await finalizeGame(tx, completed);
+      return completed;
+    });
   },
 
   async delete(id: GameId): Promise<void> {

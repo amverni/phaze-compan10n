@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ScorekeepersRouteImport } from './routes/scorekeepers'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as PhaseCompan10nRouteImport } from './routes/phaseCompan10n'
+import { Route as GamesRouteImport } from './routes/games'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PhaseCompan10nIndexRouteImport } from './routes/phaseCompan10n/index'
@@ -41,6 +42,11 @@ const PlayersRoute = PlayersRouteImport.update({
 const PhaseCompan10nRoute = PhaseCompan10nRouteImport.update({
   id: '/phaseCompan10n',
   path: '/phaseCompan10n',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -128,6 +134,7 @@ const PhaseCompan10nGameGameIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
+  '/games': typeof GamesRoute
   '/phaseCompan10n': typeof PhaseCompan10nRouteWithChildren
   '/players': typeof PlayersRoute
   '/scorekeepers': typeof ScorekeepersRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
+  '/games': typeof GamesRoute
   '/players': typeof PlayersRoute
   '/scorekeepers': typeof ScorekeepersRoute
   '/game/$gameId': typeof GameGameIdRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
+  '/games': typeof GamesRoute
   '/phaseCompan10n': typeof PhaseCompan10nRouteWithChildren
   '/players': typeof PlayersRoute
   '/scorekeepers': typeof ScorekeepersRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/create'
+    | '/games'
     | '/phaseCompan10n'
     | '/players'
     | '/scorekeepers'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/create'
+    | '/games'
     | '/players'
     | '/scorekeepers'
     | '/game/$gameId'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/create'
+    | '/games'
     | '/phaseCompan10n'
     | '/players'
     | '/scorekeepers'
@@ -246,6 +258,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRoute
+  GamesRoute: typeof GamesRoute
   PhaseCompan10nRoute: typeof PhaseCompan10nRouteWithChildren
   PlayersRoute: typeof PlayersRoute
   ScorekeepersRoute: typeof ScorekeepersRoute
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/phaseCompan10n'
       fullPath: '/phaseCompan10n'
       preLoaderRoute: typeof PhaseCompan10nRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -442,6 +462,7 @@ const PhaseCompan10nRouteWithChildren = PhaseCompan10nRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRoute,
+  GamesRoute: GamesRoute,
   PhaseCompan10nRoute: PhaseCompan10nRouteWithChildren,
   PlayersRoute: PlayersRoute,
   ScorekeepersRoute: ScorekeepersRoute,

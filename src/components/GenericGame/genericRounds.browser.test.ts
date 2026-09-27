@@ -294,7 +294,7 @@ async function saveRound(page: Page, scores: Record<string, string>) {
     await page.keyboard.type(points);
   }
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
-  await dialog.waitFor({ state: "hidden" });
+  await page.locator('[role="dialog"]').waitFor({ state: "detached" });
 }
 
 it("keeps a modal Points draft on close, saves explicit zero and negatives, and clears after save", async () => {

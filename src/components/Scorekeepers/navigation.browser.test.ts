@@ -46,7 +46,10 @@ describe("scorekeeper navigation", () => {
       expect(
         await page.getByRole("link", { name: "Players", exact: true }).getAttribute("href"),
       ).toBe("/phase-10-scoreboard/#/players");
-      expect(await page.getByRole("link", { name: /Phases|Settings|Games/ }).count()).toBe(0);
+      expect(
+        await page.getByRole("link", { name: "Games", exact: true }).getAttribute("href"),
+      ).toBe("/phase-10-scoreboard/#/games");
+      expect(await page.getByRole("link", { name: /Phases|Settings/ }).count()).toBe(0);
       await page.getByRole("link", { name: "Scorekeepers", exact: true }).click();
       const choices = page.getByRole("navigation", { name: "Scorekeepers" });
       const generic = choices.getByRole("link", { name: "Scorekeeper", exact: true });

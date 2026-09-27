@@ -28,7 +28,140 @@ import { roundsApi } from "./rounds";
 import { deriveStandings } from "./standings";
 
 beforeEach(resetDatabase);
-afterEach(resetDatabase);
+afterEach(async () => {
+  vi.restoreAllMocks();
+  await resetDatabase();
+});
+
+it.each([
+  "high",
+  "low",
+] as const)("manually finishes %s Points with the accumulated winner and every Player snapshot", async (direction) => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 1 });
+  const game = await genericGamesApi.create({
+    players: [bob.id, amy.id],
+    settings: pointsSettings(direction),
+  });
+  await genericRoundsApi.add({
+    gameId: game.id,
+    scores: [
+      { playerId: amy.id, points: "-10" },
+      { playerId: bob.id, points: "15" },
+    ],
+  });
+  await genericRoundsApi.add({
+    gameId: game.id,
+    scores: [
+      { playerId: bob.id, points: "-20" },
+      { playerId: amy.id, points: "20" },
+    ],
+  });
+  expect(await genericGamesApi.getById(game.id)).toMatchObject({ status: "active" });
+  const clock = vi.spyOn(Date, "now").mockReturnValue(100);
+  let completed: CompletedGenericGame;
+  try {
+    completed = await genericGamesApi.finish(game.id);
+  } finally {
+    clock.mockRestore();
+  }
+  expect(completed).toEqual({
+    ...game,
+    status: "completed",
+    completionType: "manual",
+    completedAt: 100,
+    lastActivityAt: 100,
+    completionOrder: 100,
+    winnerIds: [direction === "high" ? amy.id : bob.id],
+    playerSnapshots: [
+      { id: bob.id, name: "Bob", color: "Ocean" },
+      { id: amy.id, name: "Amy", color: "Jam" },
+    ],
+  });
+  closeDB();
+  expect(await genericGamesApi.getById(game.id)).toEqual(completed);
+  expect((await genericGamesApi.getScoreboard(game.id))?.players).toMatchObject([
+    { id: bob.id, totalPoints: -5 },
+    { id: amy.id, totalPoints: 10 },
+  ]);
+  expect(await genericGamesApi.getActive()).toEqual([]);
+});
+
+it.each([
+  "high",
+  "low",
+] as const)("awards every tied first-place Player in Game Creation Order for %s Points", async (direction) => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
+  const cam = await playersApi.create({ name: "Cam", color: "Moss", isFavorite: 0 });
+  const game = await genericGamesApi.create({
+    players: [cam.id, bob.id, amy.id],
+    settings: pointsSettings(direction),
+  });
+  await genericRoundsApi.add({
+    gameId: game.id,
+    scores: [
+      { playerId: amy.id, points: "-5" },
+      { playerId: bob.id, points: direction === "high" ? "-10" : "0" },
+      { playerId: cam.id, points: "-5" },
+    ],
+  });
+  expect(await genericGamesApi.getById(game.id)).toMatchObject({ status: "active" });
+  const completed = await genericGamesApi.finish(game.id);
+  expect(completed.winnerIds).toEqual([cam.id, amy.id]);
+  expect(completed.playerSnapshots).toEqual([
+    { id: cam.id, name: "Cam", color: "Moss" },
+    { id: bob.id, name: "Bob", color: "Ocean" },
+    { id: amy.id, name: "Amy", color: "Jam" },
+  ]);
+  closeDB();
+  expect((await genericGamesApi.getScoreboard(game.id))?.standings).toMatchObject([
+    { player: { id: cam.id }, place: 1, totalPoints: -5 },
+    { player: { id: amy.id }, place: 1, totalPoints: -5 },
+    { player: { id: bob.id }, place: 3, totalPoints: direction === "high" ? -10 : 0 },
+  ]);
+});
+
+it("rejects unplayed completion and prevents repeat completion or new Rounds from rewriting results", async () => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const game = await genericGamesApi.create({ players: [amy.id], settings: pointsSettings() });
+  await expect(genericGamesApi.finish(game.id)).rejects.toThrow("at least one saved Round");
+  closeDB();
+  expect(await genericGamesApi.getById(game.id)).toEqual(game);
+  await expect(playersApi.delete(amy.id)).rejects.toThrow("Active Game");
+  const input = { gameId: game.id, scores: [{ playerId: amy.id, points: "0" }] };
+  const round = await genericRoundsApi.add(input);
+  const completed = await genericGamesApi.finish(game.id);
+  expect(completed.winnerIds).toEqual([amy.id]);
+  await expect(genericGamesApi.finish(game.id)).rejects.toThrow("Completed Game");
+  await expect(genericRoundsApi.add(input)).rejects.toThrow("Completed Game");
+  closeDB();
+  expect(await genericGamesApi.getById(game.id)).toEqual(completed);
+  expect(await genericRoundsApi.getByGameId(game.id)).toEqual([round]);
+});
+
+it.each([
+  false,
+  true,
+])("rejects wrong-owner saved Rounds during generic finish (also has a generic Round: %s)", async (hasGenericRound) => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const game = await genericGamesApi.create({ players: [amy.id], settings: pointsSettings() });
+  if (hasGenericRound) {
+    await genericRoundsApi.add({
+      gameId: game.id,
+      scores: [{ playerId: amy.id, points: "0" }],
+    });
+  }
+  const before = await genericGamesApi.getById(game.id);
+  await (await getDB()).put("rounds", {
+    ...makePhaseRound(game.id, amy.id),
+    roundNumber: 2,
+  });
+  await expect(genericGamesApi.finish(game.id)).rejects.toThrow("another Scorekeeper");
+  closeDB();
+  expect(await genericGamesApi.getById(game.id)).toEqual(before);
+  await expect(playersApi.delete(amy.id)).rejects.toThrow("Active Game");
+});
 
 it("creates and reopens a solo Points Game without Phase 10 fields", async () => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
@@ -136,6 +269,8 @@ it("returns missing and wrong-owner detail results without crossing experiences"
   expect(await genericGamesApi.getDetail(phase.id)).toBeNull();
   expect(await genericGamesApi.getById("missing")).toBeUndefined();
   expect(await genericGamesApi.getDetail("missing")).toBeNull();
+  await expect(genericGamesApi.finish(phase.id)).rejects.toThrow("not found");
+  await expect(genericGamesApi.finish("missing")).rejects.toThrow("not found");
   expect(await gamesApi.getById(generic.id)).toBeUndefined();
   expect(await gamesApi.getAll()).toEqual([phase]);
   expect(await gamesApi.getActive()).toEqual([phase]);
@@ -178,6 +313,46 @@ it("lists only Active generic Games ordered by activity then creation time", asy
   ]);
 });
 
+it("lists only generic Games in mixed activity order with creation fallback and snapshot identities", async () => {
+  const clock = vi.spyOn(Date, "now").mockReturnValue(50);
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const input = { players: [amy.id], settings: pointsSettings() };
+  const oldest = await genericGamesApi.create(input);
+  clock.mockReturnValue(100);
+  const result = await genericGamesApi.create(input);
+  await genericRoundsApi.add({
+    gameId: result.id,
+    scores: [{ playerId: amy.id, points: "-5" }],
+  });
+  clock.mockReturnValue(200);
+  const newest = await genericGamesApi.create(input);
+  const completed = await genericGamesApi.finish(result.id);
+  clock.mockReturnValue(500);
+  await createPhaseGame([amy.id]);
+  const edited = await playersApi.update(amy.id, { name: "Amelia", color: "Ocean" });
+  closeDB();
+
+  expect(await genericGamesApi.getList()).toEqual([
+    { id: newest.id, status: "active", lastActivityAt: 200, players: [edited] },
+    {
+      id: result.id,
+      status: "completed",
+      lastActivityAt: 200,
+      players: [{ id: amy.id, name: "Amy", color: "Jam" }],
+    },
+    { id: oldest.id, status: "active", lastActivityAt: 50, players: [edited] },
+  ]);
+  expect((await genericGamesApi.getList({ activeOnly: true })).map((game) => game.id)).toEqual([
+    newest.id,
+    oldest.id,
+  ]);
+  expect((await genericGamesApi.getActiveViews()).map(({ game }) => game.id)).toEqual([
+    newest.id,
+    oldest.id,
+  ]);
+  expect(await genericGamesApi.getById(result.id)).toEqual(completed);
+});
+
 it("reports missing Player data instead of a successful incomplete scoreboard", async () => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
   const game = await genericGamesApi.create({ players: [amy.id], settings: pointsSettings() });
@@ -185,6 +360,7 @@ it("reports missing Player data instead of a successful incomplete scoreboard", 
   await db.delete("players", amy.id);
   await expect(genericGamesApi.getDetail(game.id)).rejects.toThrow("Player no longer exists");
   await expect(genericGamesApi.getActiveViews()).rejects.toThrow("Player no longer exists");
+  await expect(genericGamesApi.getList()).rejects.toThrow("Player no longer exists");
 });
 
 it("prevents every Phase Game write from changing a Generic Game", async () => {
@@ -286,25 +462,24 @@ it("rejects Generic ownership in the public Phase Standings boundary", async () 
   ).toThrow("Phase 10");
 });
 
-it("keeps future Completed Generic Game identities independent of saved Players", async () => {
+it("keeps completed generic scoreboard, Standings and list identities independent of saved Players", async () => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
   const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
   const active = await genericGamesApi.create({
     players: [bob.id, amy.id],
     settings: pointsSettings("low"),
   });
-  const completed: CompletedGenericGame = {
-    ...active,
-    status: "completed",
-    completionType: "manual",
-    completedAt: 100,
-    winnerIds: [amy.id],
-    playerSnapshots: [amy, bob].map(({ id, name, color }) => ({ id, name, color })),
-  };
-  const db = await getDB();
-  await db.put("rounds", makeGenericRound(active.id, amy.id));
-  await db.put("games", completed);
+  await genericRoundsApi.add({
+    gameId: active.id,
+    scores: [
+      { playerId: amy.id, points: "-10" },
+      { playerId: bob.id, points: "20" },
+    ],
+  });
+  await playersApi.update(bob.id, { name: "Bobby", color: "Moss" });
+  const completed = await genericGamesApi.finish(active.id);
   await playersApi.update(amy.id, { name: "Amelia", color: "Ocean" });
+  const beforeDeletion = await genericGamesApi.getScoreboard(active.id);
   await playersApi.delete(bob.id);
   await playersApi.delete(amy.id);
   closeDB();
@@ -312,10 +487,33 @@ it("keeps future Completed Generic Game identities independent of saved Players"
   expect(await genericGamesApi.getDetail(active.id)).toEqual({
     game: completed,
     players: [
-      { id: bob.id, name: "Bob", color: "Ocean" },
+      { id: bob.id, name: "Bobby", color: "Moss" },
       { id: amy.id, name: "Amy", color: "Jam" },
     ],
   });
+  expect(await genericGamesApi.getScoreboard(active.id)).toEqual(beforeDeletion);
+  expect(beforeDeletion).toMatchObject({
+    game: { winnerIds: [amy.id] },
+    players: [
+      { id: bob.id, name: "Bobby", color: "Moss", totalPoints: 20 },
+      { id: amy.id, name: "Amy", color: "Jam", totalPoints: -10 },
+    ],
+    standings: [
+      { player: { id: amy.id, name: "Amy", color: "Jam" }, place: 1, totalPoints: -10 },
+      { player: { id: bob.id, name: "Bobby", color: "Moss" }, place: 2, totalPoints: 20 },
+    ],
+  });
+  expect(await genericGamesApi.getList()).toEqual([
+    {
+      id: active.id,
+      status: "completed",
+      lastActivityAt: completed.completedAt,
+      players: [
+        { id: bob.id, name: "Bobby", color: "Moss" },
+        { id: amy.id, name: "Amy", color: "Jam" },
+      ],
+    },
+  ]);
 });
 
 it("guards generic deletion and atomically cleans only its Game and Rounds", async () => {
@@ -377,6 +575,55 @@ it("blocks shared Player deletion until both scorekeepers release their Active r
   expect(await playersApi.getById(amy.id)).toBeUndefined();
 });
 
+it.each([
+  "generic",
+  "phase10",
+] as const)("releases shared Player references only after both Games finish (%s finishes first)", async (first) => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
+  const phase = await createPhaseGame([amy.id, bob.id]);
+  const generic = await genericGamesApi.create({
+    players: [amy.id, bob.id],
+    settings: pointsSettings(),
+  });
+  await roundsApi.add({
+    gameId: phase.id,
+    roundWinnerId: amy.id,
+    scores: [
+      { playerId: amy.id, phaseStatus: "completed", score: 0 },
+      { playerId: bob.id, phaseStatus: "failed", score: 10 },
+    ],
+  });
+  await genericRoundsApi.add({
+    gameId: generic.id,
+    scores: [
+      { playerId: amy.id, points: "0" },
+      { playerId: bob.id, points: "0" },
+    ],
+  });
+  await expect(playersApi.delete(amy.id)).rejects.toThrow("Active Game");
+  if (first === "generic") {
+    await genericGamesApi.finish(generic.id);
+  } else {
+    await gamesApi.finish(phase.id);
+  }
+  await expect(playersApi.delete(amy.id)).rejects.toThrow("Active Game");
+  if (first === "generic") {
+    await gamesApi.finish(phase.id);
+  } else {
+    await genericGamesApi.finish(generic.id);
+  }
+  await playersApi.delete(amy.id);
+  await playersApi.delete(bob.id);
+  closeDB();
+  const identities = [
+    { id: amy.id, name: "Amy", color: "Jam" },
+    { id: bob.id, name: "Bob", color: "Ocean" },
+  ];
+  expect(await genericGamesApi.getDetail(generic.id)).toMatchObject({ players: identities });
+  expect(await gamesApi.getList()).toMatchObject([{ players: identities }]);
+});
+
 it("reflects shared Player edits and Favorites in both experience views", async () => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
   const phase = await createPhaseGame([amy.id]);
@@ -414,6 +661,35 @@ it.each([
   const games = await genericGamesApi.getActiveViews();
   expect(games).toHaveLength(remaining ? 1 : 0);
   if (remaining) expect(games[0].players).toEqual([remaining]);
+});
+
+it.each([
+  true,
+  false,
+])("captures complete identities when generic finish competes with Player deletion (finish first: %s)", async (finishFirst) => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const game = await genericGamesApi.create({ players: [amy.id], settings: pointsSettings() });
+  await genericRoundsApi.add({
+    gameId: game.id,
+    scores: [{ playerId: amy.id, points: "-10" }],
+  });
+  const results = await Promise.allSettled(
+    finishFirst
+      ? [genericGamesApi.finish(game.id), playersApi.delete(amy.id)]
+      : [playersApi.delete(amy.id), genericGamesApi.finish(game.id)],
+  );
+  expect(results.map((result) => result.status)).toEqual(
+    finishFirst ? ["fulfilled", "fulfilled"] : ["rejected", "fulfilled"],
+  );
+  await playersApi.delete(amy.id);
+  closeDB();
+  expect(await genericGamesApi.getDetail(game.id)).toMatchObject({
+    game: { status: "completed", winnerIds: [amy.id] },
+    players: [{ id: amy.id, name: "Amy", color: "Jam" }],
+  });
+  expect((await genericGamesApi.getScoreboard(game.id))?.standings).toEqual([
+    { player: { id: amy.id, name: "Amy", color: "Jam" }, place: 1, totalPoints: -10 },
+  ]);
 });
 
 it("rolls back generic Game and Round deletion when cleanup fails", async () => {

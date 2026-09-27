@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
+import { GenericGamesList } from "../Games/GenericGamesList";
 import { HomeMenu } from "../Home/HomeMenu";
 import { ScorekeeperLogo } from "../Logo/ScorekeeperLogo";
 import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
 import { Button } from "../ui";
-import { ActiveGenericGames } from "./ActiveGenericGames";
 
 export function ScorekeeperHome() {
   return (
@@ -21,7 +21,7 @@ export function ScorekeeperHome() {
             <Plus className="size-5" aria-hidden />
             Create Game
           </Button>
-          <ActiveGenericGames />
+          <GenericGamesList activeOnly />
         </div>
       }
     />

@@ -17,7 +17,10 @@ const phaseItems: MenuItem[] = [
   { label: "Phases", icon: ListChecks, to: "/phaseCompan10n/phases" },
   { label: "Settings", icon: Settings, to: "/phaseCompan10n/settings" },
 ];
-const genericItems: MenuItem[] = [{ label: "Players", icon: Users, to: "/players" }];
+const genericItems: MenuItem[] = [
+  { label: "Games", icon: History, to: "/games" },
+  { label: "Players", icon: Users, to: "/players" },
+];
 const chooserItem: MenuItem = { label: "Scorekeepers", icon: AppWindow, to: "/scorekeepers" };
 
 const itemClassName =
