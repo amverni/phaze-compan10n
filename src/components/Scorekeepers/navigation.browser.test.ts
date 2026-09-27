@@ -40,9 +40,8 @@ describe("scorekeeper navigation", () => {
         .toBe(1);
       expect(await page.locator(".card-background").count()).toBe(0);
       expect(await page.title()).toBe("Scorekeeper");
-      expect(
-        await page.getByRole("link", { name: /Create Game|Phases|Settings|Games/ }).count(),
-      ).toBe(0);
+      expect(await page.getByRole("link", { name: "Create Game", exact: true }).count()).toBe(1);
+      expect(await page.getByRole("link", { name: /Phases|Settings|Games/ }).count()).toBe(0);
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       expect(
         await page.getByRole("link", { name: "Players", exact: true }).getAttribute("href"),
@@ -199,7 +198,7 @@ describe("scorekeeper navigation", () => {
       await gameLink.click();
       expect(page.url()).toBe(gameUrl);
       await page.goto(gameUrl.replace("/phaseCompan10n/game/", "/game/"));
-      await expect.poll(() => page.getByText("Not Found", { exact: true }).count()).toBe(1);
+      await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
       expect(await page.getByRole("button", { name: "Open Standings", exact: true }).count()).toBe(
         0,
       );

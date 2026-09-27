@@ -1,4 +1,14 @@
-import type { ActiveGame, CreateGameInput, Game, GameId, PhaseId, PlayerId } from "../../types";
+import type {
+  ActiveGame,
+  CreateGameInput,
+  Game,
+  GameId,
+  PhaseId,
+  PlayerId,
+  Round,
+  StoredGame,
+  StoredRound,
+} from "../../types";
 import { getDB } from "../db";
 import {
   deleteGameRecords,
@@ -91,6 +101,7 @@ export const gamesApi = {
       assertActivePhaseGame(game);
       const players = await requirePlayers(tx, game.players);
       const rounds = await tx.objectStore("rounds").index("by-game").getAll(id);
+      assertPhaseRounds(rounds);
       const completion = resolveGameCompletion({ game, players, rounds, completedAt: Date.now() });
       if (!completion || completion.gameWinner.id !== winnerId) {
         throw new Error("Game has no matching normal completion winner");
@@ -113,7 +124,13 @@ function byLastActivityDesc(a: Game, b: Game): number {
   return b.lastActivityAt - a.lastActivityAt || b.createdAt - a.createdAt;
 }
 
-export function assertActivePhaseGame(game: Game | undefined): asserts game is ActiveGame {
+export function assertActivePhaseGame(game: StoredGame | undefined): asserts game is ActiveGame {
   if (!game || game.scorekeeper !== "phase10") throw new Error("Phase 10 Game not found");
   if (game.status === "completed") throw new Error("Cannot update a completed game");
+}
+
+export function assertPhaseRounds(rounds: StoredRound[]): asserts rounds is Round[] {
+  if (rounds.some((round) => round.scorekeeper !== "phase10")) {
+    throw new Error("Round belongs to another Scorekeeper");
+  }
 }

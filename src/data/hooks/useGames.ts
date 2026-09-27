@@ -13,7 +13,7 @@ export const gameKeys = {
 export function gameDetailOptions(id: GameId) {
   return queryOptions({
     queryKey: gameKeys.detail(id),
-    queryFn: () => gamesApi.getById(id),
+    queryFn: async () => (await gamesApi.getById(id)) ?? null,
     enabled: !!id,
   });
 }

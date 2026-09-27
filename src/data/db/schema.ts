@@ -2,7 +2,6 @@ import type { DBSchema } from "idb";
 import type {
   AppSettings,
   AppSettingsId,
-  Game,
   GameId,
   Phase,
   PhaseId,
@@ -10,7 +9,8 @@ import type {
   PhaseSetId,
   Player,
   PlayerId,
-  Round,
+  StoredGame,
+  StoredRound,
 } from "../../types";
 
 export type FavoriteEntityType = "phase" | "phaseSet";
@@ -30,7 +30,7 @@ export interface Phase10DB extends DBSchema {
   };
   games: {
     key: GameId;
-    value: Game;
+    value: StoredGame;
     indexes: {
       "by-created": number;
       "by-status": string;
@@ -38,7 +38,7 @@ export interface Phase10DB extends DBSchema {
   };
   rounds: {
     key: [string, number]; // Composite key: [gameId, roundNumber]
-    value: Round;
+    value: StoredRound;
     indexes: {
       "by-game": string;
     };

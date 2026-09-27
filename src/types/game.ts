@@ -1,9 +1,11 @@
 import type { ActiveGameMetadata, CompletedGameMetadata } from "./gameLifecycle";
+import type { GenericGame } from "./genericGame";
 import type { TemporaryPhaseSet } from "./phaseSet";
 import type { PlayerId } from "./player";
 
 export type PhaseGame = ActiveGame | CompletedGame;
 export type Game = PhaseGame;
+export type StoredGame = PhaseGame | GenericGame;
 export type { GameId } from "./gameLifecycle";
 
 export type GameTiebreaker =
@@ -20,11 +22,11 @@ export interface GameSettings {
   sitOutPenalty: number; // Default 0. Points added when player Sits Out.
 }
 
-export interface ActiveGame extends ActiveGameMetadata, PhaseGameFields {
+export interface ActiveGame extends ActiveGameMetadata<"phase10">, PhaseGameFields {
   activePlayers: PlayerId[]; // Players actively playing, allows players to be added/removed mid-game
 }
 
-export interface CompletedGame extends CompletedGameMetadata, PhaseGameFields {}
+export interface CompletedGame extends CompletedGameMetadata<"phase10">, PhaseGameFields {}
 
 interface PhaseGameFields {
   scorekeeper: "phase10";

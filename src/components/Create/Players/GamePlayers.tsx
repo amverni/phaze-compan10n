@@ -1,7 +1,7 @@
 import { shuffle } from "../../../utils";
 import type { SortableItem } from "../../ui";
 import { List } from "../../ui";
-import { useGamePlayers, useRemovePlayer, useReorderPlayers } from "../CreateGameContext";
+import { useGamePlayers, useRemovePlayer, useReorderPlayers } from "../PlayerSelectionContext";
 import { AddPlayerButton } from "./AddPlayerButton";
 import { PlayerRow } from "./PlayerRow";
 import { ShufflePlayersButton } from "./ShufflePlayersButton";

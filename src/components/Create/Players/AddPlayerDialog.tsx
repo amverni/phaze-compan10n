@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { PlayerEditor } from "../../Players/PlayerEditor";
 import { PlayersSearch } from "../../Players/PlayersSearch";
 import { Button, Dialog } from "../../ui";
-import { useAddPlayer, useGamePlayers } from "../CreateGameContext";
+import { useAddPlayer, useGamePlayers } from "../PlayerSelectionContext";
 import { AddPlayerRow } from "./AddPlayerRow";
 import "./AddPlayerDialog.css";
 
