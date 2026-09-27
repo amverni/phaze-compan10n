@@ -263,10 +263,7 @@ async function finishGame(page: Page) {
   const confirm = finish.getByRole("button", { name: "Finish", exact: true });
   await expect.poll(() => confirm.isEnabled()).toBe(true);
   await confirm.press("Enter");
-  await page
-    .getByRole("list", { name: "Standings places", exact: true })
-    .or(page.getByRole("tabpanel", { name: "Standings", exact: true }))
-    .waitFor();
+  await page.getByRole("list", { name: "Standings places", exact: true }).waitFor();
 }
 
 async function deletePlayer(page: Page, name: string) {

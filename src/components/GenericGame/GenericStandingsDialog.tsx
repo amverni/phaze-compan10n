@@ -1,7 +1,8 @@
 import { DialogTitle } from "@headlessui/react";
 import type { GenericScoreboardView } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import { Button, Dialog, DialogScrollArea, List, numberCircleClasses } from "../ui";
+import { StandingsList, standingsRowClasses } from "../Standings/StandingsList";
+import { Button, Dialog, DialogScrollArea, numberCircleClasses } from "../ui";
 
 interface GenericStandingsDialogProps {
   open: boolean;
@@ -21,9 +22,9 @@ export function GenericStandingsDialog({
       <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-2 pb-4">
         <DialogTitle className="shrink-0 text-center text-lg font-semibold">Standings</DialogTitle>
         <DialogScrollArea aria-label={`${metric === "Wins" ? "Rounds Won" : metric} Standings`}>
-          <List role="list" aria-label="Standings places">
+          <StandingsList scorekeeper="generic">
             {standings.map((row) => (
-              <li key={row.player.id} className="flex w-full min-w-0 items-center gap-2 text-sm">
+              <li key={row.player.id} className={standingsRowClasses}>
                 <span className="sr-only">Place {row.place}</span>
                 <span className={numberCircleClasses} aria-hidden>
                   {row.place}
@@ -32,7 +33,7 @@ export function GenericStandingsDialog({
                 <span className="min-w-0 flex-1 truncate font-medium" title={row.player.name}>
                   {row.player.name}
                 </span>
-                <span className="shrink-0 text-right font-semibold tabular-nums">
+                <span className="shrink-0 text-right font-semibold whitespace-nowrap tabular-nums">
                   <span className="sr-only">Total {metric}: </span>
                   {"totalPoints" in row
                     ? row.totalPoints
@@ -48,7 +49,7 @@ export function GenericStandingsDialog({
                 </span>
               </li>
             ))}
-          </List>
+          </StandingsList>
         </DialogScrollArea>
         <div className="mt-auto flex shrink-0 justify-end px-2 pt-2">
           <Button
