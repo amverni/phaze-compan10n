@@ -18,7 +18,6 @@ export interface GenericPointsSettings extends GenericScoringSettings {
   mode: "points";
   pointsDirection: GenericScoreDirection;
   tiebreaker: null;
-  dealer: false;
 }
 
 interface GenericGameFields {
@@ -46,9 +45,11 @@ export interface GenericGameView {
 
 export interface GenericScoreboardView {
   game: GenericGame;
+  upcomingDealerId: PlayerId | null;
   players: Array<PlayerIdentity & { totalPoints: number }>;
   rounds: Array<{
     roundNumber: number;
+    dealerId: PlayerId | null;
     scores: Array<{ playerId: PlayerId; points: number; totalPoints: number }>;
   }>;
   standings: Array<{ player: PlayerIdentity; totalPoints: number; place: number }>;

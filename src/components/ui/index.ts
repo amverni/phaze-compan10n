@@ -1,6 +1,7 @@
 export { Button } from "./Button/Button";
 export type { ColorPickerProps } from "./ColorPicker/ColorPicker";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
+export { DealerMarker } from "./DealerMarker/DealerMarker";
 export { Dialog } from "./Dialog/Dialog";
 export { DialogScrollArea } from "./Dialog/DialogScrollArea";
 export { FavoriteAccent } from "./FavoriteAccent/FavoriteAccent";

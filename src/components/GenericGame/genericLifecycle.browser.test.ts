@@ -149,7 +149,7 @@ afterAll(async () => {
   await server?.close();
 });
 
-async function seedGame(page: Page, names = ["Maya", "Rowan"]) {
+async function seedGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   const game = await page.evaluate<GenericGame>(`(async () => {
@@ -163,7 +163,7 @@ async function seedGame(page: Page, names = ["Maya", "Rowan"]) {
     }
     return genericGamesApi.create({
       players: players.map(player => player.id),
-      settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+      settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: ${dealer} },
     });
   })()`);
   // Seeding through the API does not invalidate the mounted Home query.
@@ -284,7 +284,7 @@ it.each([
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    const game = await seedGame(page);
+    const game = await seedGame(page, ["Maya", "Rowan"], true);
     await saveRound(page, { Maya: "5", Rowan: tied ? "5" : "-2" });
     expect(await readGame(page, game.id)).toMatchObject({ status: "active" });
     await page.getByRole("button", { name: "Add Round", exact: true }).click();
@@ -328,9 +328,12 @@ it.each([
     expect(await page.getByRole("button", { name: "Add Round", exact: true }).count()).toBe(0);
     expect(await page.getByRole("button", { name: "Finish Game", exact: true }).count()).toBe(0);
     expect(await page.getByRole("button", { name: "Expand Round 2", exact: true }).count()).toBe(0);
+    expect(await page.getByRole("cell", { name: /upcoming Round/ }).count()).toBe(0);
     await page.getByRole("button", { name: "Expand Round 1", exact: true }).click();
     expect(
-      await page.getByRole("cell", { name: "Maya, Round 1: 5 Points", exact: true }).innerText(),
+      await page
+        .getByRole("cell", { name: "Maya, Round 1: 5 Points, Dealer", exact: true })
+        .innerText(),
     ).toContain("Accumulated Points: 5");
     expect(await standings.count()).toBe(0);
     await page.getByRole("button", { name: "Open Standings", exact: true }).click();

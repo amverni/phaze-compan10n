@@ -265,7 +265,7 @@ afterAll(async () => {
   await server?.close();
 });
 
-async function openGame(page: Page, names = ["Maya", "Rowan"]) {
+async function openGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
   await page.goto(appUrl);
   const gameId = await page.evaluate<string>(`(async () => {
     const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
@@ -276,7 +276,7 @@ async function openGame(page: Page, names = ["Maya", "Rowan"]) {
     }
     const game = await genericGamesApi.create({
       players: players.map((player) => player.id),
-      settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+      settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: ${dealer} },
     });
     return game.id;
   })()`);
@@ -296,6 +296,94 @@ async function saveRound(page: Page, scores: Record<string, string>) {
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator('[role="dialog"]').waitFor({ state: "detached" });
 }
+
+it("rotates visible saved and upcoming Dealer markers, including expanded and reopened rounds", async () => {
+  const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
+  try {
+    await openGame(page, ["Rowan", "Maya"], true);
+    for (const [roundNumber, dealer, nextDealer, points] of [
+      [1, "Rowan", "Maya", "-9007199254740991"],
+      [2, "Maya", "Rowan", "9007199254740991"],
+      [3, "Rowan", "Maya", "-9007199254740991"],
+    ] as const) {
+      await saveRound(page, { Rowan: points, Maya: "0" });
+      const markerCell = page.getByRole("cell", {
+        name: `${dealer}, Round ${roundNumber}: ${dealer === "Rowan" ? points : "0"} Points, Dealer`,
+        exact: true,
+      });
+      await markerCell.waitFor();
+      expect(await markerCell.getByText("D", { exact: true }).isVisible()).toBe(true);
+      const markerBounds = await markerCell.getByText("D", { exact: true }).boundingBox();
+      const scoreBounds = await markerCell
+        .getByText(dealer === "Rowan" ? points : "0", { exact: true })
+        .boundingBox();
+      if (!markerBounds || !scoreBounds) throw new Error("Missing Dealer/score geometry");
+      expect(markerBounds.x + markerBounds.width).toBeLessThanOrEqual(scoreBounds.x);
+      expect(
+        await page
+          .getByRole("cell", { name: `${nextDealer}, upcoming Round: Dealer`, exact: true })
+          .count(),
+      ).toBe(1);
+    }
+    await page.getByRole("button", { name: "Expand Round 1", exact: true }).click();
+    const firstDealer = page.getByRole("cell", {
+      name: "Rowan, Round 1: -9007199254740991 Points, Dealer",
+      exact: true,
+    });
+    expect(await firstDealer.innerText()).toContain("Accumulated Points: -9007199254740991");
+    expect(await firstDealer.getByText("D", { exact: true }).count()).toBe(1);
+    await page.reload();
+    await firstDealer.waitFor();
+    expect(await page.getByRole("cell", { name: /Points, Dealer$/ }).count()).toBe(3);
+    expect(
+      await page.getByRole("cell", { name: "Maya, upcoming Round: Dealer", exact: true }).count(),
+    ).toBe(1);
+    await page.getByRole("button", { name: "Expand Round 1", exact: true }).click();
+    expect(await firstDealer.getByText("D", { exact: true }).count()).toBe(1);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it("keeps solo Dealer markers on every Round and reclaims their layout space when off", async () => {
+  const widths: number[] = [];
+  for (const dealer of [false, true]) {
+    const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
+    try {
+      await openGame(page, ["Maya"], dealer);
+      await saveRound(page, { Maya: "-9007199254740991" });
+      await saveRound(page, { Maya: "0" });
+      await page.reload();
+      const firstScore = page.getByRole("cell", {
+        name: `Maya, Round 1: -9007199254740991 Points${dealer ? ", Dealer" : ""}`,
+        exact: true,
+      });
+      await firstScore.waitFor();
+      const table = page.getByRole("table", { name: "Points scoreboard" });
+      expect(await table.getByText("D", { exact: true }).count()).toBe(dealer ? 3 : 0);
+      expect(await page.getByRole("cell", { name: /upcoming Round/ }).count()).toBe(dealer ? 1 : 0);
+      const bounds = await firstScore.boundingBox();
+      if (!bounds) throw new Error("Missing solo score geometry");
+      widths.push(bounds.width);
+      const add = page.getByRole("button", { name: "Add Round", exact: true });
+      await page.getByRole("region", { name: "Scoreboard", exact: true }).evaluate((element) => {
+        element.scrollLeft = element.scrollWidth;
+      });
+      const addBounds = await add.boundingBox();
+      if (!addBounds) throw new Error("Missing Add Round geometry");
+      expect(addBounds.x).toBeGreaterThanOrEqual(0);
+      expect(addBounds.x + addBounds.width).toBeLessThanOrEqual(320);
+      await add.click();
+      await page
+        .getByRole("dialog", { name: "Add Round", exact: true })
+        .getByRole("button", { name: "Save", exact: true })
+        .waitFor();
+    } finally {
+      await page.close();
+    }
+  }
+  expect(widths[0]).toBeLessThan(widths[1]);
+}, 120_000);
 
 it("keeps a modal Points draft on close, saves explicit zero and negatives, and clears after save", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });

@@ -187,24 +187,27 @@ it("creates and reopens a solo Points Game without Phase 10 fields", async () =>
   });
 });
 
-it("snapshots creation order and Low wins rules before asynchronous work", async () => {
+it("locks creation order, Low wins, and Dealer at creation and preserves them after reopening", async () => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
   const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 1 });
   const input: CreateGenericGameInput = {
     players: [bob.id, amy.id],
-    settings: pointsSettings("low"),
+    settings: { ...pointsSettings("low"), dealer: true },
   };
   const creating = genericGamesApi.create(input);
   input.players.reverse();
   input.settings.pointsDirection = "high";
+  input.settings.dealer = false;
   const game = await creating;
   expect(game.players).toEqual([bob.id, amy.id]);
   expect(game.settings.pointsDirection).toBe("low");
+  expect(game.settings.dealer).toBe(true);
   game.players.reverse();
   game.settings.pointsDirection = "high";
+  game.settings.dealer = false;
   closeDB();
   expect(await genericGamesApi.getDetail(game.id)).toMatchObject({
-    game: { players: [bob.id, amy.id], settings: pointsSettings("low") },
+    game: { players: [bob.id, amy.id], settings: { ...pointsSettings("low"), dealer: true } },
     players: [bob, amy],
   });
 });
@@ -235,7 +238,9 @@ it.each([
   { pointsDirection: undefined },
   { tiebreaker: { direction: "high" } },
   { tiebreaker: undefined },
-  { dealer: true },
+  { dealer: "true" },
+  { dealer: 1 },
+  { dealer: null },
   { dealer: undefined },
 ])("rejects unsupported Points settings: %j", async (unsupported) => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
