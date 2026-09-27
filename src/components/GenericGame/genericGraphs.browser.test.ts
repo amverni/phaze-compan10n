@@ -415,6 +415,64 @@ it.each([
   }
 }, 60_000);
 
+it.each([
+  "high",
+  "low",
+] as const)("spaces mixed-sign numeric axis labels in the %s direction", async (direction) => {
+  const page = await browser.newPage({
+    viewport: { width: 320, height: 568 },
+    reducedMotion: "reduce",
+  });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    const { gameId } = await openGraphGame(page, {
+      mode: "points",
+      pointsDirection: direction,
+      tiebreaker: { direction },
+      dealer: false,
+    });
+    await page.evaluate(`(async () => {
+      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
+      await genericRoundsApi.add({
+        gameId: game.id,
+        scores: [
+          { playerId: game.players[0], points: "-994", tiebreaker: "-997" },
+          { playerId: game.players[1], points: "7", tiebreaker: "4" },
+        ],
+      });
+    })()`);
+    await page.reload();
+    await page.getByRole("button", { name: "Open Standings", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Standings", exact: true });
+    for (const metric of ["Points", "Tiebreaker"]) {
+      await dialog.getByRole("tab", { name: metric, exact: true }).click();
+      const panel = dialog.getByRole("tabpanel", { name: metric, exact: true });
+      const labels = await panel.locator("span[aria-hidden]").evaluateAll((elements) =>
+        elements.map((element) => {
+          const bounds = element.getBoundingClientRect();
+          return { x: bounds.x, y: bounds.y, right: bounds.right, bottom: bounds.bottom };
+        }),
+      );
+      for (let index = 0; index < labels.length; index++) {
+        for (const other of labels.slice(index + 1)) {
+          const label = labels[index];
+          expect(
+            label.right <= other.x ||
+              other.right <= label.x ||
+              label.bottom <= other.y ||
+              other.bottom <= label.y,
+          ).toBe(true);
+        }
+      }
+    }
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
 it("uses live graph names/colors, then snapshots after completion and saved-Player deletion", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.setDefaultTimeout(5_000);

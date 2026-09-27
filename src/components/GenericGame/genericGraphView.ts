@@ -65,7 +65,7 @@ export function getGenericGraphView(graph: GenericGraph) {
     if (group) group.players.push(entry.player);
     else groups.set(latest.value, { ...latest, players: [entry.player] });
   }
-  const middle = min < 0 && max > 0 ? 0 : Math.round(min + (max - min) / 2);
+  const middle = Math.round(min + (max - min) / 2);
   return {
     width: GRAPH_WIDTH,
     height: GRAPH_HEIGHT,
