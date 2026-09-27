@@ -1,40 +1,120 @@
-# Phase 10 Scoreboard
+# Scorekeeper
 
-This context defines the shared language for recording and comparing Phase 10 games, rounds, phase progress, and winners. It exists to keep game setup, scoring, and outcome discussions precise.
+This glossary defines the shared language for Scorekeeper and Phase Compan10n, including Players, Games, scoring, and results. It distinguishes Generic Scorekeeping from Phase 10 gameplay.
 
-## Language
+## Shared language
 
-### Core gameplay
+**Scorekeeper**:
+A dedicated scorekeeping experience with its own Games and presentation, such as the generic Scorekeeper app or Phase Compan10n. Saved Players are shared across Scorekeepers.
+
+### Games and results
 
 **Game**:
-A full play session that runs through an ordered Phase Set until a Game Winner is determined.
+A full play session using one Scorekeeper's scoring rules. Phase 10 Games and Generic Games have different progress and completion rules, defined in their respective sections below.
 _Avoid_: Match
+
+**Round**:
+One scoring cycle within a Game. The Game's rules determine which scores or outcomes are recorded.
+_Avoid_: Hand, turn cycle
 
 **Active Game**:
 A game currently in progress and still accepting new rounds.
 _Avoid_: Open game, live game
 
 **Completed Game**:
-A game whose winner has been finalized and whose competitive result is closed.
+A game whose competitive result has been finalized and closed after at least one saved Round. Its result preserves each Player's name and color at completion, independently of later changes to saved Players.
 _Avoid_: Archived game, old game
 
+**Pause**:
+Leaving an Active Game to return home without finalizing its result. The Game remains active and can be continued later; pausing is not a separate Game status.
+
+**Game Winner**:
+A Player awarded the win when a Game is completed. The Game's rules determine whether one Player wins or tied Players share the win.
+_Avoid_: Champion
+
+**Standings**:
+The ordered comparison of Players within a Game according to its scoring rules. Standings are distinct from the order of Player columns on the scoreboard.
+_Avoid_: Leaderboard, rankings
+
+**Tiebreaker**:
+A rule used to compare Players who are tied on the primary scoring measure. Phase 10 Tiebreakers and the optional Generic Tiebreaker are defined separately below.
+
+**Score Entry Complete**:
+A Player's round entry contains the information required by the Game's scoring rules to save the round.
+_Avoid_: Completed, done
+
+### Players and selection
+
 **Player**:
-A person participating in a game.
+A person participating in a game. A saved Player's identity, name, color, and Favorite status are shared between Phase 10 scorekeeping and Generic Scorekeeping.
 _Avoid_: User, participant
 
 **Game Creation Order**:
-The order of Players chosen when the Game is created. It is the final fallback for ordering otherwise tied Players.
+The order of Players chosen when the Game is created. It determines the stable Player column order on the scoreboard.
 _Avoid_: Player list order, setup order
 
-**Active Player**:
-A player currently participating in an active game; this may differ from everyone ever added to that game.
-_Avoid_: Current player, enabled player
-
 **Dealer**:
-The player assigned to deal for a specific round, rotating by active-player order each round.
+The Player assigned to deal for a specific round, rotating through the Game's Player order (Active Player order in Phase 10). Tracking a Dealer is optional in a Generic Game.
 _Avoid_: Host, starter
 
-### Progress and outcomes
+**Favorite**:
+A pinned item prioritized for quick selection: a shared Player, or a Phase or Phase Set within Phase Compan10n.
+_Avoid_: Bookmark
+
+## Scorekeeper app: generic scoring
+
+### Games and rounds
+
+**Generic Scorekeeping**:
+Recording round-by-round points, points with a tiebreaker, single round winners, or individual pass/fail results without tracking Phase 10 phases or phase outcomes. Numeric scores are whole numbers, including zero and negatives.
+
+**Generic Game**:
+A play session for one or more Players in Generic Scorekeeping that remains active until the person keeping score explicitly finishes it. Its Players and scoring rules are chosen during setup and fixed when the game is created.
+
+**Generic Round**:
+A scoring cycle in a Generic Game, recorded according to its Scoring Mode. Required numeric entries must be explicit for every Player: zero is a score, but a blank entry is not.
+
+### Scoring rules
+
+**Scoring Mode**:
+The choice made during Generic Game setup to record Points, Single Round Winner, or Pass/Fail results. A Generic Tiebreaker is an optional setting separate from Scoring Mode and is currently available only with Points.
+
+**Points**:
+A generic Scoring Mode that records a whole-number score for each Player in each round and compares accumulated totals using the selected Score Direction.
+
+**Generic Tiebreaker**:
+An optional secondary numeric measure totaled separately across rounds and compared only when primary totals are tied. It is currently available only with Points and has its own independent Score Direction.
+
+**Single Round Winner**:
+A generic Scoring Mode in which exactly one Player wins each round and all other Players lose. Players rank by most rounds won, with no separate Tiebreaker.
+
+**Pass/Fail**:
+A generic Scoring Mode in which selected Players pass and unselected Players fail each round; any number may pass, including none. Players rank by most passes, with no separate Tiebreaker.
+
+**Score Direction**:
+The per-game choice of whether higher or lower accumulated totals rank ahead in Generic Scorekeeping. Points and Tiebreaker each have their own independent Score Direction.
+
+### Results
+
+**Generic Game Winner**:
+A Player awarded the win when a Generic Game is explicitly finished. Players who remain tied under the Game's scoring rules share the win.
+
+**Generic Standings**:
+The comparison of Players in a Generic Game using its selected scoring rules. Players equal under those rules share a place, with subsequent places skipping by the number of tied Players (for example, 1, 1, 3). Players sharing a place are displayed in Game Creation Order; that order does not break the tie or affect Game Winners.
+
+**Points Graph**:
+A round-by-round view of each Player's accumulated points in a Generic Game.
+
+## Phase Compan10n: Phase 10 scoring
+
+### Games and phase progress
+
+**Phase 10 Game**:
+A Game played through an ordered Phase Set until normal completion or an Early Finish.
+
+**Active Player**:
+A Player currently participating in an Active Phase 10 Game; this may differ from everyone ever added to that Game.
+_Avoid_: Current player, enabled player
 
 **Phase**:
 A required card objective that must be satisfied to progress through the game.
@@ -48,43 +128,31 @@ _Avoid_: Stage, tier
 The ordered list of phases used by a game.
 _Avoid_: Preset, playlist
 
-**Phases Card**:
-A shareable reference card for a Phase Set that lists its phases in order.
-_Aliases_: Phase Card
-_Avoid_: Phase Set Card, phasecard
+**Phase 10 Round**:
+A Round in which each Active Player records a score and phase outcome.
 
-**Round**:
-One scoring cycle in which each active player records a score and phase outcome.
-_Avoid_: Hand, turn cycle
+**Finished Player**:
+A Player whose phase progress has advanced past the final Phase in a Phase 10 Game. Finished Players are beyond the final Current Phase for progress comparisons.
+_Avoid_: Completed player, done player
+
+### Results and tiebreakers
 
 **Round Winner**:
 The player who completed their phase in that round and went out first.
 _Avoid_: Round leader
 
-**Game Winner**:
-The player who first becomes a Finished Player; ties are resolved by the selected Tiebreaker, then by the most recent Round Winner, then by Game Creation Order.
-_Avoid_: Champion
+**Phase 10 Game Winner**:
+On normal Phase 10 completion, the player who first becomes a Finished Player; ties are resolved by the selected Tiebreaker, then by the most recent Round Winner, then by Game Creation Order. On an Early Finish, all Players sharing first place in the current Standings share the win.
 
-**Win Count**:
-A Player's lifetime-style count of Game Winner results. It increases when a Player becomes the Game Winner and is not decremented when a Completed Game is deleted.
-_Avoid_: Active game wins, undeleted win total
+**Early Finish**:
+The explicit ending of a Phase 10 Game before anyone finishes the final Phase, using the current Standings as the final result without granting unplayed phase progress.
 
-**Finished Player**:
-A player whose phase progress has advanced past the final Phase in a Game. Finished Players are beyond the final Current Phase for progress comparisons.
-_Avoid_: Completed player, done player
-
-**Standings**:
-The ordered comparison of players in a Game. Players are placed by Finished Player state first, then highest Current Phase, then by the selected Tiebreaker, with equal place when those values are tied and subsequent places skipping by the number of tied players.
+**Phase 10 Standings**:
+Players are placed by Finished Player state first, then highest Current Phase, then by the selected Tiebreaker, with equal place when those values are tied and subsequent places skipping by the number of tied Players.
 In an Active Game, Standings compare Active Players; in a Completed Game, Standings compare the players in the finalized result; players within an equal place are ordered by most recent Round Winner, then Game Creation Order.
-_Avoid_: Leaderboard, rankings
 
-**Tiebreaker**:
-The rule used to resolve winner comparisons when multiple players are otherwise tied.
-_Avoid_: Secondary score, fallback rule
-
-**Score Entry Complete**:
+**Phase 10 Score Entry Complete**:
 A player's round score entry has enough Round Result and Tiebreaker information to be counted as entered for that round. For Points Tiebreakers, this includes a valid Points Card Count for the player's Round Result.
-_Avoid_: Completed, done
 
 **Points Card Count**:
 The total number of remaining cards represented by the point-entry counters for a Points Tiebreaker.
@@ -106,7 +174,7 @@ _Avoid_: Low points (for this rule)
 
 **Completed**:
 The player met the phase objective for that round. Displayed in the score-entry UI as the past-tense label **Passed** for grammatical consistency with the other Round Result options (Failed, Skipped, Sat Out).
-_Avoid_: Cleared. ("Passed" is permitted only as the UI label for `phaseStatus = "completed"` in the Add Round dialog.)
+_Avoid_: Cleared. ("Passed" is the permitted UI label for this Phase 10 outcome.)
 
 **Failed**:
 The player did not meet the phase objective for that round.
@@ -129,14 +197,19 @@ A card that causes another player to take a Turn Skip. The compact label **Skip*
 _Avoid_: Round Skip, Sit Out
 
 **Round Skip Penalty**:
-Points added to a player's Round Score when they take a Round Skip. Stored on `gameSettings.roundSkipPenalty` (per-game) with an app-wide default in `appSettings.gameDefaults.roundSkipPenalty`. Default: 100 points.
+Points added to a Player's Round Score when they take a Round Skip.
 _Avoid_: Auto-fail points
 
 **Sit Out Penalty**:
-Points added to a player's Round Score when they Sit Out a round. Stored on `gameSettings.sitOutPenalty` (per-game) with an app-wide default in `appSettings.gameDefaults.sitOutPenalty`. Default: 50 points.
+Points added to a Player's Round Score when they Sit Out a round.
 _Avoid_: Sit-out cost
 
-### Catalog and preferences
+### Phase catalog
+
+**Phases Card**:
+A shareable reference card for a Phase Set that lists its phases in order.
+_Aliases_: Phase Card
+_Avoid_: Phase Set Card, phasecard
 
 **Saved Phase**:
 A reusable phase definition kept for future games.
@@ -154,11 +227,7 @@ _Avoid_: Permanent phase set
 A phase-set definition scoped to one game session.
 _Avoid_: Draft phase set
 
-**Favorite**:
-A user-pinned Player, Phase, or Phase Set prioritized for quick selection.
-_Avoid_: Bookmark
-
-### Interface layout
+## Shared interface layout
 
 **Safe Area**:
 A viewport region reserved for device or browser controls. Interactive content remains outside it, while noninteractive visual surfaces may continue through it.
@@ -170,14 +239,32 @@ _Avoid_: Overflow (when referring to this deliberate layout behavior)
 
 ## Flagged ambiguities
 
-- **"Skip" is overloaded.**  
+- **"Scorekeeper" names both a product and a category.**
+  **Resolution:** Use **Scorekeeper app** for the generic product when needed; **Scorekeepers** collectively includes it and Phase Compan10n.
+
+- **"Game", "Round", "Standings", and "Game Winner" do not imply Phase 10 rules.**
+  **Resolution:** Use their shared definitions unless a specific Scorekeeper is established. Use the qualified Generic or Phase 10 terms when comparing behavior across Scorekeepers.
+
+- **"Points" can be a primary score or a tiebreaker value.**
+  **Resolution:** Generic **Points** is a primary Scoring Mode; a Phase 10 **Points Tiebreaker** resolves tied phase progress. Do not apply Phase 10 card-counting rules to generic numeric entries.
+
+- **"Pass/Fail" does not mean phase completion.**
+  **Resolution:** Generic **Pass/Fail** records independent outcomes without Phases. **Completed** and **Failed** in the Phase 10 section describe phase outcomes only.
+
+- **"Skip" is overloaded within Phase 10.**
   **Resolution:** Use **Skip Card** for the card that causes a Turn Skip, **Turn Skip** for the missed turn, **Round Skip** for full-round skips that advance phase, and **Sit Out** for full-round skips that do not advance phase. The compact label **Skip** is acceptable only when surrounding card-entry controls make **Skip Card** unambiguous.
 
 - **"Complete" is overloaded.**
-  **Resolution:** Use **Completed** only for the phase outcome. Use **Score Entry Complete** for whether a player's round score entry is ready to save.
+  **Resolution:** **Completed Game** describes a finalized Game. Within Phase 10 round outcomes, **Completed** means the phase objective was met; **Score Entry Complete** describes whether a round entry is ready to save.
 
 ## Example dialogue
 
+**Developer:** "Does every Game have a Phase Set?"
+**Domain expert:** "No. Only a Phase 10 Game has a Phase Set; a Generic Game uses its Scoring Mode."
+**Developer:** "Can nobody pass a Generic Round in Pass/Fail?"
+**Domain expert:** "Yes. All Players fail that round, without any phase outcome."
+**Developer:** "Does the Generic Tiebreaker add to Points?"
+**Domain expert:** "No. Compare accumulated Points first, then the separately accumulated Tiebreaker only if Points are tied."
 **Developer:** "If Maya takes a Round Skip this round, does she move to the next phase?"  
 **Domain expert:** "Yes, a Round Skip advances phase, and she may take a Round Skip Penalty."  
 **Developer:** "If she instead chooses Sit Out?"  
