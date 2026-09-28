@@ -5,7 +5,7 @@ import { StandingsRow } from "./StandingsRow";
 import type { StandingsDisplayRow } from "./standingsDialogView";
 
 describe("StandingsRow", () => {
-  it("aligns phase and Tiebreaker values in fixed score columns with a dot separator", () => {
+  it("shows Phase and Tiebreaker values without a dot separator", () => {
     const markup = renderToStaticMarkup(
       <StandingsRow
         row={makeStandingsRow({
@@ -15,16 +15,13 @@ describe("StandingsRow", () => {
       />,
     );
 
-    expect(markup).toContain("grid-cols-[3.75rem_0.5rem_4.75rem]");
-    expect(markup).toContain("justify-start");
-    expect(markup).toContain("text-left text-text-secondary");
     expect(markup).toContain(">Ph 10</span>");
-    expect(markup).toContain(">•</span>");
+    expect(markup).not.toContain("•");
     expect(markup).toContain(">1234 pts</span>");
     expect(markup).not.toContain(">-</span>");
   });
 
-  it("keeps the Finished Check inside the fixed phase column", () => {
+  it("keeps the Finished indicator alongside the Phase and Tiebreaker", () => {
     const markup = renderToStaticMarkup(
       <StandingsRow
         row={makeStandingsRow({
@@ -35,7 +32,6 @@ describe("StandingsRow", () => {
       />,
     );
 
-    expect(markup).toContain("grid-cols-[3.75rem_0.5rem_4.75rem]");
     expect(markup).toContain(">Ph 10");
     expect(markup).toContain('aria-label="Finished"');
     expect(markup).toContain(">3 wins</span>");

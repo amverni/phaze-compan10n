@@ -2,6 +2,7 @@ import { DialogTitle, Tab, TabGroup, TabPanel } from "@headlessui/react";
 import { useState } from "react";
 import type { GenericScoreboardView } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
+import { StandingsList, standingsRowClasses } from "../Standings/StandingsList";
 import {
   standingsDialogTabPanelClasses,
   standingsDialogTabPanelHorizontalBleed,
@@ -10,7 +11,6 @@ import {
   Button,
   Dialog,
   DialogScrollArea,
-  List,
   numberCircleClasses,
   SwipeableTabPanels,
   TabList,
@@ -55,12 +55,9 @@ export function GenericStandingsDialog({ open, onClose, view }: GenericStandings
           >
             <TabPanel className={standingsDialogTabPanelClasses}>
               <DialogScrollArea aria-label={`${primaryGraph.metric} Standings`}>
-                <List role="list" aria-label="Standings places">
+                <StandingsList scorekeeper="generic">
                   {standings.map((row) => (
-                    <li
-                      key={row.player.id}
-                      className="flex w-full min-w-0 items-center gap-2 text-sm"
-                    >
+                    <li key={row.player.id} className={standingsRowClasses}>
                       <span className="sr-only">Place {row.place}</span>
                       <span className={numberCircleClasses} aria-hidden>
                         {row.place}
@@ -69,7 +66,7 @@ export function GenericStandingsDialog({ open, onClose, view }: GenericStandings
                       <span className="min-w-0 flex-1 truncate font-medium" title={row.player.name}>
                         {row.player.name}
                       </span>
-                      <span className="shrink-0 text-right font-semibold tabular-nums">
+                      <span className="shrink-0 text-right font-semibold whitespace-nowrap tabular-nums">
                         <span className="sr-only">Total {metric}: </span>
                         {"totalPoints" in row
                           ? row.totalPoints
@@ -85,7 +82,7 @@ export function GenericStandingsDialog({ open, onClose, view }: GenericStandings
                       </span>
                     </li>
                   ))}
-                </List>
+                </StandingsList>
               </DialogScrollArea>
             </TabPanel>
             <TabPanel className={standingsDialogTabPanelClasses}>

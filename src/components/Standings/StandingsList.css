@@ -1,0 +1,18 @@
+.standings-list--phase10 {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr) max-content max-content;
+  column-gap: calc(var(--spacing) * 1.5);
+}
+
+/* Carry the shared tracks through List's animation and padded row wrappers. */
+.standings-list--phase10 > .list-row-shell,
+.standings-list--phase10 > .list-row-shell > :not(.list-divider),
+.standings-list--phase10 .standings-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.standings-list--phase10 > .list-row-shell > .list-divider {
+  grid-column: 1 / -1;
+}
