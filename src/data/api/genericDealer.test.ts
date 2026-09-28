@@ -20,10 +20,18 @@ it.each([true, false])("handles solo rounds with Dealer enabled: %s", async (dea
     upcomingDealerId: expectedDealer,
   });
   for (const points of ["-1", "0", "10"]) {
-    await genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: amy.id, points }] });
+    await genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: amy.id, points }],
+    });
   }
   await expect(
-    genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: amy.id, points: "" }] }),
+    genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: amy.id, points: "" }],
+    }),
   ).rejects.toThrow("Points");
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
@@ -51,6 +59,7 @@ it("rotates saved and upcoming Dealers in fixed Game Creation Order, not score o
   });
   for (const nextDealer of [amy.id, bob.id, zed.id, amy.id]) {
     await genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: bob.id, points: "20" },
@@ -81,6 +90,7 @@ it("rotates saved and upcoming Dealers in fixed Game Creation Order, not score o
     settings: { ...game.settings, dealer: false },
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: noDealer.id,
     scores: game.players.map((playerId) => ({ playerId, points: "0" })),
   });

@@ -213,6 +213,7 @@ it("keeps Pass/Fail and Points Round payloads distinct", async () => {
   } = await createPassFailGame(1);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: player.id, points: "0" }],
     }),

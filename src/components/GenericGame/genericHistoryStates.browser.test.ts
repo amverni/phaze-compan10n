@@ -102,13 +102,13 @@ it("refreshes cached generic Home, Games and pruned scoreboard data after the tw
       for (let index = 0; index < 20; index++) {
         const playerId = index === 0 ? old.id : history.id;
         const game = await genericGamesApi.create({ players: [playerId], settings });
-        await genericRoundsApi.add({ gameId: game.id, scores: [{ playerId, points: "-2" }] });
+        await genericRoundsApi.add({ gameId: game.id, mode: "points", scores: [{ playerId, points: "-2" }] });
         await genericGamesApi.finish(game.id);
         if (index === 0) completedId = game.id;
       }
       const active = await genericGamesApi.create({ players: [dana.id], settings });
       await genericRoundsApi.add({
-        gameId: active.id, scores: [{ playerId: dana.id, points: "5" }],
+        gameId: active.id, mode: "points", scores: [{ playerId: dana.id, points: "5" }],
       });
       await genericGamesApi.create({ players: [casey.id], settings });
       return { completedId };
@@ -178,7 +178,7 @@ it("blocks shared Player deletion for Active Games in either Scorekeeper and rel
           settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
         });
         await genericRoundsApi.add({
-          gameId: generic.id, scores: [{ playerId: amy.id, points: "5" }],
+          gameId: generic.id, mode: "points", scores: [{ playerId: amy.id, points: "5" }],
         });
         const phase = await gamesApi.create({
           players: [bob.id, cam.id],
@@ -262,6 +262,7 @@ async function finishGame(page: Page) {
     .toBe(true);
   const confirm = finish.getByRole("button", { name: "Finish", exact: true });
   await expect.poll(() => confirm.isEnabled()).toBe(true);
+  await confirm.click({ trial: true });
   await confirm.press("Enter");
   await page.getByRole("list", { name: "Standings places", exact: true }).waitFor();
 }

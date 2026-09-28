@@ -7,5 +7,5 @@ export const Route = createFileRoute("/phaseCompan10n/game/$gameId")({
 
 function GameRoute() {
   const { gameId } = Route.useParams();
-  return <Game gameId={gameId} />;
+  return <Game key={gameId} gameId={gameId} />;
 }

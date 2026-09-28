@@ -225,15 +225,12 @@ it.each([
   expect(await genericGamesApi.getById(game.id)).toEqual(game);
 });
 
-it.each([
-  undefined,
-  "points",
-] as const)("rejects Points entries in a Single Round Winner Game (Scoring Mode: %s)", async (mode) => {
+it("rejects Points entries in a Single Round Winner Game", async () => {
   const { game } = await createWinnerGame();
   await expect(
     genericRoundsApi.add({
       gameId: game.id,
-      mode,
+      mode: "points",
       scores: game.players.map((playerId) => ({ playerId, points: "1" })),
     }),
   ).rejects.toThrow("Round mode must match");
@@ -320,6 +317,7 @@ it.each([
   });
   const winnerInput = winnerRoundInput(winnerGame);
   const pointsInput = {
+    mode: "points" as const,
     gameId: pointsGame.id,
     scores: players.map((player) => ({ playerId: player.id, points: "0" })),
   };
@@ -675,7 +673,7 @@ it("retains the latest 20 Completed Generic Games across Scoring Modes while pre
     await genericRoundsApi.add(
       game.settings.mode === "singleRoundWinner"
         ? winnerRoundInput(game)
-        : { gameId: game.id, scores: [{ playerId: amy.id, points: "0" }] },
+        : { mode: "points", gameId: game.id, scores: [{ playerId: amy.id, points: "0" }] },
     );
     completed.push(await genericGamesApi.finish(game.id));
   }

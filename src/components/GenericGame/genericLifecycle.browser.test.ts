@@ -44,7 +44,7 @@ it("browses mixed generic Games with snapshot avatars and distinct actions, and 
       const casey = await playersApi.create({ name: "Casey", color: "Jam", isFavorite: 0 });
       await genericGamesApi.create({ players: [casey.id], settings: game.settings });
       await genericRoundsApi.add({
-        gameId: game.id, scores: game.players.map(playerId => ({ playerId, points: "5" })),
+        gameId: game.id, mode: "points", scores: game.players.map(playerId => ({ playerId, points: "5" })),
       });
       await genericGamesApi.finish(game.id);
       await playersApi.update(game.players[0], { name: "Renamed", color: "#654321" });

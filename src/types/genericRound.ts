@@ -43,7 +43,7 @@ export type GenericRound =
 
 export interface AddGenericPointsRoundInput {
   gameId: GameId;
-  mode?: "points";
+  mode: "points";
   scores: { playerId: PlayerId; points: string; tiebreaker?: string }[];
 }
 

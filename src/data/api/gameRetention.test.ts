@@ -544,6 +544,7 @@ function createGenericGame(players: Player[]) {
 
 function addGenericRound(game: ActiveGenericGame) {
   return genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: game.players.map((playerId, index) => ({ playerId, points: index === 0 ? "10" : "0" })),
   });

@@ -194,16 +194,6 @@ it("does not allow persistence-level Round mutations to rewrite a Completed Game
   expect(await gamesApi.getById(game.id)).toEqual(completed);
 });
 
-it("cannot use the compatibility completion entry point to finish without Rounds or overwrite results", async () => {
-  const { game, amy, bob } = await createGame();
-  await expect(gamesApi.complete(game.id, amy.id)).rejects.toThrow("normal completion");
-  expect(await gamesApi.getById(game.id)).toEqual(game);
-  await finishGame(game.id, amy.id, bob.id);
-  const completed = await gamesApi.getById(game.id);
-  await expect(gamesApi.complete(game.id, bob.id)).rejects.toThrow("completed");
-  expect(await gamesApi.getById(game.id)).toEqual(completed);
-});
-
 it("deletes Game-owned records together without removing another Game's temporary Phase", async () => {
   const { game, amy, bob } = await createGame();
   const temporary = await phasesApi.create({

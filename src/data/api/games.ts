@@ -6,7 +6,6 @@ import type {
   GameId,
   GameListItem,
   PhaseId,
-  PlayerId,
   Round,
   StoredGame,
   StoredRound,
@@ -20,7 +19,7 @@ import {
   withGameTransaction,
 } from "./gameLifecycle";
 import { getGamePlayers } from "./gameResults";
-import { resolveEarlyGameCompletion, resolveGameCompletion } from "./roundCompletion";
+import { resolveEarlyGameCompletion } from "./roundCompletion";
 
 export const gamesApi = {
   async getList({ activeOnly = false }: { activeOnly?: boolean } = {}): Promise<GameListItem[]> {
@@ -113,23 +112,6 @@ export const gamesApi = {
         ...game,
         phaseSet: { ...game.phaseSet, phases: [first, ...rest] },
       });
-    });
-  },
-
-  // Compatibility for the existing API, not an Early Finish path. New completion
-  // modes must resolve their winners and use the same finalizeGame transaction.
-  async complete(id: GameId, winnerId: PlayerId): Promise<void> {
-    await withGameTransaction(async (tx) => {
-      const game = await tx.objectStore("games").get(id);
-      assertActivePhaseGame(game);
-      const players = await requirePlayers(tx, game.players);
-      const rounds = await tx.objectStore("rounds").index("by-game").getAll(id);
-      assertPhaseRounds(rounds);
-      const completion = resolveGameCompletion({ game, players, rounds, completedAt: Date.now() });
-      if (!completion || completion.gameWinner.id !== winnerId) {
-        throw new Error("Game has no matching normal completion winner");
-      }
-      await finalizeGame(tx, completion.completedGame);
     });
   },
 

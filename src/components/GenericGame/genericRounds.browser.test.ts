@@ -228,7 +228,7 @@ it.each([
         const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
         const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
         for (let index = 0; index < 22; index++) {
-          await genericRoundsApi.add({ gameId: game.id, scores: game.players.map(playerId => ({ playerId, points: "1" })) });
+          await genericRoundsApi.add({ gameId: game.id, mode: "points", scores: game.players.map(playerId => ({ playerId, points: "1" })) });
         }
       })()`);
     await page.reload();
