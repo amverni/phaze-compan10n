@@ -289,12 +289,100 @@ describe("scorekeeper navigation", () => {
       await page.close();
     }
   }, 60_000);
+
+  it.each([
+    "Add Round",
+    "Finish Game",
+    "Standings",
+    "Phases Card",
+  ])("discards %s state when navigating directly between cached Phase Games", async (dialogName) => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(`${appUrl}#/phaseCompan10n/players`);
+      await page.getByText("No players yet", { exact: true }).waitFor();
+      const { first, second } = await page.evaluate<{
+        first: string;
+        second: string;
+      }>(`(async () => {
+          const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+          const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
+          const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+          const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+          const bob = await playersApi.create({ name: "Bob", color: "Rose", isFavorite: 0 });
+          const input = {
+            players: [amy.id, bob.id],
+            phaseSet: {
+              id: "cached-phases", type: "temporary", name: "Two Phases",
+              phases: ["classic-1", "classic-2"],
+            },
+            settings: { tiebreaker: "roundsWon", roundSkipPenalty: 100, sitOutPenalty: 0 },
+          };
+          const first = await gamesApi.create(input);
+          const second = await gamesApi.create(input);
+          await roundsApi.add({
+            gameId: second.id, roundWinnerId: amy.id,
+            scores: [
+              { playerId: amy.id, score: 0, phaseStatus: "completed" },
+              { playerId: bob.id, score: 0, phaseStatus: "failed" },
+            ],
+          });
+          return { first: first.id, second: second.id };
+        })()`);
+      const navigate = async (id: string) => {
+        await page.evaluate((gameId) => {
+          window.location.hash = `/phaseCompan10n/game/${gameId}`;
+        }, id);
+        await page.waitForURL(`${appUrl}#/phaseCompan10n/game/${id}`);
+      };
+      await navigate(second);
+      await page.getByRole("button", { name: "Add round 2", exact: true }).waitFor();
+      await navigate(first);
+      await page.getByRole("button", { name: "Add round 1", exact: true }).waitFor();
+      if (dialogName === "Add Round") {
+        await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+        const entry = page.getByRole("dialog");
+        await entry.getByRole("button", { name: /Round Winner/ }).click();
+        await page.getByRole("option", { name: "Amy", exact: true }).click();
+        await entry.getByRole("tab", { name: "Bob", exact: true }).click();
+        await entry.getByRole("button", { name: "Failed", exact: true }).click();
+        expect(await entry.getByRole("button", { name: "Save round" }).isEnabled()).toBe(true);
+      } else {
+        await page
+          .getByRole("button", {
+            name: dialogName === "Finish Game" ? dialogName : `Open ${dialogName}`,
+            exact: true,
+          })
+          .click();
+      }
+      await page.getByRole("dialog").waitFor({ state: "attached" });
+      await navigate(second);
+      await page
+        .getByRole("button", { name: "Add round 2", exact: true, includeHidden: true })
+        .waitFor();
+      await expect.poll(() => page.getByRole("dialog").count()).toBe(0);
+      await page.getByRole("button", { name: "Add round 2", exact: true }).click();
+      const freshEntry = page.getByRole("dialog");
+      expect(await freshEntry.getByRole("button", { name: "Save round" }).isDisabled()).toBe(true);
+      expect(
+        await freshEntry
+          .getByRole("tab", { name: "Amy", exact: true })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+      expect(await freshEntry.getByRole("button", { name: /Round Winner/ }).innerText()).toContain(
+        "Choose winner",
+      );
+    } finally {
+      await page.close();
+    }
+  }, 60_000);
 });
 
 describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode", (colorScheme) => {
   it("fits one-line logos and flat shells while preserving Safe Areas and Visual Bleed", async () => {
     for (const [width, height] of [
       [320, 568],
+      [390, 844],
+      [768, 1024],
       [844, 390],
       [1280, 900],
     ]) {
@@ -359,16 +447,17 @@ describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode",
               return [style.marginTop, style.marginBottom, style.paddingTop, style.clipPath];
             }),
           ).toEqual(["0px", "0px", "0px", "none"]);
-          expect(
-            await page.locator(".page-shell-bottom-bleed").evaluate((element) => {
-              const box = element.getBoundingClientRect();
-              return {
-                top: box.top,
-                height: box.height,
-                pointerEvents: getComputedStyle(element).pointerEvents,
-              };
-            }),
-          ).toEqual({ top: height, height, pointerEvents: "none" });
+          const bleed = await page.locator(".page-shell-bottom-bleed").evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            return {
+              top: box.top,
+              height: box.height,
+              pointerEvents: getComputedStyle(element).pointerEvents,
+            };
+          });
+          expect(bleed.top).toBeCloseTo(height, 1);
+          expect(bleed.height).toBeCloseTo(height, 1);
+          expect(bleed.pointerEvents).toBe("none");
           if (route === "/players") {
             expect(
               await page

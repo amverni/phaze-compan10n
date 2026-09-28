@@ -8,7 +8,6 @@ export const genericRoundsApi = {
   async add(input: AddGenericRoundInput): Promise<GenericRound> {
     const gameId = input.gameId;
     if (
-      input.mode !== undefined &&
       input.mode !== "points" &&
       input.mode !== "singleRoundWinner" &&
       input.mode !== "passFail"

@@ -44,6 +44,7 @@ it.each([
     settings: pointsSettings(direction),
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: amy.id, points: "-10" },
@@ -51,6 +52,7 @@ it.each([
     ],
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: bob.id, points: "-20" },
@@ -99,6 +101,7 @@ it.each([
     settings: pointsSettings(direction),
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: amy.id, points: "-5" },
@@ -129,7 +132,11 @@ it("rejects unplayed completion and prevents repeat completion or new Rounds fro
   closeDB();
   expect(await genericGamesApi.getById(game.id)).toEqual(game);
   await expect(playersApi.delete(amy.id)).rejects.toThrow("Active Game");
-  const input = { gameId: game.id, scores: [{ playerId: amy.id, points: "0" }] };
+  const input = {
+    mode: "points" as const,
+    gameId: game.id,
+    scores: [{ playerId: amy.id, points: "0" }],
+  };
   const round = await genericRoundsApi.add(input);
   const completed = await genericGamesApi.finish(game.id);
   expect(completed.winnerIds).toEqual([amy.id]);
@@ -148,6 +155,7 @@ it.each([
   const game = await genericGamesApi.create({ players: [amy.id], settings: pointsSettings() });
   if (hasGenericRound) {
     await genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: amy.id, points: "0" }],
     });
@@ -332,6 +340,7 @@ it("lists only generic Games in mixed activity order with creation fallback and 
   clock.mockReturnValue(100);
   const result = await genericGamesApi.create(input);
   await genericRoundsApi.add({
+    mode: "points",
     gameId: result.id,
     scores: [{ playerId: amy.id, points: "-5" }],
   });
@@ -382,7 +391,6 @@ it("prevents every Phase Game write from changing a Generic Game", async () => {
   });
   await expect(gamesApi.addPhase(generic.id, "phase-1")).rejects.toThrow("not found");
   await expect(gamesApi.removePhase(generic.id, "phase-1")).rejects.toThrow("not found");
-  await expect(gamesApi.complete(generic.id, amy.id)).rejects.toThrow("not found");
   await expect(gamesApi.finish(generic.id)).rejects.toThrow("not found");
   await expect(gamesApi.delete(generic.id)).rejects.toThrow("another Scorekeeper");
   await expect(
@@ -444,7 +452,6 @@ it("rejects Phase mutation of wrong-owner Round data even under a Phase Game id"
   );
   await expect(roundsApi.delete(phase.id, 1)).rejects.toThrow("another Scorekeeper");
   await expect(roundsApi.deleteByGameId(phase.id)).rejects.toThrow("another Scorekeeper");
-  await expect(gamesApi.complete(phase.id, amy.id)).rejects.toThrow("another Scorekeeper");
   await expect(gamesApi.finish(phase.id)).rejects.toThrow("another Scorekeeper");
 });
 
@@ -481,6 +488,7 @@ it("keeps completed generic scoreboard, Standings and list identities independen
     settings: pointsSettings("low"),
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: active.id,
     scores: [
       { playerId: amy.id, points: "-10" },
@@ -606,6 +614,7 @@ it.each([
     ],
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: generic.id,
     scores: [
       { playerId: amy.id, points: "0" },
@@ -681,6 +690,7 @@ it.each([
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
   const game = await genericGamesApi.create({ players: [amy.id], settings: pointsSettings() });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [{ playerId: amy.id, points: "-10" }],
   });

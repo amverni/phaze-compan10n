@@ -313,6 +313,7 @@ it("keeps large signed axis labels inside the graph while exposing exact cumulat
           const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
           await genericRoundsApi.add({
             gameId: game.id,
+            mode: "points",
             scores: [
               { playerId: game.players[0], points: "-9007199254740985", tiebreaker: "9007199254740991" },
               { playerId: game.players[1], points: "9007199254740991", tiebreaker: "-9007199254740988" },
@@ -438,6 +439,7 @@ it.each([
       const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
       await genericRoundsApi.add({
         gameId: game.id,
+        mode: "points",
         scores: [
           { playerId: game.players[0], points: "-994", tiebreaker: "-997" },
           { playerId: game.players[1], points: "7", tiebreaker: "4" },

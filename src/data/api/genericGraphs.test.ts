@@ -28,6 +28,7 @@ it("exposes cumulative signed Points and independent Tiebreaker series in Game C
     },
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: rowan.id, points: "0", tiebreaker: "-4" },
@@ -35,6 +36,7 @@ it("exposes cumulative signed Points and independent Tiebreaker series in Game C
     ],
   });
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: maya.id, points: "4", tiebreaker: "-5" },
@@ -191,7 +193,11 @@ it.each(
   }
   await genericRoundsApi.add(
     settings.mode === "points"
-      ? { gameId: game.id, scores: [{ playerId: player.id, points: "0", tiebreaker: "-8" }] }
+      ? {
+          mode: "points",
+          gameId: game.id,
+          scores: [{ playerId: player.id, points: "0", tiebreaker: "-8" }],
+        }
       : settings.mode === "singleRoundWinner"
         ? { gameId: game.id, mode: settings.mode, scores: [{ playerId: player.id, won: true }] }
         : {

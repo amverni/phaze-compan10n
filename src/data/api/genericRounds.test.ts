@@ -32,12 +32,30 @@ afterEach(async () => {
   await resetDatabase();
 });
 
+it("requires an explicit Points Scoring Mode instead of defaulting an incomplete Round payload", async () => {
+  const {
+    game,
+    players: [zed],
+  } = await createPointsGame("high", 1);
+  const input: AddGenericRoundInput = {
+    gameId: game.id,
+    mode: "points",
+    scores: [{ playerId: zed.id, points: "0" }],
+  };
+  Reflect.deleteProperty(input, "mode");
+  await expect(genericRoundsApi.add(input)).rejects.toThrow("Scoring Mode");
+  closeDB();
+  expect(await genericRoundsApi.getByGameId(game.id)).toEqual([]);
+  expect(await genericGamesApi.getById(game.id)).toEqual(game);
+});
+
 it("saves explicit signed Points and reloads Round values and running totals in Game Creation Order", async () => {
   const {
     game,
     players: [zed, amy],
   } = await createPointsGame();
   const first = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: amy.id, points: "-12" },
@@ -55,6 +73,7 @@ it("saves explicit signed Points and reloads Round values and running totals in 
     ],
   });
   const second = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "+7" },
@@ -118,7 +137,11 @@ it.each([
     players: [zed],
   } = await createPointsGame("high", 1);
   await expect(
-    genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points }] }),
+    genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: zed.id, points }],
+    }),
   ).rejects.toThrow(/Points/);
   closeDB();
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([]);
@@ -137,6 +160,7 @@ it.each([
     players: [zed],
   } = await createPointsGame("high", 1);
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [{ playerId: zed.id, points: String(points) }],
   });
@@ -168,9 +192,9 @@ it.each([
     outsider: [zedScore, outsiderScore],
     extra: [zedScore, amyScore, outsiderScore],
   }[invalid];
-  await expect(genericRoundsApi.add({ gameId: game.id, scores: scores ?? [] })).rejects.toThrow(
-    "every Player exactly once",
-  );
+  await expect(
+    genericRoundsApi.add({ mode: "points", gameId: game.id, scores: scores ?? [] }),
+  ).rejects.toThrow("every Player exactly once");
   closeDB();
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([]);
   expect(await genericGamesApi.getById(game.id)).toEqual(game);
@@ -187,6 +211,7 @@ it.each([
   } = await createPointsGame();
   vi.spyOn(Date, "now").mockReturnValue(100);
   const saved = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "3" },
@@ -197,6 +222,7 @@ it.each([
   vi.spyOn(Date, "now").mockReturnValue(200);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: zed.id, points: "4" },
@@ -222,6 +248,7 @@ it.each([
   const second = direction === "high" ? ["-2", "2", "-12"] : ["2", "-2", "12"];
   for (const points of [first, second]) {
     await genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: bob.id, points: points[2] },
@@ -286,6 +313,7 @@ it.each([
   await (await getDB()).put("games", { ...game, settings });
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "3" }],
     }),
@@ -304,7 +332,11 @@ it.each(["empty", "duplicate"])("rejects a corrupted Game roster (%s)", async (i
   await (await getDB()).put("games", corrupted);
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow("roster");
   await expect(
-    genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points: "1" }] }),
+    genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: zed.id, points: "1" }],
+    }),
   ).rejects.toThrow("roster");
   expect(await genericGamesApi.getById(game.id)).toEqual(corrupted);
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([]);
@@ -337,6 +369,7 @@ it.each([
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow(/Round/);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "3" }],
     }),
@@ -370,7 +403,11 @@ it.each([
   await (await getDB()).put("rounds", round);
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow("invalid Points");
   await expect(
-    genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points: "2" }] }),
+    genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: zed.id, points: "2" }],
+    }),
   ).rejects.toThrow("invalid Points");
   expect(await genericRoundsApi.getByGameId(game.id)).toEqual([round]);
   expect(await genericGamesApi.getById(game.id)).toEqual(game);
@@ -401,6 +438,7 @@ it("rejects a saved partial or duplicate-Player Round instead of filling missing
     );
     await expect(
       genericRoundsApi.add({
+        mode: "points",
         gameId: game.id,
         scores: [
           { playerId: zed.id, points: "0" },
@@ -435,6 +473,7 @@ it("rejects historical overflow even when later valid scores would cancel it", a
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow("Total Points");
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "-1" }],
     }),
@@ -449,7 +488,11 @@ it("allows exact opposite-signed cancellation at the integer boundaries", async 
     players: [zed],
   } = await createPointsGame("low", 1);
   for (const points of ["9007199254740991", "-9007199254740991", "-9007199254740991"]) {
-    await genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points }] });
+    await genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: zed.id, points }],
+    });
   }
   closeDB();
   expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
@@ -481,6 +524,7 @@ it("uses monotonically increasing Round numbers and orders persisted scores inde
     });
   }
   const round = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: amy.id, points: "1" },
@@ -522,6 +566,7 @@ it("refuses another Round when its number cannot remain an exact integer", async
   await (await getDB()).put("rounds", round);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "0" }],
     }),
@@ -543,6 +588,7 @@ it("rejects missing or wrong-Scorekeeper Games and foreign-owned saved Rounds", 
   for (const gameId of ["missing", phase.id]) {
     await expect(
       genericRoundsApi.add({
+        mode: "points",
         gameId,
         scores: [{ playerId: zed.id, points: "2" }],
       }),
@@ -560,6 +606,7 @@ it("rejects missing or wrong-Scorekeeper Games and foreign-owned saved Rounds", 
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow("another Scorekeeper");
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "2" }],
     }),
@@ -573,6 +620,7 @@ it("reads Completed Game snapshot identities but never accepts another Round", a
     players: [zed, amy],
   } = await createPointsGame();
   const round = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "7" },
@@ -593,6 +641,7 @@ it("reads Completed Game snapshot identities but never accepts another Round", a
   await playersApi.delete(amy.id);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: zed.id, points: "1" },
@@ -620,6 +669,7 @@ it("requires all saved Players to still exist before adding or displaying a Roun
   await (await getDB()).delete("players", amy.id);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: zed.id, points: "1" },
@@ -638,6 +688,7 @@ it("snapshots Round input before awaits so caller edits cannot change a pending 
     players: [zed, amy],
   } = await createPointsGame();
   const input: AddGenericRoundInput = {
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: amy.id, points: "3" },
@@ -670,6 +721,7 @@ it.each([
     players: [zed],
   } = await createPointsGame("high", 1);
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [{ playerId: zed.id, points: "1" }],
   });
@@ -692,6 +744,7 @@ it.each([
   try {
     await expect(
       genericRoundsApi.add({
+        mode: "points",
         gameId: game.id,
         scores: [{ playerId: zed.id, points: "2" }],
       }),
@@ -714,7 +767,11 @@ it("updates activity after a saved Round and reorders Active Games without chang
   vi.spyOn(Date, "now").mockReturnValue(20);
   const newer = await genericGamesApi.create({ players: [zed.id], settings: game.settings });
   vi.spyOn(Date, "now").mockReturnValue(30);
-  await genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points: "0" }] });
+  await genericRoundsApi.add({
+    mode: "points",
+    gameId: game.id,
+    scores: [{ playerId: zed.id, points: "0" }],
+  });
   closeDB();
   expect(await genericGamesApi.getById(game.id)).toEqual({ ...game, lastActivityAt: 30 });
   expect((await genericGamesApi.getActiveViews()).map(({ game }) => game.id)).toEqual([
@@ -730,7 +787,11 @@ it("serializes concurrent additions into distinct Rounds without losing either s
   } = await createPointsGame("high", 1);
   const saved = await Promise.all(
     ["3", "-1", "7"].map((points) =>
-      genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points }] }),
+      genericRoundsApi.add({
+        mode: "points",
+        gameId: game.id,
+        scores: [{ playerId: zed.id, points }],
+      }),
     ),
   );
   expect(saved.map((round) => round.roundNumber)).toEqual([1, 2, 3]);
@@ -752,10 +813,15 @@ it("rechecks cumulative bounds after a concurrent save instead of racing past th
     players: [zed],
   } = await createPointsGame("high", 1);
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [{ playerId: zed.id, points: "9007199254740990" }],
   });
-  const input = { gameId: game.id, scores: [{ playerId: zed.id, points: "1" }] };
+  const input = {
+    mode: "points" as const,
+    gameId: game.id,
+    scores: [{ playerId: zed.id, points: "1" }],
+  };
   const results = await Promise.allSettled([
     genericRoundsApi.add(input),
     genericRoundsApi.add(input),
@@ -779,7 +845,11 @@ it("reads each scoreboard from one transaction while a Round and activity update
   vi.spyOn(Date, "now").mockReturnValue(game.lastActivityAt + 1);
   const [before, , after] = await Promise.all([
     genericGamesApi.getScoreboard(game.id),
-    genericRoundsApi.add({ gameId: game.id, scores: [{ playerId: zed.id, points: "4" }] }),
+    genericRoundsApi.add({
+      mode: "points",
+      gameId: game.id,
+      scores: [{ playerId: zed.id, points: "4" }],
+    }),
     genericGamesApi.getScoreboard(game.id),
   ]);
   expect(before).toMatchObject({ game, players: [{ totalPoints: 0 }], rounds: [] });
@@ -823,10 +893,10 @@ it("invalidates generic scoreboard, detail and activity only after a successful 
     renderToString(createElement(QueryClientProvider, { client }, createElement(MutationHarness)));
     if (!save) throw new Error("Mutation hook was not rendered");
     await expect(
-      save({ gameId: game.id, scores: [{ playerId: zed.id, points: "" }] }),
+      save({ mode: "points", gameId: game.id, scores: [{ playerId: zed.id, points: "" }] }),
     ).rejects.toThrow("Points");
     for (const key of keys) expect(client.getQueryState(key)?.isInvalidated).toBe(false);
-    await save({ gameId: game.id, scores: [{ playerId: zed.id, points: "-5" }] });
+    await save({ mode: "points", gameId: game.id, scores: [{ playerId: zed.id, points: "-5" }] });
     for (const key of keys) expect(client.getQueryState(key)?.isInvalidated).toBe(true);
     expect(client.getQueryState(playerListOptions().queryKey)?.isInvalidated).toBe(false);
     expect(client.getQueryState(roundKeys.list("unrelated-phase-game"))?.isInvalidated).toBe(false);

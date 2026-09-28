@@ -54,6 +54,7 @@ it("saves explicit signed Tiebreaker entries separately and reopens fixed-order 
     players: [zed, amy],
   } = await createTiebreakerGame();
   const input: AddGenericPointsRoundInput = {
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: amy.id, points: "-12", tiebreaker: "0" },
@@ -69,6 +70,7 @@ it("saves explicit signed Tiebreaker entries separately and reopens fixed-order 
     { playerId: amy.id, points: -12, tiebreaker: 0 },
   ]);
   const second = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "+7", tiebreaker: "+9" },
@@ -150,6 +152,7 @@ it.each([
     players: [zed, amy],
   } = await createTiebreakerGame();
   const input: AddGenericPointsRoundInput = {
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "0", tiebreaker: "0" },
@@ -176,6 +179,7 @@ it.each([
     players: [zed],
   } = await createTiebreakerGame("high", "low", 1);
   await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [{ playerId: zed.id, points: "2", tiebreaker }],
   });
@@ -197,6 +201,7 @@ it.each([
   } = await createTiebreakerGame();
   vi.spyOn(Date, "now").mockReturnValue(100);
   const saved = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "3", tiebreaker: "2" },
@@ -207,6 +212,7 @@ it.each([
   vi.spyOn(Date, "now").mockReturnValue(200);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: zed.id, points: "4", tiebreaker: "3" },
@@ -246,6 +252,7 @@ it.each([
   ];
   for (const scores of [first, second]) {
     await genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: scores
         .map(({ playerId, points, tiebreaker }) => ({
@@ -294,6 +301,7 @@ it.each([
   expect(await genericGamesApi.getActive()).toEqual([]);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: first.map(({ playerId }) => ({ playerId, points: "0", tiebreaker: "0" })),
     }),
@@ -320,6 +328,7 @@ it.each([
     const input: AddGenericRoundInput =
       mode === "points"
         ? {
+            mode: "points",
             gameId: game.id,
             scores: players.map(({ id }) => ({ playerId: id, points: "0" })),
           }
@@ -378,7 +387,7 @@ it.each([
   const scores = players.map(({ id }) => ({ playerId: id, points: "0", tiebreaker: "0" }));
   Reflect.deleteProperty(scores[index], "tiebreaker");
   const before = await genericGamesApi.getScoreboard(game.id);
-  await expect(genericRoundsApi.add({ gameId: game.id, scores })).rejects.toThrow(
+  await expect(genericRoundsApi.add({ mode: "points", gameId: game.id, scores })).rejects.toThrow(
     "Enter a whole number for Tiebreaker.",
   );
   closeDB();
@@ -394,6 +403,7 @@ it("preserves both totals and activity when enabled Points overflow before a val
   } = await createTiebreakerGame();
   vi.spyOn(Date, "now").mockReturnValue(100);
   const saved = await genericRoundsApi.add({
+    mode: "points",
     gameId: game.id,
     scores: [
       { playerId: zed.id, points: "0", tiebreaker: "2" },
@@ -404,6 +414,7 @@ it("preserves both totals and activity when enabled Points overflow before a val
   vi.spyOn(Date, "now").mockReturnValue(200);
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [
         { playerId: zed.id, points: "4", tiebreaker: "6" },
@@ -424,6 +435,7 @@ it("allows independent exact boundary cancellation without adding Tiebreaker int
   } = await createTiebreakerGame("high", "low", 1);
   for (const tiebreaker of ["9007199254740991", "-9007199254740991", "-9007199254740991"]) {
     await genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "1", tiebreaker }],
     });
@@ -464,6 +476,7 @@ it.each([
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow("invalid Tiebreaker");
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "1", tiebreaker: "0" }],
     }),
@@ -496,6 +509,7 @@ it("rejects historical secondary overflow even if a later saved Round cancels it
   await expect(genericGamesApi.getScoreboard(game.id)).rejects.toThrow("Total Tiebreaker");
   await expect(
     genericRoundsApi.add({
+      mode: "points",
       gameId: game.id,
       scores: [{ playerId: zed.id, points: "1", tiebreaker: "-1" }],
     }),

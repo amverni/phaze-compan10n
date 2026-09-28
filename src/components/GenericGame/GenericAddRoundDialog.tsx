@@ -68,6 +68,7 @@ export function GenericAddRoundDialog({
         mode === "points"
           ? {
               gameId,
+              mode: "points",
               scores: value.scores.map(({ playerId, points, tiebreaker }) => ({
                 playerId,
                 points,

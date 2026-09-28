@@ -1,6 +1,6 @@
 # Shared presentation contracts
 
-This is the handoff from [#12](https://github.com/amverni/phaze-compan10n/issues/12) to the completed-result and routing slices (#14 and #15). Domain terminology lives in [CONTEXT.md](../CONTEXT.md); these contracts do not share scoring rules or change persisted records.
+These contracts were introduced in [#12](https://github.com/amverni/phaze-compan10n/issues/12) and integrated across both Scorekeepers through [#27](https://github.com/amverni/phaze-compan10n/issues/27). Domain terminology lives in [CONTEXT.md](../CONTEXT.md); shared presentation does not share scoring rules.
 
 ## Page layout
 
@@ -14,16 +14,18 @@ The shell has no logo, disclaimer, scoring controls, or slant by default. The co
 - `--page-shell-edge-offset`: zero unless the page's decoration needs overlapping angled panels.
 - `--page-shell-footer-note-height`: zero unless the footer includes a note.
 
-`CardBackground` is the Phase Compan10n skin, consumed by Home, Create Game, Game, Players, Phases, Settings, and Phases Card pages. It supplies the slanted surfaces and Mattel disclaimer, and sets the edge offset and note height. Existing logos and Phase-specific controls remain with their existing page consumers. Generic pages should compose `PageShell` directly, not hide or disable parts of `CardBackground`.
+`CardBackground` is the Phase Compan10n skin, consumed by Home, Create Game, Game, Players, Phases, Settings, and Phases Card pages. It supplies the slanted surfaces and Mattel disclaimer, and sets the edge offset and note height. Existing logos and Phase-specific controls remain with their existing page consumers. `ScorekeeperShell` composes `PageShell` with flat decorations and the one-line Scorekeeper logo; it does not hide or disable parts of `CardBackground`.
 
 ## Player presentation
 
-`PlayerIdentity` in `src/types/player.ts` requires only `id`, `name`, and `color`. Saved `Player` extends it with persistence-specific fields. Snapshot creation, storage, and selection remain the responsibility of the later data/API slice.
+`PlayerIdentity` in `src/types/player.ts` requires only `id`, `name`, and `color`. Saved `Player` extends it with persistence-specific fields. The data/API layer captures identities at completion and selects snapshots for completed surfaces instead of live saved Players.
 
 Player rows, avatar stacks, the Phase scoreboard and score-entry chain, Standings, and graph presentation accept this identity contract. The avatar badge itself only needs name and color, which also permits unsaved preview values. Saved-Player editing and Favorite controls still require a saved `Player`.
 
 Phase `deriveStandings` preserves the input Player subtype for included Players, rows, and the winner. This lets current automatic completion continue using saved-Player data without casts, while identity-only inputs can supply read-only presentation. This generic type parameter does not generalize Phase scoring rules.
 
-## Cleanup handoff for #27
+## Retained shared boundaries
 
-No temporary adapters were introduced. `CardBackground` is an actively used Phase-specific skin, not an obsolete compatibility wrapper. The shared shell selectors replace the old structural `card-panel-*-content`/`card-panel-main` selectors; there are no legacy selector aliases to remove.
+No temporary presentation adapters were introduced. `CardBackground` is an actively used Phase-specific skin, not an obsolete compatibility wrapper. The shared shell selectors replace the old structural `card-panel-*-content`/`card-panel-main` selectors; there are no legacy selector aliases to remove.
+
+Both scoreboards share `FinishGameDialog`; generic modes share `GenericRoundDialog` and its draft/submission lifecycle while retaining mode-specific entry bodies. `GraphPlot` shares plotting and accessible-table presentation, not Phase or generic scoring calculations. Standings rows allocate remaining width to names and reserve secondary-score space only when a metric is present.
