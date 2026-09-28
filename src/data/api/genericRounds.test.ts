@@ -249,6 +249,15 @@ it("starts an empty Game with explicit zero totals and shared first place, witho
   } = await createPointsGame();
   expect(await genericGamesApi.getScoreboard(game.id)).toEqual({
     game,
+    primaryGraph: {
+      metric: "Points",
+      direction: "high",
+      series: [zed, amy].map((player) => ({
+        player: identity(player),
+        points: [{ roundNumber: 0, value: 0 }],
+      })),
+    },
+    tiebreakerGraph: null,
     upcomingDealerId: null,
     players: [
       { ...identity(zed), totalPoints: 0 },
