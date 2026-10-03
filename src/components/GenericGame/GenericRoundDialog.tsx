@@ -63,7 +63,7 @@ export function GenericRoundDialog({
           onSubmit();
         }}
       >
-        <DialogTitle className="shrink-0 text-center text-lg font-semibold">Add Round</DialogTitle>
+        <DialogTitle className="sr-only">Add Round</DialogTitle>
         {children}
         <div className="shrink-0 pt-3">
           {submitError && <InlineError message={submitError} />}

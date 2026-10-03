@@ -1,0 +1,102 @@
+import type { Browser } from "playwright";
+import { webkit } from "playwright";
+import { createServer, type ViteDevServer } from "vite";
+import { afterAll, beforeAll, expect, it } from "vitest";
+import type { GenericGameSettings } from "../../types";
+
+let server: ViteDevServer;
+let browser: Browser;
+let appUrl: string;
+
+beforeAll(async () => {
+  server = await createServer({ server: { host: "127.0.0.1", port: 0, open: false } });
+  await server.listen();
+  const address = server.httpServer?.address();
+  if (!address || typeof address === "string") throw new Error("Missing test server address");
+  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  browser = await webkit.launch();
+}, 60_000);
+
+afterAll(async () => {
+  await browser?.close();
+  await server?.close();
+});
+
+const settings: GenericGameSettings[] = [
+  { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+  { mode: "points", pointsDirection: "high", tiebreaker: { direction: "low" }, dealer: false },
+  { mode: "singleRoundWinner", tiebreaker: null, dealer: false },
+  { mode: "passFail", tiebreaker: null, dealer: false },
+];
+
+it.each([
+  { width: 320, height: 568 },
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+])("keeps Add Round accessible without reserving heading space in every mode at $width x $height", async (viewport) => {
+  const page = await browser.newPage({ viewport });
+  try {
+    await page.goto(appUrl);
+    const gameIds = await page.evaluate<string[]>(`(async () => {
+      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const player = await playersApi.create({ name: "Maya", color: "Jam", isFavorite: 0 });
+      const ids = [];
+      for (const settings of ${JSON.stringify(settings)}) {
+        const game = await genericGamesApi.create({ players: [player.id], settings });
+        ids.push(game.id);
+      }
+      return ids;
+    })()`);
+
+    for (const [index, gameId] of gameIds.entries()) {
+      await page.goto(`${appUrl}#/game/${gameId}`);
+      const addRound = page.getByRole("button", { name: "Add Round", exact: true });
+      await addRound.click();
+      const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
+      await dialog.getByRole("button", { name: "Save", exact: true }).waitFor();
+      await page.evaluate(() =>
+        Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
+      );
+
+      const title = dialog.getByRole("heading", { name: "Add Round", exact: true });
+      const titleBounds = await title.boundingBox();
+      if (!titleBounds) throw new Error("Missing accessible Add Round title");
+      expect(titleBounds.width).toBeLessThanOrEqual(1);
+      expect(titleBounds.height).toBeLessThanOrEqual(1);
+      expect(
+        await title.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return style.clip === "rect(0px, 0px, 0px, 0px)" || style.clipPath === "inset(50%)";
+        }),
+      ).toBe(true);
+
+      const mode = settings[index].mode;
+      const firstPlayer =
+        mode === "points"
+          ? dialog.getByRole("tab", { name: "Maya", exact: true })
+          : mode === "singleRoundWinner"
+            ? dialog.getByRole("radio", { name: "Maya", exact: true })
+            : dialog.getByRole("button", { name: "Maya", exact: true });
+      const playerBounds = await firstPlayer.boundingBox();
+      const contentBounds = await dialog.locator(".dialog-content").boundingBox();
+      if (!playerBounds || !contentBounds) throw new Error("Missing Round entry geometry");
+      // Existing padding and the tab border use at most 25px; allow 1px for rounding.
+      expect(playerBounds.y - contentBounds.y).toBeGreaterThanOrEqual(0);
+      expect(playerBounds.y - contentBounds.y).toBeLessThanOrEqual(26);
+
+      const saveBounds = await dialog
+        .getByRole("button", { name: "Save", exact: true })
+        .boundingBox();
+      if (!saveBounds) throw new Error("Missing Save action");
+      expect(saveBounds.y + saveBounds.height).toBeLessThan(viewport.height);
+      await dialog.getByRole("button", { name: "Close", exact: true }).click();
+      await dialog.waitFor({ state: "detached" });
+      await expect
+        .poll(() => addRound.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+    }
+  } finally {
+    await page.close();
+  }
+}, 60_000);
