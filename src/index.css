@@ -355,6 +355,14 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   padding-bottom: var(--page-shell-edge-offset);
 }
 
+.scorekeeper-background .page-shell-header {
+  height: calc(
+    var(--page-shell-panel-height) - var(--slant) / 2 + var(--safe-area-inset-top)
+  );
+  /* Keep 48px header controls and their vertical padding usable on short screens. */
+  min-height: calc(4rem + var(--safe-area-inset-top));
+}
+
 .card-header-logo,
 .card-header-controls {
   height: var(--card-header-alignment-height);
@@ -371,6 +379,15 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   );
   padding-top: var(--footer-top);
   padding-bottom: calc(var(--footer-bottom) + var(--safe-area-inset-bottom));
+}
+
+.scorekeeper-background .page-shell-footer {
+  --footer-top: 12px;
+  --footer-bottom: 12px;
+  height: calc(
+    var(--footer-top) + var(--page-shell-footer-control-size) + var(--footer-bottom) +
+    var(--safe-area-inset-bottom)
+  );
 }
 
 .page-shell-footer-button,

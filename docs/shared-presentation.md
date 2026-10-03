@@ -8,13 +8,15 @@ These contracts were introduced in [#12](https://github.com/amverni/phaze-compan
 
 The shell has no logo, disclaimer, scoring controls, or slant by default. The concrete CSS layout values are:
 
-- `--page-shell-panel-height`: responsive header/footer height.
+- `--page-shell-panel-height`: responsive base panel height; skins can derive separate header and footer heights from it.
 - `--page-shell-footer-control-size`: 56px, or 44px on viewports at most 700px tall; footer controls should use this size.
 - `--page-shell-press-clearance`: room for existing 10% press growth.
 - `--page-shell-edge-offset`: zero unless the page's decoration needs overlapping angled panels.
 - `--page-shell-footer-note-height`: zero unless the footer includes a note.
 
 `CardBackground` is the Phase Compan10n skin, consumed by Home, Create Game, Game, Players, Phases, Settings, and Phases Card pages. It supplies the slanted surfaces and Mattel disclaimer, and sets the edge offset and note height. Existing logos and Phase-specific controls remain with their existing page consumers. `ScorekeeperShell` composes `PageShell` with flat decorations and the one-line Scorekeeper logo; it does not hide or disable parts of `CardBackground`.
+
+`ScorekeeperShell` alone uses compact geometry: its flat header edge sits at the midpoint of the corresponding Phase slant (`--page-shell-panel-height` minus half of `--slant`), with a 64px minimum to keep header controls usable on short screens. Its footer is the responsive control height plus 12px above and 12px below, without Phase's decorative offset. Top and bottom Safe Areas are added separately. At 390x844 with zero insets, the header is approximately 101.6px and the footer is 80px; the compact 44px controls produce a 68px footer. The recovered space belongs to the scrolling main region, with no replacement spacer. Phase panel geometry, disclaimer, and control alignment are unchanged.
 
 ## Player presentation
 
