@@ -312,7 +312,7 @@ it.each([
     await finish.waitFor({ state: "detached" });
     expect(await places.getByRole("listitem").allTextContents()).toEqual([
       expect.stringContaining("Place 1"),
-      expect.stringContaining(tied ? "Place 1" : "Place 2"),
+      expect.stringContaining(tied ? "Tied for place 1" : "Place 2"),
     ]);
     expect(await readGame(page, game.id)).toMatchObject({
       status: "completed",
