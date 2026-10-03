@@ -203,7 +203,7 @@ it.each(
     const entry = page.getByRole("dialog");
     expect(
       await entry
-        .getByRole("button", {
+        .getByRole(owner === "phase10" ? "button" : "status", {
           name: owner === "phase10" ? /Round Winner/ : "Amy Points",
         })
         .innerText(),
@@ -308,7 +308,7 @@ it.each(owners)("rejects a %s Delete after another tab saves a Round", async (ow
     expect(
       await page
         .getByRole("dialog")
-        .getByRole("button", {
+        .getByRole(owner === "phase10" ? "button" : "status", {
           name: owner === "phase10" ? /Round Winner/ : "Amy Points",
         })
         .innerText(),
