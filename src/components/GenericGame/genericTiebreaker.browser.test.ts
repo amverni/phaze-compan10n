@@ -379,7 +379,7 @@ it.each([
       const rows = await standings.getByRole("listitem").allTextContents();
       expect(rows[0]).toContain("Place 1");
       expect(rows[0]).toContain("Maya");
-      expect(rows[1]).toContain("Place 1");
+      expect(rows[1]).toContain("Tied for place 1");
       expect(rows[1]).toContain("Alex");
       expect(rows[2]).toContain("Place 3");
       expect(rows[2]).toContain("Rowan");

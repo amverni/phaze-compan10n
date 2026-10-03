@@ -131,7 +131,7 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
     const standings = page.getByRole("dialog", { name: "Standings", exact: true });
     expect(await standings.getByRole("listitem").allTextContents()).toEqual([
       "Place 11ZedTotal Wins: 1",
-      "Place 11AmyTotal Wins: 1",
+      "Tied for place 11AmyTotal Wins: 1",
       "Place 33BobTotal Wins: 0",
     ]);
     await standings.getByRole("button", { name: "Close", exact: true }).click();
@@ -157,7 +157,7 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
     await standings.getByRole("list", { name: "Standings places" }).waitFor();
     expect(await standings.getByRole("listitem").allTextContents()).toEqual([
       "Place 11ZedTotal Wins: 1",
-      "Place 11AmyTotal Wins: 1",
+      "Tied for place 11AmyTotal Wins: 1",
       "Place 33BobTotal Wins: 0",
     ]);
     await standings.getByRole("button", { name: "Close", exact: true }).click();

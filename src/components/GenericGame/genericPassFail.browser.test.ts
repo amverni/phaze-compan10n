@@ -279,7 +279,7 @@ it("finishes tied Passes with competition places and preserves completed snapsho
     ).toBe(1);
     expect(await places.getByRole("listitem").allTextContents()).toEqual([
       expect.stringContaining("Place 1"),
-      expect.stringContaining("Place 1"),
+      expect.stringContaining("Tied for place 1"),
       expect.stringContaining("Place 3"),
     ]);
     expect(await readGame(page, game.id)).toMatchObject({
