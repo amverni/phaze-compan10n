@@ -459,7 +459,7 @@ it("shows cumulative headers, read-only Round expansion, and shared competition 
     const rows = standings.getByRole("listitem");
     expect(await rows.allTextContents()).toEqual([
       expect.stringContaining("Place 1"),
-      expect.stringContaining("Place 1"),
+      expect.stringContaining("Tied for place 1"),
       expect.stringContaining("Place 3"),
     ]);
     expect(await rows.nth(0).innerText()).toContain("Maya");
