@@ -78,12 +78,15 @@ it.each([
           : mode === "singleRoundWinner"
             ? dialog.getByRole("radio", { name: "Maya", exact: true })
             : dialog.getByRole("button", { name: "Maya", exact: true });
-      const playerBounds = await firstPlayer.boundingBox();
-      const contentBounds = await dialog.locator(".dialog-content").boundingBox();
-      if (!playerBounds || !contentBounds) throw new Error("Missing Round entry geometry");
+      // Sample both bounds in one frame so the shared entrance transform cancels out.
+      const playerOffset = await firstPlayer.evaluate((element) => {
+        const content = element.closest(".dialog-content");
+        if (!content) throw new Error("Missing Round content");
+        return element.getBoundingClientRect().y - content.getBoundingClientRect().y;
+      });
       // Existing padding and the tab border use at most 25px; allow 1px for rounding.
-      expect(playerBounds.y - contentBounds.y).toBeGreaterThanOrEqual(0);
-      expect(playerBounds.y - contentBounds.y).toBeLessThanOrEqual(26);
+      expect(playerOffset).toBeGreaterThanOrEqual(0);
+      expect(playerOffset).toBeLessThanOrEqual(26);
 
       const saveBounds = await dialog
         .getByRole("button", { name: "Save", exact: true })
