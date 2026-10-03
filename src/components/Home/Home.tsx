@@ -28,7 +28,7 @@ export const Home: React.FC = () => {
       }
       footerContent={
         <div className="content-container flex h-full justify-end">
-          <CreateButton />
+          <CreateButton to="/phaseCompan10n/create" />
         </div>
       }
     />

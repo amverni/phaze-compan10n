@@ -1,10 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
 import { GenericGamesList } from "../Games/GenericGamesList";
+import { CreateButton } from "../Home/CreateButton";
 import { HomeMenu } from "../Home/HomeMenu";
 import { ScorekeeperLogo } from "../Logo/ScorekeeperLogo";
 import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
-import { Button } from "../ui";
 
 export function ScorekeeperHome() {
   return (
@@ -17,11 +15,12 @@ export function ScorekeeperHome() {
       mainContent={
         <div className="content-container flex min-h-full flex-col items-center gap-6 py-6">
           <ScorekeeperLogo height={120} />
-          <Button as={Link} to="/create" className="gap-2 px-5 py-3">
-            <Plus className="size-5" aria-hidden />
-            Create Game
-          </Button>
           <GenericGamesList activeOnly />
+        </div>
+      }
+      footerContent={
+        <div className="content-container flex h-full justify-end">
+          <CreateButton to="/create" />
         </div>
       }
     />

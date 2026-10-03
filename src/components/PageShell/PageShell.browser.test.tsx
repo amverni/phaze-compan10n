@@ -164,7 +164,7 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
 
           const controls = page.locator(".page-shell-footer :is(button, a)");
           expect(await controls.count()).toBe(
-            route === "/" ? 0 : route === "/create" || route === `/game/${gameId}` ? 2 : 1,
+            route === "/create" || route === `/game/${gameId}` ? 2 : 1,
           );
           for (const control of await controls.all()) {
             const resting = await control.boundingBox();

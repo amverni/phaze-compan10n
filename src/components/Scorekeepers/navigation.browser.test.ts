@@ -31,6 +31,66 @@ async function openMenuLink(page: Page, name: string) {
 }
 
 describe("scorekeeper navigation", () => {
+  it("opens each Create Game page from one keyboard-accessible circular action in the lower-right Home footer", async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    try {
+      for (const home of ["/", "/phaseCompan10n"]) {
+        await page.goto(`${appUrl}#${home}`);
+        const create = page.getByRole("link", { name: "Create Game", exact: true });
+        await create.waitFor();
+        expect(await create.count()).toBe(1);
+        expect(
+          await page
+            .locator(".page-shell-footer")
+            .getByRole("link", { name: "Create Game", exact: true })
+            .count(),
+        ).toBe(1);
+        expect(
+          await page
+            .locator(".page-shell-main")
+            .getByRole("link", { name: "Create Game", exact: true })
+            .count(),
+        ).toBe(0);
+        expect(await create.innerText()).toBe("");
+        await page.getByRole("heading", { name: "Active Games", exact: true }).waitFor();
+
+        const footer = await page.locator(".page-shell-footer").boundingBox();
+        const control = await create.boundingBox();
+        const icon = await create.locator("svg").boundingBox();
+        if (!footer || !control || !icon) throw new Error("Missing Create Game control");
+        expect(control.width).toBe(56);
+        expect(control.height).toBe(56);
+        expect(control.x).toBe(318);
+        expect(control.y).toBeGreaterThanOrEqual(footer.y);
+        expect(control.y + control.height).toBeLessThanOrEqual(844);
+        expect(icon.width).toBe(32);
+        expect(icon.height).toBe(32);
+        expect(
+          await create.evaluate((element) =>
+            Number.parseFloat(getComputedStyle(element).borderRadius),
+          ),
+        ).toBeGreaterThanOrEqual(28);
+
+        await page.getByRole("button", { name: "Menu", exact: true }).focus();
+        // Safari includes links in keyboard navigation with Option-Tab.
+        await page.keyboard.press("Alt+Tab");
+        expect(await create.evaluate((element) => document.activeElement === element)).toBe(true);
+        expect(await create.evaluate((element) => getComputedStyle(element).outlineWidth)).toBe(
+          "2px",
+        );
+        await create.hover();
+        await expect
+          .poll(() => create.evaluate((element) => getComputedStyle(element).filter))
+          .toBe("brightness(1.1)");
+        await page.keyboard.press("Enter");
+        await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
+        expect(page.url()).toBe(`${appUrl}#${home === "/" ? "/create" : "/phaseCompan10n/create"}`);
+      }
+    } finally {
+      await page.close();
+    }
+  }, 30_000);
+
   it("opens a neutral root and switches scorekeepers through branded choices", async () => {
     const page = await browser.newPage();
     try {
