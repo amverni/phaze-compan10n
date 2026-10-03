@@ -18,24 +18,108 @@ beforeAll(async () => {
   browser = await webkit.launch();
 }, 60_000);
 
-it("rejects unfinished, malformed, and overflowing entries without losing the draft or saving a partial Round", async () => {
+it("saves untouched Players as real zero and resets to a savable all-zero Round", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await openGame(page);
+    const add = page.getByRole("button", { name: "Add Round", exact: true });
+    const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
+    const save = dialog.getByRole("button", { name: "Save", exact: true });
+    await add.click();
+    expect(await save.isEnabled()).toBe(true);
+    expect(await dialog.locator("output").first().innerText()).toBe("0");
+    expect(
+      await dialog.getByText(/entered|Score entry complete|Score entry incomplete/).count(),
+    ).toBe(0);
+    for (const tab of await dialog.getByRole("tab").all()) {
+      expect(await tab.getAttribute("aria-describedby")).toBeNull();
+      expect(await tab.locator("svg.lucide-check").count()).toBe(0);
+    }
+    await save.click();
+    await dialog.waitFor({ state: "hidden" });
+    for (const name of ["Maya", "Rowan"]) {
+      await page.getByRole("cell", { name: `${name}, Round 1: 0 Points`, exact: true }).waitFor();
+    }
+    await add.click();
+    expect(await save.isEnabled()).toBe(true);
+    expect(await dialog.locator("output").first().innerText()).toBe("0");
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it("uses a noninteractive Points display with canonical pointer and keyboard entry", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await openGame(page, ["Maya"]);
+    await page.getByRole("button", { name: "Add Round", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
+    expect(await dialog.getByRole("button", { name: "Maya Points", exact: true }).count()).toBe(0);
+    const value = dialog.getByRole("status", { name: "Maya Points", exact: true });
+    const sign = dialog.getByRole("button", { name: "Change sign", exact: true });
+    const backspace = dialog.getByRole("button", { name: "Backspace", exact: true });
+    const zero = dialog.getByRole("button", { name: "0", exact: true });
+    expect(await value.innerText()).toBe("0");
+    expect(await sign.isDisabled()).toBe(true);
+    expect(await backspace.isDisabled()).toBe(true);
+    await zero.focus();
+    for (const key of ["-", "+", "Backspace", "Delete", "0"]) {
+      await page.keyboard.press(key);
+      expect(await value.innerText()).toBe("0");
+    }
+    await zero.click();
+    await dialog.getByRole("button", { name: "1", exact: true }).click();
+    expect(await value.innerText()).toBe("1");
+    await sign.click();
+    expect(await value.innerText()).toBe("-1");
+    await backspace.click();
+    expect(await value.innerText()).toBe("0");
+    expect(await sign.isDisabled()).toBe(true);
+    expect(await backspace.isDisabled()).toBe(true);
+    await zero.focus();
+    await page.keyboard.type("012-");
+    expect(await value.innerText()).toBe("-12");
+    await page.keyboard.press("Backspace");
+    expect(await value.innerText()).toBe("-1");
+    await page.keyboard.press("Backspace");
+    expect(await value.innerText()).toBe("0");
+    await page.keyboard.type("9-");
+    await page.keyboard.press("+");
+    expect(await value.innerText()).toBe("9");
+    await page.keyboard.press("Delete");
+    expect(await value.innerText()).toBe("0");
+    await page.keyboard.type("1.5");
+    expect(await value.innerText()).toBe("1.5");
+    expect(await dialog.getByRole("button", { name: "Save", exact: true }).isDisabled()).toBe(true);
+    await dialog.getByRole("alert").filter({ hasText: "whole number" }).waitFor();
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    expect(await value.innerText()).toBe("1");
+    expect(await dialog.getByRole("alert").count()).toBe(0);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it("rejects malformed and overflowing entries without losing the draft or saving a partial Round", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {
     await openGame(page, ["Maya"]);
     await saveRound(page, { Maya: "9007199254740991" });
     await page.getByRole("button", { name: "Add Round", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
-    const field = dialog.getByRole("button", { name: "Maya Points", exact: true });
+    const field = dialog.getByRole("status", { name: "Maya Points", exact: true });
+    const keyboard = dialog.getByRole("button", { name: "0", exact: true });
     const save = dialog.getByRole("button", { name: "Save", exact: true });
-    for (const value of ["-", "1.5", "1e2", "9007199254740992"]) {
-      await field.focus();
+    for (const value of ["1.5", "1e2", "9007199254740992"]) {
+      await keyboard.focus();
       await page.keyboard.press("Delete");
       await page.keyboard.type(value);
       expect(await field.getAttribute("aria-invalid")).toBe("true");
       expect(await save.isDisabled()).toBe(true);
       expect(await dialog.getByRole("alert").count()).toBeGreaterThan(0);
     }
-    await field.focus();
+    await keyboard.focus();
     await page.keyboard.press("Delete");
     await page.keyboard.type("1");
     await save.click();
@@ -48,11 +132,17 @@ it("rejects unfinished, malformed, and overflowing entries without losing the dr
     await dialog.getByRole("button", { name: "Close", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     expect(await page.getByRole("button", { name: "Expand Round 2", exact: true }).count()).toBe(0);
+    await page.getByRole("button", { name: "Add Round", exact: true }).click();
+    expect(await field.innerText()).toBe("1");
+    await keyboard.focus();
+    await page.keyboard.press("-");
+    await save.click();
+    await dialog.waitFor({ state: "hidden" });
     await page.reload();
     await page
       .getByRole("cell", { name: "Maya, Round 1: 9007199254740991 Points", exact: true })
       .waitFor();
-    expect(await page.getByRole("button", { name: "Expand Round 2", exact: true }).count()).toBe(0);
+    await page.getByRole("cell", { name: "Maya, Round 2: -1 Points", exact: true }).waitFor();
   } finally {
     await page.close();
   }
@@ -82,7 +172,7 @@ it("discards unsaved entries on leaving or reloading the scoreboard and restores
         standingsButton,
       ),
     ).toBe(true);
-    await dialog.getByRole("button", { name: "Maya Points", exact: true }).focus();
+    await dialog.getByRole("button", { name: "0", exact: true }).focus();
     // macOS WebKit needs Option-Tab to include buttons when full keyboard access is off.
     const tab = process.platform === "darwin" ? "Alt+Tab" : "Tab";
     for (const key of [tab, `Shift+${tab}`]) {
@@ -102,16 +192,16 @@ it("discards unsaved entries on leaving or reloading the scoreboard and restores
     await page.getByRole("link", { name: "Go home", exact: true }).click();
     await page.getByRole("link", { name: "Continue game with Maya", exact: true }).click();
     await add.click();
-    expect(
-      await dialog.getByRole("button", { name: "Maya Points", exact: true }).innerText(),
-    ).toContain("Not entered");
+    expect(await dialog.getByRole("status", { name: "Maya Points", exact: true }).innerText()).toBe(
+      "0",
+    );
     await dialog.getByRole("button", { name: "7", exact: true }).click();
     await page.reload();
     await add.click();
-    expect(
-      await dialog.getByRole("button", { name: "Maya Points", exact: true }).innerText(),
-    ).toContain("Not entered");
-    expect(await dialog.getByRole("button", { name: "Save", exact: true }).isDisabled()).toBe(true);
+    expect(await dialog.getByRole("status", { name: "Maya Points", exact: true }).innerText()).toBe(
+      "0",
+    );
+    expect(await dialog.getByRole("button", { name: "Save", exact: true }).isEnabled()).toBe(true);
   } finally {
     await page.close();
   }
@@ -212,7 +302,7 @@ it.each([
     ).toBe("true");
     for (const name of names) {
       await dialog.getByRole("tab", { name, exact: true }).click();
-      await dialog.getByRole("button", { name: `${name} Points`, exact: true }).focus();
+      await dialog.getByRole("button", { name: "0", exact: true }).focus();
       await page.keyboard.press("Delete");
       await page.keyboard.type("0");
     }
@@ -290,8 +380,9 @@ async function saveRound(page: Page, scores: Record<string, string>) {
   const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
   for (const [name, points] of Object.entries(scores)) {
     await dialog.getByRole("tab", { name, exact: true }).click();
-    await dialog.getByRole("button", { name: `${name} Points`, exact: true }).focus();
-    await page.keyboard.type(points);
+    await dialog.getByRole("button", { name: "0", exact: true }).focus();
+    await page.keyboard.type(points.replace(/^-/, ""));
+    if (points.startsWith("-")) await page.keyboard.press("-");
   }
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator('[role="dialog"]').waitFor({ state: "detached" });
@@ -398,25 +489,25 @@ it("keeps a modal Points draft on close, saves explicit zero and negatives, and 
     await add.click();
     const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
     const save = dialog.getByRole("button", { name: "Save", exact: true });
-    expect(await save.isDisabled()).toBe(true);
+    expect(await save.isEnabled()).toBe(true);
     expect(await dialog.locator("input, textarea, [contenteditable=true]").count()).toBe(0);
     await dialog.getByRole("button", { name: "0", exact: true }).tap();
     expect(
       await dialog.getByRole("tab", { name: "Maya", exact: true }).getAttribute("aria-describedby"),
-    ).toBeTruthy();
+    ).toBeNull();
     await page.keyboard.press("Escape");
     await dialog.waitFor({ state: "hidden" });
     await add.click();
-    expect(
-      await dialog.getByRole("button", { name: "Maya Points", exact: true }).innerText(),
-    ).toContain("0");
+    expect(await dialog.getByRole("status", { name: "Maya Points", exact: true }).innerText()).toBe(
+      "0",
+    );
     await dialog.getByRole("tab", { name: "Rowan", exact: true }).click();
-    await dialog.getByRole("button", { name: "Rowan Points", exact: true }).focus();
-    await page.keyboard.type("-12");
+    await dialog.getByRole("button", { name: "0", exact: true }).focus();
+    await page.keyboard.type("12-");
     await page.keyboard.press("Backspace");
     expect(
-      await dialog.getByRole("button", { name: "Rowan Points", exact: true }).innerText(),
-    ).toContain("-1");
+      await dialog.getByRole("status", { name: "Rowan Points", exact: true }).innerText(),
+    ).toBe("-1");
     expect(await save.isEnabled()).toBe(true);
     await save.click();
     await dialog.waitFor({ state: "hidden" });
@@ -427,10 +518,10 @@ it("keeps a modal Points draft on close, saves explicit zero and negatives, and 
       await page.getByRole("cell", { name: "Rowan, Round 1: -1 Points", exact: true }).count(),
     ).toBe(1);
     await add.click();
-    expect(await save.isDisabled()).toBe(true);
-    expect(
-      await dialog.getByRole("button", { name: "Maya Points", exact: true }).innerText(),
-    ).toContain("Not entered");
+    expect(await save.isEnabled()).toBe(true);
+    expect(await dialog.getByRole("status", { name: "Maya Points", exact: true }).innerText()).toBe(
+      "0",
+    );
     await page.keyboard.press("Escape");
     await dialog.waitFor({ state: "hidden" });
     await page.reload();

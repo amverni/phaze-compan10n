@@ -72,7 +72,7 @@ Recording round-by-round points, points with a tiebreaker, single round winners,
 A play session for one or more Players in Generic Scorekeeping that remains active until the person keeping score explicitly finishes it. Its Players and scoring rules are chosen during setup and fixed when the game is created.
 
 **Generic Round**:
-A scoring cycle in a Generic Game, recorded according to its Scoring Mode. Required numeric entries must be explicit for every Player: zero is a score, but a blank entry is not.
+A scoring cycle in a Generic Game, recorded according to its Scoring Mode. Untouched Points and enabled Generic Tiebreaker entries count as zero.
 
 ### Scoring rules
 

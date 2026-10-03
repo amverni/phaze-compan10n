@@ -375,7 +375,7 @@ it.each([
       const points = dialog.getByRole("button", { name: `${name} Points`, exact: true });
       const secondary = dialog.getByRole("button", { name: `${name} Tiebreaker`, exact: true });
       await points.focus();
-      await page.keyboard.type("-1234567");
+      await page.keyboard.type("1234567-");
       const tab = process.platform === "darwin" ? "Alt+Tab" : "Tab";
       await page.keyboard.press(tab);
       await expect
