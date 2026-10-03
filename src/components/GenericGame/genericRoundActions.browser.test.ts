@@ -106,7 +106,7 @@ it("replaces Save with a reduced-motion-aware spinner while retaining a failed d
     expect(await close.isEnabled()).toBe(true);
     expect(await save.locator("svg.lucide-check").count()).toBe(1);
     await save.click();
-    await dialog.waitFor({ state: "hidden" });
+    await dialog.waitFor({ state: "detached" });
     await page.getByRole("cell", { name: "Maya, Round 1: 7 Points", exact: true }).waitFor();
     expect(await page.getByRole("button", { name: "Expand Round 2", exact: true }).count()).toBe(0);
     await add.click();
@@ -232,7 +232,7 @@ it.each([
       ).toEqual({ focusVisible: true, style: "solid", width: "2px" });
       await page.keyboard.press(process.platform === "darwin" ? "Shift+Alt+Tab" : "Shift+Tab");
       await page.keyboard.press("Enter");
-      await dialog.waitFor({ state: "hidden" });
+      await dialog.waitFor({ state: "detached" });
       await expect
         .poll(() => add.evaluate((element) => element === document.activeElement))
         .toBe(true);
@@ -253,7 +253,7 @@ it.each([
       }
       await save.focus();
       await page.keyboard.press("Enter");
-      await dialog.waitFor({ state: "hidden" });
+      await dialog.waitFor({ state: "detached" });
       await page.getByRole("button", { name: "Expand Round 1", exact: true }).waitFor();
       await add.click();
       if (mode === "points") {
@@ -268,7 +268,7 @@ it.each([
         ).toBe("false");
       }
       await close.click();
-      await dialog.waitFor({ state: "hidden" });
+      await dialog.waitFor({ state: "detached" });
     }
   } finally {
     await page.close();

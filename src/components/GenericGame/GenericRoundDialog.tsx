@@ -81,6 +81,11 @@ interface GenericRoundDialogActionsProps {
   children?: ReactNode;
 }
 
+const roundActionClasses = [
+  "size-11 shrink-0",
+  "data-focus:outline-solid data-focus:outline-text-secondary!",
+].join(" ");
+
 export function GenericRoundDialogActions({
   onClose,
   submitting,
@@ -94,7 +99,7 @@ export function GenericRoundDialogActions({
         aria-label="Close"
         disabled={submitting}
         onClick={() => onClose(false)}
-        className="size-11 shrink-0 data-focus:outline-solid data-focus:outline-text-secondary!"
+        className={roundActionClasses}
       >
         <X className="size-4" aria-hidden />
       </Button>
@@ -103,7 +108,7 @@ export function GenericRoundDialogActions({
         type="submit"
         aria-label="Save"
         disabled={!canSave || submitting}
-        className="size-11 shrink-0 data-focus:outline-solid data-focus:outline-text-secondary!"
+        className={roundActionClasses}
       >
         {submitting ? (
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
