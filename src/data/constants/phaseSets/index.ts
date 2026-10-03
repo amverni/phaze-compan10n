@@ -198,5 +198,8 @@ export const builtInPhaseSets: BuiltInPhaseSet[] = [
   skipSimilarPhaseSet,
   phaseTwentyOnePhaseSet,
   phaseTwentyPhaseSet,
+  phaseTwentyDeltaPhaseSet,
   phaseThirtyPhaseSet,
+  phaseThirtyDeltaPhaseSet,
+  bestOfPhase30PhaseSet,
 ];
