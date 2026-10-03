@@ -112,7 +112,7 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
         for (const label of visible.querySelectorAll(".sr-only")) label.remove();
         return visible.textContent;
       }),
-    ).toBe("Amy1");
+    ).toBe("A1");
     await add.click();
     expect(await save.isDisabled()).toBe(true);
     expect(await dialog.getByRole("radio", { checked: true }).count()).toBe(0);

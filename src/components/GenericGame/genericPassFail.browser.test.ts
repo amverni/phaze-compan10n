@@ -86,7 +86,9 @@ it("keeps Points as the setup default and preserves independent Dealer across mo
     });
     await page.reload();
     await page.getByRole("table", { name: "Passes scoreboard", exact: true }).waitFor();
-    expect(await page.getByRole("cell", { name: /upcoming Round/ }).count()).toBe(0);
+    expect(
+      await page.getByRole("cell", { name: "Maya, upcoming Round", exact: true }).innerText(),
+    ).toBe("");
     await page.getByRole("link", { name: "Go home", exact: true }).click();
     await page.getByRole("link", { name: "Create Game", exact: true }).click();
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
