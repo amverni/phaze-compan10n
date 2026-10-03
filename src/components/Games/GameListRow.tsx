@@ -44,6 +44,7 @@ export function GameListRow({ game, destination, onDelete, isDeleting }: GameLis
       </Link>
       <Button
         type="button"
+        variant="plain"
         className="group/trash trash-btn mx-1 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-secondary hover:bg-black/5 hover:text-pt-red-500! dark:hover:bg-white/10"
         onClick={onDelete}
         disabled={isDeleting}
