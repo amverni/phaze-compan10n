@@ -14,6 +14,7 @@ import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
 import { Button, InlineError } from "../ui";
 import { GenericScoreboard } from "./GenericScoreboard";
 import { GenericStandingsDialog } from "./GenericStandingsDialog";
+import "./genericGameHeader.css";
 
 export function GenericGame({ gameId }: { gameId: GameId }) {
   const [standingsOpen, setStandingsOpen] = useState(false);
@@ -41,21 +42,23 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
     <>
       <ScorekeeperShell
         headerContent={
-          <div className="content-container flex h-full items-center gap-3 py-2">
-            <div className="min-w-0 flex-1">
+          <div className="generic-game-header relative h-full">
+            <div className="generic-game-header-logo absolute inset-0 flex items-center justify-center py-2">
               <ScorekeeperLogo height={64} />
             </div>
-            {view && (
-              <Button
-                type="button"
-                aria-label="Open Standings"
-                disabled={isError}
-                onClick={() => setStandingsOpen(true)}
-                className="size-12 shrink-0 data-focus:outline-text-secondary!"
-              >
-                <ChartNoAxesColumn className="size-8" aria-hidden />
-              </Button>
-            )}
+            <div className="generic-game-header-controls absolute inset-0 z-10 flex items-center justify-end py-2">
+              {view && (
+                <Button
+                  type="button"
+                  aria-label="Open Standings"
+                  disabled={isError}
+                  onClick={() => setStandingsOpen(true)}
+                  className="size-12 shrink-0 data-focus:outline-solid data-focus:outline-text-secondary!"
+                >
+                  <ChartNoAxesColumn className="size-8" aria-hidden />
+                </Button>
+              )}
+            </div>
           </div>
         }
         mainContent={

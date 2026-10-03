@@ -18,6 +18,8 @@ The shell has no logo, disclaimer, scoring controls, or slant by default. The co
 
 `ScorekeeperShell` alone uses compact geometry: its flat header edge sits at the midpoint of the corresponding Phase slant (`--page-shell-panel-height` minus half of `--slant`), with a 64px minimum to keep header controls usable on short screens. Its footer is the responsive control height plus 12px above and 12px below, without Phase's decorative offset. Top and bottom Safe Areas are added separately. At 390x844 with zero insets, the header is approximately 101.6px and the footer is 80px; the compact 44px controls produce a 68px footer. The recovered space belongs to the scrolling main region, with no replacement spacer. Phase panel geometry, disclaimer, and control alignment are unchanged.
 
+The Generic Game header layers its viewport-centered logo independently from the right-aligned Standings control. Symmetric clearance for the control and the larger horizontal Safe Area lets the word shrink uniformly on narrow screens without moving when Standings is absent or disabled. The control retains Safe Area and press clearance while the noninteractive stripes bleed to both viewport edges.
+
 ## Player presentation
 
 `PlayerIdentity` in `src/types/player.ts` requires only `id`, `name`, and `color`. Saved `Player` extends it with persistence-specific fields. The data/API layer captures identities at completion and selects snapshots for completed surfaces instead of live saved Players.
