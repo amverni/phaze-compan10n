@@ -1,0 +1,33 @@
+.generic-scoreboard {
+  grid-template-columns:
+    36px repeat(var(--player-count, 1), minmax(max-content, 1fr));
+}
+
+.generic-scoreboard :is(thead, tbody, tr) {
+  display: contents;
+  background: inherit;
+}
+
+.generic-scoreboard :is(td, th):not(:first-child) {
+  min-width: 70px;
+}
+
+/* Structural row controls fill the narrow grid cell, not a floating glass button. */
+.generic-scoreboard-control {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.scoreboard-cell--anchor-top .generic-scoreboard-control {
+  align-items: flex-start;
+  padding-top: 14px;
+}
+
+.generic-scoreboard-control:focus-visible {
+  outline: 2px solid var(--color-text-secondary);
+  outline-offset: -3px;
+}

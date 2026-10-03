@@ -104,7 +104,10 @@ describe("generic Points Games", () => {
       await page.reload();
       await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
       expect(await page.getByRole("columnheader", { name: /Maya/ }).count()).toBe(1);
-      expect(await page.getByText("No rounds yet.", { exact: true }).count()).toBe(1);
+      expect(await page.getByText("No rounds yet.", { exact: true }).count()).toBe(0);
+      expect(
+        await page.getByRole("cell", { name: "Maya, upcoming Round", exact: true }).innerText(),
+      ).toBe("");
       expect(await page.getByRole("button", { name: /Settings|Players/ }).count()).toBe(0);
       expect(await page.getByRole("button", { name: "Finish Game", exact: true }).count()).toBe(1);
       expect(await page.getByText(/Phase|Dealer|Tiebreaker/).count()).toBe(0);
@@ -189,14 +192,9 @@ describe("generic Points Games", () => {
       await expect.poll(() => scoreboard.count()).toBe(1);
       await scoreboard.focus();
       expect(await scoreboard.evaluate((element) => element === document.activeElement)).toBe(true);
-      await page.keyboard.down("ArrowRight");
-      try {
-        await expect
-          .poll(() => scoreboard.evaluate((element) => element.scrollLeft))
-          .toBeGreaterThan(0);
-      } finally {
-        await page.keyboard.up("ArrowRight");
-      }
+      expect(
+        await scoreboard.evaluate((element) => element.scrollWidth <= element.clientWidth),
+      ).toBe(true);
       expect(await page.getByRole("button", { name: /Reorder|Remove|Settings/ }).count()).toBe(0);
       await page.getByRole("link", { name: "Go home", exact: true }).click();
       await page.getByRole("link", { name: "Create Game", exact: true }).click();

@@ -346,7 +346,7 @@ it("rotates visible saved and upcoming Dealer markers, including expanded and re
 }, 60_000);
 
 it("keeps solo Dealer markers on every Round and reclaims their layout space when off", async () => {
-  const widths: number[] = [];
+  const dealerPadding: number[] = [];
   for (const dealer of [false, true]) {
     const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
     try {
@@ -361,10 +361,13 @@ it("keeps solo Dealer markers on every Round and reclaims their layout space whe
       await firstScore.waitFor();
       const table = page.getByRole("table", { name: "Points scoreboard" });
       expect(await table.getByText("D", { exact: true }).count()).toBe(dealer ? 3 : 0);
-      expect(await page.getByRole("cell", { name: /upcoming Round/ }).count()).toBe(dealer ? 1 : 0);
-      const bounds = await firstScore.boundingBox();
-      if (!bounds) throw new Error("Missing solo score geometry");
-      widths.push(bounds.width);
+      expect(await page.getByRole("cell", { name: /upcoming Round/ }).count()).toBe(1);
+      dealerPadding.push(
+        await firstScore
+          .locator(":scope > div")
+          .first()
+          .evaluate((element) => Number.parseFloat(getComputedStyle(element).paddingLeft)),
+      );
       const add = page.getByRole("button", { name: "Add Round", exact: true });
       await page.getByRole("region", { name: "Scoreboard", exact: true }).evaluate((element) => {
         element.scrollLeft = element.scrollWidth;
@@ -382,7 +385,8 @@ it("keeps solo Dealer markers on every Round and reclaims their layout space whe
       await page.close();
     }
   }
-  expect(widths[0]).toBeLessThan(widths[1]);
+  expect(dealerPadding[0]).toBe(0);
+  expect(dealerPadding[1]).toBeGreaterThan(0);
 }, 120_000);
 
 it("keeps a modal Points draft on close, saves explicit zero and negatives, and clears after save", async () => {

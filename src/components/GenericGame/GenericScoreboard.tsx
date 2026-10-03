@@ -1,17 +1,43 @@
 import { Check, Plus, X } from "lucide-react";
-import { useState } from "react";
-import type { GenericScoreboardView } from "../../types";
+import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
+import type { GenericScoreboardView, GenericScoreTotal } from "../../types";
 import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
-import { Button, DealerMarker } from "../ui";
+import { DealerMarker } from "../ui";
 import { GenericAddRoundDialog } from "./GenericAddRoundDialog";
 import { GenericPassFailRoundDialog } from "./GenericPassFailRoundDialog";
 import { PassFailOutcome } from "./PassFailOutcome";
+import "../Scoreboard/scoreboard.css";
+import "./genericScoreboard.css";
 
-const cellClasses = "border-r border-b border-text-secondary/20 bg-app-background px-3 py-3";
+function primaryTotal(score: GenericScoreTotal) {
+  return "totalPoints" in score
+    ? score.totalPoints
+    : "totalWins" in score
+      ? score.totalWins
+      : score.totalPasses;
+}
 
 export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   const [addOpen, setAddOpen] = useState(false);
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
+  const rootRef = useRef<HTMLElement>(null);
+  const resultsId = useId();
+
+  useEffect(() => {
+    if (expandedRound === null) return;
+    const collapseOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) {
+        setExpandedRound(null);
+      }
+    };
+    document.addEventListener("pointerdown", collapseOutside);
+    return () => document.removeEventListener("pointerdown", collapseOutside);
+  }, [expandedRound]);
+
+  function toggleRound(roundNumber: number) {
+    setExpandedRound((previous) => (previous === roundNumber ? null : roundNumber));
+  }
+
   const metric =
     view.game.settings.mode === "points"
       ? "Points"
@@ -22,92 +48,100 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   return (
     <>
       <section
+        ref={rootRef}
         aria-label="Scoreboard"
         // biome-ignore lint/a11y/noNoninteractiveTabindex: Native scroll regions need focus for keyboard scrolling.
         tabIndex={0}
         className="glass relative min-h-0 overflow-auto rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-secondary"
       >
-        <table className="w-full border-separate border-spacing-0 text-center">
+        <table
+          className="scoreboard generic-scoreboard w-full text-center"
+          style={{ "--player-count": view.players.length } as CSSProperties}
+        >
           <caption className="sr-only">
             {metric === "Wins" ? "Rounds Won" : metric} scoreboard
           </caption>
           <thead>
             <tr>
-              <th
-                scope="col"
-                className={[cellClasses, "sticky top-0 left-0 z-30 text-xs"].join(" ")}
-              >
-                Round
+              <th scope="col" className="scoreboard-cell scoreboard-cell--sticky-corner">
+                <span className="sr-only">Round</span>
               </th>
-              {view.players.map((player) => (
+              {view.players.map((player, index) => (
                 <th
                   key={player.id}
                   scope="col"
-                  className={[cellClasses, "sticky top-0 z-20 min-w-28"].join(" ")}
+                  className={[
+                    "scoreboard-cell scoreboard-cell--sticky-top",
+                    index === view.players.length - 1 ? "scoreboard-cell--last-col" : "",
+                  ].join(" ")}
                 >
-                  <span className="inline-flex flex-col items-center gap-2">
-                    <PlayerAvatar player={player} />
-                    <span className="max-w-40 truncate text-sm" title={player.name}>
-                      {player.name}
+                  <span className="sr-only">{player.name}</span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span aria-hidden className="flex">
+                      <PlayerAvatar player={player} variant="icon-initials" />
                     </span>
-                    <span className="whitespace-nowrap text-lg font-semibold tabular-nums">
+                    <span className="whitespace-nowrap text-2xl font-medium leading-none text-text-primary tabular-nums">
                       <span className="sr-only">Total {metric}: </span>
-                      {"totalPoints" in player
-                        ? player.totalPoints
-                        : "totalWins" in player
-                          ? player.totalWins
-                          : player.totalPasses}
+                      {primaryTotal(player)}
                     </span>
                     {"totalTiebreaker" in player && player.totalTiebreaker !== undefined && (
-                      <span className="whitespace-nowrap text-sm font-normal text-text-secondary tabular-nums">
+                      <span className="whitespace-nowrap text-sm font-normal leading-none text-text-secondary tabular-nums">
                         <span className="sr-only">Total Tiebreaker: </span>
                         {player.totalTiebreaker}
                       </span>
                     )}
-                  </span>
+                  </div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {view.rounds.length === 0 && (
-              <tr>
-                <td
-                  colSpan={view.players.length + 1}
-                  className="px-4 py-8 text-sm text-text-secondary"
-                >
-                  No rounds yet.
-                </td>
-              </tr>
-            )}
-            {view.rounds.map((round) => (
+            {view.rounds.map((round, roundIndex) => (
               <tr key={round.roundNumber}>
-                <th scope="row" className={[cellClasses, "sticky left-0 z-10 text-sm"].join(" ")}>
-                  <Button
+                <th
+                  scope="row"
+                  className={[
+                    "scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--anchor-top",
+                    roundIndex === view.rounds.length - 1 ? "scoreboard-cell--last-row" : "",
+                  ].join(" ")}
+                >
+                  <button
                     type="button"
                     aria-label={`${expandedRound === round.roundNumber ? "Collapse" : "Expand"} Round ${round.roundNumber}`}
                     aria-expanded={expandedRound === round.roundNumber}
-                    onClick={() =>
-                      setExpandedRound(
-                        expandedRound === round.roundNumber ? null : round.roundNumber,
-                      )
-                    }
-                    className="size-11 data-focus:outline-text-secondary!"
+                    onClick={() => toggleRound(round.roundNumber)}
+                    className="generic-scoreboard-control"
                   >
-                    {round.roundNumber}
-                  </Button>
+                    <span className="text-base font-medium leading-none text-text-secondary tabular-nums">
+                      {round.roundNumber}
+                    </span>
+                  </button>
                 </th>
                 {round.scores.map((score, index) => (
+                  // biome-ignore lint/a11y/useKeyWithClickEvents: The round control is the keyboard equivalent of this enlarged pointer target.
                   <td
                     key={score.playerId}
+                    onClick={() => toggleRound(round.roundNumber)}
                     aria-label={`${view.players[index].name}, Round ${round.roundNumber}: ${"points" in score ? `${score.points} Points${score.tiebreaker !== undefined ? `, ${score.tiebreaker} Tiebreaker` : ""}` : "passed" in score ? (score.passed ? "Passed" : "Failed") : score.won ? "Won" : "Lost"}${round.dealerId === score.playerId ? ", Dealer" : ""}`}
-                    className={[cellClasses, "whitespace-nowrap tabular-nums"].join(" ")}
+                    aria-describedby={
+                      expandedRound === round.roundNumber
+                        ? `${resultsId}-${round.roundNumber}-${index}`
+                        : undefined
+                    }
+                    className={[
+                      "scoreboard-cell scoreboard-cell--anchor-top cursor-pointer whitespace-nowrap tabular-nums",
+                      index === view.players.length - 1 ? "scoreboard-cell--last-col" : "",
+                      roundIndex === view.rounds.length - 1 ? "scoreboard-cell--last-row" : "",
+                    ].join(" ")}
                   >
                     <div
-                      className={["relative", view.game.settings.dealer ? "px-6" : ""].join(" ")}
+                      className={[
+                        "relative flex w-full flex-col items-center gap-1 text-base font-medium leading-none [&>svg]:size-4",
+                        view.game.settings.dealer ? "px-6" : "",
+                      ].join(" ")}
                     >
                       {round.dealerId === score.playerId && (
-                        <DealerMarker className="absolute top-1/2 left-0 -translate-y-1/2" />
+                        <DealerMarker className="absolute top-0 left-0.75" />
                       )}
                       {"passed" in score ? (
                         <PassFailOutcome passed={score.passed} />
@@ -115,7 +149,7 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                         <>
                           <span>{score.points}</span>
                           {score.tiebreaker !== undefined && (
-                            <span className="block text-sm text-text-secondary">
+                            <span className="text-sm font-normal leading-none text-text-secondary">
                               {score.tiebreaker}
                             </span>
                           )}
@@ -127,19 +161,26 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       )}
                     </div>
                     {expandedRound === round.roundNumber && (
-                      <div className="pt-2 text-sm text-text-secondary">
-                        <span className="sr-only">Accumulated {metric}: </span>
-                        {"totalPoints" in score
-                          ? score.totalPoints
-                          : "totalWins" in score
-                            ? score.totalWins
-                            : score.totalPasses}
-                        {"totalTiebreaker" in score && score.totalTiebreaker !== undefined && (
-                          <div className="text-xs">
-                            <span className="sr-only">Accumulated Tiebreaker: </span>
-                            {score.totalTiebreaker}
-                          </div>
-                        )}
+                      <div
+                        id={`${resultsId}-${round.roundNumber}-${index}`}
+                        className="scoreboard-extras scoreboard-extras--open"
+                      >
+                        <div className="text-xs leading-none text-text-secondary/70">
+                          <span
+                            aria-hidden
+                            className="my-0.5 h-px w-3/4 shrink-0 bg-text-secondary/70"
+                          />
+                          <span>
+                            <span className="sr-only">Accumulated {metric}: </span>
+                            {primaryTotal(score)}
+                          </span>
+                          {"totalTiebreaker" in score && score.totalTiebreaker !== undefined && (
+                            <span>
+                              <span className="sr-only">Accumulated Tiebreaker: </span>
+                              {score.totalTiebreaker}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </td>
@@ -148,38 +189,35 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
             ))}
             {view.game.status === "active" && (
               <tr>
-                <td
-                  colSpan={view.game.settings.dealer ? 1 : view.players.length + 1}
-                  className={[
-                    "border-t border-dashed border-text-secondary/50 text-left",
-                    view.game.settings.dealer ? "sticky left-0 z-10 bg-app-background" : "",
-                  ].join(" ")}
+                <th
+                  scope="row"
+                  className="scoreboard-cell scoreboard-cell--sticky-left scoreboard-cell--dashed scoreboard-cell--last-row"
                 >
-                  <Button
+                  <button
                     type="button"
                     aria-label="Add Round"
                     onClick={() => setAddOpen(true)}
+                    className="generic-scoreboard-control"
+                  >
+                    <span className="inline-flex size-5 items-center justify-center rounded-full border-[1.5px] border-text-secondary/60 text-text-secondary">
+                      <Plus className="size-3.5" aria-hidden />
+                    </span>
+                  </button>
+                </th>
+                {view.players.map((player, index) => (
+                  <td
+                    key={player.id}
+                    aria-label={`${player.name}, upcoming Round${view.upcomingDealerId === player.id ? ": Dealer" : ""}`}
                     className={[
-                      "my-3 min-h-11 gap-2 text-sm data-focus:outline-text-secondary!",
-                      view.game.settings.dealer ? "mx-auto size-11" : "sticky left-3 ml-3 px-4",
+                      "scoreboard-cell scoreboard-cell--dashed scoreboard-cell--last-row",
+                      index === view.players.length - 1 ? "scoreboard-cell--last-col" : "",
                     ].join(" ")}
                   >
-                    <Plus className="size-4" aria-hidden />
-                    {!view.game.settings.dealer && "Add Round"}
-                  </Button>
-                </td>
-                {view.game.settings.dealer &&
-                  view.players.map((player) => (
-                    <td
-                      key={player.id}
-                      aria-label={`${player.name}, upcoming Round${view.upcomingDealerId === player.id ? ": Dealer" : ""}`}
-                      className="border-t border-dashed border-text-secondary/50 px-3 py-3"
-                    >
-                      {view.upcomingDealerId === player.id && (
-                        <DealerMarker className="opacity-60" />
-                      )}
-                    </td>
-                  ))}
+                    {view.upcomingDealerId === player.id && (
+                      <DealerMarker className="absolute left-1.25 opacity-60" />
+                    )}
+                  </td>
+                ))}
               </tr>
             )}
           </tbody>
