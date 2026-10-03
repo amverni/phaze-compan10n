@@ -174,6 +174,70 @@ async function openPointsGame(page: Page, names = ["Maya", "Rowan"]) {
   return game;
 }
 
+it.each([
+  "light",
+  "dark",
+] as const)("keeps the selected metric border stronger without relying on focus in %s mode", async (colorScheme) => {
+  const page = await browser.newPage({ colorScheme, viewport: { width: 390, height: 844 } });
+  try {
+    await openPointsGame(page, ["Maya"]);
+    await page.getByRole("button", { name: "Add Round", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
+    const points = dialog.getByRole("button", { name: "Maya Points", exact: true });
+    const secondary = dialog.getByRole("button", { name: "Maya Tiebreaker", exact: true });
+    const zero = dialog.getByRole("button", { name: "0", exact: true });
+    const sign = dialog.getByRole("button", { name: "Change sign", exact: true });
+    const backspace = dialog.getByRole("button", { name: "Backspace", exact: true });
+    const border = (field: typeof points) =>
+      field.evaluate((element) => getComputedStyle(element).borderTopColor);
+    const selectedBorder = await points.evaluate((element) => {
+      const reference = document.createElement("span");
+      reference.style.color = "var(--color-text-secondary)";
+      element.append(reference);
+      const color = getComputedStyle(reference).color;
+      reference.remove();
+      return color;
+    });
+    const ordinaryBorder = await border(secondary);
+    expect(await border(points)).toBe(selectedBorder);
+    expect(selectedBorder).not.toBe(ordinaryBorder);
+    await zero.focus();
+    expect(await points.evaluate((element) => element === document.activeElement)).toBe(false);
+    expect(await border(points)).toBe(selectedBorder);
+    await page.keyboard.type("12-");
+    expect(await points.locator("output").innerText()).toBe("-12");
+    await secondary.click();
+    expect(await border(points)).toBe(ordinaryBorder);
+    expect(await border(secondary)).toBe(selectedBorder);
+    expect(await sign.isDisabled()).toBe(true);
+    expect(await backspace.isDisabled()).toBe(true);
+    for (const key of ["-", "+", "Backspace", "Delete", "0"]) {
+      await page.keyboard.press(key);
+      expect(await secondary.locator("output").innerText()).toBe("0");
+    }
+    await dialog.getByRole("button", { name: "3", exact: true }).click();
+    await sign.click();
+    expect(await secondary.locator("output").innerText()).toBe("-3");
+    expect(await points.locator("output").innerText()).toBe("-12");
+    await backspace.click();
+    expect(await secondary.locator("output").innerText()).toBe("0");
+    expect(await sign.isDisabled()).toBe(true);
+    expect(await backspace.isDisabled()).toBe(true);
+    await zero.focus();
+    await page.keyboard.type("4-");
+    await page.keyboard.press("Backspace");
+    expect(await secondary.locator("output").innerText()).toBe("0");
+    await points.focus();
+    await page.keyboard.press("Delete");
+    expect(await points.locator("output").innerText()).toBe("0");
+    expect(await secondary.locator("output").innerText()).toBe("0");
+    expect(await sign.isDisabled()).toBe(true);
+    expect(await backspace.isDisabled()).toBe(true);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
 it("targets two independent numeric fields with one keypad and preserves the draft through tabs, swipe and Close", async () => {
   const page = await browser.newPage({ viewport: { width: 320, height: 568 }, hasTouch: true });
   page.setDefaultTimeout(5_000);
@@ -193,7 +257,7 @@ it("targets two independent numeric fields with one keypad and preserves the dra
     await dialog.getByRole("button", { name: "1", exact: true }).click();
     await dialog.getByRole("button", { name: "0", exact: true }).click();
     expect(await points.innerText()).toContain("10");
-    expect(await save.isDisabled()).toBe(true);
+    expect(await save.isEnabled()).toBe(true);
     await tiebreaker.click();
     expect(await tiebreaker.getAttribute("aria-pressed")).toBe("true");
     expect(await points.getAttribute("aria-pressed")).toBe("false");
@@ -202,8 +266,8 @@ it("targets two independent numeric fields with one keypad and preserves the dra
     await dialog.getByRole("button", { name: "Change sign", exact: true }).click();
     expect(await tiebreaker.innerText()).toContain("-2");
     expect(await points.innerText()).toContain("10");
-    expect(await dialog.getByRole("tab", { name: "Maya", exact: true }).innerText()).toContain(
-      "Score entry complete",
+    expect(await dialog.getByRole("tab", { name: "Maya", exact: true }).innerText()).not.toContain(
+      "Score entry",
     );
     await dialog.getByRole("tabpanel", { name: "Maya", exact: true }).evaluate((element) => {
       const bounds = element.getBoundingClientRect();
@@ -261,15 +325,15 @@ it("targets two independent numeric fields with one keypad and preserves the dra
     await standings.getByRole("button", { name: "Close", exact: true }).click();
     await standings.waitFor({ state: "detached" });
     await add.click();
-    expect(await points.innerText()).toContain("Not entered");
-    expect(await tiebreaker.innerText()).toContain("Not entered");
-    expect(await save.isDisabled()).toBe(true);
+    expect(await points.locator("output").innerText()).toBe("0");
+    expect(await tiebreaker.locator("output").innerText()).toBe("0");
+    expect(await save.isEnabled()).toBe(true);
   } finally {
     await page.close();
   }
 }, 60_000);
 
-it("rejects incomplete and inexact Tiebreakers, rejects accumulated overflow atomically, and discards drafts on reload", async () => {
+it("rejects inexact Tiebreakers, recovers from accumulated overflow atomically, and discards drafts on reload", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
@@ -283,8 +347,8 @@ it("rejects incomplete and inexact Tiebreakers, rejects accumulated overflow ato
     await add.click();
     await points.click();
     await page.keyboard.type("10");
-    expect(await save.isDisabled()).toBe(true);
-    for (const value of ["-", "+", "1.5", "1e2", "9007199254740992", "9007199254740991.1"]) {
+    expect(await save.isEnabled()).toBe(true);
+    for (const value of ["1.5", "1e2", "9007199254740992", "9007199254740991.1"]) {
       await secondary.click();
       await page.keyboard.press("Delete");
       await page.keyboard.type(value);
@@ -315,8 +379,9 @@ it("rejects incomplete and inexact Tiebreakers, rejects accumulated overflow ato
     expect(rounds).toHaveLength(1);
     await secondary.click();
     await page.keyboard.press("Backspace");
-    expect(await save.isDisabled()).toBe(true);
-    await page.keyboard.type("-1");
+    expect(await secondary.locator("output").innerText()).toBe("0");
+    expect(await save.isEnabled()).toBe(true);
+    await page.keyboard.type("1-");
     await save.click();
     await dialog.waitFor({ state: "detached" });
     const header = page.getByRole("columnheader").filter({ hasText: "Maya" });
@@ -329,9 +394,9 @@ it("rejects incomplete and inexact Tiebreakers, rejects accumulated overflow ato
     await page.keyboard.type("3");
     await page.reload();
     await add.click();
-    expect(await points.innerText()).toContain("Not entered");
-    expect(await secondary.innerText()).toContain("Not entered");
-    expect(await save.isDisabled()).toBe(true);
+    expect(await points.locator("output").innerText()).toBe("0");
+    expect(await secondary.locator("output").innerText()).toBe("0");
+    expect(await save.isEnabled()).toBe(true);
   } finally {
     await page.close();
   }
@@ -400,6 +465,22 @@ it.each([
     await page.getByRole("button", { name: "Start", exact: true }).click();
     await page.getByRole("button", { name: "Add Round", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
+    expect(await dialog.getByRole("button", { name: "Save", exact: true }).isEnabled()).toBe(true);
+    expect(await dialog.getByText(/entered|Score entry/).count()).toBe(0);
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await dialog.waitFor({ state: "detached" });
+    for (const name of ["Maya", "Rowan", "Lee", "Alex"]) {
+      await page
+        .getByRole("cell", { name: `${name}, Round 1: 0 Points, 0 Tiebreaker`, exact: true })
+        .waitFor();
+    }
+    await page.getByRole("button", { name: "Add Round", exact: true }).click();
+    expect(await dialog.getByRole("status", { name: "Maya Points", exact: true }).innerText()).toBe(
+      "0",
+    );
+    expect(
+      await dialog.getByRole("status", { name: "Maya Tiebreaker", exact: true }).innerText(),
+    ).toBe("0");
     // Lee's better secondary score must not overcome the primary comparison.
     for (const [name, points, tiebreaker] of [
       ["Maya", leaderPoints, leaderTiebreaker],
@@ -409,9 +490,11 @@ it.each([
     ]) {
       await dialog.getByRole("tab", { name, exact: true }).click();
       await dialog.getByRole("button", { name: `${name} Points`, exact: true }).click();
-      await page.keyboard.type(points);
+      await page.keyboard.type(points.replace(/^-/, ""));
+      if (points.startsWith("-")) await page.keyboard.press("-");
       await dialog.getByRole("button", { name: `${name} Tiebreaker`, exact: true }).click();
-      await page.keyboard.type(tiebreaker);
+      await page.keyboard.type(tiebreaker.replace(/^-/, ""));
+      if (tiebreaker.startsWith("-")) await page.keyboard.press("-");
     }
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await dialog.waitFor({ state: "detached" });
