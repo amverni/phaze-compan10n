@@ -1,5 +1,5 @@
 import { DialogTitle } from "@headlessui/react";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useAddGenericRound } from "../../data/hooks/useGenericGames";
 import type { AddGenericRoundInput } from "../../types";
@@ -81,6 +81,11 @@ interface GenericRoundDialogActionsProps {
   children?: ReactNode;
 }
 
+const roundActionClasses = [
+  "size-11 shrink-0",
+  "data-focus:outline-solid data-focus:outline-text-secondary!",
+].join(" ");
+
 export function GenericRoundDialogActions({
   onClose,
   submitting,
@@ -91,22 +96,25 @@ export function GenericRoundDialogActions({
     <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-2">
       <Button
         type="button"
+        aria-label="Close"
         disabled={submitting}
         onClick={() => onClose(false)}
-        className="min-h-11 px-4 text-sm data-focus:outline-text-secondary!"
+        className={roundActionClasses}
       >
-        Close
+        <X className="size-4" aria-hidden />
       </Button>
       {children}
       <Button
         type="submit"
+        aria-label="Save"
         disabled={!canSave || submitting}
-        className="min-h-11 gap-2 px-5 text-sm font-semibold data-focus:outline-text-secondary!"
+        className={roundActionClasses}
       >
-        {submitting && (
+        {submitting ? (
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
+        ) : (
+          <Check className="size-4 text-pt-green-500" aria-hidden />
         )}
-        Save
       </Button>
     </div>
   );
