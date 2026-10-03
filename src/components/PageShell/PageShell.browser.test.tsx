@@ -174,6 +174,8 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
             expect(resting.y - footer.y).toBe(12);
             expect(height - insets.bottom - resting.y - resting.height).toBeCloseTo(12, 1);
             if (!(await control.isEnabled())) continue;
+            const isAnchoredFlag = (await control.getAttribute("aria-label")) === "Finish Game";
+            const pressSurface = isAnchoredFlag ? control.locator(":scope > .glass") : control;
             await control.focus();
             expect(await control.evaluate((element) => document.activeElement === element)).toBe(
               true,
@@ -181,9 +183,10 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
             await control.hover();
             await page.mouse.down();
             await expect
-              .poll(async () => (await control.boundingBox())?.width)
+              .poll(async () => (await pressSurface.boundingBox())?.width)
               .toBeCloseTo(size * 1.1, 1);
-            const pressed = await control.boundingBox();
+            if (isAnchoredFlag) expect(await control.boundingBox()).toEqual(resting);
+            const pressed = await pressSurface.boundingBox();
             if (!pressed) throw new Error(`Missing pressed control on ${route}`);
             expect(pressed.x).toBeGreaterThanOrEqual(insets.left);
             expect(pressed.x + pressed.width).toBeLessThanOrEqual(width - insets.right);
@@ -192,7 +195,7 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
             // Release outside the control so navigation and dialogs do not change the page.
             await page.mouse.move(0, 0);
             await page.mouse.up();
-            await expect.poll(async () => (await control.boundingBox())?.width).toBe(size);
+            await expect.poll(async () => (await pressSurface.boundingBox())?.width).toBe(size);
           }
           const bleed = await page.locator(".page-shell-bottom-bleed").boundingBox();
           expect(bleed?.y).toBeCloseTo(height, 1);
