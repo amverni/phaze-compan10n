@@ -55,9 +55,8 @@ it.each([
       await addRound.click();
       const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
       await dialog.getByRole("button", { name: "Save", exact: true }).waitFor();
-      await page.evaluate(() =>
-        Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
-      );
+      // Wait for actionability; an animation snapshot can precede the entrance transition.
+      await dialog.getByRole("button", { name: "Close", exact: true }).click({ trial: true });
 
       const title = dialog.getByRole("heading", { name: "Add Round", exact: true });
       const titleBounds = await title.boundingBox();

@@ -36,6 +36,8 @@ Both scoreboards share `FinishGameMenu`, anchored above the footer flag with Pau
 
 Generic modes share `GenericRoundDialog` and its draft/submission lifecycle while retaining mode-specific entry bodies. `GraphPlot` shares plotting and accessible-table presentation, not Phase or generic scoring calculations. Standings rows allocate remaining width to names and reserve secondary-score space only when a metric is present.
 
+Generic Add Round reserves the remaining dialog height for its mode-specific body, with Close/Save actions pinned below it inside the dialog's existing Safe Area and press padding. Only the body scrolls for long entries; recoverable save errors use a separate keyboard-scrollable area capped at one third of the form height, above the stationary actions. This composition does not change shared Dialog geometry or numeric keypad sizing.
+
 Both scoreboards use the compact grid, sticky cells, borders, and expanded-result styling in `Scoreboard/scoreboard.css`, with icon-and-initial Player badges. The generic scoreboard retains semantic table rows and headers, uses intrinsic Player column widths for signed safe-integer totals, and renders only generic results supplied by the API. Its upcoming row has blank Player cells except for an optional Dealer marker; completed Games have no upcoming row.
 
 Game-list trash actions use the shared `Button` with `variant="plain"` on both Home and Games history. This omits the persistent glass surface while preserving press, disabled, and keyboard-only focus feedback; the focus outline uses the current text color for visibility in both themes. Other Buttons retain their default glass styling.
