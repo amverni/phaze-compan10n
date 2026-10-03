@@ -1,0 +1,16 @@
+.generic-game-header {
+  margin-left: calc(-1 * var(--safe-area-inset-left));
+  margin-right: calc(-1 * var(--safe-area-inset-right));
+}
+
+.generic-game-header-logo {
+  /* Mirror the 48px control and 16px edge clearance, even when Standings is absent. */
+  padding-inline: calc(
+    4rem + max(var(--safe-area-inset-left), var(--safe-area-inset-right))
+  );
+}
+
+.generic-game-header-controls {
+  padding-left: calc(1rem + var(--safe-area-inset-left));
+  padding-right: calc(1rem + var(--safe-area-inset-right));
+}
