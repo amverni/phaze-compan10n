@@ -42,6 +42,7 @@ export const genericGamesApi = {
     await tx.done;
     return views.map(({ game, players }) => ({
       id: game.id,
+      name: game.name,
       status: game.status,
       lastActivityAt: game.lastActivityAt,
       players,
@@ -61,6 +62,7 @@ export const genericGamesApi = {
     const game: ActiveGenericGame = {
       id: crypto.randomUUID(),
       scorekeeper: "generic",
+      name: input.name?.trim() || undefined,
       status: "active",
       players: [...input.players],
       settings:

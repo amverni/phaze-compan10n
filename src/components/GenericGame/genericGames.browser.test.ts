@@ -181,7 +181,7 @@ describe("generic Points Games", () => {
           .count(),
       ).toBe(1);
       await page.reload();
-      await page.getByText("Points - Low wins", { exact: true }).waitFor();
+      await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
       await expectScoreboardOrder(page, order);
       expect(
         await page

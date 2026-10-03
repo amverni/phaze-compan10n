@@ -73,22 +73,14 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
             !isError && <output>Game not found in Scorekeeper.</output>
           ) : (
             <div className="contents" inert={isError}>
-              <p className="pb-4 text-center text-sm text-text-secondary">
-                {view.game.settings.mode === "points"
-                  ? `Points - ${view.game.settings.pointsDirection === "high" ? "High wins" : "Low wins"}`
-                  : view.game.settings.mode === "singleRoundWinner"
-                    ? "Single Round Winner - Most wins"
-                    : "Pass/Fail - Most passes"}
-                {view.game.settings.mode === "points" && view.game.settings.tiebreaker && (
-                  <span className="block text-xs">
-                    Tiebreaker -{" "}
-                    {view.game.settings.tiebreaker.direction === "high" ? "High wins" : "Low wins"}
-                  </span>
-                )}
-              </p>
-              <GenericScoreboard key={view.game.id} view={view} />
+              {view.game.name && (
+                <h1 className="shrink-0 truncate pb-4 text-center text-sm text-text-secondary">
+                  {view.game.name}
+                </h1>
+              )}
+              <GenericScoreboard key={`scoreboard-${view.game.id}`} view={view} />
               <GenericStandingsDialog
-                key={view.game.id}
+                key={`standings-${view.game.id}`}
                 open={standingsOpen && !isError}
                 onClose={setStandingsOpen}
                 view={view}

@@ -64,7 +64,7 @@ it("keeps Points as the setup default and preserves independent Dealer across mo
           .locator("[data-list-row-key]:visible")
           .count(),
       )
-      .toBe(2);
+      .toBe(3);
     expect(await dealer.isChecked()).toBe(true);
     await selectMode(page, "Points");
     expect(await page.getByRole("radio", { name: "Low wins", exact: true }).isChecked()).toBe(true);
@@ -76,7 +76,7 @@ it("keeps Points as the setup default and preserves independent Dealer across mo
       .poll(() => page.getByRole("radiogroup", { name: "Points Direction", exact: true }).count())
       .toBe(0);
     await page.getByRole("button", { name: "Start", exact: true }).click();
-    await page.getByText("Pass/Fail - Most passes", { exact: true }).waitFor();
+    await page.getByRole("table", { name: "Passes scoreboard" }).waitFor();
     const gameId = page.url().split("/").at(-1);
     if (!gameId) throw new Error("Missing created Game ID");
     expect((await readGame(page, gameId)).settings).toEqual({
