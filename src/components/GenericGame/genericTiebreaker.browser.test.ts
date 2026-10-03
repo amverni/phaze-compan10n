@@ -45,6 +45,48 @@ async function selectMode(page: Page, name: "Points" | "Single Round Winner" | "
 }
 
 it.each([
+  "no-preference",
+  "reduce",
+] as const)("keeps Scoring Mode pointer-selectable when reopening during dismissal after layout changes (%s motion)", async (reducedMotion) => {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    reducedMotion,
+  });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/create`);
+    await page.getByRole("tab", { name: "Settings", exact: true }).click();
+    const trigger = page.getByLabel("Scoring Mode", { exact: true });
+    const enable = page.getByRole("switch", { name: "Enable Tiebreaker", exact: true });
+    for (let cycle = 0; cycle < 10; cycle++) {
+      await enable.click();
+      await trigger.click();
+      await page.keyboard.press("Escape");
+      expect(await trigger.evaluate((element) => element === document.activeElement)).toBe(true);
+      await page.keyboard.press("Space");
+      await page.getByRole("option", { name: "Pass/Fail", exact: true }).click();
+      expect(await trigger.innerText()).toContain("Pass/Fail");
+      await selectMode(page, "Points");
+      expect(await enable.isChecked()).toBe(cycle % 2 === 0);
+    }
+    await trigger.press("ArrowDown");
+    await page.keyboard.press("Home");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    expect(await trigger.innerText()).toContain("Single Round Winner");
+    expect(await trigger.evaluate((element) => element === document.activeElement)).toBe(true);
+    await trigger.press("Space");
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Enter");
+    expect(await trigger.innerText()).toContain("Points");
+    expect(await enable.isChecked()).toBe(false);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it.each([
   "Single Round Winner",
   "Pass/Fail",
 ] as const)("restores Tiebreaker choices through %s without leaking them into a count Game or new setup", async (mode) => {
