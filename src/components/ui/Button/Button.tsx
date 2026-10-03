@@ -4,22 +4,32 @@ import { mergeClassName } from "../mergeClassName";
 import { interactiveClasses } from "../sharedClasses";
 
 const baseClasses = [
-  "glass",
   "inline-flex items-center justify-center rounded-full relative",
-  interactiveClasses,
   "hover:brightness-110 active:scale-110",
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
 ].join(" ");
 
+const variantClasses = {
+  default: ["glass", interactiveClasses].join(" "),
+  plain:
+    "cursor-pointer focus:outline-none data-[focus]:outline-solid data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-current",
+};
+
+type StyledButtonProps<TTag extends ElementType = "button"> = ButtonProps<TTag> & {
+  variant?: "default" | "plain";
+};
+
 /**
- * An opaque, theme-aware button that wraps Headless UI's `Button`.
+ * A theme-aware button that wraps Headless UI's `Button`.
  *
  * Accepts the same props as `@headlessui/react`'s `Button` and layers on
- * the app's shared surface styling. Pass `as`, `children`, `className`, etc. just
- * like you would with the Headless UI component.
+ * the app's shared surface styling by default. Use `variant="plain"` for
+ * surface-free actions with a current-color keyboard focus outline.
  */
-export function Button<TTag extends ElementType = "button">(props: ButtonProps<TTag>): ReactElement;
-export function Button(props: ButtonProps<"button">) {
-  const merged = mergeClassName(baseClasses, props);
+export function Button<TTag extends ElementType = "button">(
+  props: StyledButtonProps<TTag>,
+): ReactElement;
+export function Button({ variant = "default", ...props }: StyledButtonProps) {
+  const merged = mergeClassName([baseClasses, variantClasses[variant]].join(" "), props);
   return <HeadlessButton {...props} className={merged} />;
 }
