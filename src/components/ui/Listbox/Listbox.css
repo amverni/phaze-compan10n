@@ -24,13 +24,15 @@
   opacity: 0.99;
 }
 
-.listbox-options[data-enter] {
+/* Interrupted transitions can retain data-leave after reopening. The current
+   open state must own the animation and hit testing, not the transition phase. */
+.listbox-options[data-open] {
   transition-duration: var(--listbox-enter-duration);
   animation: listbox-grow-in var(--listbox-enter-duration) cubic-bezier(0.18, 0.9, 0.2, 1)
     both;
 }
 
-.listbox-options[data-leave] {
+.listbox-options:not([data-open]) {
   transition-duration: var(--listbox-leave-duration);
   animation: listbox-shrink-out var(--listbox-leave-duration) cubic-bezier(0.45, 0, 1, 0.6)
     both;
@@ -66,8 +68,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .listbox-options[data-enter],
-  .listbox-options[data-leave] {
+  .listbox-options[data-open],
+  .listbox-options:not([data-open]) {
     animation: none;
   }
 }
