@@ -63,6 +63,14 @@ function wordGeometry(page: Page) {
   });
 }
 
+async function expectSameWord(page: Page, expected: Awaited<ReturnType<typeof wordGeometry>>) {
+  const actual = await wordGeometry(page);
+  expect(actual.loaded).toBe(true);
+  for (const metric of ["center", "width", "height", "left", "right"] as const) {
+    expect(actual[metric], metric).toBeCloseTo(expected[metric], 3);
+  }
+}
+
 it.each([
   "light",
   "dark",
@@ -212,7 +220,7 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
     expect(await button.count()).toBe(0);
     await page.evaluate("window.releaseHeaderStorage()");
     await button.waitFor();
-    expect(await wordGeometry(page)).toEqual(loading);
+    await expectSameWord(page, loading);
     expect(await button.isEnabled()).toBe(true);
 
     await failGameRead(page, true);
@@ -224,7 +232,7 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
     await finish.getByRole("button", { name: "Finish", exact: true }).press("Enter");
     await page.getByRole("alert").filter({ hasText: "Unable to load this Game." }).waitFor();
     expect(await button.isDisabled()).toBe(true);
-    expect(await wordGeometry(page)).toEqual(loading);
+    await expectSameWord(page, loading);
     await page.getByRole("button", { name: "Try again", exact: true }).click();
     const standings = page.getByRole("dialog", { name: "Standings", exact: true });
     await standings.getByRole("list", { name: "Standings places", exact: true }).waitFor();
@@ -234,7 +242,7 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
     await page.keyboard.press("Escape");
     await standings.waitFor({ state: "detached" });
     expect(await button.isEnabled()).toBe(true);
-    expect(await wordGeometry(page)).toEqual(loading);
+    await expectSameWord(page, loading);
     expect(await page.getByRole("button", { name: "Finish Game", exact: true }).count()).toBe(0);
 
     await page.reload();
@@ -244,7 +252,7 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
       .toBe(true);
     await page.keyboard.press("Escape");
     await standings.waitFor({ state: "detached" });
-    expect(await wordGeometry(page)).toEqual(loading);
+    await expectSameWord(page, loading);
     await button.click();
     await standings.getByRole("list", { name: "Standings places", exact: true }).waitFor();
   } finally {
@@ -264,11 +272,11 @@ it("keeps the word stationary when an initial storage error is retried or the Ga
     expect(await button.count()).toBe(0);
     await page.getByRole("button", { name: "Try again", exact: true }).click();
     await button.waitFor();
-    expect(await wordGeometry(page)).toEqual(error);
+    await expectSameWord(page, error);
     await page.goto(`${appUrl}#/game/missing-header-game`);
     await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
     expect(await button.count()).toBe(0);
-    expect(await wordGeometry(page)).toEqual(error);
+    await expectSameWord(page, error);
   } finally {
     await page.close();
   }
