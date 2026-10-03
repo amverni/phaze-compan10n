@@ -1,0 +1,245 @@
+/// <reference types="node" />
+
+import type { Browser, Locator, Page } from "playwright";
+import { webkit } from "playwright";
+import { createServer, type ViteDevServer } from "vite";
+import { afterAll, beforeAll, expect, it } from "vitest";
+import type { GenericGameSettings } from "../../types";
+
+let server: ViteDevServer;
+let browser: Browser;
+let appUrl: string;
+
+beforeAll(async () => {
+  server = await createServer({ server: { host: "127.0.0.1", port: 0, open: false } });
+  await server.listen();
+  const address = server.httpServer?.address();
+  if (!address || typeof address === "string") throw new Error("Missing test server address");
+  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  browser = await webkit.launch();
+}, 60_000);
+
+it("keeps actions visible above a Safe Area when a recoverable error is longer than the dialog", async () => {
+  const page = await browser.newPage({
+    viewport: { width: 320, height: 480 },
+    reducedMotion: "reduce",
+  });
+  try {
+    await page.addInitScript(() => {
+      document.addEventListener("DOMContentLoaded", () => {
+        document.documentElement.style.setProperty("--safe-area-inset-bottom", "34px");
+      });
+    });
+    const dialog = await openRound(page, { mode: "passFail", tiebreaker: null, dealer: false }, 12);
+    await failNextSave(
+      page,
+      "Round storage unavailable. Keep this draft and try saving again. ".repeat(20),
+    );
+    const save = dialog.getByRole("button", { name: "Save", exact: true });
+    await save.click();
+    await dialog.getByRole("alert").filter({ hasText: "Round storage unavailable" }).waitFor();
+    await expectPinnedActions(dialog, 34);
+    expect(await save.isEnabled()).toBe(true);
+    const error = dialog.getByRole("region", { name: "Round save error", exact: true });
+    expect(await error.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+      true,
+    );
+    await error.focus();
+    await page.keyboard.press("End");
+    await expect.poll(() => error.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expectPinnedActions(dialog, 34);
+
+    // A dragged dialog must carry its actions, rather than leave them fixed to the viewport.
+    await dialog.locator(".dialog-panel").evaluate((element) => {
+      element.style.transform = "translateY(-24px)";
+    });
+    await expectPinnedActions(dialog, 34);
+    await dialog.locator(".dialog-panel").evaluate((element) => {
+      element.style.removeProperty("transform");
+    });
+    await save.click();
+    await dialog.waitFor({ state: "detached" });
+    await page.getByRole("button", { name: "Expand Round 1", exact: true }).waitFor();
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+afterAll(async () => {
+  await browser?.close();
+  await server?.close();
+});
+
+async function openRound(page: Page, settings: GenericGameSettings, playerCount: number) {
+  await page.goto(appUrl);
+  const gameId = await page.evaluate<string>(`(async () => {
+    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const players = [];
+    for (let index = 1; index <= ${playerCount}; index++) {
+      const player = await playersApi.create({
+        name: "Player " + index, color: "Jam", isFavorite: 0,
+      });
+      players.push(player.id);
+    }
+    return (await genericGamesApi.create({
+      players, settings: ${JSON.stringify(settings)},
+    })).id;
+  })()`);
+  await page.goto(`${appUrl}#/game/${gameId}`);
+  await page.getByRole("button", { name: "Add Round", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
+  await dialog.getByRole("button", { name: "Save", exact: true }).waitFor();
+  return dialog;
+}
+
+async function expectPinnedActions(dialog: Locator, bottomInset: number) {
+  const panel = await dialog.locator(".dialog-panel").boundingBox();
+  if (!panel) throw new Error("Missing Round dialog panel");
+  for (const name of ["Close", "Save"]) {
+    const action = await dialog.getByRole("button", { name, exact: true }).boundingBox();
+    if (!action) throw new Error(`Missing ${name} action`);
+    // Existing form/action padding leaves 20px below an unpressed control.
+    expect(panel.y + panel.height - action.y - action.height).toBeCloseTo(bottomInset + 20, 0);
+  }
+  expect(
+    await dialog.locator(".dialog-content").evaluate((element) => ({
+      overflow: element.scrollHeight - element.clientHeight,
+      scrollTop: element.scrollTop,
+    })),
+  ).toEqual({ overflow: 0, scrollTop: 0 });
+}
+
+async function failNextSave(page: Page, message: string) {
+  await page.evaluate((message) => {
+    const add = IDBObjectStore.prototype.add;
+    IDBObjectStore.prototype.add = function (value, key) {
+      if (this.name === "rounds") {
+        IDBObjectStore.prototype.add = add;
+        throw new DOMException(message, "QuotaExceededError");
+      }
+      return add.call(this, value, key);
+    };
+  }, message);
+}
+
+async function expectBodyClearOfActions(dialog: Locator, lastControl: Locator) {
+  const body = dialog.locator(".dialog-scroll:not(.dialog-content)").first();
+  await body.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  const bodyBounds = await body.boundingBox();
+  const lastBounds = await lastControl.boundingBox();
+  const closeBounds = await dialog
+    .getByRole("button", { name: "Close", exact: true })
+    .boundingBox();
+  if (!bodyBounds || !lastBounds || !closeBounds) throw new Error("Missing Round body geometry");
+  expect(lastBounds.y).toBeGreaterThanOrEqual(bodyBounds.y);
+  expect(lastBounds.y + lastBounds.height).toBeLessThanOrEqual(
+    bodyBounds.y + bodyBounds.height - 10,
+  );
+  expect(bodyBounds.y + bodyBounds.height).toBeLessThan(closeBounds.y);
+}
+
+const settings: GenericGameSettings[] = [
+  { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+  { mode: "points", pointsDirection: "high", tiebreaker: { direction: "low" }, dealer: false },
+  { mode: "singleRoundWinner", tiebreaker: null, dealer: false },
+  { mode: "passFail", tiebreaker: null, dealer: false },
+];
+
+it.each([
+  { width: 320, height: 480, bottom: 0, left: 0, right: 0 },
+  { width: 320, height: 568, bottom: 34, left: 20, right: 12 },
+  { width: 390, height: 844, bottom: 0, left: 0, right: 0 },
+  { width: 768, height: 1024, bottom: 34, left: 0, right: 0 },
+])("pins every mode's actions with short/long rosters at $width x $height and $bottom px Safe Area", async (viewport) => {
+  for (const playerCount of [1, 12]) {
+    for (const gameSettings of settings) {
+      const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
+      try {
+        await page.addInitScript(({ bottom, left, right }) => {
+          document.addEventListener("DOMContentLoaded", () => {
+            const style = document.documentElement.style;
+            style.setProperty("--safe-area-inset-bottom", `${bottom}px`);
+            style.setProperty("--safe-area-inset-left", `${left}px`);
+            style.setProperty("--safe-area-inset-right", `${right}px`);
+          });
+        }, viewport);
+        const dialog = await openRound(page, gameSettings, playerCount);
+        await expectPinnedActions(dialog, viewport.bottom);
+        const panelBounds = await dialog.locator(".dialog-panel").boundingBox();
+        if (!panelBounds) throw new Error("Missing Round dialog");
+        expect(panelBounds.height).toBeCloseTo(viewport.height * 0.75 + viewport.bottom, 0);
+        const lastName = `Player ${playerCount}`;
+        const lastControl =
+          gameSettings.mode === "points"
+            ? dialog.getByRole("button", { name: "Backspace", exact: true })
+            : dialog.getByRole(gameSettings.mode === "singleRoundWinner" ? "radio" : "button", {
+                name: lastName,
+                exact: true,
+              });
+        if (gameSettings.mode === "points") {
+          await dialog.getByRole("tab", { name: lastName, exact: true }).click();
+          const digit = dialog.getByRole("button", { name: "7", exact: true });
+          await digit.click();
+          await digit.focus();
+          await page.keyboard.type(".5");
+          await dialog.getByRole("alert").filter({ hasText: "Enter a whole number" }).waitFor();
+          expect(await dialog.getByRole("button", { name: "Save", exact: true }).isDisabled()).toBe(
+            true,
+          );
+          await expectPinnedActions(dialog, viewport.bottom);
+          await page.keyboard.press("Delete");
+          await page.keyboard.press("7");
+        } else {
+          const body = dialog.locator(".dialog-scroll:not(.dialog-content)").first();
+          if (playerCount === 12) {
+            expect(
+              await body.evaluate((element) => element.scrollHeight > element.clientHeight),
+            ).toBe(true);
+          }
+          await lastControl.click();
+        }
+        await expectBodyClearOfActions(dialog, lastControl);
+        await expectPinnedActions(dialog, viewport.bottom);
+
+        await failNextSave(page, "Round storage unavailable. Try saving again.");
+        const save = dialog.getByRole("button", { name: "Save", exact: true });
+        await save.click();
+        await dialog.getByRole("alert").filter({ hasText: "Round storage unavailable" }).waitFor();
+        await expectPinnedActions(dialog, viewport.bottom);
+        const error = dialog.getByRole("region", { name: "Round save error", exact: true });
+        const errorBounds = await error.boundingBox();
+        const saveBounds = await save.boundingBox();
+        if (!errorBounds || !saveBounds) throw new Error("Missing error/action geometry");
+        expect(errorBounds.y + errorBounds.height).toBeLessThan(saveBounds.y);
+
+        for (const name of ["Close", "Save"]) {
+          const action = dialog.getByRole("button", { name, exact: true });
+          const bounds = await action.boundingBox();
+          if (!bounds) throw new Error("Missing action");
+          await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+          await page.mouse.down();
+          await expect
+            .poll(async () => (await action.boundingBox())?.width ?? 0)
+            .toBeGreaterThan(bounds.width + 1);
+          const pressed = await action.boundingBox();
+          if (!pressed) throw new Error("Missing pressed action");
+          expect(pressed.x).toBeGreaterThan(Math.max(panelBounds.x, viewport.left));
+          expect(pressed.x + pressed.width).toBeLessThan(
+            Math.min(panelBounds.x + panelBounds.width, viewport.width - viewport.right),
+          );
+          expect(pressed.y + pressed.height).toBeLessThan(viewport.height - viewport.bottom);
+          await page.mouse.move(0, 0);
+          await page.mouse.up();
+        }
+        await save.click();
+        await dialog.waitFor({ state: "detached" });
+        await page.getByRole("button", { name: "Expand Round 1", exact: true }).waitFor();
+      } finally {
+        await page.close();
+      }
+    }
+  }
+}, 120_000);

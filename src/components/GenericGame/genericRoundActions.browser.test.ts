@@ -238,6 +238,8 @@ it.each([
         .toBe(true);
 
       await add.click();
+      // Programmatic focus does not wait for the reopened dialog's entrance transition.
+      await close.click({ trial: true });
       if (mode === "points") {
         expect(await dialog.locator("output").first().innerText()).toBe("7");
       } else if (mode === "singleRoundWinner") {
