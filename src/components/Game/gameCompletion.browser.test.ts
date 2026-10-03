@@ -149,10 +149,13 @@ it("offers Resume and Pause before a saved Round, retains a closed draft, and di
     const finishGame = page.getByRole("button", { name: "Finish Game", exact: true });
     await finishGame.click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
-    expect(await finish.getByRole("button", { name: "Finish", exact: true }).isDisabled()).toBe(
-      true,
-    );
-    expect(await finish.innerText()).toContain("Save at least one Round");
+    expect(await finish.getByRole("button").allTextContents()).toEqual([
+      "Pause",
+      "Resume",
+      "Delete",
+    ]);
+    expect(await finish.innerText()).not.toContain("Save at least one Round");
+    expect(await finish.getByRole("heading").count()).toBe(0);
     await finish.getByRole("button", { name: "Resume", exact: true }).click();
     await finish.waitFor({ state: "detached" });
     expect(await finishGame.evaluate((button) => button === document.activeElement)).toBe(true);
@@ -316,14 +319,11 @@ it("keeps a pending Finish on screen through dismissal attempts, shows failure, 
       true,
     );
     await page.keyboard.press("Escape");
-    const panel = finish.locator(".dialog-panel");
-    const bounds = await panel.boundingBox();
+    const bounds = await finish.boundingBox();
     if (!bounds) throw new Error("Missing Finish panel");
-    await page.mouse.move(195, bounds.y + 14);
-    await page.mouse.down();
-    await page.mouse.move(195, bounds.y + bounds.height * 0.6, { steps: 5 });
-    await page.mouse.up();
-    await expect.poll(async () => (await panel.boundingBox())?.y).toBeCloseTo(bounds.y, 0);
+    await page.mouse.click(10, 200);
+    expect(await finish.isVisible()).toBe(true);
+    expect(page.url()).toBe(`${appUrl}#/phaseCompan10n/game/${game.id}`);
     await page.evaluate(() => window.dispatchEvent(new Event("release-finish")));
     await finish.getByRole("alert").waitFor();
     expect(await finish.getByRole("alert").innerText()).toContain("Couldn't finish Game");

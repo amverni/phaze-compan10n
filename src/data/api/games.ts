@@ -12,6 +12,7 @@ import type {
 } from "../../types";
 import { getDB } from "../db";
 import {
+  deleteEmptyGame,
   deleteGameRecords,
   finalizeGame,
   requirePlayers,
@@ -131,6 +132,10 @@ export const gamesApi = {
       await finalizeGame(tx, completed);
       return completed;
     });
+  },
+
+  deleteEmpty(id: GameId): Promise<void> {
+    return deleteEmptyGame(id, "phase10");
   },
 
   async delete(id: GameId): Promise<void> {

@@ -201,7 +201,8 @@ it("keeps solo entry explicit, discards drafts on navigation and reload, and fin
     await seedGame(page, ["Solo"]);
     await page.getByRole("button", { name: "Finish Game", exact: true }).click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
-    expect(await finish.getByRole("button", { name: "Finish", exact: true }).isDisabled()).toBe(
+    expect(await finish.getByRole("button", { name: "Finish", exact: true }).count()).toBe(0);
+    expect(await finish.getByRole("button", { name: "Delete", exact: true }).isEnabled()).toBe(
       true,
     );
     await finish.getByRole("button", { name: "Resume", exact: true }).click();

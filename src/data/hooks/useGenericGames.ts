@@ -65,14 +65,25 @@ export function useCreateGenericGame() {
 }
 
 export function useDeleteGenericGame() {
+  return useGenericGameDeletion((id) => genericGamesApi.delete(id));
+}
+
+export function useDeleteEmptyGenericGame() {
+  return useGenericGameDeletion((id) => genericGamesApi.deleteEmpty(id), true);
+}
+
+function useGenericGameDeletion(remove: (id: GameId) => Promise<void>, refreshAfterError = false) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: GameId) => genericGamesApi.delete(id),
+    mutationFn: remove,
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: genericGameKeys.all }),
         queryClient.invalidateQueries({ queryKey: playerKeys.all }),
       ]),
+    onError: refreshAfterError
+      ? () => queryClient.invalidateQueries({ queryKey: genericGameKeys.all })
+      : undefined,
   });
 }
 

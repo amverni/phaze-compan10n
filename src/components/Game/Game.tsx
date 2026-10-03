@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChartNoAxesColumn, Flag } from "lucide-react";
+import { ArrowLeft, ChartNoAxesColumn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { gameDetailOptions, useFinishGame } from "../../data/hooks/useGames";
+import { gameDetailOptions, useDeleteEmptyGame, useFinishGame } from "../../data/hooks/useGames";
 import { useGamePlayers } from "../../data/hooks/usePlayers";
 import { roundsListOptions } from "../../data/hooks/useRounds";
 import type { GameId } from "../../types";
@@ -16,7 +16,7 @@ import {
 import { Scoreboard } from "../Scoreboard";
 import { StandingsDialog } from "../Standings";
 import { Button, InlineError } from "../ui";
-import { FinishGameDialog } from "./FinishGameDialog";
+import { FinishGameMenu } from "./FinishGameMenu";
 import { shouldShowPhasesCardEntryButton } from "./gameView";
 import { shouldAutoOpenStandings } from "./standingsAutoOpen";
 
@@ -30,6 +30,7 @@ export function Game({ gameId }: GameProps) {
   const [finishOpen, setFinishOpen] = useState(false);
   const openFinalStandingsAfterFinish = useRef(false);
   const finishGame = useFinishGame();
+  const deleteGame = useDeleteEmptyGame();
   const navigate = useNavigate();
   const checkedInitialStandingsGameId = useRef<GameId | null>(null);
   const gameQuery = useQuery(gameDetailOptions(gameId));
@@ -38,7 +39,15 @@ export function Game({ gameId }: GameProps) {
   const { data: players } = playersQuery;
   const roundsQuery = useQuery({ ...roundsListOptions(gameId), enabled: !!game });
   const { data: rounds } = roundsQuery;
-  const standingsReady = Boolean(game && players && rounds);
+  const hasLoadError = gameQuery.isError || playersQuery.isError || roundsQuery.isError;
+  const standingsReady = Boolean(game && players && rounds) && !hasLoadError;
+  const actionReady =
+    gameQuery.isSuccess &&
+    !gameQuery.isFetching &&
+    !gameQuery.isStale &&
+    roundsQuery.isSuccess &&
+    !roundsQuery.isFetching &&
+    !roundsQuery.isStale;
   const showPhasesCardEntryButton = game ? shouldShowPhasesCardEntryButton(game.status) : true;
 
   useEffect(() => {
@@ -84,7 +93,7 @@ export function Game({ gameId }: GameProps) {
         }
         mainContent={
           <div className="content-container flex h-full min-h-0 flex-col py-4 pb-[calc(0.5rem+var(--slant))]">
-            {gameQuery.isError || playersQuery.isError || roundsQuery.isError ? (
+            {hasLoadError && (
               <InlineError
                 message="Unable to load this Game."
                 onRetry={() => {
@@ -93,12 +102,13 @@ export function Game({ gameId }: GameProps) {
                   if (roundsQuery.isError) roundsQuery.refetch();
                 }}
               />
-            ) : game === null ? (
+            )}
+            {game === null ? (
               <p className="text-text-secondary flex flex-1 items-center justify-center text-center">
                 This Game is no longer available.
               </p>
             ) : game && players && rounds ? (
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1" inert={hasLoadError}>
                 <Scoreboard
                   game={game}
                   rounds={rounds}
@@ -106,11 +116,11 @@ export function Game({ gameId }: GameProps) {
                   onGameCompleted={() => setStandingsOpen(true)}
                 />
               </div>
-            ) : (
+            ) : !hasLoadError ? (
               <p className="text-text-secondary flex flex-1 items-center justify-center text-center">
                 Loading…
               </p>
-            )}
+            ) : null}
           </div>
         }
         footerContent={
@@ -123,43 +133,29 @@ export function Game({ gameId }: GameProps) {
             >
               <ArrowLeft className="size-8" aria-hidden />
             </Button>
-            {game?.status === "active" && (
-              <Button
-                type="button"
-                className="card-footer-button p-0"
-                aria-label="Finish Game"
-                disabled={!standingsReady}
-                onClick={() => {
-                  finishGame.reset();
-                  setFinishOpen(true);
-                }}
-              >
-                <Flag className="size-8" aria-hidden />
-              </Button>
-            )}
+            <FinishGameMenu
+              open={finishOpen}
+              active={game?.status === "active"}
+              action={actionReady ? (rounds?.length === 0 ? "delete" : "finish") : null}
+              onOpenChange={setFinishOpen}
+              onPause={() => navigate({ to: "/phaseCompan10n" })}
+              afterClose={() => {
+                if (openFinalStandingsAfterFinish.current) {
+                  openFinalStandingsAfterFinish.current = false;
+                  setStandingsOpen(true);
+                }
+              }}
+              onFinish={async () => {
+                await finishGame.mutateAsync(gameId);
+                openFinalStandingsAfterFinish.current = true;
+                setFinishOpen(false);
+              }}
+              onDelete={async () => {
+                await deleteGame.mutateAsync(gameId);
+                await navigate({ to: "/phaseCompan10n" });
+              }}
+            />
           </div>
-        }
-      />
-      <FinishGameDialog
-        open={finishOpen}
-        canFinish={Boolean(rounds?.length)}
-        isPending={finishGame.isPending}
-        error={finishGame.error ? `Couldn't finish Game: ${finishGame.error.message}` : null}
-        onResume={() => setFinishOpen(false)}
-        onPause={() => navigate({ to: "/phaseCompan10n" })}
-        afterLeave={() => {
-          if (openFinalStandingsAfterFinish.current) {
-            openFinalStandingsAfterFinish.current = false;
-            setStandingsOpen(true);
-          }
-        }}
-        onFinish={() =>
-          finishGame.mutate(gameId, {
-            onSuccess: () => {
-              openFinalStandingsAfterFinish.current = true;
-              setFinishOpen(false);
-            },
-          })
         }
       />
       {game && (

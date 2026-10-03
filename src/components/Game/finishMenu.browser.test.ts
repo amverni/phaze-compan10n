@@ -1,0 +1,419 @@
+/// <reference types="node" />
+
+import type { Browser, Page } from "playwright";
+import { webkit } from "playwright";
+import { createServer, type ViteDevServer } from "vite";
+import { afterAll, beforeAll, expect, it } from "vitest";
+import type { Player, ScorekeeperId, StoredGame } from "../../types";
+
+let server: ViteDevServer;
+let browser: Browser;
+let appUrl: string;
+
+beforeAll(async () => {
+  server = await createServer({ server: { host: "127.0.0.1", port: 0, open: false } });
+  await server.listen();
+  const address = server.httpServer?.address();
+  if (!address || typeof address === "string") throw new Error("Missing test server address");
+  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  browser = await webkit.launch();
+}, 60_000);
+
+afterAll(async () => {
+  await browser?.close();
+  await server?.close();
+});
+
+const owners = ["phase10", "generic"] as const;
+const apiImport = (owner: ScorekeeperId) =>
+  owner === "phase10"
+    ? 'const { gamesApi: api } = await import("/phase-10-scoreboard/src/data/api/games.ts");'
+    : 'const { genericGamesApi: api } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");';
+const home = (owner: ScorekeeperId) => (owner === "phase10" ? "/phaseCompan10n" : "/");
+const gamePath = (owner: ScorekeeperId, id: string) =>
+  `${owner === "phase10" ? "/phaseCompan10n" : ""}/game/${id}`;
+
+async function seed(page: Page, owner: ScorekeeperId) {
+  await page.goto(appUrl);
+  await page.getByText("No active games yet", { exact: true }).waitFor();
+  return page.evaluate<{ game: StoredGame; players: Player[] }>(`(async () => {
+    ${apiImport(owner)}
+    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+    const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
+    const game = await api.create({
+      players: [amy.id, bob.id],
+      ${
+        owner === "phase10"
+          ? 'phaseSet: { id: "short", type: "temporary", name: "Short", phases: ["phase-1", "phase-2"] }, settings: { tiebreaker: "roundsWon", roundSkipPenalty: 0, sitOutPenalty: 0 }'
+          : 'settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false }'
+      }
+    });
+    return { game, players: [amy, bob] };
+  })()`);
+}
+
+async function newPage() {
+  const page = await browser.newPage({ viewport: { width: 320, height: 568 }, hasTouch: true });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  return page;
+}
+
+const popup = (page: Page) => page.getByRole("dialog", { name: "Finish Game", exact: true });
+const flag = (page: Page) => page.locator('button[aria-label="Finish Game"]');
+const add = (page: Page, owner: ScorekeeperId) =>
+  page.getByRole("button", {
+    name: owner === "phase10" ? "Add round 1" : "Add Round",
+    exact: true,
+  });
+
+async function enterDraft(page: Page, owner: ScorekeeperId) {
+  await add(page, owner).click();
+  const entry = page.getByRole("dialog");
+  if (owner === "phase10") {
+    await entry.getByRole("button", { name: /Round Winner/ }).click();
+    await page.getByRole("option", { name: "Amy", exact: true }).click();
+  } else {
+    await entry.getByRole("button", { name: "8", exact: true }).click();
+  }
+  await page.keyboard.press("Escape");
+  await entry.waitFor({ state: "detached" });
+}
+
+function readGame(page: Page, owner: ScorekeeperId, id: string) {
+  return page.evaluate<StoredGame | undefined>(`(async () => {
+    ${apiImport(owner)}
+    return api.getById(${JSON.stringify(id)});
+  })()`);
+}
+
+it.each(
+  owners,
+)("anchors the compact %s menu safely and restores focus after dismissal", async (owner) => {
+  const page = await newPage();
+  try {
+    const { game } = await seed(page, owner);
+    const url = `${appUrl}#${gamePath(owner, game.id)}`;
+    await page.goto(url);
+    await add(page, owner).waitFor();
+    await page.addStyleTag({
+      content:
+        ":root { --safe-area-inset-top: 12px; --safe-area-inset-right: 20px; --safe-area-inset-bottom: 24px; --safe-area-inset-left: 16px; }",
+    });
+    const back = await page.getByRole("link", { name: "Go home", exact: true }).boundingBox();
+    const before = await flag(page).boundingBox();
+    if (!before || !back) throw new Error("Missing footer controls");
+    await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
+    await page.mouse.down();
+    expect(await flag(page).boundingBox()).toEqual(before);
+    await expect
+      .poll(async () => (await flag(page).locator("span").boundingBox())?.width)
+      .toBeGreaterThan(before.width);
+    await page.mouse.up();
+    await popup(page).waitFor();
+    expect(await popup(page).getByRole("button").allTextContents()).toEqual([
+      "Pause",
+      "Resume",
+      "Delete",
+    ]);
+    expect(await popup(page).getByRole("heading").count()).toBe(0);
+    const panel = await popup(page).boundingBox();
+    if (!panel) throw new Error("Missing menu");
+    expect(panel.y + panel.height).toBeCloseTo(before.y - 8, 0);
+    expect(panel.x + panel.width).toBeCloseTo(before.x + before.width, 0);
+    expect(panel.height).toBeLessThan(160);
+    expect(panel.x).toBeGreaterThanOrEqual(16);
+    expect(panel.x + panel.width).toBeLessThanOrEqual(300);
+    expect(panel.y).toBeGreaterThan(12);
+    expect(before.y + before.height * 1.05).toBeLessThanOrEqual(544);
+    const buttons = await popup(page)
+      .getByRole("button")
+      .evaluateAll((elements) =>
+        elements.map((element) => {
+          const { y, height } = element.getBoundingClientRect();
+          return { y, height };
+        }),
+      );
+    expect(buttons.every((button) => button.height >= 44)).toBe(true);
+    expect(buttons[0].y).toBeLessThan(buttons[1].y);
+    expect(buttons[1].y).toBeLessThan(buttons[2].y);
+    await expect
+      .poll(() =>
+        popup(page)
+          .getByRole("button", { name: "Resume", exact: true })
+          .evaluate((element) => element === document.activeElement),
+      )
+      .toBe(true);
+    await page.keyboard.press("Escape");
+    await popup(page).waitFor({ state: "detached" });
+    await expect
+      .poll(() => flag(page).evaluate((element) => element === document.activeElement))
+      .toBe(true);
+    await page.keyboard.press("Enter");
+    await popup(page).waitFor();
+    await page.mouse.click(back.x + back.width / 2, back.y + back.height / 2);
+    await popup(page).waitFor({ state: "detached" });
+    expect(page.url()).toBe(url);
+    expect(await readGame(page, owner, game.id)).toEqual(game);
+    await expect
+      .poll(() => flag(page).evaluate((element) => element === document.activeElement))
+      .toBe(true);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it.each(
+  owners,
+)("retains a %s draft on failed Delete, blocks pending actions, and deletes only after success", async (owner) => {
+  const page = await newPage();
+  try {
+    const { game, players } = await seed(page, owner);
+    const url = `${appUrl}#${gamePath(owner, game.id)}`;
+    await page.goto(url);
+    await enterDraft(page, owner);
+    await flag(page).click();
+    await page.evaluate(`(async () => {
+      ${apiImport(owner)}
+      const original = api.deleteEmpty;
+      api.deleteEmpty = async (...args) => {
+        api.deleteEmpty = original;
+        const method = ${JSON.stringify(owner === "phase10" ? "getById" : "getScoreboard")};
+        const read = api[method];
+        api[method] = async () => {
+          api[method] = read;
+          throw new Error("Temporary refresh failure");
+        };
+        throw new Error("Temporary deletion failure");
+      };
+    })()`);
+    await popup(page).getByRole("button", { name: "Delete", exact: true }).click();
+    await popup(page)
+      .getByRole("alert")
+      .filter({ hasText: "Temporary deletion failure" })
+      .waitFor();
+    expect(await readGame(page, owner, game.id)).toEqual(game);
+    expect(page.url()).toBe(url);
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(0);
+    await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+    await popup(page).waitFor({ state: "detached" });
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
+    await add(page, owner).click();
+    const entry = page.getByRole("dialog");
+    expect(
+      await entry
+        .getByRole("button", {
+          name: owner === "phase10" ? /Round Winner/ : "Amy Points",
+        })
+        .innerText(),
+    ).toContain(owner === "phase10" ? "Amy" : "8");
+    await expect
+      .poll(() => entry.evaluate((element) => element.contains(document.activeElement)))
+      .toBe(true);
+    await entry.evaluate((element) =>
+      Promise.allSettled(
+        element.getAnimations({ subtree: true }).map((animation) => animation.finished),
+      ),
+    );
+    await page.keyboard.press("Escape");
+    await entry.waitFor({ state: "detached" });
+    const back = await page.getByRole("link", { name: "Go home", exact: true }).boundingBox();
+    if (!back) throw new Error("Missing Home control");
+    await flag(page).click();
+    await page.evaluate(`(async () => {
+      ${apiImport(owner)}
+      const original = api.deleteEmpty;
+      window.deleteCalls = 0;
+      const ready = new Promise(resolve => { window.releaseDelete = resolve; });
+      api.deleteEmpty = async (...args) => {
+        window.deleteCalls++;
+        await ready;
+        return original(...args);
+      };
+    })()`);
+    await popup(page)
+      .getByRole("button", { name: "Delete", exact: true })
+      .evaluate((element) => {
+        element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    await popup(page).getByRole("button", { name: "Deleting...", exact: true }).waitFor();
+    for (const name of ["Pause", "Resume", "Deleting..."]) {
+      expect(await popup(page).getByRole("button", { name, exact: true }).isDisabled()).toBe(true);
+    }
+    await page.keyboard.press("Escape");
+    await page.mouse.click(back.x + back.width / 2, back.y + back.height / 2);
+    expect(await popup(page).isVisible()).toBe(true);
+    expect(page.url()).toBe(url);
+    expect(await page.evaluate("window.deleteCalls")).toBe(1);
+    expect(await readGame(page, owner, game.id)).toEqual(game);
+    await page.evaluate("window.releaseDelete()");
+    await page.waitForURL(`${appUrl}#${home(owner)}`);
+    expect(await popup(page).count()).toBe(0);
+    expect(await readGame(page, owner, game.id)).toBeUndefined();
+    expect(
+      await page.evaluate(
+        `import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) => playersApi.getAll())`,
+      ),
+    ).toEqual(players);
+    await page.goto(url);
+    await page
+      .getByText(
+        owner === "phase10"
+          ? "This Game is no longer available."
+          : "Game not found in Scorekeeper.",
+        { exact: true },
+      )
+      .waitFor();
+    expect(await add(page, owner).count()).toBe(0);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it.each(owners)("rejects a %s Delete after another tab saves a Round", async (owner) => {
+  const page = await newPage();
+  try {
+    const { game } = await seed(page, owner);
+    await page.goto(`${appUrl}#${gamePath(owner, game.id)}`);
+    await enterDraft(page, owner);
+    await flag(page).click();
+    await popup(page).getByRole("button", { name: "Delete", exact: true }).waitFor();
+    await page.evaluate(`(async () => {
+      ${apiImport(owner)}
+      const game = await api.getById(${JSON.stringify(game.id)});
+      ${
+        owner === "phase10"
+          ? `const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+           await roundsApi.add({ gameId: game.id, roundWinnerId: game.players[0],
+             scores: game.players.map(playerId => ({ playerId, phaseStatus: "completed", score: 0 })) });`
+          : `const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+           await genericRoundsApi.add({ gameId: game.id, mode: "points",
+             scores: game.players.map(playerId => ({ playerId, points: "5" })) });`
+      }
+    })()`);
+    await popup(page).getByRole("button", { name: "Delete", exact: true }).click();
+    await popup(page).getByRole("alert").filter({ hasText: "saved Rounds" }).waitFor();
+    expect(await readGame(page, owner, game.id)).toMatchObject({ id: game.id, status: "active" });
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(0);
+    expect(await popup(page).getByRole("button", { name: "Finish", exact: true }).isEnabled()).toBe(
+      true,
+    );
+    await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+    await popup(page).waitFor({ state: "detached" });
+    await page
+      .getByRole("button", { name: owner === "phase10" ? "Add round 2" : "Add Round", exact: true })
+      .click();
+    expect(
+      await page
+        .getByRole("dialog")
+        .getByRole("button", {
+          name: owner === "phase10" ? /Round Winner/ : "Amy Points",
+        })
+        .innerText(),
+    ).toContain(owner === "phase10" ? "Amy" : "8");
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    await flag(page).click();
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(0);
+    expect(await popup(page).getByRole("button", { name: "Finish", exact: true }).isEnabled()).toBe(
+      true,
+    );
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it.each(
+  owners,
+)("never treats loading, stale zero-Round data, or a failed %s refresh as permission to Delete", async (owner) => {
+  const page = await newPage();
+  try {
+    const { game } = await seed(page, owner);
+    const url = `${appUrl}#${gamePath(owner, game.id)}`;
+    await page.evaluate(`(async () => {
+      ${
+        owner === "phase10"
+          ? 'const { roundsApi: api } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");'
+          : apiImport(owner)
+      }
+      const method = ${JSON.stringify(owner === "phase10" ? "getByGameId" : "getScoreboard")};
+      const original = api[method];
+      const ready = new Promise(resolve => { window.releaseMenuRead = resolve; });
+      api[method] = async (...args) => {
+        api[method] = original;
+        await ready;
+        return original(...args);
+      };
+    })()`);
+    await page.goto(url);
+    if (owner === "phase10") {
+      await flag(page).click();
+      expect(
+        await popup(page).getByRole("button", { name: "Finish", exact: true }).isDisabled(),
+      ).toBe(true);
+      expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(
+        0,
+      );
+      await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+      await popup(page).waitFor({ state: "detached" });
+    } else {
+      await page.getByText("Loading Game...", { exact: true }).waitFor();
+      expect(await flag(page).count()).toBe(0);
+    }
+    await page.evaluate("window.releaseMenuRead()");
+    await add(page, owner).waitFor();
+    await flag(page).click();
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).isEnabled()).toBe(
+      true,
+    );
+    await page.keyboard.press("Escape");
+    await popup(page).waitFor({ state: "detached" });
+
+    // A real Player mutation invalidates the cached Game without changing its zero Rounds.
+    await page.evaluate(`import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+      playersApi.create({ name: "Unused", color: "Jam", isFavorite: 0 }))`);
+    await page.goto(`${appUrl}#/players`);
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Delete Unused", exact: true }).click();
+    await page.getByRole("button", { name: "Unused", exact: true }).waitFor({ state: "detached" });
+    await page.evaluate(`(async () => {
+      ${apiImport(owner)}
+      const method = ${JSON.stringify(owner === "phase10" ? "getById" : "getScoreboard")};
+      const original = api[method];
+      const ready = new Promise(resolve => { window.releaseMenuRead = resolve; });
+      api[method] = async () => {
+        api[method] = original;
+        await ready;
+        throw new Error("Temporary read failure");
+      };
+    })()`);
+    await page.goto(url);
+    await flag(page).click();
+    expect(
+      await popup(page).getByRole("button", { name: "Finish", exact: true }).isDisabled(),
+    ).toBe(true);
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(0);
+    await page.evaluate("window.releaseMenuRead()");
+    await page.getByText("Unable to load this Game.", { exact: true }).waitFor();
+    expect(
+      await popup(page).getByRole("button", { name: "Finish", exact: true }).isDisabled(),
+    ).toBe(true);
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(0);
+    expect(await popup(page).getByRole("button", { name: "Pause", exact: true }).isEnabled()).toBe(
+      true,
+    );
+    await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+    await popup(page).waitFor({ state: "detached" });
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
+    await add(page, owner).waitFor();
+    await flag(page).click();
+    expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).isEnabled()).toBe(
+      true,
+    );
+    expect(await readGame(page, owner, game.id)).toEqual(game);
+  } finally {
+    await page.close();
+  }
+}, 60_000);

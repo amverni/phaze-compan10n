@@ -48,9 +48,17 @@ export function useCreateGame() {
 }
 
 export function useDeleteGame() {
+  return useGameDeletion((id) => gamesApi.delete(id));
+}
+
+export function useDeleteEmptyGame() {
+  return useGameDeletion((id) => gamesApi.deleteEmpty(id), true);
+}
+
+function useGameDeletion(remove: (id: GameId) => Promise<void>, refreshAfterError = false) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: GameId) => gamesApi.delete(id),
+    mutationFn: remove,
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: gameKeys.all }),
@@ -58,6 +66,13 @@ export function useDeleteGame() {
         queryClient.invalidateQueries({ queryKey: phaseKeys.all }),
         queryClient.invalidateQueries({ queryKey: phaseSetKeys.all }),
       ]),
+    onError: refreshAfterError
+      ? () =>
+          Promise.all([
+            queryClient.invalidateQueries({ queryKey: gameKeys.all }),
+            queryClient.invalidateQueries({ queryKey: roundKeys.lists() }),
+          ])
+      : undefined,
   });
 }
 
