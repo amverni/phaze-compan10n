@@ -34,6 +34,58 @@ afterEach(async () => {
 });
 
 it.each([
+  { name: "  Friday cards  ", expected: "Friday cards" },
+  { name: "", expected: undefined },
+  { name: " \t\n ", expected: undefined },
+  { name: undefined, expected: undefined },
+])("persists an optional Game name, normalizing $name on creation", async ({ name, expected }) => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const input = { name, players: [amy.id], settings: pointsSettings() };
+  const game = await genericGamesApi.create(input);
+  expect(game).toMatchObject({ name: expected });
+  closeDB();
+  expect(await genericGamesApi.getDetail(game.id)).toMatchObject({
+    game: { name: expected },
+  });
+  expect(await genericGamesApi.getScoreboard(game.id)).toMatchObject({
+    game: { name: expected },
+  });
+  expect(await genericGamesApi.getList({ activeOnly: true })).toMatchObject([
+    { id: game.id, name: expected },
+  ]);
+  const duplicate = await genericGamesApi.create(input);
+  expect(duplicate).toMatchObject({ name: expected });
+  expect(duplicate.id).not.toBe(game.id);
+});
+
+it("reopens and finishes existing unnamed Generic Games without requiring a name field", async () => {
+  const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
+  const legacy = await genericGamesApi.create({
+    players: [amy.id],
+    settings: pointsSettings(),
+  });
+  delete legacy.name;
+  await (await getDB()).put("games", legacy);
+  closeDB();
+  expect(await genericGamesApi.getById(legacy.id)).toEqual(legacy);
+  expect(await genericGamesApi.getDetail(legacy.id)).toMatchObject({ game: legacy });
+  expect(await genericGamesApi.getList({ activeOnly: true })).toMatchObject([
+    { id: legacy.id, name: undefined },
+  ]);
+  await genericRoundsApi.add({
+    mode: "points",
+    gameId: legacy.id,
+    scores: [{ playerId: amy.id, points: "0" }],
+  });
+  await genericGamesApi.finish(legacy.id);
+  closeDB();
+  expect(await genericGamesApi.getById(legacy.id)).not.toHaveProperty("name");
+  expect(await genericGamesApi.getList()).toMatchObject([
+    { id: legacy.id, status: "completed", name: undefined },
+  ]);
+});
+
+it.each([
   "high",
   "low",
 ] as const)("manually finishes %s Points with the accumulated winner and every Player snapshot", async (direction) => {
@@ -480,10 +532,11 @@ it("rejects Generic ownership in the public Phase Standings boundary", async () 
   ).toThrow("Phase 10");
 });
 
-it("keeps completed generic scoreboard, Standings and list identities independent of saved Players", async () => {
+it("keeps completed generic names and scoreboard, Standings and list identities independent of saved Players", async () => {
   const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
   const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
   const active = await genericGamesApi.create({
+    name: "Friday cards",
     players: [bob.id, amy.id],
     settings: pointsSettings("low"),
   });
@@ -512,7 +565,7 @@ it("keeps completed generic scoreboard, Standings and list identities independen
   });
   expect(await genericGamesApi.getScoreboard(active.id)).toEqual(beforeDeletion);
   expect(beforeDeletion).toMatchObject({
-    game: { winnerIds: [amy.id] },
+    game: { name: "Friday cards", winnerIds: [amy.id] },
     players: [
       { id: bob.id, name: "Bobby", color: "Moss", totalPoints: 20 },
       { id: amy.id, name: "Amy", color: "Jam", totalPoints: -10 },
@@ -525,6 +578,7 @@ it("keeps completed generic scoreboard, Standings and list identities independen
   expect(await genericGamesApi.getList()).toEqual([
     {
       id: active.id,
+      name: "Friday cards",
       status: "completed",
       lastActivityAt: completed.completedAt,
       players: [

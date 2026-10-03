@@ -11,6 +11,7 @@ import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
 import {
   Button,
   InlineError,
+  Input,
   List,
   Listbox,
   ListboxButton,
@@ -42,6 +43,7 @@ export function GenericCreateGame() {
   const createGame = useCreateGenericGame();
   const navigate = useNavigate();
   const defaultValues: {
+    name: string;
     players: Player[];
     mode: GenericGameSettings["mode"];
     pointsDirection: GenericPointsSettings["pointsDirection"];
@@ -49,6 +51,7 @@ export function GenericCreateGame() {
     tiebreakerDirection: GenericPointsSettings["pointsDirection"];
     dealer: boolean;
   } = {
+    name: "",
     players: [],
     mode: "points",
     pointsDirection: "high",
@@ -60,6 +63,7 @@ export function GenericCreateGame() {
     defaultValues,
     onSubmit: async ({ value }) => {
       const game = await createGame.mutateAsync({
+        name: value.name,
         players: value.players.map((player) => player.id),
         settings:
           value.mode === "points"
@@ -167,6 +171,21 @@ export function GenericCreateGame() {
                   >
                     {({ mode, tiebreakerEnabled }) => (
                       <List rowVariant="content">
+                        <form.Field key="name" name="name">
+                          {(field) => (
+                            <Field className="flex w-full min-w-0 flex-col gap-2">
+                              <Label className="font-medium">Game name</Label>
+                              <Input
+                                type="text"
+                                value={field.state.value}
+                                onChange={(event) => field.handleChange(event.target.value)}
+                                onBlur={field.handleBlur}
+                                placeholder="Optional"
+                                className="glass min-w-0 rounded-xl px-3 py-2 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-text-secondary"
+                              />
+                            </Field>
+                          )}
+                        </form.Field>
                         <form.Field key="mode" name="mode">
                           {(field) => (
                             <Listbox

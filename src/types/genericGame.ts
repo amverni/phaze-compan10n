@@ -37,6 +37,7 @@ export type GenericGameSettings =
 
 interface GenericGameFields {
   scorekeeper: "generic";
+  name?: string;
   settings: GenericGameSettings;
 }
 
@@ -49,6 +50,7 @@ export interface CompletedGenericGame extends CompletedGameMetadata<"generic">, 
 export type GenericGame = ActiveGenericGame | CompletedGenericGame;
 
 export interface CreateGenericGameInput {
+  name?: string;
   players: PlayerId[];
   settings: GenericGameSettings;
 }
