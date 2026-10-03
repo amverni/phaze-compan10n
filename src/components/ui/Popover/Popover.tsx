@@ -28,7 +28,8 @@ export function PopoverButton<TTag extends ElementType = "button">(
 
 /* ── Panel ─────────────────────────────────────────────────── */
 
-const panelClasses = "glass popover-glass rounded-2xl shadow-xl focus:outline-none overflow-hidden";
+export const popoverPanelClasses =
+  "glass popover-glass rounded-2xl shadow-xl focus:outline-none overflow-hidden";
 
 const transitionClasses =
   "transition-opacity duration-200 ease-out data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150";
@@ -40,7 +41,7 @@ export function PopoverPanel<TTag extends ElementType = "div">(
     children?: ReactNode;
   };
   const merged = mergeClassName(
-    [panelClasses, transitionClasses].join(" "),
+    [popoverPanelClasses, transitionClasses].join(" "),
     props as Record<string, unknown>,
   );
 

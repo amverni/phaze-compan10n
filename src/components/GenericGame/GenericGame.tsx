@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChartNoAxesColumn, Flag } from "lucide-react";
+import { ArrowLeft, ChartNoAxesColumn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   genericGameScoreboardOptions,
+  useDeleteEmptyGenericGame,
   useFinishGenericGame,
 } from "../../data/hooks/useGenericGames";
 import type { GameId } from "../../types";
-import { FinishGameDialog } from "../Game/FinishGameDialog";
+import { FinishGameMenu } from "../Game/FinishGameMenu";
 import { shouldAutoOpenStandings } from "../Game/standingsAutoOpen";
 import { ScorekeeperLogo } from "../Logo/ScorekeeperLogo";
 import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
@@ -22,11 +23,14 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
   const checkedInitialStandingsGameId = useRef<GameId | null>(null);
   const openFinalStandingsAfterFinish = useRef(false);
   const finishGame = useFinishGenericGame();
+  const deleteGame = useDeleteEmptyGenericGame();
   const navigate = useNavigate();
   const {
     data: view,
     isPending,
     isError,
+    isFetching,
+    isStale,
     refetch,
   } = useQuery(genericGameScoreboardOptions(gameId));
 
@@ -39,108 +43,95 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
   }, [view]);
 
   return (
-    <>
-      <ScorekeeperShell
-        headerContent={
-          <div className="generic-game-header relative h-full">
-            <div className="generic-game-header-logo absolute inset-0 flex items-center justify-center py-2">
-              <ScorekeeperLogo height={64} />
-            </div>
-            <div className="generic-game-header-controls absolute inset-0 z-10 flex items-center justify-end py-2">
-              {view && (
-                <Button
-                  type="button"
-                  aria-label="Open Standings"
-                  disabled={isError}
-                  onClick={() => setStandingsOpen(true)}
-                  className="size-12 shrink-0 data-focus:outline-solid data-focus:outline-text-secondary!"
-                >
-                  <ChartNoAxesColumn className="size-8" aria-hidden />
-                </Button>
-              )}
-            </div>
+    <ScorekeeperShell
+      headerContent={
+        <div className="generic-game-header relative h-full">
+          <div className="generic-game-header-logo absolute inset-0 flex items-center justify-center py-2">
+            <ScorekeeperLogo height={64} />
           </div>
-        }
-        mainContent={
-          <div className="flex h-full min-h-0 flex-col p-4">
-            {isPending ? (
-              <output>Loading Game...</output>
-            ) : isError ? (
-              <InlineError message="Unable to load this Game." onRetry={() => refetch()} />
-            ) : !view ? (
-              <output>Game not found in Scorekeeper.</output>
-            ) : (
-              <>
-                <p className="pb-4 text-center text-sm text-text-secondary">
-                  {view.game.settings.mode === "points"
-                    ? `Points - ${view.game.settings.pointsDirection === "high" ? "High wins" : "Low wins"}`
-                    : view.game.settings.mode === "singleRoundWinner"
-                      ? "Single Round Winner - Most wins"
-                      : "Pass/Fail - Most passes"}
-                  {view.game.settings.mode === "points" && view.game.settings.tiebreaker && (
-                    <span className="block text-xs">
-                      Tiebreaker -{" "}
-                      {view.game.settings.tiebreaker.direction === "high"
-                        ? "High wins"
-                        : "Low wins"}
-                    </span>
-                  )}
-                </p>
-                <GenericScoreboard key={view.game.id} view={view} />
-                <GenericStandingsDialog
-                  key={view.game.id}
-                  open={standingsOpen}
-                  onClose={setStandingsOpen}
-                  view={view}
-                />
-              </>
-            )}
-          </div>
-        }
-        footerContent={
-          <div className="content-container flex h-full justify-between">
-            <Button as={Link} to="/" aria-label="Go home" className="page-shell-footer-button p-0">
-              <ArrowLeft className="size-8" aria-hidden />
-            </Button>
-            {view?.game.status === "active" && (
+          <div className="generic-game-header-controls absolute inset-0 z-10 flex items-center justify-end py-2">
+            {view && (
               <Button
                 type="button"
-                aria-label="Finish Game"
-                className="page-shell-footer-button p-0"
+                aria-label="Open Standings"
                 disabled={isError}
-                onClick={() => {
-                  finishGame.reset();
-                  setFinishOpen(true);
-                }}
+                onClick={() => setStandingsOpen(true)}
+                className="size-12 shrink-0 data-focus:outline-solid data-focus:outline-text-secondary!"
               >
-                <Flag className="size-8" aria-hidden />
+                <ChartNoAxesColumn className="size-8" aria-hidden />
               </Button>
             )}
           </div>
-        }
-      />
-      <FinishGameDialog
-        open={finishOpen}
-        canFinish={Boolean(view?.rounds.length) && !isError}
-        isPending={finishGame.isPending}
-        error={finishGame.error ? `Couldn't finish Game: ${finishGame.error.message}` : null}
-        onResume={() => setFinishOpen(false)}
-        onPause={() => navigate({ to: "/" })}
-        afterLeave={() => {
-          if (openFinalStandingsAfterFinish.current) {
-            openFinalStandingsAfterFinish.current = false;
-            setStandingsOpen(true);
-          }
-        }}
-        onFinish={() =>
-          finishGame.mutate(gameId, {
-            onSuccess: () => {
+        </div>
+      }
+      mainContent={
+        <div className="flex h-full min-h-0 flex-col p-4">
+          {isError && <InlineError message="Unable to load this Game." onRetry={() => refetch()} />}
+          {isPending ? (
+            <output>Loading Game...</output>
+          ) : !view ? (
+            !isError && <output>Game not found in Scorekeeper.</output>
+          ) : (
+            <div className="contents" inert={isError}>
+              <p className="pb-4 text-center text-sm text-text-secondary">
+                {view.game.settings.mode === "points"
+                  ? `Points - ${view.game.settings.pointsDirection === "high" ? "High wins" : "Low wins"}`
+                  : view.game.settings.mode === "singleRoundWinner"
+                    ? "Single Round Winner - Most wins"
+                    : "Pass/Fail - Most passes"}
+                {view.game.settings.mode === "points" && view.game.settings.tiebreaker && (
+                  <span className="block text-xs">
+                    Tiebreaker -{" "}
+                    {view.game.settings.tiebreaker.direction === "high" ? "High wins" : "Low wins"}
+                  </span>
+                )}
+              </p>
+              <GenericScoreboard key={view.game.id} view={view} />
+              <GenericStandingsDialog
+                key={view.game.id}
+                open={standingsOpen && !isError}
+                onClose={setStandingsOpen}
+                view={view}
+              />
+            </div>
+          )}
+        </div>
+      }
+      footerContent={
+        <div className="content-container flex h-full justify-between">
+          <Button as={Link} to="/" aria-label="Go home" className="page-shell-footer-button p-0">
+            <ArrowLeft className="size-8" aria-hidden />
+          </Button>
+          <FinishGameMenu
+            open={finishOpen}
+            active={view?.game.status === "active"}
+            action={
+              view && !isPending && !isError && !isFetching && !isStale
+                ? view.rounds.length === 0
+                  ? "delete"
+                  : "finish"
+                : null
+            }
+            onOpenChange={setFinishOpen}
+            onPause={() => navigate({ to: "/" })}
+            afterClose={() => {
+              if (openFinalStandingsAfterFinish.current) {
+                openFinalStandingsAfterFinish.current = false;
+                setStandingsOpen(true);
+              }
+            }}
+            onFinish={async () => {
+              await finishGame.mutateAsync(gameId);
               openFinalStandingsAfterFinish.current = true;
               setFinishOpen(false);
-            },
-          })
-        }
-      />
-    </>
+            }}
+            onDelete={async () => {
+              await deleteGame.mutateAsync(gameId);
+              await navigate({ to: "/" });
+            }}
+          />
+        </div>
+      }
+    />
   );
 }

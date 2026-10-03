@@ -1,4 +1,5 @@
 export { Button } from "./Button/Button";
+export { PlainButton } from "./Button/PlainButton";
 export type { ColorPickerProps } from "./ColorPicker/ColorPicker";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
 export { DealerMarker } from "./DealerMarker/DealerMarker";
@@ -18,6 +19,7 @@ export {
   ListboxOption,
   ListboxOptions,
 } from "./Listbox/Listbox";
+export { ControlledPopover } from "./Popover/ControlledPopover";
 export { Popover, PopoverButton, PopoverPanel } from "./Popover/Popover";
 export { ScrollFade } from "./ScrollFade/ScrollFade";
 export { SearchBar } from "./SearchBar/SearchBar";

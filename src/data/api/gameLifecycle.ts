@@ -1,5 +1,5 @@
 import type { IDBPTransaction } from "idb";
-import type { ActiveGame, GameId, Player, PlayerId, StoredGame } from "../../types";
+import type { ActiveGame, GameId, Player, PlayerId, ScorekeeperId, StoredGame } from "../../types";
 import { getDB } from "../db";
 import type { Phase10DB } from "../db/schema";
 
@@ -82,6 +82,19 @@ export async function saveActiveGame(
   }
   await requirePlayers(tx, game.players);
   await tx.objectStore("games").put(game);
+}
+
+export function deleteEmptyGame(id: GameId, owner: ScorekeeperId): Promise<void> {
+  return withGameTransaction(async (tx) => {
+    const game = await tx.objectStore("games").get(id);
+    if (!game) throw new Error("Game no longer exists");
+    if (game.scorekeeper !== owner) throw new Error("Game belongs to another Scorekeeper");
+    if (game.status !== "active") throw new Error("Cannot quick-delete a Completed Game");
+    if ((await tx.objectStore("rounds").index("by-game").count(id)) !== 0) {
+      throw new Error("Cannot quick-delete a Game with saved Rounds");
+    }
+    await deleteGameRecords(tx, id);
+  });
 }
 
 export async function deleteGameRecords(tx: GameLifecycleTransaction, id: GameId): Promise<void> {

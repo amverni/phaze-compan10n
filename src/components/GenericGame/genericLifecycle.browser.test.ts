@@ -193,10 +193,20 @@ it("offers Resume and Pause without a saved Round and discards a draft only when
     await page.evaluate(() =>
       Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
     );
-    expect(await finish.getByRole("button", { name: "Finish", exact: true }).isDisabled()).toBe(
-      true,
-    );
-    expect(await finish.innerText()).toContain("Save at least one Round");
+    expect(await finish.getByRole("button").allTextContents()).toEqual([
+      "Pause",
+      "Resume",
+      "Delete",
+    ]);
+    expect(await finish.innerText()).not.toContain("Save at least one Round");
+    expect(await finish.getByRole("heading").count()).toBe(0);
+    await expect
+      .poll(() =>
+        finish
+          .getByRole("button", { name: "Resume", exact: true })
+          .evaluate((element) => element === document.activeElement),
+      )
+      .toBe(true);
     await finish.getByRole("button", { name: "Resume", exact: true }).click();
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await expect

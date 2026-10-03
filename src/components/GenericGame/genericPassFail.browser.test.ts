@@ -347,7 +347,8 @@ it("allows solo all-fail completion only after a saved Round", async () => {
     const game = await openGame(page, ["Maya"]);
     await page.getByRole("button", { name: "Finish Game", exact: true }).click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
-    expect(await finish.getByRole("button", { name: "Finish", exact: true }).isDisabled()).toBe(
+    expect(await finish.getByRole("button", { name: "Finish", exact: true }).count()).toBe(0);
+    expect(await finish.getByRole("button", { name: "Delete", exact: true }).isEnabled()).toBe(
       true,
     );
     await finish.getByRole("button", { name: "Resume", exact: true }).click();
