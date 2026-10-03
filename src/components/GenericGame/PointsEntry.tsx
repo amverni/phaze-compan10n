@@ -1,5 +1,6 @@
 import { Delete, Minus, Plus } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
+import { editGenericPoints } from "../../utils/genericPoints";
 import { Button } from "../ui";
 
 interface NumericField {
@@ -29,80 +30,88 @@ export function PointsEntry({ name, points, tiebreaker, disabled }: PointsEntryP
     { label: "Points" as const, ...points },
     ...(tiebreaker ? [{ label: "Tiebreaker" as const, ...tiebreaker }] : []),
   ];
-  const toggleSign = () =>
-    onChange(value.startsWith("-") ? value.slice(1) : `-${value.replace(/^\+/, "")}`);
+  const edit = (key: string) => onChange(editGenericPoints(value, key));
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (disabled || event.altKey || event.ctrlKey || event.metaKey) return;
-    if (event.key === "Backspace") {
+    if (
+      event.key === "Backspace" ||
+      event.key === "Delete" ||
+      (event.key.length === 1 && event.key !== " ")
+    ) {
       event.preventDefault();
-      onChange(value.slice(0, -1));
-    } else if (event.key === "Delete") {
-      event.preventDefault();
-      onChange("");
-    } else if (event.key === "-") {
-      event.preventDefault();
-      toggleSign();
-    } else if (event.key === "+") {
-      event.preventDefault();
-      onChange(value.replace(/^-/, "") || "+");
-    } else if (event.key.length === 1 && event.key !== " ") {
-      event.preventDefault();
-      // Keep invalid typed characters visible so "1.5" cannot silently become "15".
-      onChange(value + event.key);
+      edit(event.key);
     }
   };
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-2 px-4 pt-4 pb-6">
       <div className={["grid w-full gap-3", tiebreaker ? "grid-cols-2" : "grid-cols-1"].join(" ")}>
-        {fields.map((field) => (
-          <div key={field.label} className="min-w-0">
-            <Button
-              type="button"
-              aria-label={`${name} ${field.label}`}
-              aria-pressed={tiebreaker ? metric === field.label : undefined}
-              aria-invalid={!!field.error}
-              aria-describedby={`${id}-${field.label}-value ${id}-help${field.error ? ` ${id}-${field.label}-error` : ""}`}
-              disabled={disabled}
-              onFocus={() => setSelectedMetric(field.label)}
-              onClick={(event) => {
-                setSelectedMetric(field.label);
-                event.currentTarget.focus();
-              }}
-              onKeyDown={onKeyDown}
-              className={[
-                "w-full min-w-0 flex-col gap-1 rounded-2xl! px-3 py-3",
-                "data-focus:outline-text-secondary!",
-                metric === field.label ? "ring-2 ring-text-secondary/60" : "",
-              ].join(" ")}
-            >
+        {fields.map((field) => {
+          const content = (
+            <>
               <span className="text-sm">{field.label}</span>
               <output
                 id={`${id}-${field.label}-value`}
+                aria-label={`${name} ${field.label}`}
+                aria-invalid={!!field.error}
+                aria-describedby={field.error ? `${id}-${field.label}-error` : undefined}
                 aria-live="polite"
                 className="max-w-full break-all text-2xl font-semibold tabular-nums"
               >
-                {field.value || "Not entered"}
+                {field.value}
               </output>
-            </Button>
-            {field.error && (
-              <p
-                id={`${id}-${field.label}-error`}
-                role="alert"
-                className="pt-2 text-center text-sm text-pt-red-500"
-              >
-                {field.error}
-              </p>
-            )}
-          </div>
-        ))}
+            </>
+          );
+          const boxClasses = "w-full min-w-0 flex-col gap-1 rounded-2xl! px-3 py-3";
+          return (
+            <div key={field.label} className="min-w-0">
+              {tiebreaker ? (
+                <Button
+                  type="button"
+                  aria-label={`${name} ${field.label}`}
+                  aria-pressed={metric === field.label}
+                  aria-invalid={!!field.error}
+                  aria-describedby={`${id}-${field.label}-value ${id}-help${field.error ? ` ${id}-${field.label}-error` : ""}`}
+                  disabled={disabled}
+                  onFocus={() => setSelectedMetric(field.label)}
+                  onClick={(event) => {
+                    setSelectedMetric(field.label);
+                    event.currentTarget.focus();
+                  }}
+                  onKeyDown={onKeyDown}
+                  className={[
+                    boxClasses,
+                    "data-focus:outline-text-secondary!",
+                    metric === field.label ? "border-text-secondary!" : "",
+                  ].join(" ")}
+                >
+                  {content}
+                </Button>
+              ) : (
+                <div className={["glass flex items-center", boxClasses].join(" ")}>{content}</div>
+              )}
+              {field.error && (
+                <p
+                  id={`${id}-${field.label}-error`}
+                  role="alert"
+                  className="pt-2 text-center text-sm text-pt-red-500"
+                >
+                  {field.error}
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
       <p id={`${id}-help`} className="sr-only">
         Enter {metric} using the keypad or keyboard. Minus changes the sign. Backspace removes a
-        digit. Delete clears the entry.
+        digit. Delete resets to zero.
         {tiebreaker && " Select a field to change the keypad target."}
       </p>
-      <fieldset className="grid grid-cols-3 justify-items-center gap-3 p-4">
+      <fieldset
+        aria-describedby={`${id}-${metric}-value ${id}-help`}
+        className="grid grid-cols-3 justify-items-center gap-3 p-4"
+      >
         <legend className="sr-only">
           {name} {metric} keypad
         </legend>
@@ -112,7 +121,7 @@ export function PointsEntry({ name, points, tiebreaker, disabled }: PointsEntryP
             type="button"
             disabled={disabled}
             onKeyDown={onKeyDown}
-            onClick={() => onChange(value + digit)}
+            onClick={() => edit(digit)}
             className={keyClasses}
           >
             {digit}
@@ -121,9 +130,9 @@ export function PointsEntry({ name, points, tiebreaker, disabled }: PointsEntryP
         <Button
           type="button"
           aria-label="Change sign"
-          disabled={disabled}
+          disabled={disabled || value === "0"}
           onKeyDown={onKeyDown}
-          onClick={toggleSign}
+          onClick={() => edit("-")}
           className={keyClasses}
         >
           <span className="flex flex-col items-center" aria-hidden>
@@ -135,7 +144,7 @@ export function PointsEntry({ name, points, tiebreaker, disabled }: PointsEntryP
           type="button"
           disabled={disabled}
           onKeyDown={onKeyDown}
-          onClick={() => onChange(`${value}0`)}
+          onClick={() => edit("0")}
           className={keyClasses}
         >
           0
@@ -143,9 +152,9 @@ export function PointsEntry({ name, points, tiebreaker, disabled }: PointsEntryP
         <Button
           type="button"
           aria-label="Backspace"
-          disabled={disabled}
+          disabled={disabled || value === "0"}
           onKeyDown={onKeyDown}
-          onClick={() => onChange(value.slice(0, -1))}
+          onClick={() => edit("Backspace")}
           className={keyClasses}
         >
           <Delete className="size-6" aria-hidden />

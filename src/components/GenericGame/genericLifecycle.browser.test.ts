@@ -244,7 +244,7 @@ it("offers Resume and Pause without a saved Round and discards a draft only when
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await add.click();
     expect(
-      await entry.getByRole("button", { name: "Maya Points", exact: true }).innerText(),
+      await entry.getByRole("status", { name: "Maya Points", exact: true }).innerText(),
     ).toContain("8");
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
@@ -255,10 +255,10 @@ it("offers Resume and Pause without a saved Round and discards a draft only when
     expect(await page.getByRole("dialog").count()).toBe(0);
     await page.getByRole("link", { name: "Continue game with Maya, Rowan", exact: true }).click();
     await add.click();
-    expect(
-      await entry.getByRole("button", { name: "Maya Points", exact: true }).innerText(),
-    ).toContain("Not entered");
-    expect(await entry.getByRole("button", { name: "Save", exact: true }).isDisabled()).toBe(true);
+    expect(await entry.getByRole("status", { name: "Maya Points", exact: true }).innerText()).toBe(
+      "0",
+    );
+    expect(await entry.getByRole("button", { name: "Save", exact: true }).isEnabled()).toBe(true);
   } finally {
     await page.close();
   }
@@ -269,8 +269,9 @@ async function saveRound(page: Page, scores: Record<string, string>) {
   const entry = page.getByRole("dialog", { name: "Add Round", exact: true });
   for (const [name, points] of Object.entries(scores)) {
     await entry.getByRole("tab", { name, exact: true }).click();
-    await entry.getByRole("button", { name: `${name} Points`, exact: true }).focus();
-    await page.keyboard.type(points);
+    await entry.getByRole("button", { name: "0", exact: true }).focus();
+    await page.keyboard.type(points.replace(/^-/, ""));
+    if (points.startsWith("-")) await page.keyboard.press("-");
   }
   await entry.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator('[role="dialog"]').waitFor({ state: "detached" });
