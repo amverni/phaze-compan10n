@@ -127,6 +127,14 @@ it.each([
         .toBe(true);
       const control = await button.boundingBox();
       if (!control || !header) throw new Error("Missing header control");
+      const finish = await page
+        .getByRole("button", { name: "Finish Game", exact: true })
+        .boundingBox();
+      if (!finish) throw new Error("Missing footer control");
+      expect(control.x + control.width, `header/footer right edge at ${width}px`).toBeCloseTo(
+        finish.x + finish.width,
+        1,
+      );
       expect(control.width).toBe(48);
       expect(control.x).toBeGreaterThan(word.right);
       expect(word.left).toBeGreaterThan(left);

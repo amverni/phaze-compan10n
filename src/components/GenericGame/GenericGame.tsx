@@ -49,7 +49,7 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
           <div className="generic-game-header-logo absolute inset-0 flex items-center justify-center py-2">
             <ScorekeeperLogo height={64} />
           </div>
-          <div className="generic-game-header-controls absolute inset-0 z-10 flex items-center justify-end py-2">
+          <div className="content-container generic-game-header-controls absolute inset-y-0 z-10 flex items-center justify-end py-2">
             {view && (
               <Button
                 type="button"

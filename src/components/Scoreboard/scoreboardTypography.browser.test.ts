@@ -137,7 +137,19 @@ it("centers the Phases control with the independent logo layer across viewport s
         logoBounds.y + logoBounds.height / 2,
         1,
       );
-      expect(buttonBounds.x).toBe(left + 16);
+      const homeBounds = await box(page.getByRole("link", { name: "Go home", exact: true }));
+      const standingsBounds = await box(
+        page.getByRole("button", { name: "Open Standings", exact: true }),
+      );
+      const finishBounds = await box(
+        page.getByRole("button", { name: "Finish Game", exact: true }),
+      );
+      expect(buttonBounds.x).toBeCloseTo(homeBounds.x, 1);
+      expect(standingsBounds.x + standingsBounds.width).toBeCloseTo(
+        finishBounds.x + finishBounds.width,
+        1,
+      );
+      if (width <= 390) expect(buttonBounds.x).toBe(left + 16);
       expect(buttonBounds.width).toBeGreaterThanOrEqual(48);
       expect(buttonBounds.height).toBe(56);
       expect(logoBounds.x + logoBounds.width / 2).toBeCloseTo(left + (width - left) / 2, 1);
