@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -38,9 +38,9 @@ async function openStandingsGame(page: Page, testCase: StandingsCase) {
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   await page.evaluate(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-    const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+    const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
     const { settings, rounds, tiebreakers } = ${JSON.stringify(testCase)};
     const names = ["Zed", "Amy", "Rowan", "Lee", "Bea", "Cam", "Dan"];
     const players = [];

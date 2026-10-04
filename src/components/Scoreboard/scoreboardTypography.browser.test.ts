@@ -18,7 +18,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 

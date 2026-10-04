@@ -16,7 +16,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -105,10 +105,10 @@ describe("scorekeeper navigation", () => {
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       expect(
         await page.getByRole("link", { name: "Players", exact: true }).getAttribute("href"),
-      ).toBe("/phase-10-scoreboard/#/players");
+      ).toBe("/scorekeeper/#/players");
       expect(
         await page.getByRole("link", { name: "Games", exact: true }).getAttribute("href"),
-      ).toBe("/phase-10-scoreboard/#/games");
+      ).toBe("/scorekeeper/#/games");
       expect(await page.getByRole("link", { name: /Phases|Settings/ }).count()).toBe(0);
       await page.getByRole("link", { name: "Scorekeepers", exact: true }).click();
       const choices = page.getByRole("navigation", { name: "Scorekeepers" });
@@ -134,7 +134,7 @@ describe("scorekeeper navigation", () => {
       ]) {
         expect(
           await page.getByRole("link", { name: label, exact: true }).getAttribute("href"),
-        ).toBe(`/phase-10-scoreboard/#/phaseCompan10n/${path}`);
+        ).toBe(`/scorekeeper/#/phaseCompan10n/${path}`);
       }
       await page.getByRole("link", { name: "Scorekeepers", exact: true }).click();
       await generic.click();
@@ -166,7 +166,7 @@ describe("scorekeeper navigation", () => {
           exact: true,
         });
         if (route) {
-          expect(await home.getAttribute("href")).toBe("/phase-10-scoreboard/#/phaseCompan10n");
+          expect(await home.getAttribute("href")).toBe("/scorekeeper/#/phaseCompan10n");
           await home.click();
         }
         await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
@@ -337,7 +337,7 @@ describe("scorekeeper navigation", () => {
         ).toEqual(["2 sets of 3", "1 run of 7"]);
         expect(
           await recipient.getByRole("link", { name: "Go home", exact: true }).getAttribute("href"),
-        ).toBe("/phase-10-scoreboard/#/phaseCompan10n");
+        ).toBe("/scorekeeper/#/phaseCompan10n");
         await recipient.goto(`${appUrl}#/phaseCompan10n/phasescard/custom?data=invalid`);
         await recipient.getByText("This Phases Card link is invalid.", { exact: true }).waitFor();
         await recipient.goto(`${appUrl}#/phaseCompan10n/phasescard/missing-set`);
@@ -364,9 +364,9 @@ describe("scorekeeper navigation", () => {
         first: string;
         second: string;
       }>(`(async () => {
-          const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-          const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
-          const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+          const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+          const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
+          const { roundsApi } = await import("/scorekeeper/src/data/api/rounds.ts");
           const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
           const bob = await playersApi.create({ name: "Bob", color: "Rose", isFavorite: 0 });
           const input = {

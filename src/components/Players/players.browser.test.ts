@@ -17,7 +17,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -126,8 +126,8 @@ it("keeps the Player editor open with an alert when an Active Game blocks deleti
 function seedPlayersWithActiveGame(page: Page) {
   return page.evaluate(`
     Promise.all([
-      import("/phase-10-scoreboard/src/data/api/games.ts"),
-      import("/phase-10-scoreboard/src/data/api/players.ts")
+      import("/scorekeeper/src/data/api/games.ts"),
+      import("/scorekeeper/src/data/api/players.ts")
     ]).then(async ([{ gamesApi }, { playersApi }]) => {
       const amy = await playersApi.create({ name: "Amy", color: "#123456", isFavorite: 0 });
       const bob = await playersApi.create({ name: "Bob", color: "#abcdef", isFavorite: 0 });
@@ -149,7 +149,7 @@ function seedPlayersWithActiveGame(page: Page) {
 function readPlayers(page: Page) {
   // Keep this import in the browser rather than Vitest's SSR module loader.
   return page.evaluate<Player[]>(`
-    import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+    import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
       playersApi.getAll()
     )
   `);

@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -106,7 +106,7 @@ async function seedPlayers(page: Page, names: string[]) {
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<PlayerIdentity[]>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const players = [];
     for (const [index, name] of ${JSON.stringify(names)}.entries()) {
       players.push(await playersApi.create({
@@ -120,7 +120,7 @@ async function seedPlayers(page: Page, names: string[]) {
 async function openGame(page: Page, names = ["Maya", "Rowan", "Lee"], dealer = false) {
   const players = await seedPlayers(page, names);
   const game = await page.evaluate<GenericGame>(`(async () => {
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return genericGamesApi.create({
       players: ${JSON.stringify(players.map((player) => player.id))},
       settings: { mode: "passFail", tiebreaker: null, dealer: ${dealer} },
@@ -135,21 +135,21 @@ async function openGame(page: Page, names = ["Maya", "Rowan", "Lee"], dealer = f
 
 function readGame(page: Page, id: string) {
   return page.evaluate<GenericGame>(`(async () => {
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return genericGamesApi.getById(${JSON.stringify(id)});
   })()`);
 }
 
 function readRounds(page: Page, id: string) {
   return page.evaluate<GenericRound[]>(`(async () => {
-    const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+    const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
     return genericRoundsApi.getByGameId(${JSON.stringify(id)});
   })()`);
 }
 
 function readScoreboard(page: Page, id: string) {
   return page.evaluate<GenericScoreboardView>(`(async () => {
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return genericGamesApi.getScoreboard(${JSON.stringify(id)});
   })()`);
 }
@@ -295,7 +295,7 @@ it("finishes tied Passes with competition places and preserves completed snapsho
       ],
     });
     await page.evaluate(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       await playersApi.update(${JSON.stringify(game.players[0])}, { name: "Renamed", color: "#654321" });
       await playersApi.delete(${JSON.stringify(game.players[1])});
     })()`);

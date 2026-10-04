@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -28,7 +28,7 @@ async function seedPlayers(page: Page, names = ["Zed", "Amy", "Bob"]) {
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<string[]>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const ids = [];
     for (const name of ${JSON.stringify(names)}) {
       ids.push((await playersApi.create({ name, color: "Jam", isFavorite: 1 })).id);
@@ -40,7 +40,7 @@ async function seedPlayers(page: Page, names = ["Zed", "Amy", "Bob"]) {
 async function seedGame(page: Page, names: string[]) {
   const players = await seedPlayers(page, names);
   const game = await page.evaluate<GenericGame>(`(async () => {
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return genericGamesApi.create({
       players: ${JSON.stringify(players)},
       settings: { mode: "singleRoundWinner", tiebreaker: null, dealer: false },
@@ -144,8 +144,8 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
     await standings.getByRole("list", { name: "Standings places" }).waitFor();
     const gameId = page.url().split("/").at(-1);
     const completed = await page.evaluate<GenericGame>(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
       await playersApi.update(game.players[0], { name: "Renamed", color: "#123456" });
       await playersApi.delete(game.players[1]);

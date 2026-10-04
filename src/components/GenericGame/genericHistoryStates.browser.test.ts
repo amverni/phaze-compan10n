@@ -16,7 +16,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -31,7 +31,7 @@ it("shows generic Games loading, empty and retryable errors, and never navigates
     await page.goto(appUrl);
     await page.getByText("No active games yet", { exact: true }).waitFor();
     await page.evaluate(`
-      import("/phase-10-scoreboard/src/data/api/genericGames.ts").then(({ genericGamesApi }) => {
+      import("/scorekeeper/src/data/api/genericGames.ts").then(({ genericGamesApi }) => {
         const original = genericGamesApi.getList;
         const ready = new Promise(resolve => { window.releaseGenericList = resolve; });
         genericGamesApi.getList = async (...args) => {
@@ -48,8 +48,8 @@ it("shows generic Games loading, empty and retryable errors, and never navigates
 
     await page.goto(`${appUrl}#/players`);
     await page.evaluate(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
       const player = await playersApi.create({ name: "Dana", color: "Ocean", isFavorite: 0 });
       await genericGamesApi.create({
         players: [player.id],
@@ -90,9 +90,9 @@ it("refreshes cached generic Home, Games and pruned scoreboard data after the tw
     await page.goto(`${appUrl}#/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     const { completedId } = await page.evaluate<{ completedId: string }>(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
       const settings = { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false };
       const old = await playersApi.create({ name: "Elliot", color: "Jam", isFavorite: 0 });
       const history = await playersApi.create({ name: "History", color: "Moss", isFavorite: 0 });
@@ -165,11 +165,11 @@ it("blocks shared Player deletion for Active Games in either Scorekeeper and rel
     await page.getByText("No players yet", { exact: true }).waitFor();
     const { genericId, phaseId } = await page.evaluate<{ genericId: string; phaseId: string }>(`
       (async () => {
-        const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-        const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-        const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
-        const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
-        const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+        const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+        const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+        const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
+        const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
+        const { roundsApi } = await import("/scorekeeper/src/data/api/rounds.ts");
         const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
         const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
         const cam = await playersApi.create({ name: "Cam", color: "Moss", isFavorite: 0 });
@@ -299,7 +299,7 @@ async function failNextGameOperation(
   operation: "getList" | "getScoreboard" | "delete",
 ) {
   await page.evaluate(`
-    import("/phase-10-scoreboard/src/data/api/genericGames.ts").then(({ genericGamesApi }) => {
+    import("/scorekeeper/src/data/api/genericGames.ts").then(({ genericGamesApi }) => {
       const original = genericGamesApi[${JSON.stringify(operation)}];
       genericGamesApi[${JSON.stringify(operation)}] = async () => {
         genericGamesApi[${JSON.stringify(operation)}] = original;

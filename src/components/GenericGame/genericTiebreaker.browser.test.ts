@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -28,7 +28,7 @@ async function seedPlayers(page: Page, names = ["Maya"]) {
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<PlayerIdentity[]>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const players = [];
     for (const [index, name] of ${JSON.stringify(names)}.entries()) {
       players.push(await playersApi.create({
@@ -125,7 +125,7 @@ it.each([
     await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
     const gameId = page.url().split("/").at(-1);
     const game = await page.evaluate<GenericGame>(`(async () => {
-        const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+        const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
         return genericGamesApi.getById(${JSON.stringify(gameId)});
       })()`);
     expect(game.settings).toEqual({
@@ -162,7 +162,7 @@ it.each([
 async function openPointsGame(page: Page, names = ["Maya", "Rowan"]) {
   const players = await seedPlayers(page, names);
   const game = await page.evaluate<GenericGame>(`(async () => {
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return genericGamesApi.create({
       players: ${JSON.stringify(players.map((player) => player.id))},
       settings: { mode: "points", pointsDirection: "high", tiebreaker: { direction: "low" }, dealer: false },
@@ -373,7 +373,7 @@ it("rejects inexact Tiebreakers, recovers from accumulated overflow atomically, 
     expect(await secondary.innerText()).toContain("1");
     expect(await save.isEnabled()).toBe(true);
     const rounds = await page.evaluate<GenericRound[]>(`(async () => {
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
       return genericRoundsApi.getByGameId(${JSON.stringify(game.id)});
     })()`);
     expect(rounds).toHaveLength(1);

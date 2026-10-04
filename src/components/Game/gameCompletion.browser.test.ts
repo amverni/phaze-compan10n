@@ -17,7 +17,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -316,7 +316,7 @@ it("keeps a pending Finish on screen through dismissal attempts, shows failure, 
     await page.getByRole("button", { name: "Finish Game", exact: true }).click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
     await page.evaluate(`
-      import("/phase-10-scoreboard/src/data/api/games.ts").then(({ gamesApi }) => {
+      import("/scorekeeper/src/data/api/games.ts").then(({ gamesApi }) => {
         const finish = gamesApi.finish;
         gamesApi.finish = async (id) => {
           gamesApi.finish = finish;
@@ -371,8 +371,8 @@ it("keeps a pending Finish on screen through dismissal attempts, shows failure, 
 function seedCompletionGame(page: Page, phaseCount = 1, tiebreaker: GameTiebreaker = "roundsWon") {
   return page.evaluate<{ game: Game; players: Player[] }>(`
     Promise.all([
-      import("/phase-10-scoreboard/src/data/api/games.ts"),
-      import("/phase-10-scoreboard/src/data/api/players.ts")
+      import("/scorekeeper/src/data/api/games.ts"),
+      import("/scorekeeper/src/data/api/players.ts")
     ]).then(async ([{ gamesApi }, { playersApi }]) => {
       const amy = await playersApi.create({
         name: "Amy Jones",
@@ -402,7 +402,7 @@ function seedCompletionGame(page: Page, phaseCount = 1, tiebreaker: GameTiebreak
 
 function seedSavedRound(page: Page, game: Game, players: Player[], tied: boolean) {
   return page.evaluate(`
-    import("/phase-10-scoreboard/src/data/api/rounds.ts").then(({ roundsApi }) =>
+    import("/scorekeeper/src/data/api/rounds.ts").then(({ roundsApi }) =>
       roundsApi.add({
         gameId: ${JSON.stringify(game.id)},
         roundWinnerId: ${JSON.stringify(players[0].id)},
@@ -417,7 +417,7 @@ function seedSavedRound(page: Page, game: Game, players: Player[], tied: boolean
 
 function readRounds(page: Page, gameId: string) {
   return page.evaluate(`
-    import("/phase-10-scoreboard/src/data/api/rounds.ts").then(({ roundsApi }) =>
+    import("/scorekeeper/src/data/api/rounds.ts").then(({ roundsApi }) =>
       roundsApi.getByGameId(${JSON.stringify(gameId)})
     )
   `);
@@ -437,10 +437,10 @@ async function openStandings(page: Page) {
 function updateAndDeleteSavedPlayers(page: Page, renamedId: string, removedId: string) {
   return page.evaluate(`
     Promise.all([
-      import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+      import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
         playersApi.update(${JSON.stringify(renamedId)}, { name: "Zoe Quinn", color: "#654321" })
       ),
-      import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+      import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
         playersApi.delete(${JSON.stringify(removedId)})
       )
     ])
@@ -474,10 +474,10 @@ function readResults(page: Page) {
   // Keep these imports in the browser rather than Vitest's SSR module loader.
   return page.evaluate<{ games: Array<Record<string, unknown>>; players: Player[] }>(`
     Promise.all([
-      import("/phase-10-scoreboard/src/data/api/games.ts").then(({ gamesApi }) =>
+      import("/scorekeeper/src/data/api/games.ts").then(({ gamesApi }) =>
         gamesApi.getAll()
       ),
-      import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+      import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
         playersApi.getAll()
       )
     ]).then(([games, players]) => ({ games, players }))

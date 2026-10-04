@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -27,8 +27,8 @@ afterAll(async () => {
 const owners = ["phase10", "generic"] as const;
 const apiImport = (owner: ScorekeeperId) =>
   owner === "phase10"
-    ? 'const { gamesApi: api } = await import("/phase-10-scoreboard/src/data/api/games.ts");'
-    : 'const { genericGamesApi: api } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");';
+    ? 'const { gamesApi: api } = await import("/scorekeeper/src/data/api/games.ts");'
+    : 'const { genericGamesApi: api } = await import("/scorekeeper/src/data/api/genericGames.ts");';
 const home = (owner: ScorekeeperId) => (owner === "phase10" ? "/phaseCompan10n" : "/");
 const gamePath = (owner: ScorekeeperId, id: string) =>
   `${owner === "phase10" ? "/phaseCompan10n" : ""}/game/${id}`;
@@ -38,7 +38,7 @@ async function seed(page: Page, owner: ScorekeeperId) {
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<{ game: StoredGame; players: Player[] }>(`(async () => {
     ${apiImport(owner)}
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const amy = await playersApi.create({ name: "Amy", color: "Jam", isFavorite: 0 });
     const bob = await playersApi.create({ name: "Bob", color: "Ocean", isFavorite: 0 });
     const game = await api.create({
@@ -254,7 +254,7 @@ it.each(
     expect(await readGame(page, owner, game.id)).toBeUndefined();
     expect(
       await page.evaluate(
-        `import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) => playersApi.getAll())`,
+        `import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) => playersApi.getAll())`,
       ),
     ).toEqual(players);
     await page.goto(url);
@@ -285,10 +285,10 @@ it.each(owners)("rejects a %s Delete after another tab saves a Round", async (ow
       const game = await api.getById(${JSON.stringify(game.id)});
       ${
         owner === "phase10"
-          ? `const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+          ? `const { roundsApi } = await import("/scorekeeper/src/data/api/rounds.ts");
            await roundsApi.add({ gameId: game.id, roundWinnerId: game.players[0],
              scores: game.players.map(playerId => ({ playerId, phaseStatus: "completed", score: 0 })) });`
-          : `const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+          : `const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
            await genericRoundsApi.add({ gameId: game.id, mode: "points",
              scores: game.players.map(playerId => ({ playerId, points: "5" })) });`
       }
@@ -335,7 +335,7 @@ it.each(
     await page.evaluate(`(async () => {
       ${
         owner === "phase10"
-          ? 'const { roundsApi: api } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");'
+          ? 'const { roundsApi: api } = await import("/scorekeeper/src/data/api/rounds.ts");'
           : apiImport(owner)
       }
       const method = ${JSON.stringify(owner === "phase10" ? "getByGameId" : "getScoreboard")};
@@ -372,7 +372,7 @@ it.each(
     await popup(page).waitFor({ state: "detached" });
 
     // A real Player mutation invalidates the cached Game without changing its zero Rounds.
-    await page.evaluate(`import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+    await page.evaluate(`import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
       playersApi.create({ name: "Unused", color: "Jam", isFavorite: 0 }))`);
     await page.goto(`${appUrl}#/players`);
     page.once("dialog", (dialog) => dialog.accept());

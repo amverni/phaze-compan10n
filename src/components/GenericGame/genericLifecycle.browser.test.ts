@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -36,10 +36,10 @@ it("browses mixed generic Games with snapshot avatars and distinct actions, and 
   try {
     const game = await seedGame(page);
     const phaseId = await page.evaluate<string>(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
       const game = await genericGamesApi.getById(${JSON.stringify(game.id)});
       const casey = await playersApi.create({ name: "Casey", color: "Jam", isFavorite: 0 });
       await genericGamesApi.create({ players: [casey.id], settings: game.settings });
@@ -153,8 +153,8 @@ async function seedGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   const game = await page.evaluate<GenericGame>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     const players = [];
     for (const [index, name] of ${JSON.stringify(names)}.entries()) {
       players.push(await playersApi.create({
@@ -175,7 +175,7 @@ async function seedGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
 
 function readGame(page: Page, id: string) {
   return page.evaluate<GenericGame>(`(async () => {
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return genericGamesApi.getById(${JSON.stringify(id)});
   })()`);
 }
@@ -377,7 +377,7 @@ it("keeps failed completion recoverable and prevents duplicate or dismissed pend
     const game = await seedGame(page);
     await saveRound(page, { Maya: "0", Rowan: "-1" });
     await page.evaluate(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
       const original = genericGamesApi.finish;
       genericGamesApi.finish = async () => {
         genericGamesApi.finish = original;
@@ -393,7 +393,7 @@ it("keeps failed completion recoverable and prevents duplicate or dismissed pend
       true,
     );
     await page.evaluate(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
       const original = genericGamesApi.finish;
       const ready = new Promise(resolve => { window.releaseFinish = resolve; });
       genericGamesApi.finish = async (...args) => {

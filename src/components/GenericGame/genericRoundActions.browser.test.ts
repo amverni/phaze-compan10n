@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -24,8 +24,8 @@ it("replaces Save with a reduced-motion-aware spinner while retaining a failed d
   try {
     await page.goto(appUrl);
     const gameId = await page.evaluate<string>(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
       const player = await playersApi.create({ name: "Maya", color: "Jam", isFavorite: 0 });
       return (await genericGamesApi.create({
         players: [player.id],
@@ -137,8 +137,8 @@ it.each([
   try {
     await page.goto(appUrl);
     const gameIds = await page.evaluate<string[]>(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
       const player = await playersApi.create({ name: "Maya", color: "Jam", isFavorite: 0 });
       const ids = [];
       for (const settings of ${JSON.stringify(settings)}) {

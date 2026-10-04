@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/phase-10-scoreboard/",
+  base: "/scorekeeper/",
   plugins: [
     tanstackRouter({
       routesDirectory: "./src/routes",

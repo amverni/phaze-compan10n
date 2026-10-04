@@ -20,7 +20,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -146,8 +146,8 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
       await page.goto(appUrl);
       await page.getByRole("button", { name: "Menu", exact: true }).waitFor();
       const gameId = await page.evaluate<GameId>(`(async () => {
-        const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-        const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+        const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+        const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
         const player = await playersApi.create({
           name: "Maya", color: "#123456", isFavorite: 0,
         });

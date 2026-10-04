@@ -14,7 +14,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -33,11 +33,11 @@ it("keeps every completed surface frozen across shared Player edits and deletion
     const games = await page.evaluate<
       { id: string; home: string; graphTabs: string[]; graphLabels: string[] }[]
     >(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
-      const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
-      const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
+      const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
+      const { roundsApi } = await import("/scorekeeper/src/data/api/rounds.ts");
       const maya = await playersApi.create({ name: "Maya", color: "#123456", isFavorite: 0 });
       const rowan = await playersApi.create({ name: "Rowan", color: "#abcdef", isFavorite: 0 });
       const players = [maya.id, rowan.id];
@@ -220,9 +220,9 @@ it.each([
     await page.getByText("No active games yet", { exact: true }).waitFor();
     const names = Array.from({ length: 16 }, (_, index) => `Alexandria Montgomery ${index + 1}`);
     const gameId = await page.evaluate<string>(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
       const players = [];
       for (const name of ${JSON.stringify(names)}) {
         players.push(await playersApi.create({ name, color: "Ocean", isFavorite: 0 }));
@@ -387,9 +387,9 @@ it.each(
     await page.getByText("No active games yet", { exact: true }).waitFor();
     const names = Array.from({ length: 8 }, (_, index) => `Alexandria Montgomery ${index + 1}`);
     const gameId = await page.evaluate<string>(`(async () => {
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
       const players = [];
       for (const name of ${JSON.stringify(names)}) {
         players.push(await playersApi.create({ name, color: "Ocean", isFavorite: 0 }));

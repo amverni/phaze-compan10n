@@ -19,7 +19,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -117,7 +117,7 @@ describe.each(["light", "dark"] as const)("Dealer headers in %s mode", (colorSch
 
       const api = mode === "phase10" ? "games" : "genericGames";
       await page.evaluate(`(async () => {
-          const { ${api}Api } = await import("/phase-10-scoreboard/src/data/api/${api}.ts");
+          const { ${api}Api } = await import("/scorekeeper/src/data/api/${api}.ts");
           await ${api}Api.finish(${JSON.stringify(id)});
         })()`);
       await reloadScoreboard(page);
@@ -154,13 +154,13 @@ async function openGame(page: Page, mode: TestMode, dealer = true) {
   await page.goto(`${appUrl}#/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   const id = await page.evaluate<GameId>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const players = [];
     for (const name of ${JSON.stringify(playerNames)}) {
       players.push((await playersApi.create({ name, color: "Spearmint", isFavorite: 0 })).id);
     }
     if (${JSON.stringify(mode)} === "phase10") {
-      const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
+      const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
       return (await gamesApi.create({
         scorekeeper: "phase10", players,
         phaseSet: { id: "dealer-phases", type: "temporary", name: "Dealer phases",
@@ -168,7 +168,7 @@ async function openGame(page: Page, mode: TestMode, dealer = true) {
         settings: { tiebreaker: "lowestPoints", roundSkipPenalty: 100, sitOutPenalty: 0 }
       })).id;
     }
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     return (await genericGamesApi.create({ players,
       settings: { mode: ${JSON.stringify(mode)}, dealer: ${dealer}, tiebreaker: null,
         ...(${JSON.stringify(mode)} === "points" ? { pointsDirection: "low" } : {}) }
@@ -184,8 +184,8 @@ async function openGame(page: Page, mode: TestMode, dealer = true) {
 function saveRound(page: Page, mode: TestMode, id: GameId) {
   return page.evaluate(`(async () => {
     if (${JSON.stringify(mode)} === "phase10") {
-      const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
-      const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
+      const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
+      const { roundsApi } = await import("/scorekeeper/src/data/api/rounds.ts");
       const game = await gamesApi.getById(${JSON.stringify(id)});
       await roundsApi.add({ gameId: game.id, roundWinnerId: game.players[1],
         scores: game.players.map((playerId, index) => ({
@@ -193,8 +193,8 @@ function saveRound(page: Page, mode: TestMode, id: GameId) {
         }))
       });
     } else {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
       const game = await genericGamesApi.getById(${JSON.stringify(id)});
       const mode = game.settings.mode;
       await genericRoundsApi.add({ gameId: game.id, mode,

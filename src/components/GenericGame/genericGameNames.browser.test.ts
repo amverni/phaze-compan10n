@@ -14,7 +14,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -41,9 +41,9 @@ it.each([
     await page.getByText("No active games yet", { exact: true }).waitFor();
     await page.evaluate(`
       (async () => {
-        const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-        const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-        const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+        const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+        const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+        const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
         const players = [];
         for (const name of ["Maya", "Rowan", "Lee", "Alex", "Dana", "Casey", "Sasha", "Jules"]) {
           players.push(await playersApi.create({ name, color: "Jam", isFavorite: 0 }));
@@ -159,7 +159,7 @@ it.each([
     await page.goto(`${appUrl}#/create`);
     await page.getByRole("tab", { name: "Players", exact: true }).waitFor();
     await page.evaluate(`
-      import("/phase-10-scoreboard/src/data/api/players.ts").then(({ playersApi }) =>
+      import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
         playersApi.create({ name: "Maya", color: "Jam", isFavorite: 1 }))
     `);
     await page.reload();

@@ -16,7 +16,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -227,7 +227,7 @@ async function expectDangerColor(icon: Locator) {
 async function holdNextDeletion(page: Page, ownerPath: string) {
   const module = ownerPath ? "games" : "genericGames";
   await page.evaluate(`
-    import("/phase-10-scoreboard/src/data/api/${module}.ts").then(({ ${module}Api: api }) => {
+    import("/scorekeeper/src/data/api/${module}.ts").then(({ ${module}Api: api }) => {
       const original = api.delete;
       const ready = new Promise(resolve => { window.releaseGameDeletion = resolve; });
       api.delete = async (...args) => {
@@ -243,11 +243,11 @@ async function seedGames(page: Page) {
   await page.goto(`${appUrl}#/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   await page.evaluate(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-    const { gamesApi } = await import("/phase-10-scoreboard/src/data/api/games.ts");
-    const { roundsApi } = await import("/phase-10-scoreboard/src/data/api/rounds.ts");
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-    const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+    const { gamesApi } = await import("/scorekeeper/src/data/api/games.ts");
+    const { roundsApi } = await import("/scorekeeper/src/data/api/rounds.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+    const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
     const dana = await playersApi.create({ name: "Dana", color: "Ocean", isFavorite: 0 });
     const casey = await playersApi.create({ name: "Casey", color: "Jam", isFavorite: 0 });
     const phaseInput = {

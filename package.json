@@ -1,6 +1,6 @@
 {
-  "name": "phase-10-scoreboard",
-  "homepage": "https://amverni.github.io/phase-10-scoreboard",
+  "name": "scorekeeper",
+  "homepage": "https://amverni.github.io/scorekeeper",
   "private": true,
   "version": "0.0.0",
   "type": "module",

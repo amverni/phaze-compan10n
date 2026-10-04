@@ -16,7 +16,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -44,7 +44,7 @@ async function seedSharedPlayers(page: Page) {
   await page.goto(`${appUrl}#/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   await page.evaluate(`
-    import("/phase-10-scoreboard/src/data/api/players.ts").then(async ({ playersApi }) => {
+    import("/scorekeeper/src/data/api/players.ts").then(async ({ playersApi }) => {
       for (const name of ["Maya", "Rowan", "Lee"]) {
         await playersApi.create({ name, color: "Jam", isFavorite: 1 });
       }
@@ -338,7 +338,7 @@ describe("generic Points Games", () => {
       await page.goto(`${appUrl}#/create`);
       await page.getByRole("button", { name: "Maya", exact: true }).click();
       await page.evaluate(`
-        import("/phase-10-scoreboard/src/data/api/players.ts").then(async ({ playersApi }) => {
+        import("/scorekeeper/src/data/api/players.ts").then(async ({ playersApi }) => {
           const [maya] = await playersApi.getAll({ name: "Maya" });
           await playersApi.delete(maya.id);
         })

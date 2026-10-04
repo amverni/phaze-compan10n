@@ -15,7 +15,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -28,9 +28,9 @@ async function openGraphGame(page: Page, settings: GenericGameSettings, playerCo
   await page.goto(appUrl);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   const gameId = await page.evaluate<string>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-    const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+    const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
     const maya = await playersApi.create({ name: "Maya", color: "#123456", isFavorite: 0 });
     const rowan = await playersApi.create({ name: "Rowan", color: "#abcdef", isFavorite: 0 });
     const players = [maya, rowan];
@@ -308,8 +308,8 @@ it("keeps large signed axis labels inside the graph while exposing exact cumulat
       dealer: false,
     });
     await page.evaluate(`(async () => {
-          const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-          const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+          const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+          const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
           const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
           await genericRoundsApi.add({
             gameId: game.id,
@@ -434,8 +434,8 @@ it.each([
       dealer: false,
     });
     await page.evaluate(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
       const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
       await genericRoundsApi.add({
         gameId: game.id,
@@ -487,8 +487,8 @@ it("uses live graph names/colors, then snapshots after completion and saved-Play
       dealer: false,
     });
     await page.evaluate(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
       await playersApi.update(game.players[0], { name: "Maya captured", color: "#fedcba" });
     })()`);
@@ -508,8 +508,8 @@ it("uses live graph names/colors, then snapshots after completion and saved-Play
         .getAttribute("stroke"),
     ).toBe("#fedcba");
     await page.evaluate(`(async () => {
-      const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-      const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const game = await genericGamesApi.finish(${JSON.stringify(gameId)});
       for (const id of game.players) {
         await playersApi.update(id, { name: "Changed " + id, color: "#000000" });

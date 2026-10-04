@@ -16,7 +16,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -113,7 +113,7 @@ it("shows loading, empty and retryable errors without turning failed deletes int
     await page.goto(`${appUrl}#/phaseCompan10n`);
     await page.getByText("No active games yet", { exact: true }).waitFor();
     await page.evaluate(`
-      import("/phase-10-scoreboard/src/data/api/games.ts").then(({ gamesApi }) => {
+      import("/scorekeeper/src/data/api/games.ts").then(({ gamesApi }) => {
         const original = gamesApi.getList;
         const ready = new Promise(resolve => { window.releaseGamesList = resolve; });
         gamesApi.getList = async (...args) => {
@@ -180,8 +180,8 @@ it("refreshes cached Home, Games and removed detail data after the twenty-first 
     const { activeId, completedId } = await seedGames(page);
     await page.evaluate(`
       Promise.all([
-        import("/phase-10-scoreboard/src/data/api/games.ts"),
-        import("/phase-10-scoreboard/src/data/api/rounds.ts")
+        import("/scorekeeper/src/data/api/games.ts"),
+        import("/scorekeeper/src/data/api/rounds.ts")
       ]).then(async ([{ gamesApi }, { roundsApi }]) => {
         const active = await gamesApi.getById(${JSON.stringify(activeId)});
         for (let i = 0; i < 19; i++) {
@@ -250,7 +250,7 @@ async function expectIconColor(icon: Locator, token: string) {
 
 async function failNextGameOperation(page: Page, operation: "getList" | "getById" | "delete") {
   await page.evaluate(`
-    import("/phase-10-scoreboard/src/data/api/games.ts").then(({ gamesApi }) => {
+    import("/scorekeeper/src/data/api/games.ts").then(({ gamesApi }) => {
       const original = gamesApi[${JSON.stringify(operation)}];
       gamesApi[${JSON.stringify(operation)}] = async () => {
         gamesApi[${JSON.stringify(operation)}] = original;
@@ -274,9 +274,9 @@ async function seedGames(page: Page) {
   await page.getByText("No players yet", { exact: true }).waitFor();
   return page.evaluate<{ completedId: string; activeId: string }>(`
     Promise.all([
-      import("/phase-10-scoreboard/src/data/api/games.ts"),
-      import("/phase-10-scoreboard/src/data/api/players.ts"),
-      import("/phase-10-scoreboard/src/data/api/rounds.ts")
+      import("/scorekeeper/src/data/api/games.ts"),
+      import("/scorekeeper/src/data/api/players.ts"),
+      import("/scorekeeper/src/data/api/rounds.ts")
     ]).then(async ([{ gamesApi }, { playersApi }, { roundsApi }]) => {
       const amy = await playersApi.create({ name: "Amy", color: "#123456", isFavorite: 0 });
       const bob = await playersApi.create({ name: "Bob", color: "#abcdef", isFavorite: 0 });

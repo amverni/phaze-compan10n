@@ -14,7 +14,7 @@ beforeAll(async () => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
-  appUrl = `http://127.0.0.1:${address.port}/phase-10-scoreboard/`;
+  appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
   browser = await webkit.launch();
 }, 60_000);
 
@@ -307,8 +307,8 @@ it.each([
     await save.click();
     await dialog.waitFor({ state: "hidden" });
     await page.evaluate(`(async () => {
-        const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
-        const { genericRoundsApi } = await import("/phase-10-scoreboard/src/data/api/genericRounds.ts");
+        const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+        const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
         const game = await genericGamesApi.getById(${JSON.stringify(gameId)});
         for (let index = 0; index < 22; index++) {
           await genericRoundsApi.add({ gameId: game.id, mode: "points", scores: game.players.map(playerId => ({ playerId, points: "1" })) });
@@ -351,8 +351,8 @@ afterAll(async () => {
 async function openGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
   await page.goto(appUrl);
   const gameId = await page.evaluate<string>(`(async () => {
-    const { playersApi } = await import("/phase-10-scoreboard/src/data/api/players.ts");
-    const { genericGamesApi } = await import("/phase-10-scoreboard/src/data/api/genericGames.ts");
+    const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
+    const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
     const players = [];
     for (const name of ${JSON.stringify(names)}) {
       players.push(await playersApi.create({ name, color: "Jam", isFavorite: 0 }));
