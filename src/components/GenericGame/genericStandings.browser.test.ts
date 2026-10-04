@@ -35,7 +35,7 @@ interface StandingsCase {
 }
 
 async function openStandingsGame(page: Page, testCase: StandingsCase) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   await page.evaluate(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -63,7 +63,7 @@ async function openStandingsGame(page: Page, testCase: StandingsCase) {
             : { playerId: player.id, passed: totals[index] === 1 }),
       });
     }
-    location.hash = "/game/" + game.id;
+    location.hash = "/scorekeeper/game/" + game.id;
   })()`);
   await page.getByRole("button", { name: "Open Standings", exact: true }).click();
 }

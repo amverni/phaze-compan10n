@@ -37,7 +37,7 @@ it.each([
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     await page.getByText("No active games yet", { exact: true }).waitFor();
     await page.evaluate(`
       (async () => {
@@ -64,7 +64,7 @@ it.each([
       })()
     `);
     const playerSummary = "Maya, Rowan, Lee, Alex, Dana, Casey, Sasha, Jules";
-    for (const route of ["/", "/games"]) {
+    for (const route of ["/scorekeeper", "/scorekeeper/games"]) {
       await page.goto(`${appUrl}#${route}`);
       await page.reload();
       const unnamed = page.getByRole("link", {
@@ -86,7 +86,9 @@ it.each([
       for (const { name, action } of [
         { name: longName, action: "Continue" },
         { name: "Cards", action: "Continue" },
-        ...(route === "/games" ? [{ name: longName, action: "View Standings for" }] : []),
+        ...(route === "/scorekeeper/games"
+          ? [{ name: longName, action: "View Standings for" }]
+          : []),
       ]) {
         const open = page.getByRole("link", {
           name: `${action} game "${name}" with ${playerSummary}`,
@@ -156,7 +158,7 @@ it.each([
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("tab", { name: "Players", exact: true }).waitFor();
     await page.evaluate(`
       import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>

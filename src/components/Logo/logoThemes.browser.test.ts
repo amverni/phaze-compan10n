@@ -181,7 +181,7 @@ it("initially shows Halloween in both chooser logos and changes appearance witho
       observer.observe(document, { childList: true, subtree: true });
     });
     await page.clock.setFixedTime(new Date("2026-10-31T16:00:00Z"));
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), HALLOWEEN);
     await expectColors(phaseStripes(page), HALLOWEEN);
     expect(await page.evaluate("window.firstLogoColors")).toEqual([HALLOWEEN, HALLOWEEN]);
@@ -193,7 +193,7 @@ it("initially shows Halloween in both chooser logos and changes appearance witho
     await expectColors(phaseStripes(page), dark);
     await expectGeometry(page, 4);
     expect(await lettering(page)).toEqual(before);
-    expect(page.url()).toBe(`${appUrl}#/scorekeepers`);
+    expect(page.url()).toBe(`${appUrl}#/`);
     expect(errors).toEqual([]);
   } finally {
     await page.close();
@@ -211,7 +211,7 @@ it("changes both logos at device-local midnight without navigating or moving let
     await page.clock.install({ time: beforeMidnight });
     await page.clock.pauseAt(beforeMidnight);
     await trackRefreshTimeouts(page);
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), ARCADE);
     await expectOneTimeout(page, "2026-10-31T04:00:00Z");
     const before = await lettering(page);
@@ -220,14 +220,14 @@ it("changes both logos at device-local midnight without navigating or moving let
     await expectColors(phaseStripes(page), HALLOWEEN);
     await expectOneTimeout(page, "2026-11-01T04:00:00Z");
     expect(await lettering(page)).toEqual(before);
-    expect(page.url()).toBe(`${appUrl}#/scorekeepers`);
+    expect(page.url()).toBe(`${appUrl}#/`);
   } finally {
     await page.close();
   }
 }, 30_000);
 
 async function seedGames(page: Page) {
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/scorekeeper/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   return page.evaluate<{ generic: string; phase: string }>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -288,7 +288,11 @@ it.each([
   try {
     await page.clock.setFixedTime(new Date(date));
     const games = await seedGames(page);
-    for (const route of ["/", "/players", `/game/${games.generic}`]) {
+    for (const route of [
+      "/scorekeeper",
+      "/scorekeeper/players",
+      `/scorekeeper/game/${games.generic}`,
+    ]) {
       await page.goto(`${appUrl}#${route}`);
       await expectColors(scorekeeperStripes(page), scorekeeper);
       expect(await page.getByRole("img", { name: "Scorekeeper", exact: true }).count()).toBe(1);
@@ -314,7 +318,7 @@ it.each([
       if (route.endsWith("/original"))
         await page.getByText("2 sets of 3", { exact: true }).waitFor();
     }
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), scorekeeper);
     await expectColors(phaseStripes(page), phase);
     expect(await page.getByRole("link", { name: "Scorekeeper", exact: true }).count()).toBe(1);
@@ -373,7 +377,7 @@ it("refreshes behind a live unsaved score entry without changing saved Games, co
   try {
     await page.clock.setFixedTime(new Date("2026-10-30T16:00:00Z"));
     const games = await seedGames(page);
-    await page.goto(`${appUrl}#/game/${games.generic}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${games.generic}`);
     await page.getByRole("cell", { name: "Maya, Round 1: 5 Points", exact: true }).waitFor();
     await page.getByRole("cell", { name: "Rowan, Round 1: 9 Points", exact: true }).waitFor();
     await page.getByRole("button", { name: "Add Round", exact: true }).click();
@@ -398,7 +402,7 @@ it("refreshes behind a live unsaved score entry without changing saved Games, co
     expect(await lettering(page)).toEqual(word);
     expect(await surfaceStyles(page)).toEqual(styles);
     expect(await savedGames(page, games)).toEqual(before);
-    expect(page.url()).toBe(`${appUrl}#/game/${games.generic}`);
+    expect(page.url()).toBe(`${appUrl}#/scorekeeper/game/${games.generic}`);
     await dialog.getByRole("button", { name: "Close", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     expect(
@@ -437,7 +441,7 @@ it.each([
   });
   try {
     await page.clock.setFixedTime(new Date(date));
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), colors);
     await expectColors(phaseStripes(page), colors);
     const before = await lettering(page);
@@ -472,7 +476,7 @@ it.each([
     await page.clock.install({ time: start });
     await page.clock.pauseAt(start);
     await trackRefreshTimeouts(page);
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), ARCADE);
     await expectOneTimeout(page, "2026-10-31T04:00:00Z");
     const before = await lettering(page);
@@ -503,7 +507,7 @@ it.each([
     await expectColors(phaseStripes(page), PHASE);
     await expectOneTimeout(page, "2026-11-02T05:00:00Z");
     expect(await lettering(page)).toEqual(before);
-    expect(page.url()).toBe(`${appUrl}#/scorekeepers`);
+    expect(page.url()).toBe(`${appUrl}#/`);
   } finally {
     await page.close();
   }
@@ -538,7 +542,7 @@ it.each([
     await page.clock.install({ time: new Date(start) });
     await page.clock.pauseAt(new Date(start));
     await trackRefreshTimeouts(page);
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), before);
     await expectColors(phaseStripes(page), PHASE);
     await expectOneTimeout(page, midnight);
@@ -565,7 +569,7 @@ it.each([
   const page = await browser.newPage({ timezoneId, colorScheme: "light" });
   try {
     await page.clock.setFixedTime(new Date("2026-10-30T16:00:00Z"));
-    await page.goto(`${appUrl}#/scorekeepers`);
+    await page.goto(`${appUrl}#/`);
     await expectColors(scorekeeperStripes(page), scorekeeper);
     await expectColors(phaseStripes(page), phase);
   } finally {

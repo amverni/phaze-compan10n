@@ -77,7 +77,7 @@ export function GenericCreateGame() {
               }
             : { mode: value.mode, tiebreaker: null, dealer: value.dealer },
       });
-      await navigate({ to: "/game/$gameId", params: { gameId: game.id } });
+      await navigate({ to: "/scorekeeper/game/$gameId", params: { gameId: game.id } });
     },
   });
 
@@ -303,7 +303,12 @@ export function GenericCreateGame() {
         }
         footerContent={
           <div className="content-container flex h-full justify-between">
-            <Button as={Link} to="/" aria-label="Cancel" className="page-shell-footer-button p-0">
+            <Button
+              as={Link}
+              to="/scorekeeper"
+              aria-label="Cancel"
+              className="page-shell-footer-button p-0"
+            >
               <X className="size-8" aria-hidden />
             </Button>
             <form.Subscribe

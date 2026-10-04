@@ -40,7 +40,7 @@ it.each([
       ? "drop-shadow(rgba(0, 0, 0, 0.18) 0px 0px 12px) drop-shadow(rgba(0, 0, 0, 0.12) 0px 0px 4px)"
       : "drop-shadow(rgba(0, 0, 0, 0.95) 0px 0px 12px) drop-shadow(rgba(0, 0, 0, 0.7) 0px 0px 4px)";
   try {
-    for (const route of ["/phaseCompan10n/create", "/create"]) {
+    for (const route of ["/phaseCompan10n/create", "/scorekeeper/create"]) {
       await page.goto(`${appUrl}#${route}`);
       await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
       for (const [width, height, top, bottom, left, right] of [
@@ -110,7 +110,7 @@ it.each([
             shine: "none",
           });
           expect(actual.clipPath).toBe(
-            route === "/create"
+            route === "/scorekeeper/create"
               ? "none"
               : position === "header"
                 ? "polygon(0px 0px, 100% 0px, 100% calc(100% - 50px), 0% 100%)"
@@ -150,7 +150,7 @@ describe("Scorekeeper shell geometry", () => {
       const phaseHeader = await page.locator(".page-shell-header").boundingBox();
       expect(phaseHeader?.height).toBeCloseTo(126.6, 1);
 
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       await page.getByRole("img", { name: "Scorekeeper", exact: true }).waitFor();
       const header = await page.locator(".page-shell-header").boundingBox();
       const main = await page.locator(".page-shell-main").boundingBox();
@@ -164,7 +164,7 @@ describe("Scorekeeper shell geometry", () => {
   it("fits the footer around its controls with 12px above and below", async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
     try {
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       const cancel = page.getByRole("link", { name: "Cancel", exact: true });
       await cancel.waitFor();
       const footer = await page.locator(".page-shell-footer").boundingBox();
@@ -184,9 +184,9 @@ describe("Scorekeeper shell geometry", () => {
 });
 
 it.each([
-  "/",
+  "/scorekeeper",
   "/phaseCompan10n",
-])("aligns home header controls with the footer on %s", async (route) => {
+])("aligns Scorekeeper Dashboard header controls with the footer on %s", async (route) => {
   const page = await browser.newPage();
   try {
     await page.goto(`${appUrl}#${route}`);
@@ -255,7 +255,7 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
       hasTouch: width < 1024,
     });
     try {
-      await page.goto(appUrl);
+      await page.goto(`${appUrl}#/scorekeeper`);
       await page.getByRole("button", { name: "Menu", exact: true }).waitFor();
       const gameId = await page.evaluate<GameId>(`(async () => {
         const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -271,16 +271,16 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
       })()`);
 
       for (const route of [
+        "/scorekeeper",
+        "/scorekeeper/create",
+        `/scorekeeper/game/${gameId}`,
+        "/scorekeeper/players",
+        "/scorekeeper/games",
         "/",
-        "/create",
-        `/game/${gameId}`,
-        "/players",
-        "/games",
-        "/scorekeepers",
       ]) {
         await page.goto(`${appUrl}#${route}`);
         await page.locator(".scorekeeper-background").waitFor();
-        if (route === `/game/${gameId}`) {
+        if (route === `/scorekeeper/game/${gameId}`) {
           await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
         }
         await page.evaluate(() => document.fonts.ready);
@@ -330,7 +330,11 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
 
           const controls = page.locator(".page-shell-footer :is(button, a)");
           expect(await controls.count()).toBe(
-            route === "/create" || route === `/game/${gameId}` ? 2 : 1,
+            route === "/"
+              ? 0
+              : route === "/scorekeeper/create" || route === `/scorekeeper/game/${gameId}`
+                ? 2
+                : 1,
           );
           for (const control of await controls.all()) {
             const resting = await control.boundingBox();

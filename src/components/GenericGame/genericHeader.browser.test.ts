@@ -26,7 +26,7 @@ afterAll(async () => {
 async function createGame(page: Page) {
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/scorekeeper/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   return page.evaluate<string>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -79,7 +79,7 @@ it.each([
   await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
   try {
     const id = await createGame(page);
-    await page.goto(`${appUrl}#/game/${id}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${id}`);
     const button = page.getByRole("button", { name: "Open Standings", exact: true });
     await button.waitFor();
     let wordAspect: number | undefined;
@@ -233,7 +233,7 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
         resolve();
       };
     })`);
-    await page.goto(`${appUrl}#/game/${id}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${id}`);
     await page.getByText("Loading Game...", { exact: true }).waitFor();
     const loading = await wordGeometry(page);
     const button = page.getByRole("button", { name: "Open Standings", exact: true });
@@ -290,7 +290,7 @@ it("keeps the word stationary when an initial storage error is retried or the Ga
   try {
     const id = await createGame(page);
     await failGameRead(page);
-    await page.goto(`${appUrl}#/game/${id}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${id}`);
     await page.getByRole("alert").filter({ hasText: "Unable to load this Game." }).waitFor();
     const error = await wordGeometry(page);
     const button = page.getByRole("button", { name: "Open Standings", exact: true });
@@ -298,7 +298,7 @@ it("keeps the word stationary when an initial storage error is retried or the Ga
     await page.getByRole("button", { name: "Try again", exact: true }).click();
     await button.waitFor();
     await expectSameWord(page, error);
-    await page.goto(`${appUrl}#/game/missing-header-game`);
+    await page.goto(`${appUrl}#/scorekeeper/game/missing-header-game`);
     await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
     expect(await button.count()).toBe(0);
     await expectSameWord(page, error);

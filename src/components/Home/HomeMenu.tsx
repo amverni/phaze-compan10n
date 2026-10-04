@@ -1,7 +1,7 @@
 import { CloseButton } from "@headlessui/react";
 import { Link, type LinkOptions } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { AppWindow, History, ListChecks, Menu, Settings, Users } from "lucide-react";
+import { History, House, ListChecks, Menu, Settings, Users } from "lucide-react";
 import type { ScorekeeperExperience } from "../../types";
 import { Popover, PopoverButton, PopoverPanel } from "../ui";
 
@@ -18,16 +18,16 @@ const phaseItems: MenuItem[] = [
   { label: "Settings", icon: Settings, to: "/phaseCompan10n/settings" },
 ];
 const genericItems: MenuItem[] = [
-  { label: "Games", icon: History, to: "/games" },
-  { label: "Players", icon: Users, to: "/players" },
+  { label: "Games", icon: History, to: "/scorekeeper/games" },
+  { label: "Players", icon: Users, to: "/scorekeeper/players" },
 ];
-const chooserItem: MenuItem = { label: "Scorekeepers", icon: AppWindow, to: "/scorekeepers" };
+const homeItem: MenuItem = { label: "Home", icon: House, to: "/" };
 
 const itemClassName =
   "flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-black/5 dark:hover:bg-white/10";
 
 export function HomeMenu({ experience }: { experience: ScorekeeperExperience }) {
-  const items = [...(experience === "phaseCompan10n" ? phaseItems : genericItems), chooserItem];
+  const items = [homeItem, ...(experience === "phaseCompan10n" ? phaseItems : genericItems)];
   return (
     <Popover className="relative">
       {/* The outer button keeps a fixed 40×40 box so Headless UI's anchored

@@ -31,14 +31,14 @@ async function openMenuLink(page: Page, name: string) {
 }
 
 describe("scorekeeper navigation", () => {
-  it("opens each Create Game page from one keyboard-accessible circular action in the lower-right Home footer", async () => {
+  it("opens each Create Game page from one keyboard-accessible circular action in the lower-right Scorekeeper Dashboard footer", async () => {
     const page = await browser.newPage({
       viewport: { width: 390, height: 844 },
       timezoneId: "America/New_York",
     });
     await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
-      for (const home of ["/", "/phaseCompan10n"]) {
+      for (const home of ["/scorekeeper", "/phaseCompan10n"]) {
         await page.goto(`${appUrl}#${home}`);
         const create = page.getByRole("link", { name: "Create Game", exact: true });
         await create.waitFor();
@@ -88,34 +88,28 @@ describe("scorekeeper navigation", () => {
           .toBe("brightness(1.1)");
         await page.keyboard.press("Enter");
         await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
-        expect(page.url()).toBe(`${appUrl}#${home === "/" ? "/create" : "/phaseCompan10n/create"}`);
+        expect(page.url()).toBe(`${appUrl}#${home}/create`);
+        await page.getByRole("link", { name: "Cancel", exact: true }).click();
+        await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
+        expect(page.url()).toBe(`${appUrl}#${home}`);
       }
     } finally {
       await page.close();
     }
   }, 30_000);
 
-  it("opens a neutral root and switches scorekeepers through branded choices", async () => {
+  it("opens Home at the root and returns from each Scorekeeper Dashboard through the first menu item", async () => {
     const page = await browser.newPage({ timezoneId: "America/New_York" });
     await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       await page.goto(appUrl);
       await expect
-        .poll(() => page.getByRole("img", { name: "Scorekeeper", exact: true }).count())
+        .poll(() => page.getByRole("heading", { name: "Scorekeepers", exact: true }).count())
         .toBe(1);
       expect(await page.locator(".card-background").count()).toBe(0);
       expect(await page.title()).toBe("Scorekeeper");
-      expect(await page.getByRole("link", { name: "Create Game", exact: true }).count()).toBe(1);
-      expect(await page.getByRole("link", { name: /Phases|Settings|Games/ }).count()).toBe(0);
-      await page.getByRole("button", { name: "Menu", exact: true }).click();
-      expect(
-        await page.getByRole("link", { name: "Players", exact: true }).getAttribute("href"),
-      ).toBe("/scorekeeper/#/players");
-      expect(
-        await page.getByRole("link", { name: "Games", exact: true }).getAttribute("href"),
-      ).toBe("/scorekeeper/#/games");
-      expect(await page.getByRole("link", { name: /Phases|Settings/ }).count()).toBe(0);
-      await page.getByRole("link", { name: "Scorekeepers", exact: true }).click();
+      expect(await page.getByRole("link", { name: "Create Game", exact: true }).count()).toBe(0);
+      expect(await page.getByRole("link", { name: "Go home", exact: true }).count()).toBe(0);
       const choices = page.getByRole("navigation", { name: "Scorekeepers" });
       const generic = choices.getByRole("link", { name: "Scorekeeper", exact: true });
       const phase = choices.getByRole("link", { name: "Phase Compan10n", exact: true });
@@ -125,26 +119,40 @@ describe("scorekeeper navigation", () => {
       const phaseBox = await phase.boundingBox();
       if (!genericBox || !phaseBox) throw new Error("Missing scorekeeper choices");
       expect(phaseBox.y).toBeGreaterThan(genericBox.y + genericBox.height);
-      await phase.focus();
-      await page.keyboard.press("Enter");
-      await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
-      expect(page.url()).toBe(`${appUrl}#/phaseCompan10n`);
-      expect(await page.title()).toBe("Phaze Compan10n");
-      await page.getByRole("button", { name: "Menu", exact: true }).click();
-      for (const [label, path] of [
-        ["Games", "games"],
-        ["Players", "players"],
-        ["Phases", "phases"],
-        ["Settings", "settings"],
-      ]) {
-        expect(
-          await page.getByRole("link", { name: label, exact: true }).getAttribute("href"),
-        ).toBe(`/scorekeeper/#/phaseCompan10n/${path}`);
+      for (const [name, path, title, menuLabels] of [
+        ["Scorekeeper", "/scorekeeper", "Scorekeeper", ["Home", "Games", "Players"]],
+        [
+          "Phase Compan10n",
+          "/phaseCompan10n",
+          "Phaze Compan10n",
+          ["Home", "Games", "Players", "Phases", "Settings"],
+        ],
+      ] as const) {
+        await choices.getByRole("link", { name, exact: true }).focus();
+        await page.keyboard.press("Enter");
+        await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
+        expect(page.url()).toBe(`${appUrl}#${path}`);
+        expect(await page.title()).toBe(title);
+        await page.getByRole("button", { name: "Menu", exact: true }).click();
+        const menu = page.getByRole("navigation");
+        expect(await menu.getByRole("link").allTextContents()).toEqual(menuLabels);
+        for (const label of menuLabels) {
+          expect(
+            await menu.getByRole("link", { name: label, exact: true }).getAttribute("href"),
+          ).toBe(
+            label === "Home" ? "/scorekeeper/#/" : `/scorekeeper/#${path}/${label.toLowerCase()}`,
+          );
+        }
+        await menu.getByRole("link", { name: "Home", exact: true }).click();
+        await choices.waitFor();
+        expect(page.url()).toBe(`${appUrl}#/`);
       }
-      await page.getByRole("link", { name: "Scorekeepers", exact: true }).click();
+
       await generic.click();
-      await page.getByRole("img", { name: "Scorekeeper", exact: true }).waitFor();
-      expect(page.url()).toBe(`${appUrl}#/`);
+      await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
+      await page.goto(appUrl);
+      await choices.waitFor();
+      expect(await page.getByRole("link", { name: "Create Game", exact: true }).count()).toBe(0);
     } finally {
       await page.close();
     }
@@ -189,11 +197,56 @@ describe("scorekeeper navigation", () => {
     }
   }, 60_000);
 
+  it("opens and reloads nested generic pages with back navigation to the Scorekeeper Dashboard", async () => {
+    const page = await browser.newPage();
+    try {
+      for (const [route, readyText] of [
+        ["/scorekeeper", "No active games yet"],
+        ["/scorekeeper/create", "Players"],
+        ["/scorekeeper/games", "No games yet"],
+        ["/scorekeeper/players", "No players yet"],
+        ["/scorekeeper/game/missing-game", "Game not found in Scorekeeper."],
+      ]) {
+        await page.goto(`${appUrl}#${route}`);
+        await page.getByText(readyText, { exact: true }).waitFor();
+        await page.reload();
+        await page.getByText(readyText, { exact: true }).waitFor();
+        expect(page.url()).toBe(`${appUrl}#${route}`);
+        if (route !== "/scorekeeper") {
+          const back = page.getByRole("link", {
+            name: route === "/scorekeeper/create" ? "Cancel" : "Go home",
+            exact: true,
+          });
+          expect(await back.getAttribute("href")).toBe("/scorekeeper/#/scorekeeper");
+          await back.click();
+          await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
+          expect(page.url()).toBe(`${appUrl}#/scorekeeper`);
+        }
+      }
+    } finally {
+      await page.close();
+    }
+  }, 60_000);
+
+  it("does not retain or redirect removed generic and chooser routes", async () => {
+    const page = await browser.newPage();
+    try {
+      for (const route of ["/create", "/games", "/players", "/game/old-game", "/scorekeepers"]) {
+        await page.goto(`${appUrl}#${route}`);
+        await page.getByText("Not Found", { exact: true }).waitFor();
+        expect(page.url()).toBe(`${appUrl}#${route}`);
+        expect(await page.getByRole("link").count()).toBe(0);
+      }
+    } finally {
+      await page.close();
+    }
+  }, 30_000);
+
   it("shares Player edits and favorites between shells and starts only nested Phase Games", async () => {
     const page = await browser.newPage({ timezoneId: "America/New_York" });
     await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
-      await page.goto(`${appUrl}#/players`);
+      await page.goto(`${appUrl}#/scorekeeper/players`);
       for (const name of ["Maya", "Rowan"]) {
         await page.getByRole("button", { name: "Create new player" }).click();
         const dialog = page.getByRole("dialog", { name: "Create player", exact: true });
@@ -205,8 +258,8 @@ describe("scorekeeper navigation", () => {
       }
       expect(await page.locator(".card-background").count()).toBe(0);
       await page.getByRole("link", { name: "Go home", exact: true }).click();
-      expect(page.url()).toBe(`${appUrl}#/`);
-      await openMenuLink(page, "Scorekeepers");
+      expect(page.url()).toBe(`${appUrl}#/scorekeeper`);
+      await openMenuLink(page, "Home");
       await page.getByRole("link", { name: "Phase Compan10n", exact: true }).click();
       await openMenuLink(page, "Players");
       await page.getByRole("button", { name: "Remove Maya from favorites", exact: true }).waitFor();
@@ -228,7 +281,7 @@ describe("scorekeeper navigation", () => {
         .waitFor();
       await page.getByRole("link", { name: "Go home", exact: true }).click();
       expect(page.url()).toBe(`${appUrl}#/phaseCompan10n`);
-      await openMenuLink(page, "Scorekeepers");
+      await openMenuLink(page, "Home");
       await page.getByRole("link", { name: "Scorekeeper", exact: true }).click();
       await openMenuLink(page, "Players");
       await page
@@ -275,7 +328,7 @@ describe("scorekeeper navigation", () => {
       await gameLink.waitFor();
       await gameLink.click();
       expect(page.url()).toBe(gameUrl);
-      await page.goto(gameUrl.replace("/phaseCompan10n/game/", "/game/"));
+      await page.goto(gameUrl.replace("/phaseCompan10n/game/", "/scorekeeper/game/"));
       await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
       expect(await page.getByRole("button", { name: "Open Standings", exact: true }).count()).toBe(
         0,
@@ -463,7 +516,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode",
       });
       await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
       try {
-        for (const route of ["/", "/players", "/scorekeepers"]) {
+        for (const route of ["/scorekeeper", "/scorekeeper/players", "/"]) {
           await page.goto(`${appUrl}#${route}`);
           const logo = page.getByRole("img", { name: "Scorekeeper", exact: true });
           await logo.waitFor();
@@ -540,7 +593,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode",
           expect(bleed.top).toBeCloseTo(height, 1);
           expect(bleed.height).toBeCloseTo(height, 1);
           expect(bleed.pointerEvents).toBe("none");
-          if (route === "/players") {
+          if (route === "/scorekeeper/players") {
             expect(
               await page
                 .locator(".page-shell-main .dialog-scroll")

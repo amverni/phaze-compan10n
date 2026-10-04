@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { Button } from "../ui";
 
 interface CreateButtonProps {
-  to: "/create" | "/phaseCompan10n/create";
+  to: "/scorekeeper/create" | "/phaseCompan10n/create";
 }
 
 export function CreateButton({ to }: CreateButtonProps) {

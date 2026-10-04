@@ -102,7 +102,7 @@ afterAll(async () => {
 });
 
 async function openRound(page: Page, settings: GenericGameSettings, playerCount: number) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   const gameId = await page.evaluate<string>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
@@ -117,7 +117,7 @@ async function openRound(page: Page, settings: GenericGameSettings, playerCount:
       players, settings: ${JSON.stringify(settings)},
     })).id;
   })()`);
-  await page.goto(`${appUrl}#/game/${gameId}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
   await page.getByRole("button", { name: "Add Round", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
   await dialog.getByRole("button", { name: "Save", exact: true }).waitFor();

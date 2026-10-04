@@ -52,7 +52,7 @@ describe.each([
     page.setDefaultTimeout(5_000);
     page.setDefaultNavigationTimeout(30_000);
     try {
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       const enable = page.getByRole("switch", { name: "Enable Tiebreaker", exact: true });
       await enable.click();

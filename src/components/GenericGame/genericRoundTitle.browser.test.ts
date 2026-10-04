@@ -36,7 +36,7 @@ it.each([
 ])("keeps Add Round accessible without reserving heading space in every mode at $width x $height", async (viewport) => {
   const page = await browser.newPage({ viewport });
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     const gameIds = await page.evaluate<string[]>(`(async () => {
       const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
@@ -50,7 +50,7 @@ it.each([
     })()`);
 
     for (const [index, gameId] of gameIds.entries()) {
-      await page.goto(`${appUrl}#/game/${gameId}`);
+      await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
       const addRound = page.getByRole("button", { name: "Add Round", exact: true });
       await addRound.click();
       const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });

@@ -151,7 +151,7 @@ it.each<GenericScoringMode>([
 
 async function openGame(page: Page, mode: TestMode, dealer = true) {
   page.setDefaultNavigationTimeout(30_000);
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/scorekeeper/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   const id = await page.evaluate<GameId>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -174,7 +174,7 @@ async function openGame(page: Page, mode: TestMode, dealer = true) {
         ...(${JSON.stringify(mode)} === "points" ? { pointsDirection: "low" } : {}) }
     })).id;
   })()`);
-  const route = mode === "phase10" ? "phaseCompan10n/game" : "game";
+  const route = mode === "phase10" ? "phaseCompan10n/game" : "scorekeeper/game";
   await page.goto(`${appUrl}#/${route}/${id}`);
   await page.locator('section[aria-label="Scoreboard"]').waitFor();
   await page.evaluate(() => document.fonts.ready);

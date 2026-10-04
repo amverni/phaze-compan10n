@@ -87,7 +87,7 @@ export function Players({ experience }: { experience: ScorekeeperExperience }) {
         <div className="content-container flex h-full">
           <Button
             as={Link}
-            to={isPhase ? "/phaseCompan10n" : "/"}
+            to={isPhase ? "/phaseCompan10n" : "/scorekeeper"}
             className="page-shell-footer-button p-0"
             aria-label="Go home"
           >

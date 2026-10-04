@@ -14,7 +14,12 @@ export function GenericGames() {
       }
       footerContent={
         <div className="content-container flex h-full">
-          <Button as={Link} to="/" aria-label="Go home" className="page-shell-footer-button p-0">
+          <Button
+            as={Link}
+            to="/scorekeeper"
+            aria-label="Go home"
+            className="page-shell-footer-button p-0"
+          >
             <ArrowLeft className="size-8" aria-hidden />
           </Button>
         </div>

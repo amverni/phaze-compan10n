@@ -23,13 +23,18 @@ both. Totals, Standings, graphs, and result snapshots are derived in the API lay
 ## Navigation and presentation
 
 The client-only SPA uses hash routes beneath the configured GitHub Pages base
-(`/phase-10-scoreboard/`). Scorekeeper owns `/`, `/create`, `/players`, `/games`,
-and `/game/$gameId`. Phase Compan10n pages live under `/phaseCompan10n`.
-`/scorekeepers` switches experiences. Game detail and mutation APIs reject the
-wrong Scorekeeper's records.
+(`/scorekeeper/`). Home at `/` always shows the Scorekeepers chooser, without a
+back arrow. The generic Scorekeeper Dashboard lives at `/scorekeeper`, with
+`/scorekeeper/create`, `/scorekeeper/players`, `/scorekeeper/games`, and
+`/scorekeeper/game/$gameId` beneath it. Phase Compan10n pages remain under
+`/phaseCompan10n`. Old top-level generic routes and `/scorekeepers` are removed
+without redirects. Game detail and mutation APIs reject the wrong Scorekeeper's
+records.
 
-Both Homes show only Active Games; each Games page includes that Scorekeeper's
-Active and retained Completed Games. Saved Player names, colors, and favorites
+Both dashboards put **Home** first in their menus to return to the shared chooser.
+Pause, setup Cancel, and back arrows within a Scorekeeper return to its dashboard.
+Both Scorekeeper Dashboards show only Active Games; each Games page includes that
+Scorekeeper's Active and retained Completed Games. Saved Player names, colors, and favorites
 are shared. Generic pages have straight-edged surfaces; Phase pages retain their
 logo, slants, and specialized controls.
 

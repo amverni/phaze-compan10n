@@ -349,7 +349,7 @@ afterAll(async () => {
 });
 
 async function openGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   const gameId = await page.evaluate<string>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
     const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
@@ -363,7 +363,7 @@ async function openGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
     });
     return game.id;
   })()`);
-  await page.goto(`${appUrl}#/game/${gameId}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
   await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
   return gameId;
 }

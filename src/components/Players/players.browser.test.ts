@@ -29,7 +29,7 @@ afterAll(async () => {
 it("manages saved Players without displaying or writing lifetime Win Counts", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
   try {
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByRole("button", { name: "Create new player" }).click();
     const createDialog = page.getByRole("dialog", { name: "Create player", exact: true });
     await createDialog.getByRole("textbox", { name: "Name", exact: true }).fill("Amy");
@@ -67,11 +67,11 @@ it("keeps the Player row visible with an alert when an Active Game blocks deleti
   try {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     await seedPlayersWithActiveGame(page);
 
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByRole("button", { name: "Amy", exact: true }).waitFor();
 
     page.once("dialog", (dialog) => dialog.accept());
@@ -98,7 +98,7 @@ it("keeps the Player editor open with an alert when an Active Game blocks deleti
   try {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     await seedPlayersWithActiveGame(page);
     await page.reload();

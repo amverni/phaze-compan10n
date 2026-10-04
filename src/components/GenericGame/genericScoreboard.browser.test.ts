@@ -100,7 +100,7 @@ async function openGame(
   names = ["Maya Chen", "Rowan Patel"],
 ) {
   page.setDefaultNavigationTimeout(30_000);
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/scorekeeper/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   const id = await page.evaluate<string>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -111,7 +111,7 @@ async function openGame(
     }
     return (await genericGamesApi.create({ players, settings: ${JSON.stringify(settings)} })).id;
   })()`);
-  await page.goto(`${appUrl}#/game/${id}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${id}`);
   await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);
   return id;

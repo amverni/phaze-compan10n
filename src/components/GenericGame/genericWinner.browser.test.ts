@@ -25,7 +25,7 @@ afterAll(async () => {
 });
 
 async function seedPlayers(page: Page, names = ["Zed", "Amy", "Bob"]) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<string[]>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -47,7 +47,7 @@ async function seedGame(page: Page, names: string[]) {
     });
   })()`);
   await page.reload();
-  await page.goto(`${appUrl}#/game/${game.id}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${game.id}`);
   await page.getByRole("table", { name: "Rounds Won scoreboard" }).waitFor();
   return game;
 }
@@ -58,7 +58,7 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
   page.setDefaultNavigationTimeout(30_000);
   try {
     await seedPlayers(page);
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     for (const name of ["Zed", "Amy", "Bob"]) {
       await page.getByRole("button", { name, exact: true }).click();
     }
@@ -179,7 +179,7 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
       .getByRole("link", { name: "View Standings for game with Zed, Amy, Bob", exact: true })
       .click();
     await standings.getByRole("list", { name: "Standings places" }).waitFor();
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
     expect(await page.getByRole("button", { name: /Scoring Mode/ }).innerText()).toContain(
       "Points",
@@ -357,7 +357,7 @@ it("keeps the mode dropdown and hidden Points direction usable within a narrow s
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
     await page.getByRole("radio", { name: "Low wins", exact: true }).click();
     const mode = page.getByRole("button", { name: /Scoring Mode/ });
@@ -384,7 +384,7 @@ it("keeps the mode dropdown and hidden Points direction usable within a narrow s
     await page.getByRole("option", { name: "Points", exact: true }).click();
     expect(await page.getByRole("radio", { name: "Low wins", exact: true }).isChecked()).toBe(true);
     await page.getByRole("link", { name: "Cancel", exact: true }).click();
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
     expect(await mode.innerText()).toContain("Points");
     expect(await page.getByRole("radio", { name: "High wins", exact: true }).isChecked()).toBe(

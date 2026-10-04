@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
 import { Logo } from "../Logo/Logo";
 import { ScorekeeperLogo } from "../Logo/ScorekeeperLogo";
 import { ScorekeeperShell } from "../ScorekeeperShell/ScorekeeperShell";
@@ -20,7 +19,7 @@ export function Scorekeepers() {
           aria-label="Scorekeepers"
           className="content-container flex w-full flex-col gap-6 px-6 py-6"
         >
-          <Button as={Link} to="/" aria-label="Scorekeeper" className={choiceClasses}>
+          <Button as={Link} to="/scorekeeper" aria-label="Scorekeeper" className={choiceClasses}>
             <ScorekeeperLogo height={80} />
           </Button>
           <Button
@@ -32,13 +31,6 @@ export function Scorekeepers() {
             <Logo height={120} width="100%" fitToContainer />
           </Button>
         </nav>
-      }
-      footerContent={
-        <div className="content-container flex h-full">
-          <Button as={Link} to="/" className="page-shell-footer-button p-0" aria-label="Go home">
-            <ArrowLeft className="size-8" aria-hidden="true" />
-          </Button>
-        </div>
       }
     />
   );

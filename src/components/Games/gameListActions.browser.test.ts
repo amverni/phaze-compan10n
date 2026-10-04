@@ -25,7 +25,7 @@ afterAll(async () => {
   await server?.close();
 });
 
-describe.each(["", "/phaseCompan10n"])("Game-list actions under #%s", (ownerPath) => {
+describe.each(["/scorekeeper", "/phaseCompan10n"])("Game-list actions under #%s", (ownerPath) => {
   it.each([
     "light",
     "dark",
@@ -38,7 +38,7 @@ describe.each(["", "/phaseCompan10n"])("Game-list actions under #%s", (ownerPath
     page.setDefaultNavigationTimeout(30_000);
     try {
       await seedGames(page);
-      for (const path of [ownerPath || "/", `${ownerPath}/games`]) {
+      for (const path of [ownerPath, `${ownerPath}/games`]) {
         await page.goto(`${appUrl}#${path}`);
         const active = page.getByRole("link", { name: "Continue game with Dana", exact: true });
         await active.waitFor();
@@ -131,7 +131,7 @@ describe.each(["", "/phaseCompan10n"])("Game-list actions under #%s", (ownerPath
     try {
       await seedGames(page);
       for (const { path, name, key } of [
-        { path: ownerPath || "/", name: "Dana", key: null },
+        { path: ownerPath, name: "Dana", key: null },
         {
           path: `${ownerPath}/games`,
           name: "Casey",
@@ -225,7 +225,7 @@ async function expectDangerColor(icon: Locator) {
 }
 
 async function holdNextDeletion(page: Page, ownerPath: string) {
-  const module = ownerPath ? "games" : "genericGames";
+  const module = ownerPath === "/phaseCompan10n" ? "games" : "genericGames";
   await page.evaluate(`
     import("/scorekeeper/src/data/api/${module}.ts").then(({ ${module}Api: api }) => {
       const original = api.delete;
@@ -240,7 +240,7 @@ async function holdNextDeletion(page: Page, ownerPath: string) {
 }
 
 async function seedGames(page: Page) {
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/scorekeeper/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   await page.evaluate(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");

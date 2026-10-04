@@ -22,7 +22,7 @@ beforeAll(async () => {
 async function openGames(page: Page) {
   await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("link", { name: "Games", exact: true }).click();
-  await page.waitForURL(`${appUrl}#/games`);
+  await page.waitForURL(`${appUrl}#/scorekeeper/games`);
 }
 
 function gameLinks(page: Page) {
@@ -58,7 +58,7 @@ it("browses mixed generic Games with snapshot avatars and distinct actions, and 
       });
       return phase.id;
     })()`);
-    await page.goto(`${appUrl}#/`);
+    await page.goto(`${appUrl}#/scorekeeper`);
     await page.reload();
     await page.getByRole("link", { name: "Continue game with Dana", exact: true }).waitFor();
     expect(await gameLinks(page).count()).toBe(2);
@@ -111,14 +111,14 @@ it("browses mixed generic Games with snapshot avatars and distinct actions, and 
     );
     await page.getByRole("button", { name: "Delete game with Maya, Rowan", exact: true }).click();
     await completed.waitFor({ state: "detached" });
-    expect(page.url()).toBe(`${appUrl}#/games`);
-    await page.goto(`${appUrl}#/game/${game.id}`);
+    expect(page.url()).toBe(`${appUrl}#/scorekeeper/games`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${game.id}`);
     await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
-    await page.goto(`${appUrl}#/game/${phaseId}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${phaseId}`);
     await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
     await page.goto(`${appUrl}#/phaseCompan10n/game/${phaseId}`);
     await page.getByRole("button", { name: "Add round 1", exact: true }).waitFor();
-    await page.goto(`${appUrl}#/games`);
+    await page.goto(`${appUrl}#/scorekeeper/games`);
     await active.waitFor();
     await page.getByRole("button", { name: "Delete game with Dana", exact: true }).click();
     await active.waitFor({ state: "detached" });
@@ -150,7 +150,7 @@ afterAll(async () => {
 });
 
 async function seedGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   const game = await page.evaluate<GenericGame>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -168,7 +168,7 @@ async function seedGame(page: Page, names = ["Maya", "Rowan"], dealer = false) {
   })()`);
   // Seeding through the API does not invalidate the mounted Home query.
   await page.reload();
-  await page.goto(`${appUrl}#/game/${game.id}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${game.id}`);
   await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
   return game;
 }
@@ -252,7 +252,7 @@ it("offers Pause and Delete without a saved Round and discards a draft only when
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await finishButton.click();
     await finish.getByRole("button", { name: "Pause", exact: true }).click();
-    await page.waitForURL(`${appUrl}#/`);
+    await page.waitForURL(`${appUrl}#/scorekeeper`);
     expect(await readGame(page, game.id)).toMatchObject({ status: "active" });
     expect(await page.getByRole("dialog").count()).toBe(0);
     await page.getByRole("link", { name: "Continue game with Maya, Rowan", exact: true }).click();

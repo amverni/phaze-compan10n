@@ -41,7 +41,7 @@ async function createPlayerInSetup(page: Page, name: string) {
 }
 
 async function seedSharedPlayers(page: Page) {
-  await page.goto(`${appUrl}#/players`);
+  await page.goto(`${appUrl}#/scorekeeper/players`);
   await page.getByText("No players yet", { exact: true }).waitFor();
   await page.evaluate(`
     import("/scorekeeper/src/data/api/players.ts").then(async ({ playersApi }) => {
@@ -79,7 +79,7 @@ describe("generic Points Games", () => {
   it("creates a solo Game and reopens its genuine empty scoreboard after reload", async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     try {
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       await expect.poll(() => page.getByRole("tab", { name: "Players" }).count()).toBe(1);
       expect(await page.getByRole("tab").allTextContents()).toEqual(["Players", "Settings"]);
       expect(await page.locator(".card-background").count()).toBe(0);
@@ -100,7 +100,7 @@ describe("generic Points Games", () => {
       await page.getByRole("button", { name: "Start", exact: true }).click();
       await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
       const gameUrl = page.url();
-      expect(gameUrl).toMatch(/#\/game\/[^/]+$/);
+      expect(gameUrl).toMatch(/#\/scorekeeper\/game\/[^/]+$/);
       await page.reload();
       await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
       expect(await page.getByRole("columnheader", { name: /Maya/ }).count()).toBe(1);
@@ -114,7 +114,7 @@ describe("generic Points Games", () => {
       await page.getByRole("link", { name: "Go home", exact: true }).click();
       const resume = page.getByRole("link", { name: "Continue game with Maya", exact: true });
       await resume.waitFor();
-      expect(await resume.getAttribute("href")).toContain("#/game/");
+      expect(await resume.getAttribute("href")).toContain("#/scorekeeper/game/");
       await resume.click();
       expect(page.url()).toBe(gameUrl);
     } finally {
@@ -126,7 +126,7 @@ describe("generic Points Games", () => {
     const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
     try {
       await seedSharedPlayers(page);
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       for (const name of ["Maya", "Rowan", "Lee"]) {
         await page.getByRole("button", { name, exact: true }).click();
       }
@@ -220,7 +220,7 @@ describe("generic Points Games", () => {
       await page.goto(gameUrl);
       await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
       await page.getByRole("link", { name: "Go home", exact: true }).click();
-      expect(page.url()).toBe(`${appUrl}#/`);
+      expect(page.url()).toBe(`${appUrl}#/scorekeeper`);
     } finally {
       await page.close();
     }
@@ -239,7 +239,7 @@ describe("generic Points Games", () => {
       await page.getByRole("button", { name: "Start", exact: true }).click();
       await page.getByRole("button", { name: "Open Standings", exact: true }).waitFor();
       const phaseUrl = page.url();
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       await page.getByRole("button", { name: "Lee", exact: true }).click();
       await page.getByRole("button", { name: "Start", exact: true }).click();
       await page.getByRole("table", { name: "Points scoreboard" }).waitFor();
@@ -263,7 +263,7 @@ describe("generic Points Games", () => {
       page.once("dialog", (dialog) => dialog.accept());
       await page.getByRole("button", { name: "Delete Lee Updated", exact: true }).click();
       await page.getByRole("alert").filter({ hasText: "Active Game" }).waitFor();
-      await page.goto(`${appUrl}#/`);
+      await page.goto(`${appUrl}#/scorekeeper`);
       await page.getByRole("link", { name: "Continue game with Lee Updated", exact: true }).click();
       await page.getByRole("columnheader", { name: /Lee Updated/ }).waitFor();
       await page.getByRole("link", { name: "Go home", exact: true }).click();
@@ -275,18 +275,18 @@ describe("generic Points Games", () => {
       await page.keyboard.press("Escape");
       await page.getByRole("button", { name: "Reorder Lee Updated", exact: true }).waitFor();
       await page.getByRole("link", { name: "Cancel", exact: true }).click();
-      await page.goto(phaseUrl.replace("/phaseCompan10n/game/", "/game/"));
+      await page.goto(phaseUrl.replace("/phaseCompan10n/game/", "/scorekeeper/game/"));
       await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
       expect(await page.getByRole("table").count()).toBe(0);
-      await page.goto(genericUrl.replace("/game/", "/phaseCompan10n/game/"));
+      await page.goto(genericUrl.replace("/scorekeeper/game/", "/phaseCompan10n/game/"));
       await page.getByText("This Game is no longer available.", { exact: true }).waitFor();
       await page.getByRole("link", { name: "Go home", exact: true }).click();
       await page.getByRole("link", { name: "Create Game", exact: true }).waitFor();
       expect(page.url()).toBe(`${appUrl}#/phaseCompan10n`);
-      await page.goto(`${appUrl}#/`);
+      await page.goto(`${appUrl}#/scorekeeper`);
       await page.getByRole("button", { name: "Delete game with Lee Updated", exact: true }).click();
       await page.getByText("No active games yet", { exact: true }).waitFor();
-      await page.goto(`${appUrl}#/players`);
+      await page.goto(`${appUrl}#/scorekeeper/players`);
       page.once("dialog", (dialog) => dialog.accept());
       await page.getByRole("button", { name: "Delete Lee Updated", exact: true }).click();
       await expect
@@ -312,20 +312,20 @@ describe("generic Points Games", () => {
           IDBFactory.prototype.open = open;
         });
       });
-      await page.goto(appUrl);
+      await page.goto(`${appUrl}#/scorekeeper`);
       await page.getByRole("alert").filter({ hasText: "Unable to load Active Games." }).waitFor();
       expect(await page.getByText("No active games yet", { exact: true }).count()).toBe(0);
       await page.evaluate(() => window.dispatchEvent(new Event("restore-test-storage")));
       await page.getByRole("button", { name: "Try again", exact: true }).click();
       await page.getByText("No active games yet", { exact: true }).waitFor();
-      await page.goto(`${appUrl}#/game/missing`);
+      await page.goto(`${appUrl}#/scorekeeper/game/missing`);
       await page.reload();
       await page.getByRole("alert").filter({ hasText: "Unable to load this Game." }).waitFor();
       await page.evaluate(() => window.dispatchEvent(new Event("restore-test-storage")));
       await page.getByRole("button", { name: "Try again", exact: true }).click();
       await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
       await page.getByRole("link", { name: "Go home", exact: true }).click();
-      expect(page.url()).toBe(`${appUrl}#/`);
+      expect(page.url()).toBe(`${appUrl}#/scorekeeper`);
     } finally {
       await page.close();
     }
@@ -335,7 +335,7 @@ describe("generic Points Games", () => {
     const page = await browser.newPage();
     try {
       await seedSharedPlayers(page);
-      await page.goto(`${appUrl}#/create`);
+      await page.goto(`${appUrl}#/scorekeeper/create`);
       await page.getByRole("button", { name: "Maya", exact: true }).click();
       await page.evaluate(`
         import("/scorekeeper/src/data/api/players.ts").then(async ({ playersApi }) => {
@@ -345,7 +345,7 @@ describe("generic Points Games", () => {
       `);
       await page.getByRole("button", { name: "Start", exact: true }).click();
       await page.getByRole("alert").filter({ hasText: "Player no longer exists" }).waitFor();
-      expect(page.url()).toBe(`${appUrl}#/create`);
+      expect(page.url()).toBe(`${appUrl}#/scorekeeper/create`);
       await page.getByRole("button", { name: "Remove Maya", exact: true }).click();
       await page.getByRole("button", { name: "Rowan", exact: true }).click();
       await page.getByRole("button", { name: "Start", exact: true }).click();

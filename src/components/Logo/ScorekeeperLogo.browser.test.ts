@@ -34,7 +34,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
     });
     await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
-      for (const route of ["/", "/players", "/scorekeepers"]) {
+      for (const route of ["/scorekeeper", "/scorekeeper/players", "/"]) {
         await page.goto(`${appUrl}#${route}`);
         const logo = page.getByRole("img", { name: "Scorekeeper", exact: true });
         await logo.waitFor();
@@ -102,7 +102,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
     const page = await browser.newPage({ colorScheme, timezoneId: "America/New_York" });
     await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
-      for (const route of ["/", "/players"]) {
+      for (const route of ["/scorekeeper", "/scorekeeper/players"]) {
         await page.goto(`${appUrl}#${route}`);
         const logo = page.getByRole("img", { name: "Scorekeeper", exact: true });
         await logo.waitFor();
@@ -186,7 +186,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
           ]);
           expect(
             await page
-              .locator(route === "/" ? "html, body, .page-shell-main" : "html, body")
+              .locator(route === "/scorekeeper" ? "html, body, .page-shell-main" : "html, body")
               .evaluateAll((elements) =>
                 elements.every((element) => element.scrollWidth <= element.clientWidth),
               ),

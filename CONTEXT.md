@@ -7,6 +7,12 @@ This glossary defines the shared language for Scorekeeper and Phase Compan10n, i
 **Scorekeeper**:
 A dedicated scorekeeping experience with its own Games and presentation, such as the generic Scorekeeper app or Phase Compan10n. Saved Players are shared across Scorekeepers.
 
+**Home**:
+The shared entry page where a person chooses a Scorekeeper.
+
+**Scorekeeper Dashboard**:
+A Scorekeeper's overview of its Active Games and starting point for creating a Game. Each Scorekeeper has its own dashboard, distinct from the shared Home.
+
 ### Games and results
 
 **Game**:
@@ -26,7 +32,7 @@ A game whose competitive result has been finalized and closed after at least one
 _Avoid_: Archived game, old game
 
 **Pause**:
-Leaving an Active Game to return home without finalizing its result. The Game remains active and can be continued later; pausing is not a separate Game status.
+Leaving an Active Game to return to its Scorekeeper Dashboard without finalizing its result. The Game remains active and can be continued later; pausing is not a separate Game status.
 
 **Game Winner**:
 A Player awarded the win when a Game is completed. The Game's rules determine whether one Player wins or tied Players share the win.

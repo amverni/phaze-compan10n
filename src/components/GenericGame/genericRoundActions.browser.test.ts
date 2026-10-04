@@ -22,7 +22,7 @@ beforeAll(async () => {
 it("replaces Save with a reduced-motion-aware spinner while retaining a failed draft for retry", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     const gameId = await page.evaluate<string>(`(async () => {
       const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
@@ -32,7 +32,7 @@ it("replaces Save with a reduced-motion-aware spinner while retaining a failed d
         settings: { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
       })).id;
     })()`);
-    await page.goto(`${appUrl}#/game/${gameId}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
     const add = page.getByRole("button", { name: "Add Round", exact: true });
     await add.click();
     const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });
@@ -135,7 +135,7 @@ it.each([
 ])("provides accessible circular Close/Save actions in every mode at $width x $height", async (viewport) => {
   const page = await browser.newPage({ viewport });
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     const gameIds = await page.evaluate<string[]>(`(async () => {
       const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
@@ -149,7 +149,7 @@ it.each([
     })()`);
 
     for (const [index, gameId] of gameIds.entries()) {
-      await page.goto(`${appUrl}#/game/${gameId}`);
+      await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
       const add = page.getByRole("button", { name: "Add Round", exact: true });
       await add.click();
       const dialog = page.getByRole("dialog", { name: "Add Round", exact: true });

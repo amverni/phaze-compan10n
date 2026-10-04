@@ -28,7 +28,7 @@ afterAll(async () => {
 it("shows generic Games loading, empty and retryable errors, and never navigates after a failed deletion", async () => {
   const page = await newPage();
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     await page.getByText("No active games yet", { exact: true }).waitFor();
     await page.evaluate(`
       import("/scorekeeper/src/data/api/genericGames.ts").then(({ genericGamesApi }) => {
@@ -46,7 +46,7 @@ it("shows generic Games loading, empty and retryable errors, and never navigates
     await page.evaluate("window.releaseGenericList()");
     await page.getByText("No games yet", { exact: true }).waitFor();
 
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.evaluate(`(async () => {
       const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
       const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
@@ -59,7 +59,7 @@ it("shows generic Games loading, empty and retryable errors, and never navigates
     await page.reload();
     await page.getByRole("button", { name: "Dana", exact: true }).waitFor();
     await failNextGameOperation(page, "getList");
-    await page.goto(`${appUrl}#/games`);
+    await page.goto(`${appUrl}#/scorekeeper/games`);
     await page.getByRole("alert").filter({ hasText: "Unable to load Games." }).waitFor();
     await page.getByRole("button", { name: "Try again", exact: true }).click();
     const active = page.getByRole("link", { name: "Continue game with Dana", exact: true });
@@ -69,7 +69,7 @@ it("shows generic Games loading, empty and retryable errors, and never navigates
     await page.getByRole("button", { name: "Delete game with Dana", exact: true }).click();
     await page.getByRole("alert").filter({ hasText: "Temporary storage failure" }).waitFor();
     expect(await active.count()).toBe(1);
-    expect(page.url()).toBe(`${appUrl}#/games`);
+    expect(page.url()).toBe(`${appUrl}#/scorekeeper/games`);
     expect(await page.getByRole("dialog").count()).toBe(0);
 
     await failNextGameOperation(page, "getScoreboard");
@@ -87,7 +87,7 @@ it("shows generic Games loading, empty and retryable errors, and never navigates
 it("refreshes cached generic Home, Games and pruned scoreboard data after the twenty-first completion", async () => {
   const page = await newPage();
   try {
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     const { completedId } = await page.evaluate<{ completedId: string }>(`(async () => {
       const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -148,7 +148,7 @@ it("refreshes cached generic Home, Games and pruned scoreboard data after the tw
 
     // Hash-only navigation keeps the completed scoreboard query cached from its first visit.
     await page.evaluate((id) => {
-      window.location.hash = `/game/${id}`;
+      window.location.hash = `/scorekeeper/game/${id}`;
     }, completedId);
     await page.getByText("Game not found in Scorekeeper.", { exact: true }).waitFor();
     expect(await page.getByRole("table", { name: "Points scoreboard" }).count()).toBe(0);
@@ -161,7 +161,7 @@ it("refreshes cached generic Home, Games and pruned scoreboard data after the tw
 it("blocks shared Player deletion for Active Games in either Scorekeeper and releases completed references", async () => {
   const page = await newPage();
   try {
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     const { genericId, phaseId } = await page.evaluate<{ genericId: string; phaseId: string }>(`
       (async () => {
@@ -201,7 +201,7 @@ it("blocks shared Player deletion for Active Games in either Scorekeeper and rel
     await page.reload();
     await deletePlayer(page, "Amy");
     await deletionBlocked(page, "Amy");
-    expect(page.url()).toBe(`${appUrl}#/players`);
+    expect(page.url()).toBe(`${appUrl}#/scorekeeper/players`);
 
     await page.goto(`${appUrl}#/phaseCompan10n/players`);
     await page.getByRole("button", { name: "Bob", exact: true }).waitFor();
@@ -210,7 +210,7 @@ it("blocks shared Player deletion for Active Games in either Scorekeeper and rel
     await deletionBlocked(page, "Bob");
     expect(page.url()).toBe(`${appUrl}#/phaseCompan10n/players`);
 
-    await page.goto(`${appUrl}#/game/${genericId}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${genericId}`);
     await finishGame(page);
     await closeStandings(page);
     await page.getByRole("link", { name: "Go home", exact: true }).click();
@@ -251,7 +251,7 @@ async function newPage() {
 async function openGames(page: Page) {
   await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("link", { name: "Games", exact: true }).click();
-  await page.waitForURL(`${appUrl}#/games`);
+  await page.waitForURL(`${appUrl}#/scorekeeper/games`);
 }
 
 async function finishGame(page: Page) {

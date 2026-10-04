@@ -31,7 +31,7 @@ async function waitForSlide(slider: Locator) {
   });
 }
 
-describe.each(["/create", "/phaseCompan10n/create"])("%s", (route) => {
+describe.each(["/scorekeeper/create", "/phaseCompan10n/create"])("%s", (route) => {
   describe.each([
     { width: 390, height: 844 },
     { width: 1280, height: 900 },

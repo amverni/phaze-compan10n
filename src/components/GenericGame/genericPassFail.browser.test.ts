@@ -40,7 +40,7 @@ it("keeps Points as the setup default and preserves independent Dealer across mo
   const page = await newPage();
   try {
     await seedPlayers(page, ["Maya"]);
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("button", { name: "Maya", exact: true }).click();
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
     const mode = page.getByLabel("Scoring Mode", { exact: true });
@@ -103,7 +103,7 @@ it("keeps Points as the setup default and preserves independent Dealer across mo
 }, 60_000);
 
 async function seedPlayers(page: Page, names: string[]) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<PlayerIdentity[]>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -128,7 +128,7 @@ async function openGame(page: Page, names = ["Maya", "Rowan", "Lee"], dealer = f
   })()`);
   // API seeding does not invalidate the Home query's cached empty Game list.
   await page.reload();
-  await page.goto(`${appUrl}#/game/${game.id}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${game.id}`);
   await page.getByRole("table", { name: "Passes scoreboard", exact: true }).waitFor();
   return game;
 }

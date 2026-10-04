@@ -32,7 +32,7 @@ const players: Player[] = [
 ];
 
 async function seedGame(page: Page, game: Game | GenericGame, round: Round | GenericRound) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   await page.evaluate(
     async ({ game, round, players }) => {
@@ -62,7 +62,7 @@ async function seedGame(page: Page, game: Game | GenericGame, round: Round | Gen
     },
     { game, round, players },
   );
-  const prefix = game.scorekeeper === "phase10" ? "phaseCompan10n/" : "";
+  const prefix = game.scorekeeper === "phase10" ? "phaseCompan10n/" : "scorekeeper/";
   await page.goto(`${appUrl}#/${prefix}game/${game.id}`);
   await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
   if (game.status !== "completed") {

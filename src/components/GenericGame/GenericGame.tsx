@@ -91,7 +91,12 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
       }
       footerContent={
         <div className="content-container flex h-full justify-between">
-          <Button as={Link} to="/" aria-label="Go home" className="page-shell-footer-button p-0">
+          <Button
+            as={Link}
+            to="/scorekeeper"
+            aria-label="Go home"
+            className="page-shell-footer-button p-0"
+          >
             <ArrowLeft className="size-8" aria-hidden />
           </Button>
           <FinishGameMenu
@@ -105,7 +110,7 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
                 : null
             }
             onOpenChange={setFinishOpen}
-            onPause={() => navigate({ to: "/" })}
+            onPause={() => navigate({ to: "/scorekeeper" })}
             afterClose={() => {
               if (openFinalStandingsAfterFinish.current) {
                 openFinalStandingsAfterFinish.current = false;
@@ -119,7 +124,7 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
             }}
             onDelete={async () => {
               await deleteGame.mutateAsync(gameId);
-              await navigate({ to: "/" });
+              await navigate({ to: "/scorekeeper" });
             }}
           />
         </div>

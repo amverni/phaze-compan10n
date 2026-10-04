@@ -25,7 +25,7 @@ afterAll(async () => {
 });
 
 async function openGraphGame(page: Page, settings: GenericGameSettings, playerCount = 2) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   const gameId = await page.evaluate<string>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -59,7 +59,7 @@ async function openGraphGame(page: Page, settings: GenericGameSettings, playerCo
     return game.id;
   })()`);
   await page.reload();
-  await page.goto(`${appUrl}#/game/${gameId}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
   await page.getByRole("button", { name: "Open Standings", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Standings", exact: true });
   await dialog.getByRole("button", { name: "Close", exact: true }).waitFor();

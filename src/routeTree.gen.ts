@@ -9,34 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ScorekeepersRouteImport } from './routes/scorekeepers'
-import { Route as PlayersRouteImport } from './routes/players'
+import { Route as ScorekeeperRouteImport } from './routes/scorekeeper'
 import { Route as PhaseCompan10nRouteImport } from './routes/phaseCompan10n'
-import { Route as GamesRouteImport } from './routes/games'
-import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ScorekeeperIndexRouteImport } from './routes/scorekeeper/index'
 import { Route as PhaseCompan10nIndexRouteImport } from './routes/phaseCompan10n/index'
+import { Route as ScorekeeperPlayersRouteImport } from './routes/scorekeeper/players'
+import { Route as ScorekeeperGamesRouteImport } from './routes/scorekeeper/games'
+import { Route as ScorekeeperCreateRouteImport } from './routes/scorekeeper/create'
 import { Route as PhaseCompan10nSettingsRouteImport } from './routes/phaseCompan10n/settings'
 import { Route as PhaseCompan10nPlayersRouteImport } from './routes/phaseCompan10n/players'
 import { Route as PhaseCompan10nPhasescardRouteImport } from './routes/phaseCompan10n/phasescard'
 import { Route as PhaseCompan10nPhasesRouteImport } from './routes/phaseCompan10n/phases'
 import { Route as PhaseCompan10nGamesRouteImport } from './routes/phaseCompan10n/games'
 import { Route as PhaseCompan10nCreateRouteImport } from './routes/phaseCompan10n/create'
-import { Route as GameGameIdRouteImport } from './routes/game/$gameId'
 import { Route as PhaseCompan10nPhasescardIndexRouteImport } from './routes/phaseCompan10n/phasescard/index'
 import { Route as PhaseCompan10nCreateIndexRouteImport } from './routes/phaseCompan10n/create/index'
+import { Route as ScorekeeperGameGameIdRouteImport } from './routes/scorekeeper/game/$gameId'
 import { Route as PhaseCompan10nPhasescardCustomRouteImport } from './routes/phaseCompan10n/phasescard/custom'
 import { Route as PhaseCompan10nPhasescardPhaseSetIdRouteImport } from './routes/phaseCompan10n/phasescard/$phaseSetId'
 import { Route as PhaseCompan10nGameGameIdRouteImport } from './routes/phaseCompan10n/game/$gameId'
 
-const ScorekeepersRoute = ScorekeepersRouteImport.update({
-  id: '/scorekeepers',
-  path: '/scorekeepers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlayersRoute = PlayersRouteImport.update({
-  id: '/players',
-  path: '/players',
+const ScorekeeperRoute = ScorekeeperRouteImport.update({
+  id: '/scorekeeper',
+  path: '/scorekeeper',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PhaseCompan10nRoute = PhaseCompan10nRouteImport.update({
@@ -44,25 +40,35 @@ const PhaseCompan10nRoute = PhaseCompan10nRouteImport.update({
   path: '/phaseCompan10n',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GamesRoute = GamesRouteImport.update({
-  id: '/games',
-  path: '/games',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CreateRoute = CreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScorekeeperIndexRoute = ScorekeeperIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ScorekeeperRoute,
+} as any)
 const PhaseCompan10nIndexRoute = PhaseCompan10nIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PhaseCompan10nRoute,
+} as any)
+const ScorekeeperPlayersRoute = ScorekeeperPlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
+  getParentRoute: () => ScorekeeperRoute,
+} as any)
+const ScorekeeperGamesRoute = ScorekeeperGamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => ScorekeeperRoute,
+} as any)
+const ScorekeeperCreateRoute = ScorekeeperCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => ScorekeeperRoute,
 } as any)
 const PhaseCompan10nSettingsRoute = PhaseCompan10nSettingsRouteImport.update({
   id: '/settings',
@@ -95,11 +101,6 @@ const PhaseCompan10nCreateRoute = PhaseCompan10nCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => PhaseCompan10nRoute,
 } as any)
-const GameGameIdRoute = GameGameIdRouteImport.update({
-  id: '/game/$gameId',
-  path: '/game/$gameId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PhaseCompan10nPhasescardIndexRoute =
   PhaseCompan10nPhasescardIndexRouteImport.update({
     id: '/',
@@ -112,6 +113,11 @@ const PhaseCompan10nCreateIndexRoute =
     path: '/',
     getParentRoute: () => PhaseCompan10nCreateRoute,
   } as any)
+const ScorekeeperGameGameIdRoute = ScorekeeperGameGameIdRouteImport.update({
+  id: '/game/$gameId',
+  path: '/game/$gameId',
+  getParentRoute: () => ScorekeeperRoute,
+} as any)
 const PhaseCompan10nPhasescardCustomRoute =
   PhaseCompan10nPhasescardCustomRouteImport.update({
     id: '/custom',
@@ -133,62 +139,64 @@ const PhaseCompan10nGameGameIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/create': typeof CreateRoute
-  '/games': typeof GamesRoute
   '/phaseCompan10n': typeof PhaseCompan10nRouteWithChildren
-  '/players': typeof PlayersRoute
-  '/scorekeepers': typeof ScorekeepersRoute
-  '/game/$gameId': typeof GameGameIdRoute
+  '/scorekeeper': typeof ScorekeeperRouteWithChildren
   '/phaseCompan10n/create': typeof PhaseCompan10nCreateRouteWithChildren
   '/phaseCompan10n/games': typeof PhaseCompan10nGamesRoute
   '/phaseCompan10n/phases': typeof PhaseCompan10nPhasesRoute
   '/phaseCompan10n/phasescard': typeof PhaseCompan10nPhasescardRouteWithChildren
   '/phaseCompan10n/players': typeof PhaseCompan10nPlayersRoute
   '/phaseCompan10n/settings': typeof PhaseCompan10nSettingsRoute
+  '/scorekeeper/create': typeof ScorekeeperCreateRoute
+  '/scorekeeper/games': typeof ScorekeeperGamesRoute
+  '/scorekeeper/players': typeof ScorekeeperPlayersRoute
   '/phaseCompan10n/': typeof PhaseCompan10nIndexRoute
+  '/scorekeeper/': typeof ScorekeeperIndexRoute
   '/phaseCompan10n/game/$gameId': typeof PhaseCompan10nGameGameIdRoute
   '/phaseCompan10n/phasescard/$phaseSetId': typeof PhaseCompan10nPhasescardPhaseSetIdRoute
   '/phaseCompan10n/phasescard/custom': typeof PhaseCompan10nPhasescardCustomRoute
+  '/scorekeeper/game/$gameId': typeof ScorekeeperGameGameIdRoute
   '/phaseCompan10n/create/': typeof PhaseCompan10nCreateIndexRoute
   '/phaseCompan10n/phasescard/': typeof PhaseCompan10nPhasescardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/create': typeof CreateRoute
-  '/games': typeof GamesRoute
-  '/players': typeof PlayersRoute
-  '/scorekeepers': typeof ScorekeepersRoute
-  '/game/$gameId': typeof GameGameIdRoute
   '/phaseCompan10n/games': typeof PhaseCompan10nGamesRoute
   '/phaseCompan10n/phases': typeof PhaseCompan10nPhasesRoute
   '/phaseCompan10n/players': typeof PhaseCompan10nPlayersRoute
   '/phaseCompan10n/settings': typeof PhaseCompan10nSettingsRoute
+  '/scorekeeper/create': typeof ScorekeeperCreateRoute
+  '/scorekeeper/games': typeof ScorekeeperGamesRoute
+  '/scorekeeper/players': typeof ScorekeeperPlayersRoute
   '/phaseCompan10n': typeof PhaseCompan10nIndexRoute
+  '/scorekeeper': typeof ScorekeeperIndexRoute
   '/phaseCompan10n/game/$gameId': typeof PhaseCompan10nGameGameIdRoute
   '/phaseCompan10n/phasescard/$phaseSetId': typeof PhaseCompan10nPhasescardPhaseSetIdRoute
   '/phaseCompan10n/phasescard/custom': typeof PhaseCompan10nPhasescardCustomRoute
+  '/scorekeeper/game/$gameId': typeof ScorekeeperGameGameIdRoute
   '/phaseCompan10n/create': typeof PhaseCompan10nCreateIndexRoute
   '/phaseCompan10n/phasescard': typeof PhaseCompan10nPhasescardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/create': typeof CreateRoute
-  '/games': typeof GamesRoute
   '/phaseCompan10n': typeof PhaseCompan10nRouteWithChildren
-  '/players': typeof PlayersRoute
-  '/scorekeepers': typeof ScorekeepersRoute
-  '/game/$gameId': typeof GameGameIdRoute
+  '/scorekeeper': typeof ScorekeeperRouteWithChildren
   '/phaseCompan10n/create': typeof PhaseCompan10nCreateRouteWithChildren
   '/phaseCompan10n/games': typeof PhaseCompan10nGamesRoute
   '/phaseCompan10n/phases': typeof PhaseCompan10nPhasesRoute
   '/phaseCompan10n/phasescard': typeof PhaseCompan10nPhasescardRouteWithChildren
   '/phaseCompan10n/players': typeof PhaseCompan10nPlayersRoute
   '/phaseCompan10n/settings': typeof PhaseCompan10nSettingsRoute
+  '/scorekeeper/create': typeof ScorekeeperCreateRoute
+  '/scorekeeper/games': typeof ScorekeeperGamesRoute
+  '/scorekeeper/players': typeof ScorekeeperPlayersRoute
   '/phaseCompan10n/': typeof PhaseCompan10nIndexRoute
+  '/scorekeeper/': typeof ScorekeeperIndexRoute
   '/phaseCompan10n/game/$gameId': typeof PhaseCompan10nGameGameIdRoute
   '/phaseCompan10n/phasescard/$phaseSetId': typeof PhaseCompan10nPhasescardPhaseSetIdRoute
   '/phaseCompan10n/phasescard/custom': typeof PhaseCompan10nPhasescardCustomRoute
+  '/scorekeeper/game/$gameId': typeof ScorekeeperGameGameIdRoute
   '/phaseCompan10n/create/': typeof PhaseCompan10nCreateIndexRoute
   '/phaseCompan10n/phasescard/': typeof PhaseCompan10nPhasescardIndexRoute
 }
@@ -196,89 +204,80 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/create'
-    | '/games'
     | '/phaseCompan10n'
-    | '/players'
-    | '/scorekeepers'
-    | '/game/$gameId'
+    | '/scorekeeper'
     | '/phaseCompan10n/create'
     | '/phaseCompan10n/games'
     | '/phaseCompan10n/phases'
     | '/phaseCompan10n/phasescard'
     | '/phaseCompan10n/players'
     | '/phaseCompan10n/settings'
+    | '/scorekeeper/create'
+    | '/scorekeeper/games'
+    | '/scorekeeper/players'
     | '/phaseCompan10n/'
+    | '/scorekeeper/'
     | '/phaseCompan10n/game/$gameId'
     | '/phaseCompan10n/phasescard/$phaseSetId'
     | '/phaseCompan10n/phasescard/custom'
+    | '/scorekeeper/game/$gameId'
     | '/phaseCompan10n/create/'
     | '/phaseCompan10n/phasescard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/create'
-    | '/games'
-    | '/players'
-    | '/scorekeepers'
-    | '/game/$gameId'
     | '/phaseCompan10n/games'
     | '/phaseCompan10n/phases'
     | '/phaseCompan10n/players'
     | '/phaseCompan10n/settings'
+    | '/scorekeeper/create'
+    | '/scorekeeper/games'
+    | '/scorekeeper/players'
     | '/phaseCompan10n'
+    | '/scorekeeper'
     | '/phaseCompan10n/game/$gameId'
     | '/phaseCompan10n/phasescard/$phaseSetId'
     | '/phaseCompan10n/phasescard/custom'
+    | '/scorekeeper/game/$gameId'
     | '/phaseCompan10n/create'
     | '/phaseCompan10n/phasescard'
   id:
     | '__root__'
     | '/'
-    | '/create'
-    | '/games'
     | '/phaseCompan10n'
-    | '/players'
-    | '/scorekeepers'
-    | '/game/$gameId'
+    | '/scorekeeper'
     | '/phaseCompan10n/create'
     | '/phaseCompan10n/games'
     | '/phaseCompan10n/phases'
     | '/phaseCompan10n/phasescard'
     | '/phaseCompan10n/players'
     | '/phaseCompan10n/settings'
+    | '/scorekeeper/create'
+    | '/scorekeeper/games'
+    | '/scorekeeper/players'
     | '/phaseCompan10n/'
+    | '/scorekeeper/'
     | '/phaseCompan10n/game/$gameId'
     | '/phaseCompan10n/phasescard/$phaseSetId'
     | '/phaseCompan10n/phasescard/custom'
+    | '/scorekeeper/game/$gameId'
     | '/phaseCompan10n/create/'
     | '/phaseCompan10n/phasescard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CreateRoute: typeof CreateRoute
-  GamesRoute: typeof GamesRoute
   PhaseCompan10nRoute: typeof PhaseCompan10nRouteWithChildren
-  PlayersRoute: typeof PlayersRoute
-  ScorekeepersRoute: typeof ScorekeepersRoute
-  GameGameIdRoute: typeof GameGameIdRoute
+  ScorekeeperRoute: typeof ScorekeeperRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/scorekeepers': {
-      id: '/scorekeepers'
-      path: '/scorekeepers'
-      fullPath: '/scorekeepers'
-      preLoaderRoute: typeof ScorekeepersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/players': {
-      id: '/players'
-      path: '/players'
-      fullPath: '/players'
-      preLoaderRoute: typeof PlayersRouteImport
+    '/scorekeeper': {
+      id: '/scorekeeper'
+      path: '/scorekeeper'
+      fullPath: '/scorekeeper'
+      preLoaderRoute: typeof ScorekeeperRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/phaseCompan10n': {
@@ -288,20 +287,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PhaseCompan10nRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/games': {
-      id: '/games'
-      path: '/games'
-      fullPath: '/games'
-      preLoaderRoute: typeof GamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create': {
-      id: '/create'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof CreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -309,12 +294,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scorekeeper/': {
+      id: '/scorekeeper/'
+      path: '/'
+      fullPath: '/scorekeeper/'
+      preLoaderRoute: typeof ScorekeeperIndexRouteImport
+      parentRoute: typeof ScorekeeperRoute
+    }
     '/phaseCompan10n/': {
       id: '/phaseCompan10n/'
       path: '/'
       fullPath: '/phaseCompan10n/'
       preLoaderRoute: typeof PhaseCompan10nIndexRouteImport
       parentRoute: typeof PhaseCompan10nRoute
+    }
+    '/scorekeeper/players': {
+      id: '/scorekeeper/players'
+      path: '/players'
+      fullPath: '/scorekeeper/players'
+      preLoaderRoute: typeof ScorekeeperPlayersRouteImport
+      parentRoute: typeof ScorekeeperRoute
+    }
+    '/scorekeeper/games': {
+      id: '/scorekeeper/games'
+      path: '/games'
+      fullPath: '/scorekeeper/games'
+      preLoaderRoute: typeof ScorekeeperGamesRouteImport
+      parentRoute: typeof ScorekeeperRoute
+    }
+    '/scorekeeper/create': {
+      id: '/scorekeeper/create'
+      path: '/create'
+      fullPath: '/scorekeeper/create'
+      preLoaderRoute: typeof ScorekeeperCreateRouteImport
+      parentRoute: typeof ScorekeeperRoute
     }
     '/phaseCompan10n/settings': {
       id: '/phaseCompan10n/settings'
@@ -358,13 +371,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PhaseCompan10nCreateRouteImport
       parentRoute: typeof PhaseCompan10nRoute
     }
-    '/game/$gameId': {
-      id: '/game/$gameId'
-      path: '/game/$gameId'
-      fullPath: '/game/$gameId'
-      preLoaderRoute: typeof GameGameIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/phaseCompan10n/phasescard/': {
       id: '/phaseCompan10n/phasescard/'
       path: '/'
@@ -378,6 +384,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/phaseCompan10n/create/'
       preLoaderRoute: typeof PhaseCompan10nCreateIndexRouteImport
       parentRoute: typeof PhaseCompan10nCreateRoute
+    }
+    '/scorekeeper/game/$gameId': {
+      id: '/scorekeeper/game/$gameId'
+      path: '/game/$gameId'
+      fullPath: '/scorekeeper/game/$gameId'
+      preLoaderRoute: typeof ScorekeeperGameGameIdRouteImport
+      parentRoute: typeof ScorekeeperRoute
     }
     '/phaseCompan10n/phasescard/custom': {
       id: '/phaseCompan10n/phasescard/custom'
@@ -459,14 +472,30 @@ const PhaseCompan10nRouteWithChildren = PhaseCompan10nRoute._addFileChildren(
   PhaseCompan10nRouteChildren,
 )
 
+interface ScorekeeperRouteChildren {
+  ScorekeeperCreateRoute: typeof ScorekeeperCreateRoute
+  ScorekeeperGamesRoute: typeof ScorekeeperGamesRoute
+  ScorekeeperPlayersRoute: typeof ScorekeeperPlayersRoute
+  ScorekeeperIndexRoute: typeof ScorekeeperIndexRoute
+  ScorekeeperGameGameIdRoute: typeof ScorekeeperGameGameIdRoute
+}
+
+const ScorekeeperRouteChildren: ScorekeeperRouteChildren = {
+  ScorekeeperCreateRoute: ScorekeeperCreateRoute,
+  ScorekeeperGamesRoute: ScorekeeperGamesRoute,
+  ScorekeeperPlayersRoute: ScorekeeperPlayersRoute,
+  ScorekeeperIndexRoute: ScorekeeperIndexRoute,
+  ScorekeeperGameGameIdRoute: ScorekeeperGameGameIdRoute,
+}
+
+const ScorekeeperRouteWithChildren = ScorekeeperRoute._addFileChildren(
+  ScorekeeperRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CreateRoute: CreateRoute,
-  GamesRoute: GamesRoute,
   PhaseCompan10nRoute: PhaseCompan10nRouteWithChildren,
-  PlayersRoute: PlayersRoute,
-  ScorekeepersRoute: ScorekeepersRoute,
-  GameGameIdRoute: GameGameIdRoute,
+  ScorekeeperRoute: ScorekeeperRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

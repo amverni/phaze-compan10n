@@ -28,7 +28,7 @@ it("keeps every completed surface frozen across shared Player edits and deletion
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   try {
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
     const games = await page.evaluate<
       { id: string; home: string; graphTabs: string[]; graphLabels: string[] }[]
@@ -57,7 +57,7 @@ it("keeps every completed surface frozen across shared Player edits and deletion
         });
         const metric = mode === "points" ? "Points" : mode === "singleRoundWinner" ? "Rounds Won" : "Passes";
         results.push({
-          id: game.id, home: "",
+          id: game.id, home: "/scorekeeper",
           graphTabs: mode === "points" ? [metric, "Tiebreaker"] : [metric],
           graphLabels: mode === "points"
             ? ["Points progress by round", "Tiebreaker progress by round"]
@@ -160,7 +160,7 @@ it("keeps every completed surface frozen across shared Player edits and deletion
       expect(
         await scoreboard
           .locator(
-            game.home
+            game.home === "/phaseCompan10n"
               ? '.scoreboard-cell--sticky-top > div > span[style*="background-color"]'
               : 'thead span[style*="background-color"]',
           )
@@ -216,7 +216,7 @@ it.each([
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     await page.getByText("No active games yet", { exact: true }).waitFor();
     const names = Array.from({ length: 16 }, (_, index) => `Alexandria Montgomery ${index + 1}`);
     const gameId = await page.evaluate<string>(`(async () => {
@@ -242,7 +242,7 @@ it.each([
       }
       return game.id;
     })()`);
-    await page.goto(`${appUrl}#/game/${gameId}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
     await page.addStyleTag({
       content:
         ":root { --safe-area-inset-top: 20px; --safe-area-inset-bottom: 34px; --safe-area-inset-left: 16px; --safe-area-inset-right: 16px; }",
@@ -383,7 +383,7 @@ it.each(
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    await page.goto(appUrl);
+    await page.goto(`${appUrl}#/scorekeeper`);
     await page.getByText("No active games yet", { exact: true }).waitFor();
     const names = Array.from({ length: 8 }, (_, index) => `Alexandria Montgomery ${index + 1}`);
     const gameId = await page.evaluate<string>(`(async () => {
@@ -406,7 +406,7 @@ it.each(
       }
       return game.id;
     })()`);
-    await page.goto(`${appUrl}#/game/${gameId}`);
+    await page.goto(`${appUrl}#/scorekeeper/game/${gameId}`);
     await page.addStyleTag({
       content:
         ":root { --safe-area-inset-top: 20px; --safe-area-inset-bottom: 34px; --safe-area-inset-left: 16px; --safe-area-inset-right: 16px; }",

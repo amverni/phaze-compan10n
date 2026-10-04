@@ -29,7 +29,7 @@ export function GenericGamesList({ activeOnly = false }: { activeOnly?: boolean 
             <GameListRow
               key={game.id}
               game={game}
-              destination={{ to: "/game/$gameId", params: { gameId: game.id } }}
+              destination={{ to: "/scorekeeper/game/$gameId", params: { gameId: game.id } }}
               onDelete={() => deleteGame.mutate(game.id)}
               isDeleting={deleteGame.isPending}
             />

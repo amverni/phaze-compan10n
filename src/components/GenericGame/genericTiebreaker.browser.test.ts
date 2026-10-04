@@ -25,7 +25,7 @@ afterAll(async () => {
 });
 
 async function seedPlayers(page: Page, names = ["Maya"]) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#/scorekeeper`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<PlayerIdentity[]>(`(async () => {
     const { playersApi } = await import("/scorekeeper/src/data/api/players.ts");
@@ -55,7 +55,7 @@ it.each([
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
   try {
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
     const trigger = page.getByLabel("Scoring Mode", { exact: true });
     const enable = page.getByRole("switch", { name: "Enable Tiebreaker", exact: true });
@@ -95,7 +95,7 @@ it.each([
   page.setDefaultNavigationTimeout(30_000);
   try {
     await seedPlayers(page);
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     await page.getByRole("button", { name: "Maya", exact: true }).click();
     await page.getByRole("tab", { name: "Settings", exact: true }).click();
     const enable = page.getByRole("switch", { name: "Enable Tiebreaker", exact: true });
@@ -169,7 +169,7 @@ async function openPointsGame(page: Page, names = ["Maya", "Rowan"]) {
     });
   })()`);
   await page.reload();
-  await page.goto(`${appUrl}#/game/${game.id}`);
+  await page.goto(`${appUrl}#/scorekeeper/game/${game.id}`);
   await page.getByRole("table", { name: "Points scoreboard", exact: true }).waitFor();
   return game;
 }
@@ -448,7 +448,7 @@ it.each([
   page.setDefaultNavigationTimeout(30_000);
   try {
     await seedPlayers(page, ["Maya", "Rowan", "Lee", "Alex"]);
-    await page.goto(`${appUrl}#/create`);
+    await page.goto(`${appUrl}#/scorekeeper/create`);
     for (const name of ["Maya", "Rowan", "Lee", "Alex"]) {
       await page.getByRole("button", { name, exact: true }).click();
     }

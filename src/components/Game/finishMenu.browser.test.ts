@@ -29,12 +29,11 @@ const apiImport = (owner: ScorekeeperId) =>
   owner === "phase10"
     ? 'const { gamesApi: api } = await import("/scorekeeper/src/data/api/games.ts");'
     : 'const { genericGamesApi: api } = await import("/scorekeeper/src/data/api/genericGames.ts");';
-const home = (owner: ScorekeeperId) => (owner === "phase10" ? "/phaseCompan10n" : "/");
-const gamePath = (owner: ScorekeeperId, id: string) =>
-  `${owner === "phase10" ? "/phaseCompan10n" : ""}/game/${id}`;
+const home = (owner: ScorekeeperId) => (owner === "phase10" ? "/phaseCompan10n" : "/scorekeeper");
+const gamePath = (owner: ScorekeeperId, id: string) => `${home(owner)}/game/${id}`;
 
 async function seed(page: Page, owner: ScorekeeperId) {
-  await page.goto(appUrl);
+  await page.goto(`${appUrl}#${home(owner)}`);
   await page.getByText("No active games yet", { exact: true }).waitFor();
   return page.evaluate<{ game: StoredGame; players: Player[] }>(`(async () => {
     ${apiImport(owner)}
@@ -444,7 +443,7 @@ it.each(
     // A real Player mutation invalidates the cached Game without changing its zero Rounds.
     await page.evaluate(`import("/scorekeeper/src/data/api/players.ts").then(({ playersApi }) =>
       playersApi.create({ name: "Unused", color: "Jam", isFavorite: 0 }))`);
-    await page.goto(`${appUrl}#/players`);
+    await page.goto(`${appUrl}#/scorekeeper/players`);
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Delete Unused", exact: true }).click();
     await page.getByRole("button", { name: "Unused", exact: true }).waitFor({ state: "detached" });

@@ -20,7 +20,7 @@ export function ScorekeeperHome() {
       }
       footerContent={
         <div className="content-container flex h-full justify-end">
-          <CreateButton to="/create" />
+          <CreateButton to="/scorekeeper/create" />
         </div>
       }
     />
