@@ -8,7 +8,7 @@ export function ScorekeeperHome() {
   return (
     <ScorekeeperShell
       headerContent={
-        <div className="flex h-full items-center justify-end px-4">
+        <div className="content-container flex h-full items-center justify-end">
           <HomeMenu experience="scorekeeper" />
         </div>
       }

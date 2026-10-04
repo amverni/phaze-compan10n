@@ -11,6 +11,6 @@
 }
 
 .generic-game-header-controls {
-  padding-left: calc(1rem + var(--safe-area-inset-left));
-  padding-right: calc(1rem + var(--safe-area-inset-right));
+  left: var(--safe-area-inset-left);
+  right: var(--safe-area-inset-right);
 }

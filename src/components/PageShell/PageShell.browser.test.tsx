@@ -71,6 +71,60 @@ describe("Scorekeeper shell geometry", () => {
   }, 30_000);
 });
 
+it.each([
+  "/",
+  "/phaseCompan10n",
+])("aligns home header controls with the footer on %s", async (route) => {
+  const page = await browser.newPage();
+  try {
+    await page.goto(`${appUrl}#${route}`);
+    const menu = page.getByRole("button", { name: "Menu", exact: true });
+    const create = page.getByRole("link", { name: "Create Game", exact: true });
+    await menu.waitFor();
+    await create.waitFor();
+    for (const [width, height, left, right] of [
+      [390, 844, 0, 0],
+      [320, 568, 0, 0],
+      [844, 390, 44, 0],
+      [844, 390, 0, 44],
+      [1280, 900, 0, 0],
+      [1920, 1080, 0, 0],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(
+        ({ left, right }) => {
+          document.documentElement.style.setProperty("--safe-area-inset-left", `${left}px`);
+          document.documentElement.style.setProperty("--safe-area-inset-right", `${right}px`);
+        },
+        { left, right },
+      );
+      const headerControl = await menu.boundingBox();
+      const footerControl = await create.boundingBox();
+      if (!headerControl || !footerControl) throw new Error("Missing home controls");
+      expect(headerControl.x + headerControl.width, `right edge at ${width}px`).toBeCloseTo(
+        footerControl.x + footerControl.width,
+        1,
+      );
+      if (width <= 390) {
+        expect(headerControl.x + headerControl.width).toBe(width - 16);
+      }
+      if (route === "/phaseCompan10n") {
+        const phases = await page
+          .getByRole("link", { name: "Open Phases Card", exact: true })
+          .boundingBox();
+        if (!phases) throw new Error("Missing Phases Card control");
+        expect(phases.x - left).toBeCloseTo(
+          width - right - footerControl.x - footerControl.width,
+          1,
+        );
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
 describe.each(["light", "dark"] as const)("generic page layout in %s mode", (colorScheme) => {
   it.each([
     { width: 390, height: 844 },

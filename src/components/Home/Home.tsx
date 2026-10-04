@@ -11,7 +11,7 @@ export const Home: React.FC = () => {
   return (
     <CardBackground
       headerContent={
-        <div className="relative z-10 mx-auto flex h-full w-full items-center justify-between px-4">
+        <div className="content-container relative z-10 flex h-full items-center justify-between">
           <PhasesCardButton />
           <HomeMenu experience="phaseCompan10n" />
         </div>

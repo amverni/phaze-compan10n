@@ -20,6 +20,8 @@ The shell has no logo, disclaimer, scoring controls, or slant by default. The co
 
 The Generic Game header layers its viewport-centered logo independently from the right-aligned Standings control. Symmetric clearance for the control and the larger horizontal Safe Area lets the word shrink uniformly on narrow screens without moving when Standings is absent or disabled. The control retains Safe Area and press clearance while the noninteractive stripes bleed to both viewport edges.
 
+Home and Game header controls in both Scorekeepers use the footer's shared `content-container`: centered within the horizontal Safe Areas, capped at `max-w-lg`, and padded by `px-4`. This keeps header and footer control edges aligned on wide screens without changing narrow-screen spacing or constraining the independent logo decorations.
+
 ## Player presentation
 
 `PlayerIdentity` in `src/types/player.ts` requires only `id`, `name`, and `color`. Saved `Player` extends it with persistence-specific fields. The data/API layer captures identities at completion and selects snapshots for completed surfaces instead of live saved Players.
