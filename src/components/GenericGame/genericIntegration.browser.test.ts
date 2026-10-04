@@ -359,6 +359,12 @@ async function expectNumericFit(dialog: Locator) {
       }),
     ).toBe(true);
   }
+  const errorRegion = dialog.getByRole("region", { name: "Round save error", exact: true });
+  if (await errorRegion.count()) {
+    expect(
+      await errorRegion.evaluate((element) => element.scrollHeight - element.clientHeight),
+    ).toBe(0);
+  }
 }
 
 it.each(
@@ -463,6 +469,19 @@ it.each(
         .filter({ hasText: new RegExp(`${metric} must be`) })
         .waitFor();
       await expectNumericFit(dialog);
+      for (const value of ["9".repeat(22), "9".repeat(51)]) {
+        await page.keyboard.press("Delete");
+        await page.keyboard.type(value);
+        expect(await dialog.getByRole("button", { name: "Save", exact: true }).isDisabled()).toBe(
+          true,
+        );
+        expect(
+          await dialog
+            .getByRole("status", { name: `${lastName} ${metric}`, exact: true })
+            .innerText(),
+        ).toContain(value);
+        await expectNumericFit(dialog);
+      }
     }
     for (const metric of metrics) {
       if (tiebreaker) {

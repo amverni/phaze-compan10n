@@ -19,6 +19,7 @@ interface PointsEntryProps {
 }
 
 const keyClasses = ["points-key font-semibold", "data-focus:outline-text-secondary!"].join(" ");
+const maxFullValueLength = String(Number.MIN_SAFE_INTEGER).length;
 
 export function PointsEntry({ name, points, tiebreaker, disabled, submitError }: PointsEntryProps) {
   const id = useId();
@@ -50,6 +51,7 @@ export function PointsEntry({ name, points, tiebreaker, disabled, submitError }:
             className={["points-fields grid", tiebreaker ? "grid-cols-2" : "grid-cols-1"].join(" ")}
           >
             {fields.map((field) => {
+              const abbreviate = field.value.length > maxFullValueLength;
               const content = (
                 <>
                   <span className="text-sm">{field.label}</span>
@@ -61,7 +63,16 @@ export function PointsEntry({ name, points, tiebreaker, disabled, submitError }:
                     aria-live="polite"
                     className="points-value max-w-full break-all font-semibold tabular-nums"
                   >
-                    {field.value}
+                    {abbreviate ? (
+                      <>
+                        <span aria-hidden title={field.value}>
+                          {field.value.slice(0, 7)}...{field.value.slice(-7)}
+                        </span>
+                        <span className="sr-only">{field.value}</span>
+                      </>
+                    ) : (
+                      field.value
+                    )}
                   </output>
                 </>
               );

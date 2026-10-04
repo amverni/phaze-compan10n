@@ -19,13 +19,26 @@ beforeAll(async () => {
   browser = await webkit.launch();
 }, 60_000);
 
-it.each([
+const longErrorSettings = [
   { mode: "passFail", tiebreaker: null, dealer: false },
   { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
   { mode: "points", pointsDirection: "high", tiebreaker: { direction: "low" }, dealer: false },
-] satisfies GenericGameSettings[])("keeps $mode actions visible above a Safe Area when a recoverable error is longer than the dialog", async (gameSettings) => {
+] satisfies GenericGameSettings[];
+
+it.each(
+  [
+    { width: 320, height: 480 },
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ].flatMap((viewport) => longErrorSettings.map((settings) => ({ ...viewport, settings }))),
+)("keeps $settings.mode actions and entry usable at $width x $height when a recoverable error is longer than the dialog", async ({
+  width,
+  height,
+  settings: gameSettings,
+}) => {
   const page = await browser.newPage({
-    viewport: { width: 320, height: 480 },
+    viewport: { width, height },
     reducedMotion: "reduce",
   });
   try {

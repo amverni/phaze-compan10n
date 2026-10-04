@@ -32,6 +32,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  max-height: 25cqh;
 }
 
 .points-field {
@@ -93,6 +94,10 @@
   .points-keypad-space {
     flex: none;
     width: min(42%, calc((100cqh - 16px) * 3.4 / 4.5));
+  }
+
+  .points-save-error {
+    max-height: none;
   }
 }
 
