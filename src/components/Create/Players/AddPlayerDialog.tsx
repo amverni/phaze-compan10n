@@ -42,7 +42,8 @@ export function AddPlayerDialog({ open, onClose }: AddPlayerDialogProps) {
       initialFocus={inputRef}
       aria-label={view === "create" ? "Create player" : "Add player"}
     >
-      <div className="h-full w-full overflow-hidden">
+      {/* Clip without scrolling when the entering page's name input receives focus. */}
+      <div className="h-full w-full overflow-clip">
         <div className="add-player-slider h-full" data-view={view}>
           {/* ── Page 1: Search ───────────────────────────── */}
           <div
