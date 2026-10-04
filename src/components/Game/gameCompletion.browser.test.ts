@@ -26,6 +26,49 @@ afterAll(async () => {
   await server?.close();
 });
 
+it("matches header and footer button sizing without changing the Phase header geometry", async () => {
+  const page = await browser.newPage({ hasTouch: true });
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game } = await seedCompletionGame(page);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    const standings = page.getByRole("button", { name: "Open Standings", exact: true });
+    await standings.waitFor();
+    for (const [width, height] of [
+      [390, 844],
+      [390, 701],
+      [390, 700],
+      [320, 568],
+      [844, 390],
+    ]) {
+      await page.setViewportSize({ width, height });
+      const size = height <= 700 ? 44 : 56;
+      const iconSize = height <= 700 ? 24 : 32;
+      for (const control of [
+        standings,
+        page.getByRole("link", { name: "Go home", exact: true }),
+        page.getByRole("button", { name: "Finish Game", exact: true }),
+      ]) {
+        expect(await control.boundingBox()).toMatchObject({ width: size, height: size });
+        expect(await control.locator("svg").boundingBox()).toMatchObject({
+          width: iconSize,
+          height: iconSize,
+        });
+      }
+      expect((await page.locator(".page-shell-header").boundingBox())?.height).toBeCloseTo(
+        height * 0.15,
+        1,
+      );
+      expect(
+        await page.getByRole("button", { name: "Open Phases Card", exact: true }).boundingBox(),
+      ).toMatchObject({ height: size });
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
 it("matches Save and Cancel icon colors in both themes", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {

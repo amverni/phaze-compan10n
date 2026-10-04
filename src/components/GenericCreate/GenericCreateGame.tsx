@@ -307,7 +307,7 @@ export function GenericCreateGame() {
               as={Link}
               to="/scorekeeper"
               aria-label="Cancel"
-              className="page-shell-footer-button p-0"
+              className="page-shell-button p-0"
             >
               <X className="size-8" aria-hidden />
             </Button>
@@ -321,7 +321,7 @@ export function GenericCreateGame() {
                 <Button
                   type="submit"
                   aria-label="Start"
-                  className="page-shell-footer-button p-0"
+                  className="page-shell-button p-0"
                   disabled={!canSubmit || isSubmitting}
                 >
                   <Play className="size-8" aria-hidden />

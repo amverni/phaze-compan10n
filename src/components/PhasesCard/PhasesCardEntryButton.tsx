@@ -1,7 +1,7 @@
 import "./PhasesCardEntryButton.css";
 
 export const phasesCardEntryButtonClasses = [
-  "glass phases-card-entry-card relative inline-flex h-14 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg! px-2",
+  "glass phases-card-entry-card relative inline-flex h-(--page-shell-control-size) min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg! px-2",
   "text-[0.625rem] font-bold leading-none tracking-[-0.02em]",
   "hover:brightness-110 active:scale-95!",
 ].join(" ");

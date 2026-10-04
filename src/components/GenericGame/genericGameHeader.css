@@ -4,7 +4,7 @@
 }
 
 .generic-game-header-logo {
-  /* Mirror the 48px control and 16px edge clearance, even when Standings is absent. */
+  /* Preserve symmetric logo clearance, even when Standings is absent. */
   padding-inline: calc(
     4rem + max(var(--safe-area-inset-left), var(--safe-area-inset-right))
   );

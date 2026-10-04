@@ -55,14 +55,14 @@ export function PhasesCardPage({
           <Button
             as={Link}
             to="/phaseCompan10n"
-            className="card-footer-button p-0"
+            className="page-shell-button p-0"
             aria-label="Go home"
           >
             <ArrowLeft className="size-8" />
           </Button>
           {shareTarget && !errorMessage && (
             <PhasesCardShareButton
-              className="card-footer-button"
+              className="page-shell-button"
               target={shareTarget}
               disabled={isLoading || phases.length === 0}
               onError={(message) => toastRef.current?.show(message)}

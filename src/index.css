@@ -254,7 +254,8 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 .page-shell {
   --page-shell-viewport-height: 100vh;
   --page-shell-panel-height: 15vh;
-  --page-shell-footer-control-size: 3.5rem;
+  --page-shell-control-size: 3.5rem;
+  --page-shell-control-icon-size: 2rem;
   --page-shell-edge-offset: 0px;
   --page-shell-footer-note-height: 0px;
   /* Covers each edge of the 10% press growth at both footer button sizes. */
@@ -265,7 +266,8 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 
 @media (max-height: 700px) {
   .page-shell {
-    --page-shell-footer-control-size: 2.75rem;
+    --page-shell-control-size: 2.75rem;
+    --page-shell-control-icon-size: 1.5rem;
   }
 }
 
@@ -356,7 +358,7 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   height: calc(
     var(--page-shell-panel-height) - var(--slant) / 2 + var(--safe-area-inset-top)
   );
-  /* Keep 48px header controls and their vertical padding usable on short screens. */
+  /* Keep compact header controls and their vertical padding usable on short screens. */
   min-height: calc(4rem + var(--safe-area-inset-top));
 }
 
@@ -371,7 +373,7 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   --footer-bottom: calc(var(--page-shell-press-clearance) + var(--page-shell-footer-note-height));
   height: calc(var(--page-shell-panel-height) + var(--safe-area-inset-bottom));
   min-height: calc(
-    var(--footer-top) + var(--page-shell-footer-control-size) + var(--footer-bottom) +
+    var(--footer-top) + var(--page-shell-control-size) + var(--footer-bottom) +
     var(--safe-area-inset-bottom)
   );
   padding-top: var(--footer-top);
@@ -382,16 +384,20 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   --footer-top: 12px;
   --footer-bottom: 12px;
   height: calc(
-    var(--footer-top) + var(--page-shell-footer-control-size) + var(--footer-bottom) +
+    var(--footer-top) + var(--page-shell-control-size) + var(--footer-bottom) +
     var(--safe-area-inset-bottom)
   );
 }
 
-.page-shell-footer-button,
-.card-footer-button {
-  width: var(--page-shell-footer-control-size, 3.5rem);
-  height: var(--page-shell-footer-control-size, 3.5rem);
+.page-shell-button {
+  width: var(--page-shell-control-size);
+  height: var(--page-shell-control-size);
   flex-shrink: 0;
+}
+
+.page-shell-button svg {
+  width: var(--page-shell-control-icon-size);
+  height: var(--page-shell-control-icon-size);
 }
 
 .page-shell-bottom-bleed {

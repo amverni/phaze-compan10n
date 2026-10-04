@@ -88,7 +88,7 @@ export function Players({ experience }: { experience: ScorekeeperExperience }) {
           <Button
             as={Link}
             to={isPhase ? "/phaseCompan10n" : "/scorekeeper"}
-            className="page-shell-footer-button p-0"
+            className="page-shell-button p-0"
             aria-label="Go home"
           >
             <ArrowLeft className="size-8" />

@@ -151,7 +151,7 @@ it("centers the Phases control with the independent logo layer across viewport s
       );
       if (width <= 390) expect(buttonBounds.x).toBe(left + 16);
       expect(buttonBounds.width).toBeGreaterThanOrEqual(48);
-      expect(buttonBounds.height).toBe(56);
+      expect(buttonBounds.height).toBe(height <= 700 ? 44 : 56);
       expect(logoBounds.x + logoBounds.width / 2).toBeCloseTo(left + (width - left) / 2, 1);
       expect(headerBounds.height).toBeCloseTo(height * 0.15 + top, 1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);

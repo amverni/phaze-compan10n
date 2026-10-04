@@ -196,6 +196,8 @@ it.each([
     await create.waitFor();
     for (const [width, height, left, right] of [
       [390, 844, 0, 0],
+      [390, 701, 0, 0],
+      [390, 700, 0, 0],
       [320, 568, 0, 0],
       [844, 390, 44, 0],
       [844, 390, 0, 44],
@@ -213,6 +215,15 @@ it.each([
       const headerControl = await menu.boundingBox();
       const footerControl = await create.boundingBox();
       if (!headerControl || !footerControl) throw new Error("Missing home controls");
+      const size = height <= 700 ? 44 : 56;
+      const iconSize = height <= 700 ? 24 : 32;
+      for (const control of [menu, create]) {
+        expect(await control.boundingBox()).toMatchObject({ width: size, height: size });
+        expect(await control.locator("svg").boundingBox()).toMatchObject({
+          width: iconSize,
+          height: iconSize,
+        });
+      }
       expect(headerControl.x + headerControl.width, `right edge at ${width}px`).toBeCloseTo(
         footerControl.x + footerControl.width,
         1,
@@ -225,6 +236,7 @@ it.each([
           .getByRole("link", { name: "Open Phases Card", exact: true })
           .boundingBox();
         if (!phases) throw new Error("Missing Phases Card control");
+        expect(phases.height).toBe(size);
         expect(phases.x - left).toBeCloseTo(
           width - right - footerControl.x - footerControl.width,
           1,
@@ -232,6 +244,15 @@ it.each([
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     }
+    const resting = await menu.boundingBox();
+    const surface = menu.locator(":scope > .glass");
+    await menu.hover();
+    await page.mouse.down();
+    await expect.poll(async () => (await surface.boundingBox())?.width).toBeCloseTo(56 * 1.1, 1);
+    expect(await menu.boundingBox()).toEqual(resting);
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
+    await expect.poll(async () => (await surface.boundingBox())?.width).toBe(56);
   } finally {
     await page.close();
   }
@@ -336,6 +357,11 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
             if (!resting) throw new Error(`Missing footer control on ${route}`);
             expect(resting.height).toBe(size);
             expect(resting.width).toBe(size);
+            const iconSize = height <= 700 ? 24 : 32;
+            expect(await control.locator("svg").boundingBox()).toMatchObject({
+              width: iconSize,
+              height: iconSize,
+            });
             expect(resting.y - footer.y).toBe(12);
             expect(height - insets.bottom - resting.y - resting.height).toBeCloseTo(12, 1);
             if (!(await control.isEnabled())) continue;
@@ -397,13 +423,7 @@ describe.each(["light", "dark"] as const)("neutral page layout in %s mode", (col
             footerContent={
               <div className="content-container flex h-full items-center justify-between">
                 {["Back", "Finish"].map((label) => (
-                  <Button
-                    key={label}
-                    style={{
-                      width: "var(--page-shell-footer-control-size)",
-                      height: "var(--page-shell-footer-control-size)",
-                    }}
-                  >
+                  <Button key={label} className="page-shell-button">
                     {label}
                   </Button>
                 ))}

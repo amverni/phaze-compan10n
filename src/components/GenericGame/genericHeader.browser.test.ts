@@ -85,6 +85,8 @@ it.each([
     let wordAspect: number | undefined;
     for (const [width, height, top, left, right] of [
       [390, 844, 0, 0, 0],
+      [390, 701, 0, 0, 0],
+      [390, 700, 0, 0, 0],
       [320, 568, 0, 0, 0],
       [844, 390, 0, 44, 0],
       [844, 390, 0, 0, 44],
@@ -128,6 +130,8 @@ it.each([
         .toBe(true);
       const control = await button.boundingBox();
       if (!control || !header) throw new Error("Missing header control");
+      const size = height <= 700 ? 44 : 56;
+      const iconSize = height <= 700 ? 24 : 32;
       const finish = await page
         .getByRole("button", { name: "Finish Game", exact: true })
         .boundingBox();
@@ -136,7 +140,12 @@ it.each([
         finish.x + finish.width,
         1,
       );
-      expect(control.width).toBe(48);
+      expect(control.width).toBe(size);
+      expect(control.height).toBe(size);
+      expect(await button.locator("svg").boundingBox()).toMatchObject({
+        width: iconSize,
+        height: iconSize,
+      });
       expect(control.x).toBeGreaterThan(word.right);
       expect(word.left).toBeGreaterThan(left);
       const band = await page
@@ -156,7 +165,7 @@ it.each([
       expect(band.middleBottom).toBeLessThan(control.y + control.height);
       await button.hover();
       await page.mouse.down();
-      await expect.poll(async () => (await button.boundingBox())?.width).toBeCloseTo(52.8, 1);
+      await expect.poll(async () => (await button.boundingBox())?.width).toBeCloseTo(size * 1.1, 1);
       const pressed = await button.boundingBox();
       if (!pressed) throw new Error("Missing pressed control");
       expect(pressed.x).toBeGreaterThan(word.right);
@@ -173,7 +182,7 @@ it.each([
       ).toBe(true);
       await page.mouse.move(0, 0);
       await page.mouse.up();
-      await expect.poll(async () => (await button.boundingBox())?.width).toBe(48);
+      await expect.poll(async () => (await button.boundingBox())?.width).toBe(size);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     }
     const tab = process.platform === "darwin" ? "Alt+Tab" : "Tab";

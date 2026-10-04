@@ -81,7 +81,7 @@ export function Game({ gameId }: GameProps) {
               )}
               <Button
                 type="button"
-                className="ml-auto size-12 p-0"
+                className="page-shell-button ml-auto p-0"
                 aria-label="Open Standings"
                 disabled={!standingsReady}
                 onClick={() => setStandingsOpen(true)}
@@ -128,7 +128,7 @@ export function Game({ gameId }: GameProps) {
             <Button
               as={Link}
               to="/phaseCompan10n"
-              className="card-footer-button p-0"
+              className="page-shell-button p-0"
               aria-label="Go home"
             >
               <ArrowLeft className="size-8" aria-hidden />

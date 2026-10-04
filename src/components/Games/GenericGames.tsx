@@ -18,7 +18,7 @@ export function GenericGames() {
             as={Link}
             to="/scorekeeper"
             aria-label="Go home"
-            className="page-shell-footer-button p-0"
+            className="page-shell-button p-0"
           >
             <ArrowLeft className="size-8" aria-hidden />
           </Button>

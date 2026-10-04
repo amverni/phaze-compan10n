@@ -30,13 +30,13 @@ export function HomeMenu({ experience }: { experience: ScorekeeperExperience }) 
   const items = [homeItem, ...(experience === "phaseCompan10n" ? phaseItems : genericItems)];
   return (
     <Popover className="relative">
-      {/* The outer button keeps a fixed 40×40 box so Headless UI's anchored
+      {/* The outer button keeps a fixed box at each responsive size so Headless UI's anchored
           panel never sees a size change (which would otherwise drift the
           popover when the press-scale fires). The visible glass + icon live
           in an inner span that grows uniformly from center on press. */}
       <PopoverButton
         aria-label="Menu"
-        className="relative size-10 rounded-full group cursor-pointer focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60"
+        className="page-shell-button relative rounded-full group cursor-pointer focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-white/60"
       >
         <span className="absolute inset-0 inline-flex items-center justify-center rounded-full glass transition-transform group-hover:brightness-110 group-active:scale-110">
           <Menu className="size-6 relative z-10" aria-hidden="true" />

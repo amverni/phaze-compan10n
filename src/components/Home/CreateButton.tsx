@@ -8,7 +8,7 @@ interface CreateButtonProps {
 
 export function CreateButton({ to }: CreateButtonProps) {
   return (
-    <Button as={Link} to={to} aria-label="Create Game" className="card-footer-button">
+    <Button as={Link} to={to} aria-label="Create Game" className="page-shell-button">
       <Plus className="size-8 relative z-10" aria-hidden="true" />
     </Button>
   );

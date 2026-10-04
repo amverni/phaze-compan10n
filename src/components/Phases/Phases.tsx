@@ -64,7 +64,7 @@ export function Phases() {
           <Button
             as={Link}
             to="/phaseCompan10n"
-            className="card-footer-button p-0"
+            className="page-shell-button p-0"
             aria-label="Go home"
           >
             <ArrowLeft className="size-8" />

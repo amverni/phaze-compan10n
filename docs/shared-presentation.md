@@ -11,7 +11,8 @@ Home is a panel-free chooser rather than a Scorekeeper Dashboard. It reuses the 
 The shell has no logo, disclaimer, scoring controls, or slant by default. The concrete CSS layout values are:
 
 - `--page-shell-panel-height`: responsive base panel height; skins can derive separate header and footer heights from it.
-- `--page-shell-footer-control-size`: 56px, or 44px on viewports at most 700px tall; footer controls should use this size.
+- `--page-shell-control-size`: 56px, or 44px on viewports at most 700px tall; circular header and footer controls use this size through `.page-shell-button`.
+- `--page-shell-control-icon-size`: 32px, or 24px on viewports at most 700px tall; `.page-shell-button` applies this size to its icons, including icons inside anchored controls' press surfaces.
 - `--page-shell-press-clearance`: room for existing 10% press growth.
 - `--page-shell-edge-offset`: zero unless the page's decoration needs overlapping angled panels.
 - `--page-shell-footer-note-height`: zero unless the footer includes a note.
@@ -23,6 +24,8 @@ Both skins use `PageShell/PanelSurface.tsx` for their header and footer decorati
 `ScorekeeperShell` alone uses compact geometry: its flat header edge sits at the midpoint of the corresponding Phase slant (`--page-shell-panel-height` minus half of `--slant`), with a 64px minimum to keep header controls usable on short screens. Its footer is the responsive control height plus 12px above and 12px below, without Phase's decorative offset. Top and bottom Safe Areas are added separately. At 390x844 with zero insets, the header is approximately 101.6px and the footer is 80px; the compact 44px controls produce a 68px footer. The recovered space belongs to the scrolling main region, with no replacement spacer. Phase panel geometry, disclaimer, and control alignment are unchanged.
 
 The Generic Game header layers its viewport-centered logo independently from the right-aligned Standings control. Symmetric clearance for the control and the larger horizontal Safe Area lets the word shrink uniformly on narrow screens without moving when Standings is absent or disabled. The control retains Safe Area and press clearance while the noninteractive stripes bleed to both viewport edges.
+
+Circular header and footer buttons share the same responsive button and icon sizes across both Scorekeepers, including Menu, Standings, and footer actions. Anchored controls retain a stationary outer button while their inner surface enlarges on press. The Phases Card entry uses the same responsive height on the Dashboard and Game screens while retaining its card shape, label, width, and press behavior. Controls inside page content or dialogs are excluded. This sizing does not change header heights or vertical alignment; extra clearance from Phase Compan10n's slanted edge on short screens remains deferred.
 
 Scorekeeper Dashboard and Game header controls in both Scorekeepers use the footer's shared `content-container`: centered within the horizontal Safe Areas, capped at `max-w-lg`, and padded by `px-4`. This keeps header and footer control edges aligned on wide screens without changing narrow-screen spacing or constraining the independent logo decorations.
 

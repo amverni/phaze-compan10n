@@ -120,14 +120,14 @@ export function CreateGame() {
       footerContent={
         <div className="content-container flex h-full justify-between">
           {/* Cancel — back to home */}
-          <Button as={Link} to="/phaseCompan10n" aria-label="Cancel" className="card-footer-button">
+          <Button as={Link} to="/phaseCompan10n" aria-label="Cancel" className="page-shell-button">
             <X className="size-8 relative z-10" />
           </Button>
 
           {/* Start game */}
           <Button
             aria-label="Start"
-            className="card-footer-button"
+            className="page-shell-button"
             disabled={!canStartGame}
             onClick={handleStartGame}
           >

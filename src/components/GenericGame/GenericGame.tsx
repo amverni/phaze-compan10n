@@ -56,7 +56,7 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
                 aria-label="Open Standings"
                 disabled={isError}
                 onClick={() => setStandingsOpen(true)}
-                className="size-12 shrink-0 data-focus:outline-solid data-focus:outline-text-secondary!"
+                className="page-shell-button data-focus:outline-solid data-focus:outline-text-secondary!"
               >
                 <ChartNoAxesColumn className="size-8" aria-hidden />
               </Button>
@@ -95,7 +95,7 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
             as={Link}
             to="/scorekeeper"
             aria-label="Go home"
-            className="page-shell-footer-button p-0"
+            className="page-shell-button p-0"
           >
             <ArrowLeft className="size-8" aria-hidden />
           </Button>

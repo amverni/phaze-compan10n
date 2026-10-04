@@ -74,7 +74,7 @@ export function FinishGameMenu({
           aria-label="Finish Game"
           disabled={isPending || !active}
           className={[
-            "page-shell-footer-button group relative rounded-full p-0",
+            "page-shell-button group relative rounded-full p-0",
             "focus-visible:outline-offset-2",
           ].join(" ")}
         >
