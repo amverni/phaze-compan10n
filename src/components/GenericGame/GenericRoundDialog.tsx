@@ -117,7 +117,7 @@ export function GenericRoundDialogActions({
         {submitting ? (
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
         ) : (
-          <Check className="size-4 text-pt-green-500" aria-hidden />
+          <Check className="size-4" aria-hidden />
         )}
       </Button>
     </div>

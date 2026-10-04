@@ -26,6 +26,31 @@ afterAll(async () => {
   await server?.close();
 });
 
+it("matches Save and Cancel icon colors in both themes", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game } = await seedCompletionGame(page);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    const cancel = dialog.getByRole("button", { name: "Cancel", exact: true });
+    const save = dialog.getByRole("button", { name: "Save round", exact: true });
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme });
+      const cancelColor = await cancel
+        .locator("svg")
+        .evaluate((element) => getComputedStyle(element).color);
+      await expect
+        .poll(() => save.locator("svg").evaluate((element) => getComputedStyle(element).color))
+        .toBe(cancelColor);
+    }
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
 it("opens final Standings after a finishing Round and keeps completed snapshot names and colors after saved Players change", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
   try {

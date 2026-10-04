@@ -160,16 +160,16 @@ it.each([
       expect(await save.innerText()).toBe("");
       expect(await close.locator("svg.lucide-x[aria-hidden=true]").count()).toBe(1);
       expect(await save.locator("svg.lucide-check[aria-hidden=true]").count()).toBe(1);
-      expect(
-        await save.locator("svg").evaluate((element) => {
-          const reference = document.createElement("span");
-          reference.style.color = "var(--color-pt-green-500)";
-          element.after(reference);
-          const matches = getComputedStyle(element).color === getComputedStyle(reference).color;
-          reference.remove();
-          return matches;
-        }),
-      ).toBe(true);
+      for (const colorScheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme });
+        const closeColor = await close
+          .locator("svg")
+          .evaluate((element) => getComputedStyle(element).color);
+        await expect
+          .poll(() => save.locator("svg").evaluate((element) => getComputedStyle(element).color))
+          .toBe(closeColor);
+      }
+      await page.emulateMedia({ colorScheme: "light" });
 
       const mode = settings[index].mode;
       if (mode === "singleRoundWinner") {
