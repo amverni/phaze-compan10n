@@ -23,7 +23,8 @@ both. Totals, Standings, graphs, and result snapshots are derived in the API lay
 ## Navigation and presentation
 
 The client-only SPA uses hash routes beneath the configured GitHub Pages base
-(`/scorekeeper/`). Home at `/` always shows the Scorekeepers chooser, without a
+(`/scorekeeper/`). Home at `/` always shows the two branded Scorekeeper choices in
+a panel-free layout with Safe Area spacing, without a visible header, footer, or
 back arrow. The generic Scorekeeper Dashboard lives at `/scorekeeper`, with
 `/scorekeeper/create`, `/scorekeeper/players`, `/scorekeeper/games`, and
 `/scorekeeper/game/$gameId` beneath it. Phase Compan10n pages remain under

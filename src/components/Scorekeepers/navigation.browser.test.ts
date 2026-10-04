@@ -501,6 +501,81 @@ describe("scorekeeper navigation", () => {
 });
 
 describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode", (colorScheme) => {
+  it("gives Home a panel-free viewport with both branded choices inside Safe Areas", async () => {
+    const page = await browser.newPage({ colorScheme, timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
+    try {
+      for (const [width, height] of [
+        [320, 568],
+        [390, 844],
+        [512, 400],
+        [844, 390],
+        [1280, 900],
+        [320, 320],
+      ]) {
+        await page.setViewportSize({ width, height });
+        await page.goto(`${appUrl}#/`);
+        const choices = page.getByRole("navigation", { name: "Scorekeepers", exact: true });
+        await choices.waitFor();
+        await page.evaluate(() => document.fonts.ready);
+        for (const insets of [
+          { top: 0, right: 0, bottom: 0, left: 0 },
+          { top: 47, right: 44, bottom: 34, left: 44 },
+        ]) {
+          await page.evaluate((insets) => {
+            for (const [edge, value] of Object.entries(insets)) {
+              document.documentElement.style.setProperty(`--safe-area-inset-${edge}`, `${value}px`);
+            }
+          }, insets);
+          const content = page.locator(".page-shell-main");
+          await content.evaluate((element) => {
+            element.scrollTop = 0;
+          });
+          const contentBox = await content.boundingBox();
+          if (!contentBox) throw new Error("Missing Home content");
+          expect(contentBox.y).toBe(insets.top);
+          expect(contentBox.height).toBeCloseTo(height - insets.top - insets.bottom, 1);
+
+          const generic = choices.getByRole("link", { name: "Scorekeeper", exact: true });
+          const phase = choices.getByRole("link", { name: "Phase Compan10n", exact: true });
+          const genericBox = await generic.boundingBox();
+          const phaseBox = await phase.boundingBox();
+          if (!genericBox || !phaseBox) throw new Error("Missing Scorekeeper choices");
+          expect(genericBox.y).toBe(insets.top + 24);
+          expect(phaseBox.y - genericBox.y - genericBox.height).toBe(24);
+          expect(genericBox.width).toBe(phaseBox.width);
+          expect(await choices.getByRole("link").count()).toBe(2);
+          expect(await generic.getByRole("img", { name: "Scorekeeper", exact: true }).count()).toBe(
+            1,
+          );
+          expect(
+            await phase.getByRole("img", { name: "Phaze Compan10n", exact: true }).count(),
+          ).toBe(1);
+
+          for (const [index, choice] of [generic, phase].entries()) {
+            await choice.focus();
+            await content.evaluate((element, last) => {
+              element.scrollTop = last ? element.scrollHeight : 0;
+            }, index === 1);
+            expect(await choice.evaluate((element) => element === document.activeElement)).toBe(
+              true,
+            );
+            const box = await choice.boundingBox();
+            if (!box) throw new Error("Missing focused choice");
+            expect(box.x).toBeGreaterThanOrEqual(insets.left);
+            expect(box.x + box.width).toBeLessThanOrEqual(width - insets.right);
+            expect(box.y).toBeGreaterThanOrEqual(insets.top);
+            expect(box.y + box.height).toBeLessThanOrEqual(height - insets.bottom);
+          }
+          expect(await page.locator(".page-panel-surface, .page-panel-shadow").count()).toBe(0);
+          expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+        }
+      }
+    } finally {
+      await page.close();
+    }
+  }, 60_000);
+
   it("fits one-line logos and flat shells while preserving Safe Areas and Visual Bleed", async () => {
     for (const [width, height] of [
       [320, 568],
@@ -582,17 +657,19 @@ describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode",
               return [style.marginTop, style.marginBottom, style.paddingTop, style.clipPath];
             }),
           ).toEqual(["0px", "0px", "0px", "none"]);
-          const bleed = await page.locator(".page-shell-bottom-bleed").evaluate((element) => {
-            const box = element.getBoundingClientRect();
-            return {
-              top: box.top,
-              height: box.height,
-              pointerEvents: getComputedStyle(element).pointerEvents,
-            };
-          });
-          expect(bleed.top).toBeCloseTo(height, 1);
-          expect(bleed.height).toBeCloseTo(height, 1);
-          expect(bleed.pointerEvents).toBe("none");
+          if (route !== "/") {
+            const bleed = await page.locator(".page-shell-bottom-bleed").evaluate((element) => {
+              const box = element.getBoundingClientRect();
+              return {
+                top: box.top,
+                height: box.height,
+                pointerEvents: getComputedStyle(element).pointerEvents,
+              };
+            });
+            expect(bleed.top).toBeCloseTo(height, 1);
+            expect(bleed.height).toBeCloseTo(height, 1);
+            expect(bleed.pointerEvents).toBe("none");
+          }
           if (route === "/scorekeeper/players") {
             expect(
               await page

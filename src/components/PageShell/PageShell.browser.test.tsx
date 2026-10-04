@@ -276,7 +276,6 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
         `/scorekeeper/game/${gameId}`,
         "/scorekeeper/players",
         "/scorekeeper/games",
-        "/",
       ]) {
         await page.goto(`${appUrl}#${route}`);
         await page.locator(".scorekeeper-background").waitFor();
@@ -330,11 +329,7 @@ describe.each(["light", "dark"] as const)("generic page layout in %s mode", (col
 
           const controls = page.locator(".page-shell-footer :is(button, a)");
           expect(await controls.count()).toBe(
-            route === "/"
-              ? 0
-              : route === "/scorekeeper/create" || route === `/scorekeeper/game/${gameId}`
-                ? 2
-                : 1,
+            route === "/scorekeeper/create" || route === `/scorekeeper/game/${gameId}` ? 2 : 1,
           );
           for (const control of await controls.all()) {
             const resting = await control.boundingBox();

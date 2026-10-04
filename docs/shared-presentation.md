@@ -6,6 +6,8 @@ These contracts were introduced in [#12](https://github.com/amverni/phaze-compan
 
 `src/components/PageShell/PageShell.tsx` owns header, scrolling main content, and footer layout. It handles stable mobile viewport sizing, desktop viewport coverage, Safe Areas, footer press clearance, and bottom Visual Bleed. Its content slots accept ordinary React nodes; optional decoration slots are noninteractive and hidden from assistive technology.
 
+Home is a panel-free chooser rather than a Scorekeeper Dashboard. It reuses the shared viewport and scrolling-content CSS without rendering header or footer regions, panel decorations, or reserved bands. The two branded choices retain their shared Button styling, with Safe Area spacing and scrolling on short screens. A screen-reader heading labels Home without a visible title. Scorekeeper Dashboard and Game layouts remain unchanged.
+
 The shell has no logo, disclaimer, scoring controls, or slant by default. The concrete CSS layout values are:
 
 - `--page-shell-panel-height`: responsive base panel height; skins can derive separate header and footer heights from it.
