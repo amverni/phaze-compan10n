@@ -1,0 +1,112 @@
+.points-entry {
+  container: points-entry / size;
+  width: 100%;
+  height: 100%;
+}
+
+.points-entry-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: clamp(4px, 2cqh, 12px);
+  padding: clamp(6px, 3cqh, 12px) 12px 10px;
+}
+
+.points-summary {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 4px;
+  width: 100%;
+  max-width: 360px;
+  max-height: 100%;
+  align-self: center;
+}
+
+.points-fields {
+  flex-shrink: 0;
+  gap: clamp(8px, 3cqw, 16px);
+}
+
+.points-save-error {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 25cqh;
+}
+
+.points-field {
+  padding: clamp(4px, 2cqh, 12px) 8px;
+}
+
+.points-value {
+  font-size: clamp(1rem, 6cqh, 1.5rem);
+  line-height: 1.2;
+}
+
+.points-error {
+  padding-top: 4px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.points-keypad-space {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.points-keypad {
+  /* Four rows, three gaps and press clearance; neither axis imposes a minimum. */
+  --key-size: min(4rem, calc(100cqw / 3.4), calc(100cqh / 4.5));
+  min-inline-size: 0;
+  gap: calc(var(--key-size) * 0.1);
+  padding: calc(var(--key-size) * 0.1);
+}
+
+.points-key {
+  width: var(--key-size);
+  height: var(--key-size);
+  font-size: clamp(0.875rem, calc(var(--key-size) * 0.5), 1.5rem);
+  line-height: 1;
+}
+
+@container points-entry (max-height: 230px) {
+  .points-entry-layout {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .points-summary {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .points-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .points-keypad-space {
+    flex: none;
+    width: min(42%, calc((100cqh - 16px) * 3.4 / 4.5));
+  }
+
+  .points-save-error {
+    max-height: none;
+  }
+}
+
+@container points-entry (max-height: 230px) and (min-width: 400px) {
+  .points-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .points-fields > :only-child {
+    grid-column: 1 / -1;
+  }
+}

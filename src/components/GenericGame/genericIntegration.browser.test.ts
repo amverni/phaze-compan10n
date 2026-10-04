@@ -313,14 +313,67 @@ it.each([
   }
 }, 60_000);
 
-it.each([
-  { width: 320, height: 568, colorScheme: "light" },
-  { width: 390, height: 844, colorScheme: "dark" },
-  { width: 768, height: 1024, colorScheme: "light" },
-] as const)("keeps two-metric entry operable with a long roster and Safe Areas at $width x $height in $colorScheme", async ({
+const numericLayouts = [
+  { width: 320, height: 568 },
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+  { width: 844, height: 390 },
+].flatMap((viewport) =>
+  (["light", "dark"] as const).flatMap((colorScheme) =>
+    [false, true].map((tiebreaker) => ({ ...viewport, colorScheme, tiebreaker })),
+  ),
+);
+
+async function expectNumericFit(dialog: Locator) {
+  const body = dialog.locator("[data-swipe-navigation-root]");
+  for (const container of [body, dialog.locator(".dialog-content")]) {
+    expect(
+      await container.evaluate((element) => ({
+        overflow: element.scrollHeight - element.clientHeight,
+        top: element.scrollTop,
+        left: element.scrollLeft,
+      })),
+    ).toEqual({ overflow: 0, top: 0, left: 0 });
+  }
+  const keys = dialog.getByRole("group", { name: /keypad$/ }).getByRole("button");
+  expect(await keys.count()).toBe(12);
+  for (const control of [
+    ...(await keys.all()),
+    ...(await dialog.getByRole("status").all()),
+    ...(await dialog.getByRole("alert").all()),
+  ]) {
+    await expectContained(control, body);
+  }
+  for (const key of await keys.all()) {
+    const bounds = await key.boundingBox();
+    if (!bounds) throw new Error("Missing numeric key");
+    expect(bounds.width).toBeGreaterThanOrEqual(24);
+    expect(bounds.width).toBeCloseTo(bounds.height, 0);
+    if (await key.isDisabled()) continue;
+    expect(
+      await key.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return element.contains(
+          document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
+        );
+      }),
+    ).toBe(true);
+  }
+  const errorRegion = dialog.getByRole("region", { name: "Round save error", exact: true });
+  if (await errorRegion.count()) {
+    expect(
+      await errorRegion.evaluate((element) => element.scrollHeight - element.clientHeight),
+    ).toBe(0);
+  }
+}
+
+it.each(
+  numericLayouts,
+)("fits numeric entry without scrolling with a long roster and Safe Areas at $width x $height in $colorScheme (Tiebreaker $tiebreaker)", async ({
   width,
   height,
   colorScheme,
+  tiebreaker,
 }) => {
   const page = await browser.newPage({
     viewport: { width, height },
@@ -343,12 +396,12 @@ it.each([
       }
       const game = await genericGamesApi.create({
         players: players.map(player => player.id),
-        settings: { mode: "points", pointsDirection: "low", tiebreaker: { direction: "high" }, dealer: true },
+        settings: { mode: "points", pointsDirection: "low", tiebreaker: ${tiebreaker ? '{ direction: "high" }' : "null"}, dealer: true },
       });
       for (let index = 0; index < 12; index++) {
         await genericRoundsApi.add({
           gameId: game.id, mode: "points",
-          scores: players.map(player => ({ playerId: player.id, points: "-1234567", tiebreaker: "7654321" })),
+          scores: players.map(player => ({ playerId: player.id, points: "-1234567", ...(${tiebreaker} ? { tiebreaker: "7654321" } : {}) })),
         });
       }
       return game.id;
@@ -368,28 +421,92 @@ it.each([
       }),
     ).toBe(true);
     await settleMotion(page);
+    await expectNumericFit(dialog);
+    const panelBounds = await dialog.locator(".dialog-panel").boundingBox();
+    if (!panelBounds) throw new Error("Missing numeric dialog panel");
+    expect(panelBounds.height).toBeCloseTo(height * 0.75 + 34, 0);
     for (const name of names) {
       const playerTab = dialog.getByRole("tab", { name, exact: true });
       await playerTab.click();
       await expect.poll(() => playerTab.getAttribute("aria-selected")).toBe("true");
-      const points = dialog.getByRole("button", { name: `${name} Points`, exact: true });
-      const secondary = dialog.getByRole("button", { name: `${name} Tiebreaker`, exact: true });
-      await points.focus();
+      const points = dialog.getByRole("status", { name: `${name} Points`, exact: true });
+      await dialog.getByRole("button", { name: "0", exact: true }).focus();
       await page.keyboard.type("1234567-");
-      const tab = process.platform === "darwin" ? "Alt+Tab" : "Tab";
-      await page.keyboard.press(tab);
-      await expect
-        .poll(() => secondary.evaluate((element) => element === document.activeElement))
-        .toBe(true);
-      expect(await secondary.getAttribute("aria-pressed")).toBe("true");
-      await page.keyboard.type("7654321");
+      if (tiebreaker) {
+        await dialog.getByRole("button", { name: `${name} Points`, exact: true }).focus();
+        const secondary = dialog.getByRole("button", { name: `${name} Tiebreaker`, exact: true });
+        const tab = process.platform === "darwin" ? "Alt+Tab" : "Tab";
+        await page.keyboard.press(tab);
+        await expect
+          .poll(() => secondary.evaluate((element) => element === document.activeElement))
+          .toBe(true);
+        expect(await secondary.getAttribute("aria-pressed")).toBe("true");
+        await page.keyboard.type("7654321");
+        expect(await secondary.innerText()).toContain("7654321");
+      }
       expect(await points.innerText()).toContain("-1234567");
-      expect(await secondary.innerText()).toContain("7654321");
+      await expectNumericFit(dialog);
     }
-    await scroll.evaluate((element) => {
-      element.scrollTop = 0;
-    });
-    for (const metric of ["Points", "Tiebreaker"]) {
+    const metrics = tiebreaker ? ["Points", "Tiebreaker"] : ["Points"];
+    const lastName = names[7];
+    for (const metric of metrics) {
+      if (tiebreaker) {
+        await dialog.getByRole("button", { name: `${lastName} ${metric}`, exact: true }).focus();
+      } else {
+        await dialog.getByRole("button", { name: "0", exact: true }).focus();
+      }
+      await page.keyboard.press("Delete");
+      await page.keyboard.type("1.5");
+      await dialog
+        .getByRole("alert")
+        .filter({ hasText: `whole number for ${metric}` })
+        .waitFor();
+      await expectNumericFit(dialog);
+      await page.keyboard.press("Delete");
+      await page.keyboard.type("9007199254740992-");
+      await dialog
+        .getByRole("alert")
+        .filter({ hasText: new RegExp(`${metric} must be`) })
+        .waitFor();
+      await expectNumericFit(dialog);
+      for (const value of ["9".repeat(22), "9".repeat(51)]) {
+        await page.keyboard.press("Delete");
+        await page.keyboard.type(value);
+        expect(await dialog.getByRole("button", { name: "Save", exact: true }).isDisabled()).toBe(
+          true,
+        );
+        expect(
+          await dialog
+            .getByRole("status", { name: `${lastName} ${metric}`, exact: true })
+            .innerText(),
+        ).toContain(value);
+        await expectNumericFit(dialog);
+      }
+    }
+    for (const metric of metrics) {
+      if (tiebreaker) {
+        await dialog.getByRole("button", { name: `${lastName} ${metric}`, exact: true }).focus();
+      }
+      await page.keyboard.press("Delete");
+      await page.keyboard.type("9007199254740991-");
+    }
+    await expectNumericFit(dialog);
+    const save = dialog.getByRole("button", { name: "Save", exact: true });
+    await save.click();
+    await dialog
+      .getByRole("alert")
+      .filter({ hasText: /Total Points must be/ })
+      .waitFor();
+    await expectNumericFit(dialog);
+    for (const metric of metrics) {
+      await (tiebreaker
+        ? dialog.getByRole("button", { name: `${lastName} ${metric}`, exact: true })
+        : dialog.getByRole("button", { name: "0", exact: true })
+      ).focus();
+      await page.keyboard.press("Delete");
+      await page.keyboard.type(metric === "Points" ? "1234567-" : "7654321");
+    }
+    for (const metric of tiebreaker ? ["Points", "Tiebreaker"] : []) {
       const field = dialog.getByRole("button", { name: `${names[7]} ${metric}`, exact: true });
       const resting = await field.boundingBox();
       if (!resting) throw new Error("Missing numeric field geometry");
@@ -402,9 +519,6 @@ it.each([
       await page.mouse.move(0, 0);
       await page.mouse.up();
     }
-    await scroll.evaluate((element) => {
-      element.scrollTop = element.scrollHeight;
-    });
     const key = dialog.getByRole("button", { name: "Backspace", exact: true });
     const resting = await key.boundingBox();
     if (!resting) throw new Error("Missing Backspace geometry");
@@ -416,18 +530,18 @@ it.each([
     await expectContained(key, scroll);
     await page.mouse.move(0, 0);
     await page.mouse.up();
-    const save = dialog.getByRole("button", { name: "Save", exact: true });
     const bounds = await save.boundingBox();
     if (!bounds) throw new Error("Missing Save geometry");
     expect(bounds.y + bounds.height).toBeLessThanOrEqual(height - 34);
     expect(bounds.x).toBeGreaterThanOrEqual(16);
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 16);
     expect(await dialog.locator("input, textarea").count()).toBe(0);
+    await expectNumericFit(dialog);
     await save.click();
     await dialog.waitFor({ state: "detached" });
     await page
       .getByRole("cell", {
-        name: `${names[7]}, Round 13: -1234567 Points, 7654321 Tiebreaker`,
+        name: `${names[7]}, Round 13: -1234567 Points${tiebreaker ? ", 7654321 Tiebreaker" : ""}`,
         exact: true,
       })
       .waitFor();

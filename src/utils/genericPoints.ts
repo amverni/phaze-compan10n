@@ -21,7 +21,7 @@ export function parseGenericPoints(
   }
   const points = Number(BigInt(value));
   if (!Number.isSafeInteger(points)) {
-    throw new Error(`${metric} must be between -9007199254740991 and 9007199254740991.`);
+    throw new Error(`${metric} must be within +/-9007199254740991.`);
   }
   return points;
 }
