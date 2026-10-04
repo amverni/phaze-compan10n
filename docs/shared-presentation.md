@@ -22,6 +22,8 @@ The Generic Game header layers its viewport-centered logo independently from the
 
 Home and Game header controls in both Scorekeepers use the footer's shared `content-container`: centered within the horizontal Safe Areas, capped at `max-w-lg`, and padded by `px-4`. This keeps header and footer control edges aligned on wide screens without changing narrow-screen spacing or constraining the independent logo decorations.
 
+Both Game pages use that same container for main content, keeping scoreboards aligned with the controls on desktop. Wide Player grids scroll within the scoreboard rather than widening the page.
+
 ## Logo presentation
 
 Both Scorekeepers consume the checked-in [Logo Theme configuration](logo-themes.md) through one `LogoThemeProvider` above routes. It owns system appearance observation, a shared next-local-midnight timer, and focus/visibility catch-up. Selection is independent per Scorekeeper: skip out-of-scope entries, select the first matching theme, otherwise use that Scorekeeper's Base Logo Palette. No game data, Query cache, page surfaces, or Player colors participate.

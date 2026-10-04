@@ -166,6 +166,60 @@ const modes: Array<{ label: string; settings: GenericGameSettings; metric: strin
   },
 ];
 
+it.each([2, 7])("matches the capped header/footer width with %i Players", async (playerCount) => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  page.setDefaultTimeout(5_000);
+  try {
+    await openGame(
+      page,
+      { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+      Array.from({ length: playerCount }, (_, index) => `Player ${index + 1}`),
+    );
+    const card = page.getByRole("region", { name: "Scoreboard", exact: true });
+    for (const [width, height, left, right] of [
+      [1280, 900, 0, 0],
+      [1920, 1080, 0, 0],
+      [390, 844, 0, 0],
+      [320, 568, 0, 0],
+      [844, 390, 44, 0],
+      [844, 390, 0, 44],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(
+        ({ left, right }) => {
+          document.documentElement.style.setProperty("--safe-area-inset-left", `${left}px`);
+          document.documentElement.style.setProperty("--safe-area-inset-right", `${right}px`);
+        },
+        { left, right },
+      );
+      const bounds = await box(card);
+      const home = await box(page.getByRole("link", { name: "Go home", exact: true }));
+      const finish = await box(page.getByRole("button", { name: "Finish Game", exact: true }));
+      const standings = await box(
+        page.getByRole("button", { name: "Open Standings", exact: true }),
+      );
+      expect(bounds.width, `scoreboard width at ${width}px`).toBe(
+        Math.min(width - left - right, 512) - 32,
+      );
+      expect(bounds.x).toBeCloseTo(home.x, 1);
+      expect(bounds.x + bounds.width).toBeCloseTo(finish.x + finish.width, 1);
+      expect(bounds.x + bounds.width).toBeCloseTo(standings.x + standings.width, 1);
+      expect(await card.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
+        playerCount === 7,
+      );
+      if (playerCount === 7) {
+        await card.evaluate((element) => {
+          element.scrollLeft = element.scrollWidth;
+        });
+        expect(await card.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
 it("shows a compact blank upcoming row, compact Player badges, and a small Add Round control", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.setDefaultTimeout(5_000);

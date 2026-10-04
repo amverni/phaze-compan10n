@@ -65,7 +65,7 @@ export function GenericGame({ gameId }: { gameId: GameId }) {
         </div>
       }
       mainContent={
-        <div className="flex h-full min-h-0 flex-col p-4">
+        <div className="content-container flex h-full min-h-0 flex-col py-4">
           {isError && <InlineError message="Unable to load this Game." onRetry={() => refetch()} />}
           {isPending ? (
             <output>Loading Game...</output>
