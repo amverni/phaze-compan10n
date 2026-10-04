@@ -29,7 +29,7 @@ export function FinishGameMenu({
   onPause,
   afterClose,
 }: FinishGameMenuProps) {
-  const resumeRef = useRef<HTMLButtonElement>(null);
+  const pauseRef = useRef<HTMLButtonElement>(null);
   const actionStarted = useRef(false);
   const [pendingAction, setPendingAction] = useState<"finish" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export function FinishGameMenu({
       }}
       dismissible={!isPending}
       label="Finish Game"
-      initialFocus={resumeRef}
+      initialFocus={pauseRef}
       restoreFocus={active}
       afterClose={afterClose}
       trigger={
@@ -86,6 +86,7 @@ export function FinishGameMenu({
     >
       <div className="flex flex-col" aria-busy={isPending}>
         <PlainButton
+          ref={pauseRef}
           className={actionClasses}
           disabled={isPending}
           onClick={() => {
@@ -93,16 +94,6 @@ export function FinishGameMenu({
           }}
         >
           Pause
-        </PlainButton>
-        <PlainButton
-          ref={resumeRef}
-          className={actionClasses}
-          disabled={isPending}
-          onClick={() => {
-            if (!actionStarted.current) onOpenChange(false);
-          }}
-        >
-          Resume
         </PlainButton>
         <PlainButton
           className={[actionClasses, displayedAction === "delete" ? "text-pt-red-500" : ""].join(

@@ -161,7 +161,7 @@ it("opens final Standings after a finishing Round and keeps completed snapshot n
   }
 }, 30_000);
 
-it("offers Resume and Pause before a saved Round, retains a closed draft, and discards it only when leaving", async () => {
+it("offers Pause and Delete before a saved Round, retains a closed draft, and discards it only when leaving", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
@@ -174,14 +174,10 @@ it("offers Resume and Pause before a saved Round, retains a closed draft, and di
     const finishGame = page.getByRole("button", { name: "Finish Game", exact: true });
     await finishGame.click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
-    expect(await finish.getByRole("button").allTextContents()).toEqual([
-      "Pause",
-      "Resume",
-      "Delete",
-    ]);
+    expect(await finish.getByRole("button").allTextContents()).toEqual(["Pause", "Delete"]);
     expect(await finish.innerText()).not.toContain("Save at least one Round");
     expect(await finish.getByRole("heading").count()).toBe(0);
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await finish.waitFor({ state: "detached" });
     expect(await finishGame.evaluate((button) => button === document.activeElement)).toBe(true);
 
@@ -210,7 +206,7 @@ it("offers Resume and Pause before a saved Round, retains a closed draft, and di
     await page.keyboard.press("Escape");
     await entry.waitFor({ state: "detached" });
     await finishGame.click();
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+    await page.mouse.click(4, 4);
     await finish.waitFor({ state: "detached" });
     await page.getByRole("button", { name: "Add round 1", exact: true }).click();
     expect(await entry.getByRole("button", { name: /Round Winner/ }).innerText()).toContain(
@@ -337,9 +333,9 @@ it("keeps a pending Finish on screen through dismissal attempts, shows failure, 
     });
     await finish.getByRole("button", { name: "Finish", exact: true }).click();
     await finish.getByRole("button", { name: "Finishing...", exact: true }).waitFor();
-    expect(await finish.getByRole("button", { name: "Resume", exact: true }).isDisabled()).toBe(
-      true,
-    );
+    expect(
+      await finish.getByRole("button", { name: "Finishing...", exact: true }).isDisabled(),
+    ).toBe(true);
     expect(await finish.getByRole("button", { name: "Pause", exact: true }).isDisabled()).toBe(
       true,
     );
@@ -354,7 +350,7 @@ it("keeps a pending Finish on screen through dismissal attempts, shows failure, 
     expect(await finish.getByRole("alert").innerText()).toContain("Couldn't finish Game");
     expect(await readResults(page)).toMatchObject({ games: [{ id: game.id, status: "active" }] });
     expect(await readRounds(page, game.id)).toHaveLength(1);
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await finish.waitFor({ state: "detached" });
     await page.getByRole("button", { name: "Finish Game", exact: true }).click();
     expect(await finish.getByRole("alert").count()).toBe(0);

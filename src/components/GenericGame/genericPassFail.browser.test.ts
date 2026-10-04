@@ -351,7 +351,7 @@ it("allows solo all-fail completion only after a saved Round", async () => {
     expect(await finish.getByRole("button", { name: "Delete", exact: true }).isEnabled()).toBe(
       true,
     );
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await finish.waitFor({ state: "detached" });
     await saveRound(page, []);
     const standings = await finishGame(page);

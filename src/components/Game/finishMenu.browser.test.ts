@@ -90,7 +90,7 @@ function readGame(page: Page, owner: ScorekeeperId, id: string) {
 
 it.each(
   owners,
-)("anchors the compact %s menu safely and restores focus after dismissal", async (owner) => {
+)("anchors the compact %s menu safely with input-aware focus on dismissal", async (owner) => {
   const page = await newPage();
   try {
     const { game } = await seed(page, owner);
@@ -112,11 +112,7 @@ it.each(
       .toBeGreaterThan(before.width);
     await page.mouse.up();
     await popup(page).waitFor();
-    expect(await popup(page).getByRole("button").allTextContents()).toEqual([
-      "Pause",
-      "Resume",
-      "Delete",
-    ]);
+    expect(await popup(page).getByRole("button").allTextContents()).toEqual(["Pause", "Delete"]);
     expect(await popup(page).getByRole("heading").count()).toBe(0);
     const panel = await popup(page).boundingBox();
     if (!panel) throw new Error("Missing menu");
@@ -137,14 +133,9 @@ it.each(
       );
     expect(buttons.every((button) => button.height >= 44)).toBe(true);
     expect(buttons[0].y).toBeLessThan(buttons[1].y);
-    expect(buttons[1].y).toBeLessThan(buttons[2].y);
     await expect
-      .poll(() =>
-        popup(page)
-          .getByRole("button", { name: "Resume", exact: true })
-          .evaluate((element) => element === document.activeElement),
-      )
-      .toBe(true);
+      .poll(() => popup(page).evaluate((element) => element.contains(document.activeElement)))
+      .toBe(false);
     await page.keyboard.press("Escape");
     await popup(page).waitFor({ state: "detached" });
     await expect
@@ -158,7 +149,86 @@ it.each(
     expect(await readGame(page, owner, game.id)).toEqual(game);
     await expect
       .poll(() => flag(page).evaluate((element) => element === document.activeElement))
-      .toBe(true);
+      .toBe(false);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it.each(
+  owners.flatMap((owner) =>
+    (["light", "dark"] as const).map((colorScheme) => ({ owner, colorScheme })),
+  ),
+)("uses keyboard-only focus for the $owner Finish menu in $colorScheme mode", async ({
+  owner,
+  colorScheme,
+}) => {
+  const page = await newPage();
+  try {
+    await page.emulateMedia({ colorScheme });
+    const { game } = await seed(page, owner);
+    const url = `${appUrl}#${gamePath(owner, game.id)}`;
+    await page.goto(url);
+    await add(page, owner).waitFor();
+    const menu = popup(page);
+    const trigger = flag(page);
+    const pause = menu.getByRole("button", { name: "Pause", exact: true });
+    const remove = menu.getByRole("button", { name: "Delete", exact: true });
+    const tab = process.platform === "darwin" ? "Alt+Tab" : "Tab";
+
+    for (const pointer of ["mouse", "touch"] as const) {
+      if (pointer === "mouse") await trigger.click();
+      else await trigger.tap();
+      await menu.waitFor();
+      expect(await menu.evaluate((element) => element.contains(document.activeElement))).toBe(
+        false,
+      );
+      await page.keyboard.press(tab);
+      await expect
+        .poll(() => pause.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+      expect(await pause.evaluate((element) => element.matches(":focus-visible"))).toBe(true);
+      expect(await pause.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe(
+        "none",
+      );
+      await page.keyboard.press("Escape");
+      await menu.waitFor({ state: "detached" });
+      await expect
+        .poll(() => trigger.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+
+      if (pointer === "mouse") await trigger.click();
+      else await trigger.tap();
+      await menu.waitFor();
+      expect(await menu.evaluate((element) => element.contains(document.activeElement))).toBe(
+        false,
+      );
+      if (pointer === "mouse") await page.mouse.click(4, 4);
+      else await page.touchscreen.tap(4, 4);
+      await menu.waitFor({ state: "detached" });
+      await expect
+        .poll(() => trigger.evaluate((element) => element === document.activeElement))
+        .toBe(false);
+
+      await trigger.focus();
+      await page.keyboard.press(pointer === "mouse" ? "Enter" : "Space");
+      await menu.waitFor();
+      await expect
+        .poll(() => pause.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+      await page.keyboard.press(tab);
+      expect(await remove.evaluate((element) => element === document.activeElement)).toBe(true);
+      await page.keyboard.press(`Shift+${tab}`);
+      expect(await pause.evaluate((element) => element === document.activeElement)).toBe(true);
+      if (pointer === "mouse") await page.mouse.click(4, 4);
+      else await page.touchscreen.tap(4, 4);
+      await menu.waitFor({ state: "detached" });
+      await expect
+        .poll(() => trigger.evaluate((element) => element === document.activeElement))
+        .toBe(false);
+      expect(page.url()).toBe(url);
+      expect(await readGame(page, owner, game.id)).toEqual(game);
+    }
   } finally {
     await page.close();
   }
@@ -196,7 +266,7 @@ it.each(
     expect(await readGame(page, owner, game.id)).toEqual(game);
     expect(page.url()).toBe(url);
     expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(0);
-    await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await popup(page).waitFor({ state: "detached" });
     await page.getByRole("button", { name: "Try again", exact: true }).click();
     await add(page, owner).click();
@@ -239,7 +309,7 @@ it.each(
         element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
     await popup(page).getByRole("button", { name: "Deleting...", exact: true }).waitFor();
-    for (const name of ["Pause", "Resume", "Deleting..."]) {
+    for (const name of ["Pause", "Deleting..."]) {
       expect(await popup(page).getByRole("button", { name, exact: true }).isDisabled()).toBe(true);
     }
     await page.keyboard.press("Escape");
@@ -300,7 +370,7 @@ it.each(owners)("rejects a %s Delete after another tab saves a Round", async (ow
     expect(await popup(page).getByRole("button", { name: "Finish", exact: true }).isEnabled()).toBe(
       true,
     );
-    await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await popup(page).waitFor({ state: "detached" });
     await page
       .getByRole("button", { name: owner === "phase10" ? "Add round 2" : "Add Round", exact: true })
@@ -356,7 +426,7 @@ it.each(
       expect(await popup(page).getByRole("button", { name: "Delete", exact: true }).count()).toBe(
         0,
       );
-      await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+      await page.keyboard.press("Escape");
       await popup(page).waitFor({ state: "detached" });
     } else {
       await page.getByText("Loading Game...", { exact: true }).waitFor();
@@ -404,7 +474,7 @@ it.each(
     expect(await popup(page).getByRole("button", { name: "Pause", exact: true }).isEnabled()).toBe(
       true,
     );
-    await popup(page).getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await popup(page).waitFor({ state: "detached" });
     await page.getByRole("button", { name: "Try again", exact: true }).click();
     await add(page, owner).waitFor();

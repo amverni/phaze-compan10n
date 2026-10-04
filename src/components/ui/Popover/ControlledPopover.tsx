@@ -1,5 +1,5 @@
 import * as Popover from "@radix-ui/react-popover";
-import type { ReactElement, ReactNode, RefObject } from "react";
+import { type ReactElement, type ReactNode, type RefObject, useRef } from "react";
 import { popoverPanelClasses } from "./Popover";
 
 interface ControlledPopoverProps {
@@ -26,9 +26,19 @@ export function ControlledPopover({
   afterClose,
   children,
 }: ControlledPopoverProps) {
+  const openedWithKeyboard = useRef(false);
+  const dismissedWithKeyboard = useRef(false);
+
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange} modal>
-      <Popover.Trigger asChild>{trigger}</Popover.Trigger>
+      <Popover.Trigger
+        asChild
+        onClickCapture={(event) => {
+          openedWithKeyboard.current = event.detail === 0;
+        }}
+      >
+        {trigger}
+      </Popover.Trigger>
       <Popover.Portal>
         {/* Shell controls opt into pointer events, bypassing modal body styles. */}
         <div className="pointer-events-auto fixed inset-0 z-50" aria-hidden="true" />
@@ -47,17 +57,20 @@ export function ControlledPopover({
           ].join(" ")}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
-            initialFocus.current?.focus();
+            dismissedWithKeyboard.current = false;
+            if (openedWithKeyboard.current) initialFocus.current?.focus();
           }}
           onCloseAutoFocus={(event) => {
-            if (!restoreFocus) event.preventDefault();
+            if (!restoreFocus || !dismissedWithKeyboard.current) event.preventDefault();
             afterClose();
           }}
           onEscapeKeyDown={(event) => {
             if (!dismissible) event.preventDefault();
+            else dismissedWithKeyboard.current = true;
           }}
           onInteractOutside={(event) => {
             if (!dismissible) event.preventDefault();
+            else dismissedWithKeyboard.current = false;
           }}
         >
           {children}

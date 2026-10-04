@@ -205,7 +205,7 @@ it("keeps solo entry explicit, discards drafts on navigation and reload, and fin
     expect(await finish.getByRole("button", { name: "Delete", exact: true }).isEnabled()).toBe(
       true,
     );
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+    await page.keyboard.press("Escape");
     await finish.waitFor({ state: "hidden" });
     const add = page.getByRole("button", { name: "Add Round", exact: true });
     const entry = page.getByRole("dialog", { name: "Add Round", exact: true });

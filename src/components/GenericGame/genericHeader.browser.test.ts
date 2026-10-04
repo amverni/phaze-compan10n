@@ -234,9 +234,10 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
     await failGameRead(page, true);
     await page.getByRole("button", { name: "Finish Game", exact: true }).click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
+    await finish.waitFor();
     await expect
       .poll(() => finish.evaluate((element) => element.contains(document.activeElement)))
-      .toBe(true);
+      .toBe(false);
     await finish.getByRole("button", { name: "Finish", exact: true }).press("Enter");
     await page.getByRole("alert").filter({ hasText: "Unable to load this Game." }).waitFor();
     expect(await button.isDisabled()).toBe(true);

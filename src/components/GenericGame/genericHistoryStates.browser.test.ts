@@ -257,14 +257,22 @@ async function openGames(page: Page) {
 async function finishGame(page: Page) {
   await page.getByRole("button", { name: "Finish Game", exact: true }).click();
   const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
+  await finish.waitFor();
   await expect
     .poll(() => finish.evaluate((dialog) => dialog.contains(document.activeElement)))
-    .toBe(true);
+    .toBe(false);
   const confirm = finish.getByRole("button", { name: "Finish", exact: true });
   await expect.poll(() => confirm.isEnabled()).toBe(true);
   await confirm.click({ trial: true });
   await confirm.press("Enter");
   await page.getByRole("list", { name: "Standings places", exact: true }).waitFor();
+  await page
+    .getByRole("dialog")
+    .evaluate((dialog) =>
+      Promise.allSettled(
+        dialog.getAnimations({ subtree: true }).map((animation) => animation.finished),
+      ),
+    );
 }
 
 async function deletePlayer(page: Page, name: string) {

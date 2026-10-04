@@ -180,7 +180,7 @@ function readGame(page: Page, id: string) {
   })()`);
 }
 
-it("offers Resume and Pause without a saved Round and discards a draft only when leaving", async () => {
+it("offers Pause and Delete without a saved Round and discards a draft only when leaving", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
   page.setDefaultTimeout(5_000);
   page.setDefaultNavigationTimeout(30_000);
@@ -189,25 +189,17 @@ it("offers Resume and Pause without a saved Round and discards a draft only when
     const finishButton = page.getByRole("button", { name: "Finish Game", exact: true });
     await finishButton.click();
     const finish = page.getByRole("dialog", { name: "Finish Game", exact: true });
-    await finish.getByRole("button", { name: "Resume", exact: true }).waitFor();
+    await finish.getByRole("button", { name: "Pause", exact: true }).waitFor();
     await page.evaluate(() =>
       Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
     );
-    expect(await finish.getByRole("button").allTextContents()).toEqual([
-      "Pause",
-      "Resume",
-      "Delete",
-    ]);
+    expect(await finish.getByRole("button").allTextContents()).toEqual(["Pause", "Delete"]);
     expect(await finish.innerText()).not.toContain("Save at least one Round");
     expect(await finish.getByRole("heading").count()).toBe(0);
     await expect
-      .poll(() =>
-        finish
-          .getByRole("button", { name: "Resume", exact: true })
-          .evaluate((element) => element === document.activeElement),
-      )
-      .toBe(true);
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+      .poll(() => finish.evaluate((element) => element.contains(document.activeElement)))
+      .toBe(false);
+    await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await expect
       .poll(() => finishButton.evaluate((element) => element === document.activeElement))
@@ -250,7 +242,7 @@ it("offers Resume and Pause without a saved Round and discards a draft only when
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await finishButton.click();
-    await finish.getByRole("button", { name: "Resume", exact: true }).click();
+    await page.mouse.click(4, 4);
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await add.click();
     expect(
@@ -389,9 +381,7 @@ it("keeps failed completion recoverable and prevents duplicate or dismissed pend
     await finish.getByRole("button", { name: "Finish", exact: true }).click();
     await finish.getByRole("alert").filter({ hasText: "Temporary storage failure" }).waitFor();
     expect(await readGame(page, game.id)).toMatchObject({ status: "active" });
-    expect(await finish.getByRole("button", { name: "Resume", exact: true }).isEnabled()).toBe(
-      true,
-    );
+    expect(await finish.getByRole("button", { name: "Pause", exact: true }).isEnabled()).toBe(true);
     await page.evaluate(`(async () => {
       const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
       const original = genericGamesApi.finish;
@@ -404,7 +394,7 @@ it("keeps failed completion recoverable and prevents duplicate or dismissed pend
     })()`);
     await finish.getByRole("button", { name: "Finish", exact: true }).click();
     await finish.getByRole("button", { name: "Finishing...", exact: true }).waitFor();
-    for (const name of ["Finishing...", "Resume", "Pause"]) {
+    for (const name of ["Finishing...", "Pause"]) {
       expect(await finish.getByRole("button", { name, exact: true }).isDisabled()).toBe(true);
     }
     await page.keyboard.press("Escape");
