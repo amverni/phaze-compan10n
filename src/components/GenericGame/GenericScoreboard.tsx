@@ -73,9 +73,13 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                   className={[
                     "scoreboard-cell scoreboard-cell--sticky-top",
                     index === view.players.length - 1 ? "scoreboard-cell--last-col" : "",
+                    view.upcomingDealerId === player.id ? "scoreboard-cell--upcoming-dealer" : "",
                   ].join(" ")}
                 >
                   <span className="sr-only">{player.name}</span>
+                  {view.upcomingDealerId === player.id && (
+                    <span className="sr-only">Upcoming Round Dealer</span>
+                  )}
                   <div className="flex flex-col items-center gap-1">
                     <span aria-hidden className="flex">
                       <PlayerAvatar player={player} variant="icon-initials" />

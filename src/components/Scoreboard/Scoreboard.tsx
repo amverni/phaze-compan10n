@@ -4,6 +4,7 @@ import { AddRoundDialog } from "./AddRoundDialog";
 import { GhostRow } from "./GhostRow";
 import { RoundRow } from "./RoundRow";
 import { ScoreboardHeader } from "./ScoreboardHeader";
+import { getDealerId } from "./scoreboardUtils";
 import { useAddRoundDraft } from "./useAddRoundDraft";
 import "./scoreboard.css";
 
@@ -70,6 +71,9 @@ export function Scoreboard({ game, rounds, players, onGameCompleted }: Scoreboar
             totalPhases={totalPhases}
             tiebreaker={tiebreaker}
             playerCount={orderedPlayers.length}
+            upcomingDealerId={
+              isActive ? getDealerId(sortedRounds.length + 1, game.activePlayers) : null
+            }
           />
 
           {sortedRounds.map((round, idx) => {
