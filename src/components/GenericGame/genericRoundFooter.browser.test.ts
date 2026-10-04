@@ -19,7 +19,11 @@ beforeAll(async () => {
   browser = await webkit.launch();
 }, 60_000);
 
-it("keeps actions visible above a Safe Area when a recoverable error is longer than the dialog", async () => {
+it.each([
+  { mode: "passFail", tiebreaker: null, dealer: false },
+  { mode: "points", pointsDirection: "high", tiebreaker: null, dealer: false },
+  { mode: "points", pointsDirection: "high", tiebreaker: { direction: "low" }, dealer: false },
+] satisfies GenericGameSettings[])("keeps $mode actions visible above a Safe Area when a recoverable error is longer than the dialog", async (gameSettings) => {
   const page = await browser.newPage({
     viewport: { width: 320, height: 480 },
     reducedMotion: "reduce",
@@ -30,7 +34,7 @@ it("keeps actions visible above a Safe Area when a recoverable error is longer t
         document.documentElement.style.setProperty("--safe-area-inset-bottom", "34px");
       });
     });
-    const dialog = await openRound(page, { mode: "passFail", tiebreaker: null, dealer: false }, 12);
+    const dialog = await openRound(page, gameSettings, 12);
     await failNextSave(
       page,
       "Round storage unavailable. Keep this draft and try saving again. ".repeat(20),
@@ -39,6 +43,20 @@ it("keeps actions visible above a Safe Area when a recoverable error is longer t
     await save.click();
     await dialog.getByRole("alert").filter({ hasText: "Round storage unavailable" }).waitFor();
     await expectPinnedActions(dialog, 34);
+    if (gameSettings.mode === "points") {
+      const body = dialog.locator("[data-swipe-navigation-root]");
+      expect(await body.evaluate((element) => element.scrollHeight - element.clientHeight)).toBe(0);
+      const keys = dialog.getByRole("group", { name: /keypad$/ }).getByRole("button");
+      const area = await body.boundingBox();
+      if (!area) throw new Error("Missing numeric entry body");
+      for (const key of await keys.all()) {
+        const bounds = await key.boundingBox();
+        if (!bounds) throw new Error("Missing numeric key");
+        expect(bounds.width).toBeGreaterThanOrEqual(24);
+        expect(bounds.y).toBeGreaterThanOrEqual(area.y);
+        expect(bounds.y + bounds.height).toBeLessThanOrEqual(area.y + area.height - 10);
+      }
+    }
     expect(await save.isEnabled()).toBe(true);
     const error = dialog.getByRole("region", { name: "Round save error", exact: true });
     expect(await error.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
@@ -125,9 +143,14 @@ async function failNextSave(page: Page, message: string) {
 
 async function expectBodyClearOfActions(dialog: Locator, lastControl: Locator) {
   const body = dialog.locator(".dialog-scroll:not(.dialog-content)").first();
-  await body.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
-  });
+  if (await dialog.getByRole("group", { name: /keypad$/ }).count()) {
+    expect(await body.evaluate((element) => element.scrollHeight - element.clientHeight)).toBe(0);
+    expect(await body.evaluate((element) => element.scrollTop)).toBe(0);
+  } else {
+    await body.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+  }
   const bodyBounds = await body.boundingBox();
   const lastBounds = await lastControl.boundingBox();
   const closeBounds = await dialog

@@ -102,7 +102,7 @@ export function GenericAddRoundDialog({
       onClose={onClose}
       isPending={roundDialog.isPending}
       onSubmit={() => roundDialog.handleSubmit(form.handleSubmit)}
-      submitError={roundDialog.submitError}
+      submitError={mode === "points" ? null : roundDialog.submitError}
       actions={
         <form.Subscribe
           selector={(state) => ({
@@ -145,7 +145,7 @@ export function GenericAddRoundDialog({
           onChange={setSelectedIndex}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div ref={tabListRef} className="-mx-2 shrink-0 overflow-x-auto px-2 py-4">
+          <div ref={tabListRef} className="-mx-2 shrink-0 overflow-x-auto px-2 py-1">
             <TabList className="w-max! min-w-full max-w-none!">
               {players.map((player) => (
                 <Tab
@@ -167,10 +167,10 @@ export function GenericAddRoundDialog({
           <SwipeableTabPanels
             selectedIndex={selectedIndex}
             onChange={setSelectedIndex}
-            className="dialog-scroll -mx-2 min-h-0 flex-1 overflow-y-auto!"
+            className="dialog-scroll -mx-2 min-h-0 flex-1"
           >
             {players.map((player, index) => (
-              <TabPanel key={player.id} className="px-2">
+              <TabPanel key={player.id} className="h-full px-2">
                 <form.Field
                   name={`scores[${index}]`}
                   validators={{
@@ -201,6 +201,7 @@ export function GenericAddRoundDialog({
                           : undefined
                       }
                       disabled={roundDialog.isPending}
+                      submitError={index === selectedIndex ? roundDialog.submitError : null}
                     />
                   )}
                 </form.Field>

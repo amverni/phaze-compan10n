@@ -238,7 +238,7 @@ it.each([
   { width: 320, height: 568 },
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
-])("keeps circular keypad growth, swipe/tabs, sticky cells, and Save reachable at $width x $height", async (viewport) => {
+])("fits circular keypad growth without scrolling and preserves swipe/tabs and sticky cells at $width x $height", async (viewport) => {
   const page = await browser.newPage({ viewport, hasTouch: true });
   try {
     const names = ["Maya", "Rowan", "Lee", "Alexandria", "Christopher"];
@@ -260,17 +260,12 @@ it.each([
     ).toBe(0);
     expect(await dialog.locator("input,textarea").count()).toBe(0);
     const scroll = dialog.locator("[data-swipe-navigation-root]");
+    expect(await scroll.evaluate((element) => element.scrollHeight - element.clientHeight)).toBe(0);
     for (const name of ["1", "3", "Change sign", "Backspace"]) {
-      await scroll.evaluate(
-        (element, bottom) => {
-          element.scrollTop = bottom ? element.scrollHeight : 0;
-        },
-        name === "Change sign" || name === "Backspace",
-      );
       const key = dialog.getByRole("button", { name, exact: true });
       const before = await key.boundingBox();
       if (!before) throw new Error("Missing keypad button");
-      expect(before.width).toBeGreaterThanOrEqual(44);
+      expect(before.width).toBeGreaterThanOrEqual(24);
       expect(Math.abs(before.width - before.height)).toBeLessThan(1);
       await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
       await page.mouse.down();
@@ -286,9 +281,7 @@ it.each([
       expect(pressed.y + pressed.height).toBeLessThan(bounds.y + bounds.height - 10);
       await page.mouse.up();
     }
-    await scroll.evaluate((element) => {
-      element.scrollTop = 0;
-    });
+    expect(await scroll.evaluate((element) => element.scrollTop)).toBe(0);
     await swipeLeft(dialog.getByRole("tabpanel", { name: "Maya", exact: true }));
     await expect
       .poll(() =>
