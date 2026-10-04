@@ -240,6 +240,18 @@ _Avoid_: Safe space
 The noninteractive continuation of a decorative background, surface, shadow, or similar visual through a Safe Area without moving interactive content into that area.
 _Avoid_: Overflow (when referring to this deliberate layout behavior)
 
+### Logo presentation
+
+**Logo Palette**:
+The ordered colors of a Scorekeeper logo's decorative stripes, from top to bottom. A Logo Palette can have different light and dark appearances.
+
+**Base Logo Palette**:
+A Scorekeeper's ordinary Logo Palette, used whenever no Logo Theme applies.
+
+**Logo Theme**:
+A scheduled use of a Logo Palette for the Scorekeeper app alone or for all Scorekeepers. It changes stripe colors and count, not the lettering, stripe direction, or the rest of the interface.
+_Avoid_: App theme (when referring only to logo stripes)
+
 ## Flagged ambiguities
 
 - **"Scorekeeper" names both a product and a category.**
