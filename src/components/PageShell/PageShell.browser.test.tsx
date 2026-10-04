@@ -29,6 +29,118 @@ afterAll(async () => {
   await server?.close();
 });
 
+it.each([
+  "light",
+  "dark",
+] as const)("shares the existing Phase panel finish through Safe Areas in %s mode", async (colorScheme) => {
+  const page = await browser.newPage({ colorScheme, hasTouch: true });
+  const background = colorScheme === "light" ? "rgb(255, 255, 255)" : "rgb(23, 23, 23)";
+  const shadow =
+    colorScheme === "light"
+      ? "drop-shadow(rgba(0, 0, 0, 0.18) 0px 0px 12px) drop-shadow(rgba(0, 0, 0, 0.12) 0px 0px 4px)"
+      : "drop-shadow(rgba(0, 0, 0, 0.95) 0px 0px 12px) drop-shadow(rgba(0, 0, 0, 0.7) 0px 0px 4px)";
+  try {
+    for (const route of ["/phaseCompan10n/create", "/create"]) {
+      await page.goto(`${appUrl}#${route}`);
+      await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
+      for (const [width, height, top, bottom, left, right] of [
+        [390, 844, 0, 0, 0, 0],
+        [390, 844, 47, 34, 0, 0],
+        [844, 390, 0, 21, 44, 0],
+        [844, 390, 0, 21, 0, 44],
+        [1280, 900, 0, 0, 0, 0],
+      ]) {
+        await page.setViewportSize({ width, height });
+        await page.evaluate(
+          (insets) => {
+            for (const [edge, value] of Object.entries(insets)) {
+              document.documentElement.style.setProperty(`--safe-area-inset-${edge}`, `${value}px`);
+            }
+          },
+          { top, bottom, left, right },
+        );
+        expect(
+          await page
+            .locator("body")
+            .evaluate((element) => getComputedStyle(element).backgroundColor),
+        ).toBe(background);
+
+        for (const position of ["header", "footer"] as const) {
+          const panel = await page.locator(`.page-shell-${position}`).boundingBox();
+          if (!panel) throw new Error(`Missing ${position} on ${route}`);
+          const decoration = page.locator(
+            `.page-shell > div:${position === "header" ? "first" : "last"}-child > [aria-hidden="true"]:first-child`,
+          );
+          const actual = await decoration.evaluate((element) => {
+            const surface = element.querySelector("div:empty");
+            if (!surface?.parentElement) throw new Error("Missing painted panel surface");
+            const style = getComputedStyle(surface);
+            const bounds = surface.getBoundingClientRect();
+            return {
+              background: style.backgroundColor,
+              borders: [
+                style.borderTopWidth,
+                style.borderRightWidth,
+                style.borderBottomWidth,
+                style.borderLeftWidth,
+              ],
+              backdropFilter: style.backdropFilter,
+              filter: style.filter,
+              boxShadow: style.boxShadow,
+              opacity: style.opacity,
+              shadow: getComputedStyle(surface.parentElement).filter,
+              shine: getComputedStyle(surface, "::after").content,
+              clipPath: style.clipPath,
+              bounds: {
+                left: bounds.left,
+                right: bounds.right,
+                top: bounds.top,
+                bottom: bounds.bottom,
+              },
+            };
+          });
+          expect(actual, `${route} ${position} at ${width}x${height}`).toMatchObject({
+            background,
+            borders: ["0px", "0px", "0px", "0px"],
+            backdropFilter: "none",
+            filter: "none",
+            boxShadow: "none",
+            opacity: "1",
+            shadow,
+            shine: "none",
+          });
+          expect(actual.clipPath).toBe(
+            route === "/create"
+              ? "none"
+              : position === "header"
+                ? "polygon(0px 0px, 100% 0px, 100% calc(100% - 50px), 0% 100%)"
+                : "polygon(0px 50px, 100% 0px, 100% 100%, 0% 100%)",
+          );
+          expect(actual.bounds.left).toBe(0);
+          expect(actual.bounds.right).toBe(width);
+          expect(actual.bounds.top).toBeCloseTo(panel.y, 1);
+          expect(actual.bounds.bottom).toBeCloseTo(panel.y + panel.height, 1);
+        }
+
+        const footer = await page.locator(".page-shell-footer").boundingBox();
+        const bleed = page.locator(".page-shell-bottom-bleed");
+        const bleedBounds = await bleed.boundingBox();
+        if (!footer || !bleedBounds) throw new Error("Missing footer extension");
+        expect(await bleed.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(
+          background,
+        );
+        expect(bleedBounds.x).toBe(0);
+        expect(bleedBounds.width).toBe(width);
+        expect(bleedBounds.y).toBeCloseTo(footer.y + footer.height, 1);
+        expect(bleedBounds.height).toBeCloseTo(height, 1);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      }
+    }
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
 describe("Scorekeeper shell geometry", () => {
   it("places the flat header edge at the Phase slant midpoint", async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });

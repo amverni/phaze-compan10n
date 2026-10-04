@@ -1,8 +1,7 @@
 import { PageShell, type PageShellContent } from "../PageShell/PageShell";
+import { PanelSurface } from "../PageShell/PanelSurface";
 import { Disclaimer } from "./Disclaimer";
 
-const shadowClasses = ["card-panel-shadow", "h-full"].join(" ");
-const surfaceClasses = ["card-panel-surface", "h-full"].join(" ");
 const disclaimerClasses = [
   "card-panel-disclaimer",
   "pointer-events-none",
@@ -17,16 +16,8 @@ export function CardBackground({ headerContent, mainContent, footerContent }: Pa
       className="card-background"
       headerContent={headerContent}
       mainContent={mainContent}
-      headerDecoration={
-        <div className={shadowClasses}>
-          <div className={["card-panel-top", surfaceClasses].join(" ")} />
-        </div>
-      }
-      footerDecoration={
-        <div className={shadowClasses}>
-          <div className={["card-panel-bottom", surfaceClasses].join(" ")} />
-        </div>
-      }
+      headerDecoration={<PanelSurface className="card-panel-top" />}
+      footerDecoration={<PanelSurface className="card-panel-bottom" />}
       footerContent={
         <>
           {footerContent}
