@@ -1,13 +1,9 @@
 import type React from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { SLANT_PX } from "../../constants/layout";
+import { useLogoPalette } from "./LogoThemeProvider";
 
-const STRIPES = [
-  "--color-pt-red-500",
-  "--color-pt-blue-500",
-  "--color-pt-green-500",
-  "--color-pt-yellow-500",
-];
+const stripeSlots = ["stripe-1", "stripe-2", "stripe-3", "stripe-4"];
 
 // ── Font ─────────────────────────────────────────────────────────────────────
 const FONT_FAMILY = "Quicksand Variable, sans-serif";
@@ -31,9 +27,8 @@ const textBlockTop = phazeY - capHeight;
 const textBlockBottom = companY + fontSize * 0.2;
 
 // Stripe geometry
-const stripeHeight = 12;
 const stripeGap = 5;
-const totalStripeH = STRIPES.length * stripeHeight + (STRIPES.length - 1) * stripeGap;
+const totalStripeH = 63;
 const stripeCenterY = (textBlockTop + textBlockBottom) / 2 - fontSize * 0.05;
 const stripeBandTop = stripeCenterY - totalStripeH / 2;
 
@@ -60,6 +55,8 @@ interface LogoProps {
 
 /** Phaze Compan10n logo. */
 export const Logo: React.FC<LogoProps> = ({ height, width, fitToContainer = false }) => {
+  const colors = useLogoPalette("phaseCompan10n");
+  const stripeHeight = (totalStripeH - (colors.length - 1) * stripeGap) / colors.length;
   const scaledInnerWidth = (innerWidth * height) / wordHeight;
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -111,7 +108,7 @@ export const Logo: React.FC<LogoProps> = ({ height, width, fitToContainer = fals
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {STRIPES.map((color, i) => {
+        {stripeSlots.slice(0, colors.length).map((slot, i) => {
           const y = stripeBandTop + i * (stripeHeight + stripeGap);
           // Extend the same slope beyond the word area, including device insets.
           const points = [
@@ -120,7 +117,7 @@ export const Logo: React.FC<LogoProps> = ({ height, width, fitToContainer = fals
             `${viewBoxWidth * 2},${y + stripeHeight - dyHalf * 3}`,
             `${-viewBoxWidth},${y + stripeHeight + dyHalf * 3}`,
           ].join(" ");
-          return <polygon key={color} points={points} fill={`var(${color})`} />;
+          return <polygon key={slot} points={points} fill={colors[i]} />;
         })}
       </svg>
       <svg

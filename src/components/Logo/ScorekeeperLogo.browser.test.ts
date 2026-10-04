@@ -27,7 +27,12 @@ afterAll(async () => {
 
 describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorScheme) => {
   it("centers the stripe band on the loaded word including its descender without moving the lettering", async () => {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme });
+    const page = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      colorScheme,
+      timezoneId: "America/New_York",
+    });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       for (const route of ["/", "/players", "/scorekeepers"]) {
         await page.goto(`${appUrl}#${route}`);
@@ -53,12 +58,13 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
           const stripes = [...element.querySelectorAll("rect")].map((stripe) =>
             stripe.getBoundingClientRect(),
           );
-          if (stripes.length !== 3) throw new Error("Missing Scorekeeper stripes");
+          if (stripes.length !== 4) throw new Error("Missing Scorekeeper stripes");
           return {
             loaded: faces.length > 0 && faces.every((face) => face.status === "loaded"),
             descender: metrics.actualBoundingBoxDescent,
             inkCenter: inkCenter.y,
-            stripeCenter: (stripes[0].top + stripes[2].bottom) / 2,
+            stripeCenter: (stripes[0].top + stripes[3].bottom) / 2,
+            bandHeight: (stripes[3].bottom - stripes[0].top) / transform.d,
             text: text.textContent,
             x: text.getAttribute("x"),
             y: text.getAttribute("y"),
@@ -84,6 +90,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
           strokeWidth: "12px",
         });
         expect(geometry.fill).not.toBe(geometry.stroke);
+        expect(geometry.bandHeight).toBeCloseTo(66, 3);
         expect(Math.abs(geometry.stripeCenter - geometry.inkCenter)).toBeLessThan(0.1);
       }
     } finally {
@@ -92,7 +99,8 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
   }, 60_000);
 
   it("bleeds straight noninteractive stripes to both viewport edges across resizing and Safe Areas", async () => {
-    const page = await browser.newPage({ colorScheme });
+    const page = await browser.newPage({ colorScheme, timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       for (const route of ["/", "/players"]) {
         await page.goto(`${appUrl}#${route}`);
@@ -136,7 +144,7 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
               };
             }),
           );
-          expect(stripes).toHaveLength(3);
+          expect(stripes).toHaveLength(4);
           expect(stripes.every((stripe) => stripe.pointerEvents === "none")).toBe(true);
           const screenshot = await page.screenshot();
           const pixels = await page.evaluate(
@@ -160,16 +168,20 @@ describe.each(["light", "dark"] as const)("Scorekeeper logo in %s mode", (colorS
           );
           expect(pixels).toEqual([
             [
-              [201, 154, 46, 255],
-              [201, 154, 46, 255],
+              [37, 99, 235, 255],
+              [37, 99, 235, 255],
             ],
             [
-              [166, 173, 181, 255],
-              [166, 173, 181, 255],
+              [6, 182, 212, 255],
+              [6, 182, 212, 255],
             ],
             [
-              [173, 116, 76, 255],
-              [173, 116, 76, 255],
+              [139, 92, 246, 255],
+              [139, 92, 246, 255],
+            ],
+            [
+              [236, 72, 153, 255],
+              [236, 72, 153, 255],
             ],
           ]);
           expect(

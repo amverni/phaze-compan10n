@@ -1,19 +1,18 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { useLogoPalette } from "./LogoThemeProvider";
 
 interface ScorekeeperLogoProps {
   height: number;
 }
 
-const stripes = [
-  "--color-scorekeeper-gold",
-  "--color-scorekeeper-silver",
-  "--color-scorekeeper-bronze",
-];
+const stripeSlots = ["stripe-1", "stripe-2", "stripe-3", "stripe-4"];
 
 // Center of Quicksand 600's visible ink at size 72 and baseline 79, including the p.
 const stripeCenterY = 59.5625;
 
 export function ScorekeeperLogo({ height }: ScorekeeperLogoProps) {
+  const colors = useLogoPalette("scorekeeper");
+  const stripeHeight = (66 - (colors.length - 1) * 6) / colors.length;
   const svgRef = useRef<SVGSVGElement>(null);
   const [stripeBounds, setStripeBounds] = useState({ x: 0, width: 560 });
 
@@ -51,14 +50,14 @@ export function ScorekeeperLogo({ height }: ScorekeeperLogoProps) {
       role="img"
     >
       <title>Scorekeeper</title>
-      {stripes.map((color, index) => (
+      {stripeSlots.slice(0, colors.length).map((slot, index) => (
         <rect
-          key={color}
+          key={slot}
           x={stripeBounds.x}
-          y={stripeCenterY - 24 + index * 18}
+          y={stripeCenterY - 33 + index * (stripeHeight + 6)}
           width={stripeBounds.width}
-          height={12}
-          fill={`var(${color})`}
+          height={stripeHeight}
+          fill={colors[index]}
         />
       ))}
       <text

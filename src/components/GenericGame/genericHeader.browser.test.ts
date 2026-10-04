@@ -75,7 +75,8 @@ it.each([
   "light",
   "dark",
 ] as const)("centers the loaded word with Standings above the stripes and clear of the letters in %s mode", async (colorScheme) => {
-  const page = await browser.newPage({ colorScheme });
+  const page = await browser.newPage({ colorScheme, timezoneId: "America/New_York" });
+  await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
   try {
     const id = await createGame(page);
     await page.goto(`${appUrl}#/game/${id}`);
@@ -138,14 +139,21 @@ it.each([
       expect(control.width).toBe(48);
       expect(control.x).toBeGreaterThan(word.right);
       expect(word.left).toBeGreaterThan(left);
-      const stripe = await page
+      const band = await page
         .getByRole("img", { name: "Scorekeeper", exact: true })
         .locator("rect")
-        .nth(1)
-        .boundingBox();
-      if (!stripe) throw new Error("Missing stripe band");
-      expect(stripe.y).toBeGreaterThan(control.y);
-      expect(stripe.y + stripe.height).toBeLessThan(control.y + control.height);
+        .evaluateAll((elements) => {
+          if (elements.length !== 4) throw new Error("Missing stripe band");
+          const first = elements[0].getBoundingClientRect();
+          const last = elements[3].getBoundingClientRect();
+          const middleTop = elements[1].getBoundingClientRect().top;
+          const middleBottom = elements[2].getBoundingClientRect().bottom;
+          return { center: (first.top + last.bottom) / 2, middleTop, middleBottom };
+        });
+      expect(band.center).toBeGreaterThan(control.y);
+      expect(band.center).toBeLessThan(control.y + control.height);
+      expect(band.middleTop).toBeGreaterThan(control.y);
+      expect(band.middleBottom).toBeLessThan(control.y + control.height);
       await button.hover();
       await page.mouse.down();
       await expect.poll(async () => (await button.boundingBox())?.width).toBeCloseTo(52.8, 1);
@@ -193,7 +201,11 @@ it.each([
 }, 60_000);
 
 it("keeps the word stationary through loading, Active Game, failed refresh, and Completed Game states", async () => {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    timezoneId: "America/New_York",
+  });
+  await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
   try {
     const id = await createGame(page);
     await page.evaluate(`(async () => {
@@ -270,7 +282,11 @@ it("keeps the word stationary through loading, Active Game, failed refresh, and 
 }, 60_000);
 
 it("keeps the word stationary when an initial storage error is retried or the Game is missing", async () => {
-  const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
+  const page = await browser.newPage({
+    viewport: { width: 320, height: 568 },
+    timezoneId: "America/New_York",
+  });
+  await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
   try {
     const id = await createGame(page);
     await failGameRead(page);

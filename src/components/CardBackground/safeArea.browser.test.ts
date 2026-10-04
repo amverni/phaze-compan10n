@@ -35,7 +35,9 @@ async function openPage(
     viewport: { width, height },
     colorScheme,
     hasTouch,
+    timezoneId: "America/New_York",
   });
+  await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
   await page.goto(`${appUrl}#/phaseCompan10n/create`);
   await page.getByRole("link", { name: "Cancel", exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);

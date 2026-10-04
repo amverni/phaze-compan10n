@@ -22,6 +22,14 @@ The Generic Game header layers its viewport-centered logo independently from the
 
 Home and Game header controls in both Scorekeepers use the footer's shared `content-container`: centered within the horizontal Safe Areas, capped at `max-w-lg`, and padded by `px-4`. This keeps header and footer control edges aligned on wide screens without changing narrow-screen spacing or constraining the independent logo decorations.
 
+## Logo presentation
+
+Both Scorekeepers consume the checked-in [Logo Theme configuration](logo-themes.md) through one `LogoThemeProvider` above routes. It owns system appearance observation, a shared next-local-midnight timer, and focus/visibility catch-up. Selection is independent per Scorekeeper: skip out-of-scope entries, select the first matching theme, otherwise use that Scorekeeper's Base Logo Palette. No game data, Query cache, page surfaces, or Player colors participate.
+
+`ScorekeeperLogo` retains horizontal rectangles and its existing lettering coordinates and stripe center at 59.5625 SVG units. Its fixed band is 66 units tall with gaps of 6. `Logo` retains Phase Compan10n's existing stripe center, `SLANT_PX = 50` slope calculation, lettering, responsive fitting, and Safe Area Visual Bleed; its fixed band is 63 units tall with gaps of 5. For rendered count `n`, stripe thickness is `(bandHeight - (n - 1) * gap) / n`. Two configured colors render as four A/B/A/B stripes; three and four colors retain their count, including duplicates.
+
+The outer band remains centered and unchanged when appearance changes stripe count. Lettering, header height, control clearance, accessible names, and decorative noninteraction remain unchanged. The renderers share palette selection, not a generalized flat/slanted SVG implementation.
+
 ## Player presentation
 
 `PlayerIdentity` in `src/types/player.ts` requires only `id`, `name`, and `color`. Saved `Player` extends it with persistence-specific fields. The data/API layer captures identities at completion and selects snapshots for completed surfaces instead of live saved Players.

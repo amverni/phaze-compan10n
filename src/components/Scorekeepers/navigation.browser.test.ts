@@ -32,7 +32,11 @@ async function openMenuLink(page: Page, name: string) {
 
 describe("scorekeeper navigation", () => {
   it("opens each Create Game page from one keyboard-accessible circular action in the lower-right Home footer", async () => {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const page = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      timezoneId: "America/New_York",
+    });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       for (const home of ["/", "/phaseCompan10n"]) {
         await page.goto(`${appUrl}#${home}`);
@@ -92,7 +96,8 @@ describe("scorekeeper navigation", () => {
   }, 30_000);
 
   it("opens a neutral root and switches scorekeepers through branded choices", async () => {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       await page.goto(appUrl);
       await expect
@@ -146,7 +151,8 @@ describe("scorekeeper navigation", () => {
   }, 60_000);
 
   it("opens and reloads every moved Phase page inside the deployment base", async () => {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       for (const route of [
         "",
@@ -184,7 +190,8 @@ describe("scorekeeper navigation", () => {
   }, 60_000);
 
   it("shares Player edits and favorites between shells and starts only nested Phase Games", async () => {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       await page.goto(`${appUrl}#/players`);
       for (const name of ["Maya", "Rowan"]) {
@@ -284,7 +291,8 @@ describe("scorekeeper navigation", () => {
   }, 60_000);
 
   it("copies nested built-in and self-contained custom Phases Cards that reload in a fresh browser", async () => {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       await page.addInitScript(() => {
         Object.defineProperty(navigator, "clipboard", {
@@ -324,7 +332,8 @@ describe("scorekeeper navigation", () => {
       const customUrl = await page.locator("html").getAttribute("data-copied-url");
       expect(customUrl).toBe(`${appUrl}#/phaseCompan10n/phasescard/custom?data=${data}`);
       if (!customUrl) throw new Error("Missing custom share URL");
-      const recipient = await browser.newPage();
+      const recipient = await browser.newPage({ timezoneId: "America/New_York" });
+      await recipient.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
       try {
         await recipient.goto(customUrl);
         await recipient.reload();
@@ -356,7 +365,8 @@ describe("scorekeeper navigation", () => {
     "Standings",
     "Phases Card",
   ])("discards %s state when navigating directly between cached Phase Games", async (dialogName) => {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ timezoneId: "America/New_York" });
+    await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
     try {
       await page.goto(`${appUrl}#/phaseCompan10n/players`);
       await page.getByText("No players yet", { exact: true }).waitFor();
@@ -446,7 +456,12 @@ describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode",
       [844, 390],
       [1280, 900],
     ]) {
-      const page = await browser.newPage({ viewport: { width, height }, colorScheme });
+      const page = await browser.newPage({
+        viewport: { width, height },
+        colorScheme,
+        timezoneId: "America/New_York",
+      });
+      await page.clock.setFixedTime(new Date("2026-10-06T16:00:00Z"));
       try {
         for (const route of ["/", "/players", "/scorekeepers"]) {
           await page.goto(`${appUrl}#${route}`);
@@ -495,12 +510,19 @@ describe.each(["light", "dark"] as const)("Scorekeeper presentation in %s mode",
               };
             }),
           );
-          expect(stripes).toHaveLength(3);
-          expect(new Set(stripes.map((stripe) => stripe.fill)).size).toBe(3);
-          expect(stripes[0].left).toBeCloseTo(stripes[2].left);
-          expect(stripes[0].width).toBeCloseTo(stripes[2].width);
+          expect(stripes).toHaveLength(4);
+          expect(new Set(stripes.map((stripe) => stripe.fill)).size).toBe(4);
+          expect(stripes.map((stripe) => stripe.fill)).toEqual([
+            "rgb(37, 99, 235)",
+            "rgb(6, 182, 212)",
+            "rgb(139, 92, 246)",
+            "rgb(236, 72, 153)",
+          ]);
+          expect(stripes[0].left).toBeCloseTo(stripes[3].left);
+          expect(stripes[0].width).toBeCloseTo(stripes[3].width);
           expect(stripes[1].top).toBeGreaterThan(stripes[0].top + stripes[0].height);
           expect(stripes[2].top).toBeGreaterThan(stripes[1].top + stripes[1].height);
+          expect(stripes[3].top).toBeGreaterThan(stripes[2].top + stripes[2].height);
           expect(
             await page.locator(".page-shell-main").evaluate((element) => {
               const style = getComputedStyle(element);
