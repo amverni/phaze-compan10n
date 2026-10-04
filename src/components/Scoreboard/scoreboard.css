@@ -55,6 +55,15 @@
   padding: 10px 3px;
 }
 
+.scoreboard-cell--upcoming-dealer {
+  background-color: color-mix(
+    in srgb,
+    var(--color-dealer-background) 12%,
+    var(--color-app-background)
+  );
+  box-shadow: inset 0 2px 0 var(--color-dealer-background);
+}
+
 /* Sticky first column (round numbers). */
 .scoreboard-cell--sticky-left {
   position: sticky;
