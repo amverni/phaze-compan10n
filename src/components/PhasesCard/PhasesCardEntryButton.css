@@ -1,8 +1,8 @@
 .phases-card-entry-card {
   --phases-card-entry-accent: var(--color-text-primary);
-  --phases-card-entry-slant: 0.55rem;
-  --phases-card-entry-inset-x: 0.2rem;
-  --phases-card-entry-inset-y: 0.2rem;
+  --phases-card-entry-slant: 0.88em;
+  --phases-card-entry-inset-x: 0.32em;
+  --phases-card-entry-inset-y: 0.32em;
   --phases-card-entry-cap-height: 28%;
 
   isolation: isolate;
@@ -21,12 +21,12 @@
 
 .phases-card-entry-card__cap--top {
   top: var(--phases-card-entry-inset-y);
-  border-radius: 0.5rem 0.5rem 0.15rem 0.15rem;
+  border-radius: 0.8em 0.8em 0.24em 0.24em;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--phases-card-entry-slant)), 0 100%);
 }
 
 .phases-card-entry-card__cap--bottom {
   bottom: var(--phases-card-entry-inset-y);
-  border-radius: 0.15rem 0.15rem 0.5rem 0.5rem;
+  border-radius: 0.24em 0.24em 0.8em 0.8em;
   clip-path: polygon(0 var(--phases-card-entry-slant), 100% 0, 100% 100%, 0 100%);
 }

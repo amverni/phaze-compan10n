@@ -26,7 +26,7 @@ afterAll(async () => {
   await server?.close();
 });
 
-it("matches header and footer button sizing without changing the Phase header geometry", async () => {
+it("keeps header buttons centered together with clearance above the slant", async () => {
   const page = await browser.newPage({ hasTouch: true });
   try {
     await page.goto(`${appUrl}#/phaseCompan10n/players`);
@@ -35,14 +35,25 @@ it("matches header and footer button sizing without changing the Phase header ge
     await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
     const standings = page.getByRole("button", { name: "Open Standings", exact: true });
     await standings.waitFor();
-    for (const [width, height] of [
-      [390, 844],
-      [390, 701],
-      [390, 700],
-      [320, 568],
-      [844, 390],
+    for (const [width, height, top, left, right] of [
+      [390, 844, 0, 0, 0],
+      [390, 701, 0, 0, 0],
+      [390, 700, 0, 0, 0],
+      [320, 568, 0, 0, 0],
+      [844, 390, 0, 0, 0],
+      [390, 844, 47, 0, 0],
+      [844, 390, 0, 44, 44],
+      [1280, 900, 0, 0, 0],
     ]) {
       await page.setViewportSize({ width, height });
+      await page.evaluate(
+        (insets) => {
+          for (const [edge, value] of Object.entries(insets)) {
+            document.documentElement.style.setProperty(`--safe-area-inset-${edge}`, `${value}px`);
+          }
+        },
+        { top, left, right },
+      );
       const size = height <= 700 ? 44 : 56;
       const iconSize = height <= 700 ? 24 : 32;
       for (const control of [
@@ -56,13 +67,29 @@ it("matches header and footer button sizing without changing the Phase header ge
           height: iconSize,
         });
       }
-      expect((await page.locator(".page-shell-header").boundingBox())?.height).toBeCloseTo(
-        height * 0.15,
+      const header = await page.locator(".page-shell-header").boundingBox();
+      const standingsBounds = await standings.boundingBox();
+      const phases = await page
+        .getByRole("button", { name: "Open Phases Card", exact: true })
+        .boundingBox();
+      if (!header || !standingsBounds || !phases) throw new Error("Missing header controls");
+      expect(phases.height).toBe(size);
+      expect(phases.y + phases.height / 2).toBeCloseTo(
+        standingsBounds.y + standingsBounds.height / 2,
         1,
       );
-      expect(
-        await page.getByRole("button", { name: "Open Phases Card", exact: true }).boundingBox(),
-      ).toMatchObject({ height: size });
+      for (const control of [phases, standingsBounds]) {
+        const slantEdge = header.y + header.height - (50 * (control.x + control.width)) / width;
+        expect
+          .soft(control.y - top, `top clearance at ${width}x${height}`)
+          .toBeGreaterThanOrEqual(10);
+        expect
+          .soft(slantEdge - control.y - control.height, `slant clearance at ${width}x${height}`)
+          .toBeGreaterThanOrEqual(4);
+      }
+      expect
+        .soft(header.height, `minimum header height at ${width}x${height}`)
+        .toBeCloseTo(Math.max(height * 0.15, size + 50 + 20) + top, 1);
     }
   } finally {
     await page.close();

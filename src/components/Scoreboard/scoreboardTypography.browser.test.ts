@@ -100,7 +100,7 @@ async function seedGame(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-it("centers the Phases control with the independent logo layer across viewport sizes and safe areas", async () => {
+it("centers header controls together without moving the independent logo across viewport sizes and safe areas", async () => {
   const page = await browser.newPage({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
@@ -133,10 +133,6 @@ it("centers the Phases control with the independent logo layer across viewport s
       const buttonBounds = await box(button);
       const headerBounds = await box(header);
       const mainBounds = await box(main);
-      expect(buttonBounds.y + buttonBounds.height / 2).toBeCloseTo(
-        logoBounds.y + logoBounds.height / 2,
-        1,
-      );
       const homeBounds = await box(page.getByRole("link", { name: "Go home", exact: true }));
       const standingsBounds = await box(
         page.getByRole("button", { name: "Open Standings", exact: true }),
@@ -144,16 +140,21 @@ it("centers the Phases control with the independent logo layer across viewport s
       const finishBounds = await box(
         page.getByRole("button", { name: "Finish Game", exact: true }),
       );
+      expect(buttonBounds.y + buttonBounds.height / 2).toBeCloseTo(
+        standingsBounds.y + standingsBounds.height / 2,
+        1,
+      );
       expect(buttonBounds.x).toBeCloseTo(homeBounds.x, 1);
       expect(standingsBounds.x + standingsBounds.width).toBeCloseTo(
         finishBounds.x + finishBounds.width,
         1,
       );
       if (width <= 390) expect(buttonBounds.x).toBe(left + 16);
-      expect(buttonBounds.width).toBeGreaterThanOrEqual(48);
-      expect(buttonBounds.height).toBe(height <= 700 ? 44 : 56);
+      const size = height <= 700 ? 44 : 56;
+      expect(buttonBounds.width).toBeGreaterThanOrEqual((48 / 56) * size);
+      expect(buttonBounds.height).toBe(size);
       expect(logoBounds.x + logoBounds.width / 2).toBeCloseTo(left + (width - left) / 2, 1);
-      expect(headerBounds.height).toBeCloseTo(height * 0.15 + top, 1);
+      expect(headerBounds.height).toBeCloseTo(Math.max(height * 0.15, size + 50 + 20) + top, 1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
 
       await button.evaluate((element) => {

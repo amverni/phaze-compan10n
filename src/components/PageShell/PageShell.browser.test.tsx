@@ -187,13 +187,18 @@ it.each([
   "/scorekeeper",
   "/phaseCompan10n",
 ])("aligns Scorekeeper Dashboard header controls with the footer on %s", async (route) => {
-  const page = await browser.newPage();
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {
     await page.goto(`${appUrl}#${route}`);
     const menu = page.getByRole("button", { name: "Menu", exact: true });
     const create = page.getByRole("link", { name: "Create Game", exact: true });
     await menu.waitFor();
     await create.waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    const fullSizePhases =
+      route === "/phaseCompan10n"
+        ? await page.getByRole("link", { name: "Open Phases Card", exact: true }).boundingBox()
+        : null;
     for (const [width, height, left, right] of [
       [390, 844, 0, 0],
       [390, 701, 0, 0],
@@ -232,11 +237,22 @@ it.each([
         expect(headerControl.x + headerControl.width).toBe(width - 16);
       }
       if (route === "/phaseCompan10n") {
-        const phases = await page
-          .getByRole("link", { name: "Open Phases Card", exact: true })
-          .boundingBox();
-        if (!phases) throw new Error("Missing Phases Card control");
+        const phasesControl = page.getByRole("link", { name: "Open Phases Card", exact: true });
+        const phases = await phasesControl.boundingBox();
+        if (!phases || !fullSizePhases) throw new Error("Missing Phases Card control");
         expect(phases.height).toBe(size);
+        expect
+          .soft(phases.width, `Phases Card width at ${width}x${height}`)
+          .toBeCloseTo((fullSizePhases.width / fullSizePhases.height) * size, 1);
+        const label = phasesControl.getByText("Phases", { exact: true });
+        expect
+          .soft(
+            await label.evaluate((element) =>
+              Number.parseFloat(getComputedStyle(element).fontSize),
+            ),
+            `Phases Card label size at ${width}x${height}`,
+          )
+          .toBeCloseTo((10 / 56) * size, 2);
         expect(phases.x - left).toBeCloseTo(
           width - right - footerControl.x - footerControl.width,
           1,

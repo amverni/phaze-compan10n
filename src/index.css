@@ -340,7 +340,7 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
 }
 
 .card-background .page-shell-header {
-  /* Align independent logo and control layers above the diagonal. */
+  /* Fit the logo independently of the header controls. */
   --card-header-alignment-height: max(
     0px,
     calc(var(--page-shell-panel-height) - var(--slant) + 1.5rem - 5px)
@@ -354,6 +354,12 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   padding-bottom: var(--page-shell-edge-offset);
 }
 
+.card-background .page-shell-header:has(.card-header-controls) {
+  min-height: calc(
+    var(--page-shell-control-size) + var(--slant) + 1.25rem + var(--safe-area-inset-top)
+  );
+}
+
 .scorekeeper-background .page-shell-header {
   height: calc(
     var(--page-shell-panel-height) - var(--slant) / 2 + var(--safe-area-inset-top)
@@ -362,9 +368,12 @@ button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   min-height: calc(4rem + var(--safe-area-inset-top));
 }
 
-.card-header-logo,
-.card-header-controls {
+.card-header-logo {
   height: var(--card-header-alignment-height);
+}
+
+.card-header-controls {
+  height: 100%;
 }
 
 .page-shell-footer {
