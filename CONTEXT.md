@@ -130,7 +130,7 @@ A required card objective that must be satisfied to progress through the game.
 _Avoid_: Level, challenge
 
 **Current Phase**:
-The phase number a player is attempting in their next round.
+The phase number a Player is attempting in their next Round, based on saved Round outcomes. Unfinished score entry does not change a Player's Current Phase.
 _Avoid_: Stage, tier
 
 **Phase Set**:
