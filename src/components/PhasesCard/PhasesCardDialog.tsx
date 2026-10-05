@@ -1,20 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
+import { gamePhasePlayersOptions } from "../../data/hooks/useGames";
 import { builtInPhaseSetMatchOptions } from "../../data/hooks/usePhaseSets";
 import { phasesByIdsOptions } from "../../data/hooks/usePhases";
-import type { TemporaryPhaseSet } from "../../types";
+import type { GameId, TemporaryPhaseSet } from "../../types";
 import { Dialog, DialogScrollArea, InlineError, Toast, type ToastHandle } from "../ui";
 import { PhasesCardList } from "./PhasesCardList";
 import { PhasesCardShareButton } from "./PhasesCardShareButton";
 
 interface PhasesCardDialogProps {
+  gameId: GameId;
   open: boolean;
   onClose: (open: boolean) => void;
   phaseSet: TemporaryPhaseSet;
 }
 
-export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogProps) {
+export function PhasesCardDialog({ gameId, open, onClose, phaseSet }: PhasesCardDialogProps) {
   const toastRef = useRef<ToastHandle>(null);
+  const phasePlayersQuery = useQuery({
+    ...gamePhasePlayersOptions(gameId),
+    enabled: open,
+  });
   const {
     data: phases = [],
     isError,
@@ -54,9 +60,22 @@ export function PhasesCardDialog({ open, onClose, phaseSet }: PhasesCardDialogPr
           <InlineError message="Unable to load phases." onRetry={() => refetch()} />
         ) : missingPhaseRecords ? (
           <InlineError message="This Phase Set is missing phase data and cannot be shared." />
+        ) : phasePlayersQuery.isError ? (
+          <InlineError
+            message="Unable to load Players' Current Phases."
+            onRetry={() => phasePlayersQuery.refetch()}
+          />
         ) : (
-          <DialogScrollArea aria-label="Phases Card phase list">
-            <PhasesCardList phases={phases} isLoading={isLoading} scrollable={false} />
+          <DialogScrollArea
+            aria-label="Phases Card phase list"
+            aria-busy={isLoading || phasePlayersQuery.isPending}
+          >
+            <PhasesCardList
+              phases={phases}
+              playerGroups={phasePlayersQuery.data}
+              isLoading={isLoading || phasePlayersQuery.isPending}
+              scrollable={false}
+            />
           </DialogScrollArea>
         )}
         <Toast ref={toastRef} />

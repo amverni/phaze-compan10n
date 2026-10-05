@@ -73,6 +73,7 @@ export type {
 } from "./phaseSet";
 export type {
   PhasesCardPhase,
+  PhasesCardPlayerGroups,
   PhasesCardSharePayloadV1,
   PhasesCardShareTarget,
 } from "./phasesCard";

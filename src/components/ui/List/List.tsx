@@ -32,7 +32,7 @@ const COMPACT_ROW_HEIGHT = "h-10";
 const LIST_ANIMATION_MS = 220;
 const LIST_MOVE_EASING = "cubic-bezier(0.2, 0, 0, 1)";
 const LIST_HEIGHT_EASING = "linear";
-export type ListRowVariant = "compact" | "content";
+export type ListRowVariant = "compact" | "compact-content" | "content";
 
 interface RowRect {
   top: number;
@@ -103,7 +103,9 @@ function rowClassName(isFirst: boolean, isLast: boolean, rowVariant: ListRowVari
   const sizing =
     rowVariant === "content"
       ? "min-h-10 flex items-center px-4 py-4 text-sm"
-      : `${COMPACT_ROW_HEIGHT} flex items-center px-3 text-sm`;
+      : rowVariant === "compact-content"
+        ? "min-h-10 flex items-center px-3 py-2 text-sm"
+        : `${COMPACT_ROW_HEIGHT} flex items-center px-3 text-sm`;
   return `${sizing} ${radius}`;
 }
 
@@ -335,7 +337,7 @@ export interface ListProps {
   tabIndex?: number;
   isLoading?: boolean;
   shimmerRows?: number;
-  /** Use `content` for variable-height rows that contain controls or sections. */
+  /** Variable-height rows use `content`, or `compact-content` to retain compact spacing. */
   rowVariant?: ListRowVariant;
   emptyMessage?: ReactNode;
   sortable?: boolean;

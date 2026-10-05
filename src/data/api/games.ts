@@ -6,6 +6,8 @@ import type {
   GameId,
   GameListItem,
   PhaseId,
+  PhasesCardPlayerGroups,
+  Player,
   Round,
   StoredGame,
   StoredRound,
@@ -21,6 +23,7 @@ import {
 } from "./gameLifecycle";
 import { getGamePlayers } from "./gameResults";
 import { resolveEarlyGameCompletion } from "./roundCompletion";
+import { deriveStandings } from "./standings";
 
 export const gamesApi = {
   async getList({ activeOnly = false }: { activeOnly?: boolean } = {}): Promise<GameListItem[]> {
@@ -63,6 +66,38 @@ export const gamesApi = {
     const db = await getDB();
     const game = await db.get("games", id);
     return game?.scorekeeper === "phase10" ? game : undefined;
+  },
+
+  async getPhasePlayers(id: GameId): Promise<PhasesCardPlayerGroups> {
+    const db = await getDB();
+    const tx = db.transaction(["games", "players", "rounds"]);
+    const game = await tx.objectStore("games").get(id);
+    assertActivePhaseGame(game);
+    const [players, rounds] = await Promise.all([
+      Promise.all(game.activePlayers.map((playerId) => tx.objectStore("players").get(playerId))),
+      tx.objectStore("rounds").index("by-game").getAll(id),
+    ]);
+    await tx.done;
+    assertPhaseRounds(rounds);
+    const { includedPlayers, rows } = deriveStandings({
+      game,
+      players: players.filter((player): player is Player => player !== undefined),
+      rounds,
+    });
+    const currentPhases = new Map(
+      rows
+        .filter((row) => !row.progress.isFinished)
+        .map((row) => [row.player.id, row.progress.currentPhase]),
+    );
+    const groups: PhasesCardPlayerGroups = {};
+    for (const player of includedPlayers) {
+      const currentPhase = currentPhases.get(player.id);
+      if (currentPhase !== undefined) {
+        groups[currentPhase] ??= [];
+        groups[currentPhase].push(player);
+      }
+    }
+    return groups;
   },
 
   async create(data: CreateGameInput): Promise<ActiveGame> {

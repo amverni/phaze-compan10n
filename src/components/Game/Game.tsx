@@ -160,7 +160,8 @@ export function Game({ gameId }: GameProps) {
       />
       {game && (
         <PhasesCardDialog
-          open={phasesCardOpen}
+          gameId={game.id}
+          open={game.status === "active" && phasesCardOpen}
           onClose={setPhasesCardOpen}
           phaseSet={game.phaseSet}
         />
