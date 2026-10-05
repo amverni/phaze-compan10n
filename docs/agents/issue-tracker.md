@@ -15,6 +15,19 @@ Use the `gh` CLI for write operations when it is available and authenticated. If
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside this clone.
 
+## Commit messages and automatic closure
+
+When a commit completes an issue's acceptance criteria, include a GitHub closing keyword in the commit body. Use one line per completed issue:
+
+```text
+Closes #123
+Closes #124
+```
+
+Bare references such as `(#123)` or `Implements #123` only link issues; they do not close them. Use `Refs #123` for partial work instead of prematurely closing an issue.
+
+Automatic closure happens when the commit reaches the repository's default branch on GitHub, not when branches are merged locally. Preserve closing lines in the final commit message when squashing. After an authorized push or merge, confirm the affected issues are closed; completing a session task list does not update GitHub.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
