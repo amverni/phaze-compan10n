@@ -18,6 +18,7 @@ interface ScoreboardProps {
 export function Scoreboard({ game, rounds, players, onGameCompleted }: ScoreboardProps) {
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [namesExpanded, setNamesExpanded] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   // Outside-click collapses any expanded row. Use mousedown so it fires
@@ -55,13 +56,14 @@ export function Scoreboard({ game, rounds, players, onGameCompleted }: Scoreboar
       <section
         ref={rootRef}
         aria-label="Scoreboard"
-        className="glass relative min-h-0 max-h-full overflow-auto rounded-2xl"
+        className="scoreboard-scroller glass relative min-h-0 max-h-full overflow-auto rounded-2xl"
       >
         <div
           className="scoreboard"
           style={
             {
               "--player-count": orderedPlayers.length,
+              "--name-column-cap": orderedPlayers.length === 1 ? "calc(100cqw - 36px)" : "50cqw",
             } as React.CSSProperties
           }
         >
@@ -70,7 +72,8 @@ export function Scoreboard({ game, rounds, players, onGameCompleted }: Scoreboar
             rounds={sortedRounds}
             totalPhases={totalPhases}
             tiebreaker={tiebreaker}
-            playerCount={orderedPlayers.length}
+            namesExpanded={namesExpanded}
+            onToggleNames={() => setNamesExpanded((previous) => !previous)}
             upcomingDealerId={
               isActive ? getDealerId(sortedRounds.length + 1, game.activePlayers) : null
             }

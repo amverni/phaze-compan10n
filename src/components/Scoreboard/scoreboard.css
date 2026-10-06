@@ -9,9 +9,38 @@
 .scoreboard {
   display: grid;
   grid-template-columns:
-    36px repeat(var(--player-count, 1), minmax(70px, 1fr));
+    36px repeat(var(--player-count, 1), minmax(max-content, 1fr));
   background: white;
   min-width: max-content;
+}
+
+.scoreboard-scroller {
+  container-type: inline-size;
+}
+
+.scoreboard-identity {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 26px;
+  overflow: hidden;
+}
+
+.scoreboard-identity-compact {
+  display: flex;
+  flex-shrink: 0;
+  width: max-content;
+}
+
+.scoreboard-identity-named {
+  position: absolute;
+  left: 0;
+  display: block;
+  width: max-content;
+  /* Only names are capped; Grid still honors the intrinsic minimum of every score and total. */
+  max-width: max(63px, calc(var(--name-column-cap, 50cqw) - 7px));
+  font-size: 1rem;
+  color: var(--color-text-primary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,6 +82,8 @@
   top: 0;
   z-index: 2;
   padding: 10px 3px;
+  min-width: 70px;
+  white-space: nowrap;
 }
 
 .scoreboard-cell--upcoming-dealer {

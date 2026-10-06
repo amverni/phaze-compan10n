@@ -45,7 +45,7 @@ describe.each(["light", "dark"] as const)("Dealer headers in %s mode", (colorSch
       const id = await openGame(page, mode);
       const scoreboard = page.locator('section[aria-label="Scoreboard"]');
       const headers = scoreboard.locator(".scoreboard-cell--sticky-top");
-      const avatars = headers.locator('span[style*="background-color"]');
+      const avatars = headers.locator('span[style*="background-color"]:visible');
       const initialAvatarBounds = await avatarBounds(avatars);
 
       expect(await headers.count()).toBe(4);
@@ -65,11 +65,16 @@ describe.each(["light", "dark"] as const)("Dealer headers in %s mode", (colorSch
         expect(await scoreboard.locator(`.${highlightClass}`).count()).toBe(1);
         expect(await highlighted.count()).toBe(1);
         expect(await headers.nth(dealerIndex).getAttribute("class")).toContain(highlightClass);
-        expect(await highlighted.innerText()).toContain(playerNames[dealerIndex]);
+        expect(await highlighted.ariaSnapshot()).toContain(playerNames[dealerIndex]);
         expect(await highlighted.ariaSnapshot()).toContain("Upcoming Round Dealer");
         expect(await headers.getByText("D", { exact: true }).count()).toBe(0);
         expect(await scoreboard.getByText("D", { exact: true }).count()).toBe(savedRounds + 1);
-        expect(await avatarBounds(avatars)).toEqual(initialAvatarBounds);
+        for (const [index, avatar] of (await avatarBounds(avatars)).entries()) {
+          expect(avatar.x).toBeCloseTo(initialAvatarBounds[index].x, 1);
+          expect(avatar.y).toBe(initialAvatarBounds[index].y);
+          expect(avatar.width).toBe(initialAvatarBounds[index].width);
+          expect(avatar.height).toBe(initialAvatarBounds[index].height);
+        }
         for (let index = 0; index < 4; index++) {
           const header = await box(headers.nth(index));
           const rightBorder = await headers

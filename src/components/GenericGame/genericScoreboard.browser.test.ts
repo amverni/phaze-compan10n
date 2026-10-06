@@ -243,11 +243,12 @@ it("shows a compact blank upcoming row, compact Player badges, and a small Add R
     const header = table.getByRole("columnheader", { name: /Maya Chen/ });
     expect((await box(header)).height).toBe(75);
     expect(await header.getByText("MC", { exact: true }).count()).toBe(1);
+    expect(await header.getByText("Maya Chen", { exact: true }).isVisible()).toBe(false);
     expect(
       await header
-        .getByText("Maya Chen", { exact: true })
-        .evaluate((element) => getComputedStyle(element).position),
-    ).toBe("absolute");
+        .getByRole("button", { name: "Maya Chen: Show all Player names", exact: true })
+        .count(),
+    ).toBe(1);
     const upcoming = table.getByRole("row").last();
     expect(await table.getByRole("row").count()).toBe(2);
     expect(await upcoming.getByRole("cell").count()).toBe(2);

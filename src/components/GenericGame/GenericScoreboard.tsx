@@ -1,7 +1,7 @@
 import { Check, Plus, X } from "lucide-react";
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import type { GenericScoreboardView, GenericScoreTotal } from "../../types";
-import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
+import { ScoreboardPlayerName } from "../Scoreboard/ScoreboardPlayerName";
 import { DealerMarker } from "../ui";
 import { GenericAddRoundDialog } from "./GenericAddRoundDialog";
 import { GenericPassFailRoundDialog } from "./GenericPassFailRoundDialog";
@@ -19,6 +19,7 @@ function primaryTotal(score: GenericScoreTotal) {
 
 export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   const [addOpen, setAddOpen] = useState(false);
+  const [namesExpanded, setNamesExpanded] = useState(false);
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const resultsId = useId();
@@ -52,11 +53,16 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
         aria-label="Scoreboard"
         // biome-ignore lint/a11y/noNoninteractiveTabindex: Native scroll regions need focus for keyboard scrolling.
         tabIndex={0}
-        className="glass relative min-h-0 overflow-auto rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-secondary"
+        className="scoreboard-scroller glass relative min-h-0 overflow-auto rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-secondary"
       >
         <table
           className="scoreboard generic-scoreboard w-full text-center"
-          style={{ "--player-count": view.players.length } as CSSProperties}
+          style={
+            {
+              "--player-count": view.players.length,
+              "--name-column-cap": view.players.length === 1 ? "calc(100cqw - 36px)" : "50cqw",
+            } as CSSProperties
+          }
         >
           <caption className="sr-only">
             {metric === "Wins" ? "Rounds Won" : metric} scoreboard
@@ -76,14 +82,15 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                     view.upcomingDealerId === player.id ? "scoreboard-cell--upcoming-dealer" : "",
                   ].join(" ")}
                 >
-                  <span className="sr-only">{player.name}</span>
                   {view.upcomingDealerId === player.id && (
                     <span className="sr-only">Upcoming Round Dealer</span>
                   )}
                   <div className="flex flex-col items-center gap-1">
-                    <span aria-hidden className="flex">
-                      <PlayerAvatar player={player} variant="icon-initials" />
-                    </span>
+                    <ScoreboardPlayerName
+                      player={player}
+                      expanded={namesExpanded}
+                      onToggle={() => setNamesExpanded((previous) => !previous)}
+                    />
                     <span className="whitespace-nowrap text-2xl font-medium leading-none text-text-primary tabular-nums">
                       <span className="sr-only">Total {metric}: </span>
                       {primaryTotal(player)}

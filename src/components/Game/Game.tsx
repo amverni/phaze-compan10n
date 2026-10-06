@@ -110,6 +110,7 @@ export function Game({ gameId }: GameProps) {
             ) : game && players && rounds ? (
               <div className="min-h-0 flex-1" inert={hasLoadError}>
                 <Scoreboard
+                  key={game.id}
                   game={game}
                   rounds={rounds}
                   players={players}

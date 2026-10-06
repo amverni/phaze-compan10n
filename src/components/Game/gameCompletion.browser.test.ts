@@ -515,7 +515,7 @@ function updateAndDeleteSavedPlayers(page: Page, renamedId: string, removedId: s
 
 function readScoreboardHeaderPlayers(page: Page) {
   return page
-    .locator('.scoreboard-cell--sticky-top > div > span[style*="background-color"]')
+    .locator('.scoreboard-cell--sticky-top span[style*="background-color"]:visible')
     .evaluateAll((elements) =>
       elements.map((element) => ({
         backgroundColor: getComputedStyle(element as HTMLElement).backgroundColor,

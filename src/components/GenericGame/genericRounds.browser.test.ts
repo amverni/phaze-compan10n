@@ -532,9 +532,9 @@ it("shows cumulative headers, read-only Round expansion, and shared competition 
     await saveRound(page, { Maya: "-10", Rowan: "0", Lee: "5" });
     await saveRound(page, { Maya: "15", Rowan: "-2", Lee: "0" });
     const headers = page.getByRole("columnheader");
-    expect(await headers.nth(1).innerText()).toContain("Maya");
-    expect(await headers.nth(2).innerText()).toContain("Rowan");
-    expect(await headers.nth(3).innerText()).toContain("Lee");
+    expect(await headers.nth(1).ariaSnapshot()).toContain("Maya");
+    expect(await headers.nth(2).ariaSnapshot()).toContain("Rowan");
+    expect(await headers.nth(3).ariaSnapshot()).toContain("Lee");
     expect(await headers.nth(1).innerText()).toContain("Total Points: 5");
     expect(await headers.nth(2).innerText()).toContain("Total Points: -2");
     await page.getByRole("button", { name: "Expand Round 1", exact: true }).click();

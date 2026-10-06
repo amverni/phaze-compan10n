@@ -1,5 +1,5 @@
 import type { GameTiebreaker, PlayerId, PlayerIdentity, Round } from "../../types";
-import { PlayerAvatar } from "../PlayerAvatar/PlayerAvatar";
+import { ScoreboardPlayerName } from "./ScoreboardPlayerName";
 import { formatTiebreaker, getCurrentPhase, getRunningTiebreakerTotal } from "./scoreboardUtils";
 
 interface ScoreboardHeaderProps {
@@ -7,7 +7,8 @@ interface ScoreboardHeaderProps {
   rounds: Round[];
   totalPhases: number;
   tiebreaker: GameTiebreaker;
-  playerCount: number;
+  namesExpanded: boolean;
+  onToggleNames: () => void;
   upcomingDealerId: PlayerId | null;
 }
 
@@ -17,6 +18,8 @@ export function ScoreboardHeader({
   totalPhases,
   tiebreaker,
   upcomingDealerId,
+  namesExpanded,
+  onToggleNames,
 }: ScoreboardHeaderProps) {
   const lastRoundNumber = rounds.length > 0 ? Math.max(...rounds.map((r) => r.roundNumber)) : 0;
 
@@ -42,7 +45,11 @@ export function ScoreboardHeader({
               <span className="sr-only">Upcoming Round Dealer: {player.name}</span>
             )}
             <div className="flex flex-col items-center gap-1">
-              <PlayerAvatar player={player} variant="icon-initials" />
+              <ScoreboardPlayerName
+                player={player}
+                expanded={namesExpanded}
+                onToggle={onToggleNames}
+              />
               <span className="text-2xl font-medium leading-none tabular-nums text-text-primary">
                 {phase}
               </span>

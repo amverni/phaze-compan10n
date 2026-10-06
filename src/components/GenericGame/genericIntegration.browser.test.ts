@@ -159,11 +159,7 @@ it("keeps every completed surface frozen across shared Player edits and deletion
       const scoreboard = page.getByRole("region", { name: "Scoreboard", exact: true });
       expect(
         await scoreboard
-          .locator(
-            game.home === "/phaseCompan10n"
-              ? '.scoreboard-cell--sticky-top > div > span[style*="background-color"]'
-              : 'thead span[style*="background-color"]',
-          )
+          .locator('.scoreboard-cell--sticky-top span[style*="background-color"]:visible')
           .evaluateAll((avatars) =>
             avatars.map((avatar) => getComputedStyle(avatar).backgroundColor),
           ),

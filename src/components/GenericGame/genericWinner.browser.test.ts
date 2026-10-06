@@ -105,14 +105,9 @@ it("selects the mode in fresh setup and records one winner with reselection, ret
       page.getByRole("cell", { name: "Bob, Round 1: Lost", exact: true }).locator("svg"),
       "--color-pt-red-500",
     );
-    expect(
-      await page.getByRole("columnheader", { name: /Amy/ }).evaluate((element) => {
-        const visible = element.cloneNode(true);
-        if (!(visible instanceof HTMLElement)) throw new Error("Missing header");
-        for (const label of visible.querySelectorAll(".sr-only")) label.remove();
-        return visible.textContent;
-      }),
-    ).toBe("A1");
+    const amyHeader = page.getByRole("columnheader", { name: /Amy/ });
+    expect(await amyHeader.getByText("A", { exact: true }).isVisible()).toBe(true);
+    expect(await amyHeader.getByText("Amy", { exact: true }).isVisible()).toBe(false);
     await add.click();
     expect(await save.isDisabled()).toBe(true);
     expect(await dialog.getByRole("radio", { checked: true }).count()).toBe(0);
