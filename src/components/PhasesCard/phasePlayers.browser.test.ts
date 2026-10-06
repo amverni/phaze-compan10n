@@ -52,6 +52,311 @@ async function setPlayerAvailability(page: Page, player: Player, available: bool
   );
 }
 
+it("expands an occupied phase row into named icon identities and collapses it again", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedGame(page);
+    const card = await openCard(page);
+    await expect
+      .poll(() => names(card, 1))
+      .toEqual(["Zoe Jones", "Alex Stone", "Ada Stone", "Bo Reed"]);
+    const toggle = card.getByRole("button", { name: "Players on Phase 1", exact: true });
+    expect(await toggle.count()).toBe(1);
+    expect(await toggle.getAttribute("aria-expanded")).toBe("false");
+    const objective = card.locator(".list-row-shell").first().locator("span[title]");
+    expect(
+      await objective.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return document
+          .elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+          ?.closest("[title]")
+          ?.getAttribute("title");
+      }),
+    ).toBe(await objective.getAttribute("title"));
+    const collapsedHeight = (await bounds(group(card, 1))).height;
+    await toggle.click();
+    expect(await toggle.getAttribute("aria-expanded")).toBe("true");
+    for (const name of ["Zoe Jones", "Alex Stone", "Ada Stone", "Bo Reed"]) {
+      await group(card, 1).getByText(name, { exact: true }).first().waitFor();
+    }
+    await settleMotion(card);
+    const avatars = group(card, 1).locator('span[style*="background-color"]');
+    expect(await avatars.allTextContents()).toEqual(["", "", "", "BR"]);
+    expect(await avatars.locator("svg").count()).toBe(3);
+    const boxes = await Promise.all((await avatars.all()).map(bounds));
+    for (const [index, box] of boxes.entries()) {
+      expect(box).toMatchObject({ width: 26, height: 26, x: boxes[0].x });
+      if (index) expect(box.y).toBeGreaterThan(boxes[index - 1].y + 26);
+    }
+    expect((await bounds(group(card, 1))).height).toBeGreaterThan(collapsedHeight);
+    await toggle.click();
+    await settleMotion(card);
+    expect(await toggle.getAttribute("aria-expanded")).toBe("false");
+    expect((await bounds(group(card, 1))).height).toBe(collapsedHeight);
+    expect(await avatars.allTextContents()).toEqual(["ZJ", "AS", "AS", "BR"]);
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
+async function settleMotion(locator: Locator) {
+  await locator.evaluate(async (element) => {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await Promise.all(
+      element.getAnimations({ subtree: true }).map((animation) => animation.finished),
+    );
+  });
+}
+
+function sampleToggleMotion(card: Locator) {
+  return card.evaluate(async (element) => {
+    const toggle = element.querySelector<HTMLButtonElement>(
+      'button[aria-label="Players on Phase 1"]',
+    );
+    const players = element.querySelector<HTMLElement>('[role="group"]');
+    const avatar = players?.querySelectorAll<HTMLElement>('span[style*="background-color"]')[1];
+    const name = Array.from(players?.querySelectorAll("span") ?? []).find(
+      (span) => span.textContent === "Alex Stone" && span.childElementCount === 0,
+    );
+    const rows = element.querySelectorAll(".list-row-shell");
+    if (!toggle || !players || !avatar || !name || rows.length < 2) {
+      throw new Error("Expected an occupied Phase followed by another Phase");
+    }
+    function sample() {
+      if (!players || !avatar || !name) throw new Error("Missing motion sample elements");
+      const groupBox = players.getBoundingClientRect();
+      const avatarBox = avatar.getBoundingClientRect();
+      const nameBox = name.getBoundingClientRect();
+      return {
+        height: groupBox.height,
+        nextRow: rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().top,
+        avatarX: avatarBox.x - groupBox.x,
+        avatarY: avatarBox.y - groupBox.y,
+        avatarWidth: avatarBox.width,
+        avatarHeight: avatarBox.height,
+        nameWidth: nameBox.width,
+        nameHeight: nameBox.height,
+        nameOpacity: Number(getComputedStyle(name).opacity),
+      };
+    }
+    const before = sample();
+    toggle.click();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const animations = players.getAnimations({ subtree: true });
+    for (const animation of animations) animation.pause();
+    const frames = [];
+    // Sample paused public animations so compositor transforms and layout share a timeline.
+    for (const progress of [0.25, 0.5, 0.75, 1]) {
+      for (const animation of animations) {
+        animation.currentTime = Number(animation.effect?.getComputedTiming().endTime) * progress;
+      }
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      frames.push(sample());
+    }
+    for (const animation of animations) animation.finish();
+    return { before, frames, after: sample() };
+  });
+}
+
+it("coordinates avatar movement, name reveal and row height in both directions without stretching", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedGame(page);
+    const card = await openCard(page);
+    await group(card, 1).waitFor();
+    for (const expanding of [true, false]) {
+      const { before, frames, after } = await sampleToggleMotion(card);
+      expect(after.height > before.height).toBe(expanding);
+      const intermediate = frames.filter(
+        (frame) =>
+          frame.height > Math.min(before.height, after.height) + 1 &&
+          frame.height < Math.max(before.height, after.height) - 1,
+      );
+      expect(intermediate.length).toBeGreaterThan(0);
+      for (const frame of intermediate) {
+        const progress = (frame.height - before.height) / (after.height - before.height);
+        expect(frame.avatarX).toBeCloseTo(
+          before.avatarX + (after.avatarX - before.avatarX) * progress,
+          0,
+        );
+        expect(frame.avatarY).toBeCloseTo(
+          before.avatarY + (after.avatarY - before.avatarY) * progress,
+          0,
+        );
+        expect(frame.nextRow - before.nextRow).toBeCloseTo(frame.height - before.height, 0);
+        expect(frame.nameOpacity).toBeGreaterThan(0);
+        expect(frame.nameOpacity).toBeLessThan(1);
+        expect(frame).toMatchObject({
+          avatarWidth: 26,
+          avatarHeight: 26,
+        });
+        expect(frame.nameWidth).toBeCloseTo(after.nameWidth, 2);
+        expect(frame.nameHeight).toBeCloseTo(after.nameHeight, 2);
+      }
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
+it("reveals every overflowed Player with bounded names across responsive layouts", async () => {
+  const page = await browser.newPage({ viewport: { width: 320, height: 844 } });
+  try {
+    const { crowd } = await seedCrowdedGame(page);
+    const card = await openCard(page);
+    const toggle = card.getByRole("button", { name: "Players on Phase 1", exact: true });
+    const avatars = group(card, 1).locator('span[style*="background-color"]:visible');
+    for (const width of [320, 1280, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.emulateMedia({ colorScheme: width === 1280 ? "dark" : "light" });
+      await settleMotion(card);
+      expect(await avatars.count()).toBeLessThan(crowd.length);
+      expect(
+        await group(card, 1)
+          .getByText(/^\+\d+$/)
+          .isVisible(),
+      ).toBe(true);
+      await toggle.click({ position: { x: 5, y: 5 } });
+      await settleMotion(card);
+      expect(await avatars.count()).toBe(crowd.length);
+      expect(
+        await group(card, 1)
+          .getByText(/^\+\d+$/)
+          .isVisible(),
+      ).toBe(false);
+      expect(await names(card, 1)).toEqual(crowd.map((player) => player.name));
+      const groupBox = await bounds(group(card, 1));
+      const avatarBoxes = await Promise.all((await avatars.all()).map(bounds));
+      for (const [index, player] of crowd.entries()) {
+        const name = group(card, 1).getByText(player.name, { exact: true }).first();
+        const nameBox = await bounds(name);
+        expect(nameBox.height).toBe(20);
+        expect(nameBox.x).toBeGreaterThanOrEqual(avatarBoxes[index].x + 26);
+        expect(nameBox.x + nameBox.width).toBeLessThanOrEqual(groupBox.x + groupBox.width + 1);
+        expect(avatarBoxes[index]).toMatchObject({ width: 26, height: 26, x: groupBox.x });
+        if (index) expect(avatarBoxes[index].y).toBeGreaterThan(avatarBoxes[index - 1].y + 26);
+        expect(await name.getAttribute("title")).toBeNull();
+      }
+      const longName = group(card, 1).getByText(crowd[0].name, { exact: true }).first();
+      expect(
+        await longName.evaluate((element) => ({
+          truncated: element.scrollWidth > element.clientWidth,
+          overflow: getComputedStyle(element).textOverflow,
+          whitespace: getComputedStyle(element).whiteSpace,
+        })),
+      ).toEqual({ truncated: true, overflow: "ellipsis", whitespace: "nowrap" });
+      expect(await group(card, 1).ariaSnapshot()).toContain(`listitem: ${crowd[0].name}`);
+      const row = card.locator(".list-row-shell").first();
+      const number = await bounds(row.getByText("1", { exact: true }));
+      const description = await bounds(row.locator("span[title]"));
+      expect(number.y + number.height / 2).toBeCloseTo(description.y + description.height / 2, 1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+
+      // The avatar and adjacent-name area belong to the same row-wide control.
+      await toggle.click({ position: { x: 70, y: 55 } });
+      await settleMotion(card);
+      expect(await toggle.getAttribute("aria-expanded")).toBe("false");
+    }
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it("keeps phase groups independent through scrolling and outside interaction, then resets on close", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedCrowdedGame(page);
+    let card = await openCard(page);
+    const crowded = card.getByRole("button", { name: "Players on Phase 1", exact: true });
+    const solo = card.getByRole("button", { name: "Players on Phase 2", exact: true });
+    await solo.click();
+    await settleMotion(card);
+    expect((await bounds(group(card, 2))).height).toBe(26);
+    expect(await group(card, 2).getByText("Solo Player", { exact: true }).first().isVisible()).toBe(
+      true,
+    );
+    await crowded.click({ position: { x: 5, y: 5 } });
+    await settleMotion(card);
+    expect(await solo.getAttribute("aria-expanded")).toBe("true");
+    const list = card.getByRole("region", { name: "Phases Card phase list", exact: true });
+    await list.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+    await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    const empty = card.locator(".list-row-shell").nth(2);
+    expect(await empty.getByRole("button").count()).toBe(0);
+    await empty.click();
+    expect(await crowded.getAttribute("aria-expanded")).toBe("true");
+    expect(await solo.getAttribute("aria-expanded")).toBe("true");
+    await solo.click();
+    await settleMotion(card);
+    expect(await solo.getAttribute("aria-expanded")).toBe("false");
+    expect(await crowded.getAttribute("aria-expanded")).toBe("true");
+    await closeDialog(page, card);
+    card = await openCard(page);
+    for (const phase of [1, 2]) {
+      expect(
+        await card
+          .getByRole("button", { name: `Players on Phase ${phase}`, exact: true })
+          .getAttribute("aria-expanded"),
+      ).toBe("false");
+      expect((await bounds(group(card, phase))).height).toBe(26);
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
+it.each([
+  "no-preference",
+  "reduce",
+] as const)("supports keyboard focus and repeated activation with %s motion", async (reducedMotion) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion });
+  try {
+    await seedGame(page);
+    const card = await openCard(page);
+    const toggle = card.getByRole("button", { name: "Players on Phase 1", exact: true });
+    await card.getByRole("region", { name: "Phases Card phase list", exact: true }).focus();
+    // Safari includes buttons in sequential keyboard navigation with Option-Tab.
+    await page.keyboard.press("Alt+Tab");
+    expect(
+      await toggle.evaluate((element) => ({
+        focused: element === document.activeElement,
+        visible: element.matches(":focus-visible"),
+        outline: getComputedStyle(element).outlineStyle,
+        outlineWidth: getComputedStyle(element).outlineWidth,
+      })),
+    ).toEqual({ focused: true, visible: true, outline: "solid", outlineWidth: "2px" });
+    expect(await toggle.getAttribute("aria-controls")).toBe(
+      await group(card, 1).getAttribute("id"),
+    );
+    await page.keyboard.press("Enter");
+    expect(await toggle.getAttribute("aria-expanded")).toBe("true");
+    for (const key of ["Space", "Enter", "Space", "Enter"]) {
+      await page.keyboard.press(key);
+    }
+    await settleMotion(card);
+    expect(await toggle.getAttribute("aria-expanded")).toBe("true");
+    expect((await bounds(group(card, 1))).height).toBe(128);
+    expect(await group(card, 1).ariaSnapshot()).toContain("listitem: Ada Stone");
+    await page.keyboard.press("Space");
+    await settleMotion(card);
+    expect(await toggle.getAttribute("aria-expanded")).toBe("false");
+    expect((await bounds(group(card, 1))).height).toBe(26);
+    expect(await toggle.evaluate((element) => element === document.activeElement)).toBe(true);
+    if (reducedMotion === "reduce") {
+      const { frames, after } = await sampleToggleMotion(card);
+      expect(after.height).toBe(128);
+      expect(frames.every((frame) => frame.height === 128 && frame.nameOpacity === 1)).toBe(true);
+      expect(
+        await group(card, 1).evaluate((element) => element.getAnimations({ subtree: true }).length),
+      ).toBe(0);
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
 it("shows pending data as loading rather than confirmed empty phase groups", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {
@@ -141,39 +446,11 @@ it.each([
 it("keeps empty rows compact and occupied stacks below the first line with responsive single-line overflow", async () => {
   const page = await browser.newPage({ viewport: { width: 320, height: 844 } });
   try {
-    const crowd = Array.from({ length: 26 }, (_, index) => ({
-      ...players[index % 4],
-      id: `crowd-${index}`,
-      name: `Player ${index}`,
-    }));
-    const solo = { ...players[0], id: "solo", name: "Solo Player" };
-    const identities = [...crowd, solo];
-    const game = makeGame({
-      players: identities.map((player) => player.id),
-      activePlayers: identities.map((player) => player.id).reverse(),
-    });
-    const rounds: Round[] = [
-      {
-        gameId: game.id,
-        scorekeeper: "phase10",
-        roundNumber: 1,
-        roundWinnerId: solo.id,
-        scores: [
-          { playerId: solo.id, currentPhase: 1, phaseStatus: "completed", score: 0 },
-          ...crowd.map((player) => ({
-            playerId: player.id,
-            currentPhase: 1,
-            phaseStatus: "failed" as const,
-            score: 0,
-          })),
-        ],
-      },
-    ];
-    await seedGame(page, game, identities, rounds);
+    const { crowd } = await seedCrowdedGame(page);
     const card = await openCard(page);
     await expect.poll(() => names(card, 1)).toEqual(crowd.map((player) => player.name));
     expect(await names(card, 2)).toEqual(["Solo Player"]);
-    const visibleAvatars = group(card, 1).locator('span[style*="background-color"]');
+    const visibleAvatars = group(card, 1).locator('span[style*="background-color"]:visible');
     let narrowCount = 0;
     for (const width of [320, 1280, 390, 320]) {
       await page.setViewportSize({ width, height: 844 });
@@ -185,6 +462,7 @@ it("keeps empty rows compact and occupied stacks below the first line with respo
             requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
           ),
       );
+      await settleMotion(card);
       await expect
         .poll(async () => {
           const groupBounds = await bounds(group(card, 1));
@@ -238,7 +516,7 @@ it("keeps empty rows compact and occupied stacks below the first line with respo
       for (const index of [0, 1]) {
         const row = rows.nth(index);
         const number = await bounds(row.getByText(String(index + 1), { exact: true }));
-        const description = await bounds(row.locator("[title]"));
+        const description = await bounds(row.locator("span[title]"));
         const avatars = await bounds(group(card, index + 1));
         expect(number.y + number.height / 2).toBeCloseTo(description.y + description.height / 2, 1);
         expect(avatars.y).toBeGreaterThanOrEqual(description.y + description.height);
@@ -249,7 +527,7 @@ it("keeps empty rows compact and occupied stacks below the first line with respo
         expect((await bounds(rows.nth(index))).height).toBe(41);
         expect(await rows.nth(index).getByRole("group").count()).toBe(0);
       }
-      expect(await rows.getByRole("button").count()).toBe(0);
+      expect(await rows.getByRole("button").count()).toBe(2);
       expect(await rows.locator("[tabindex]").count()).toBe(0);
       expect(await card.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
         true,
@@ -366,6 +644,42 @@ function makeGame(overrides: Partial<ActiveGame> = {}) {
     settings: { tiebreaker: "roundsWon", roundSkipPenalty: 100, sitOutPenalty: 0 },
     ...overrides,
   });
+}
+
+async function seedCrowdedGame(page: Page) {
+  const crowd = Array.from({ length: 26 }, (_, index) => ({
+    ...players[index % 4],
+    id: `crowd-${index}`,
+    name:
+      index === 0
+        ? "Alexandria With An Exceptionally Long Name That Must Remain Available To Assistive Technology Stone"
+        : `Alex ${index} Stone`,
+  }));
+  const solo = { ...players[0], id: "solo", name: "Solo Player" };
+  const identities = [...crowd, solo];
+  const game = makeGame({
+    players: identities.map((player) => player.id),
+    activePlayers: identities.map((player) => player.id).reverse(),
+  });
+  const rounds: Round[] = [
+    {
+      gameId: game.id,
+      scorekeeper: "phase10",
+      roundNumber: 1,
+      roundWinnerId: solo.id,
+      scores: [
+        { playerId: solo.id, currentPhase: 1, phaseStatus: "completed", score: 0 },
+        ...crowd.map((player) => ({
+          playerId: player.id,
+          currentPhase: 1,
+          phaseStatus: "failed" as const,
+          score: 0,
+        })),
+      ],
+    },
+  ];
+  await seedGame(page, game, identities, rounds);
+  return { crowd, solo };
 }
 
 async function seedGame(page: Page, game = makeGame(), identities = players, rounds: Round[] = []) {

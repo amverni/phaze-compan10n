@@ -1,0 +1,11 @@
+.player-identity-motion {
+  transition-property: height, width, transform, opacity, visibility;
+  transition-duration: 240ms;
+  transition-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-identity-motion {
+    transition: none;
+  }
+}
