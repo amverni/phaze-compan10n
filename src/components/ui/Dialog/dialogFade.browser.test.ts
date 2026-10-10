@@ -188,7 +188,7 @@ describe.each([
       await winner.click();
       await page.getByRole("option", { name: "Choose winner", exact: true }).click();
       const save = dialog.getByRole("button", { name: "Save round", exact: true });
-      expect(await save.isDisabled()).toBe(true);
+      expect(await save.isDisabled()).toBe(false);
 
       await winner.click();
       await page.getByRole("option", { name: "Amy", exact: true }).click();

@@ -148,6 +148,7 @@ _Avoid_: Completed player, done player
 
 **Round Winner**:
 The Player who completed their Phase in a Phase 10 Round and went out first. A Round may have an unrecorded Round Winner; when every Active Player takes a Round Skip or Sits Out, there is no Round Winner.
+Recording a Round Winner is required only for the Rounds Won Tiebreaker, except when every Active Player explicitly takes a Round Skip or Sits Out. Other Tiebreakers allow a Round without a recorded winner; scores and Passed results never imply one.
 _Avoid_: Round leader
 
 **Phase 10 Game Winner**:

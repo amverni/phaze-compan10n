@@ -4,7 +4,7 @@ import type { Browser, Locator, Page } from "playwright";
 import { webkit } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import type { Game, GameTiebreaker, Player } from "../../types";
+import type { Game, GameTiebreaker, Player, Round } from "../../types";
 import { expectReadyAction } from "../ui/Button/readyActionTestUtils";
 
 let server: ViteDevServer;
@@ -29,6 +29,294 @@ afterAll(async () => {
   await browser?.close();
   await server?.close();
 });
+
+it("counts the required winner separately and restores its requirement after all-Skipped/Sat Out exceptions", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game, players } = await seedCompletionGame(page, 3, "roundsWon", 3);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+    const entry = page.getByRole("dialog");
+    const winner = entry.getByRole("button", { name: /Round Winner/ });
+    const save = entry.getByRole("button", { name: "Save round", exact: true });
+    await expectRoundProgress(page, entry, 0, 4, false, true);
+    expect(await save.isDisabled()).toBe(true);
+
+    await winner.click();
+    await page.getByRole("option", { name: players[0].name, exact: true }).click();
+    expect(
+      await entry.getByRole("button", { name: "Passed", exact: true }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    await expectRoundProgress(page, entry, 2, 4, false, true);
+    for (const player of players.slice(1)) {
+      await entry.getByRole("tab", { name: player.name, exact: true }).click();
+      await entry.getByRole("button", { name: "Failed", exact: true }).click();
+    }
+    await expectRoundProgress(page, entry, 4, 4, true, true);
+    expect(await save.isDisabled()).toBe(false);
+
+    await winner.click();
+    await page.getByRole("option", { name: "Choose winner", exact: true }).click();
+    await expectRoundProgress(page, entry, 3, 4, false, true);
+    expect(await save.isDisabled()).toBe(true);
+    await entry.getByRole("tab", { name: players[0].name, exact: true }).click();
+    await entry.getByRole("button", { name: "Failed", exact: true }).click();
+    await expectRoundProgress(page, entry, 3, 4, false, true);
+    expect(await winner.isDisabled()).toBe(false);
+
+    for (const player of players) {
+      await entry.getByRole("tab", { name: player.name, exact: true }).click();
+      await entry.getByRole("button", { name: "Show extra options", exact: true }).click();
+      await entry.getByRole("button", { name: "Skipped", exact: true }).click();
+    }
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    expect(await winner.isDisabled()).toBe(true);
+    expect((await winner.innerText()).trim()).toBe("No winner");
+    expect(await save.isDisabled()).toBe(false);
+
+    await entry.getByRole("button", { name: "Sat Out", exact: true }).click();
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    for (const player of players.slice(0, 2)) {
+      await entry.getByRole("tab", { name: player.name, exact: true }).click();
+      await entry.getByRole("button", { name: "Sat Out", exact: true }).click();
+    }
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    await entry.getByRole("button", { name: "Failed", exact: true }).click();
+    expect(await winner.isDisabled()).toBe(false);
+    expect((await winner.innerText()).trim()).toBe("Choose winner");
+    await expectRoundProgress(page, entry, 3, 4, false, true);
+    expect(await save.isDisabled()).toBe(true);
+    await entry.getByRole("button", { name: "Skipped", exact: true }).click();
+    await save.click();
+    await entry.waitFor({ state: "detached" });
+    expect(await readRounds(page, game.id)).toMatchObject([
+      {
+        roundWinnerId: null,
+        scores: [{ phaseStatus: "satOut" }, { phaseStatus: "skipped" }, { phaseStatus: "satOut" }],
+      },
+    ]);
+    await page.reload();
+    await page.getByRole("button", { name: "Add round 2", exact: true }).waitFor();
+    expect((await readRounds(page, game.id))[0].roundWinnerId).toBeNull();
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it.each<GameTiebreaker>([
+  "lowestPoints",
+  "highestPoints",
+  "fewestWilds",
+  "fewestSkips",
+  "mostSkipped",
+])("saves and reloads complete %s entries without inferring a winner", async (tiebreaker) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game, players } = await seedCompletionGame(page, 3, tiebreaker, 3);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+    const entry = page.getByRole("dialog");
+    const winner = entry.getByRole("button", { name: /Round Winner/ });
+    const save = entry.getByRole("button", { name: "Save round", exact: true });
+    await expectRoundProgress(page, entry, 0, 3, false, false);
+    for (const player of players) {
+      await entry.getByRole("tab", { name: player.name, exact: true }).click();
+      await entry.getByRole("button", { name: "Passed", exact: true }).click();
+    }
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    expect(await save.isDisabled()).toBe(false);
+    await winner.click();
+    await page.getByRole("option", { name: players[0].name, exact: true }).click();
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    await winner.click();
+    await page.getByRole("option", { name: "Choose winner", exact: true }).click();
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    expect(await entry.innerText()).not.toContain("Optional");
+    await save.click();
+    await entry.waitFor({ state: "detached" });
+    expect(await readRounds(page, game.id)).toMatchObject([
+      {
+        roundNumber: 1,
+        roundWinnerId: null,
+        scores: players.map((player) => ({
+          playerId: player.id,
+          phaseStatus: "completed",
+          score: 0,
+          currentPhase: 1,
+        })),
+      },
+    ]);
+    await page.reload();
+    await page.getByRole("button", { name: "Add round 2", exact: true }).waitFor();
+    expect((await readRounds(page, game.id))[0].roundWinnerId).toBeNull();
+    expect(await page.locator(".scoreboard-cell .border-current").count()).toBe(0);
+    const standings = await openStandings(page);
+    const results = standings.getByRole("tabpanel", { name: "Standings", exact: true });
+    expect(await results.innerText()).toContain(players[0].name);
+    expect(await results.innerText()).toContain(players[2].name);
+    await standings.getByRole("tab", { name: "Phases", exact: true }).click();
+    await standings.locator('[aria-label="Phase progress by round"]').waitFor();
+    await standings.getByRole("tab", { name: "Tiebreaker", exact: true }).click();
+    await standings.locator('[aria-label="Tiebreaker progress by round"]').waitFor();
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it("restores Points entries when switching, clearing, or downgrading an explicit winner", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game, players } = await seedCompletionGame(page, 3, "lowestPoints", 3);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+    const entry = page.getByRole("dialog");
+    const winner = entry.getByRole("button", { name: /Round Winner/ });
+    await entry.getByRole("button", { name: "Passed", exact: true }).click();
+    await entry.getByRole("button", { name: "Add 10 points (+10)", exact: true }).click();
+    await entry.getByRole("button", { name: "Add 5 points (+5)", exact: true }).click();
+    await entry.getByRole("tab", { name: players[1].name, exact: true }).click();
+    await entry.getByRole("button", { name: "Failed", exact: true }).click();
+    await entry.getByRole("tab", { name: players[2].name, exact: true }).click();
+    await entry.getByRole("button", { name: "Passed", exact: true }).click();
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+
+    await winner.click();
+    await page.getByRole("option", { name: players[0].name, exact: true }).click();
+    await entry.getByRole("tab", { name: players[0].name, exact: true }).click();
+    expect(await entry.getByRole("button", { name: "+10", exact: true }).isDisabled()).toBe(true);
+    expect(
+      await entry.getByRole("tabpanel").getByText("Used 0 times", { exact: true }).count(),
+    ).toBe(4);
+    await winner.click();
+    await page.getByRole("option", { name: players[1].name, exact: true }).click();
+    expect(
+      await entry.getByRole("tabpanel").getByText("Used 1 time", { exact: true }).count(),
+    ).toBe(2);
+    await entry.getByRole("tab", { name: players[1].name, exact: true }).click();
+    expect(
+      await entry.getByRole("button", { name: "Passed", exact: true }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    await winner.click();
+    await page.getByRole("option", { name: "Choose winner", exact: true }).click();
+    expect(
+      await entry.getByRole("tabpanel").getByText("Used 10 times", { exact: true }).count(),
+    ).toBe(1);
+    await expectRoundProgress(page, entry, 2, 3, false, false);
+    await entry.getByRole("button", { name: /^Round progress:/ }).click();
+    await page.getByText("Needs 9 or fewer cards.", { exact: true }).waitFor();
+    await entry.getByRole("button", { name: /^Round progress:/ }).click();
+    expect(await entry.getByRole("button", { name: "Save round", exact: true }).isDisabled()).toBe(
+      true,
+    );
+    await entry.getByRole("button", { name: "Failed", exact: true }).click();
+
+    await winner.click();
+    await page.getByRole("option", { name: players[0].name, exact: true }).click();
+    await entry.getByRole("tab", { name: players[0].name, exact: true }).click();
+    await entry.getByRole("button", { name: "Show extra options", exact: true }).click();
+    await entry.getByRole("button", { name: "Skipped", exact: true }).click();
+    expect((await winner.innerText()).trim()).toBe("Choose winner");
+    await expectRoundProgress(page, entry, 3, 3, true, false);
+    await entry.getByRole("button", { name: "Sat Out", exact: true }).click();
+    await entry.getByRole("button", { name: "Passed", exact: true }).click();
+    expect(
+      await entry.getByRole("tabpanel").getByText("Used 1 time", { exact: true }).count(),
+    ).toBe(2);
+    await entry.getByRole("button", { name: "Save round", exact: true }).click();
+    await entry.waitFor({ state: "detached" });
+    expect(await readRounds(page, game.id)).toMatchObject([
+      {
+        roundWinnerId: null,
+        scores: [
+          { playerId: players[0].id, phaseStatus: "completed", score: 15 },
+          { playerId: players[1].id, phaseStatus: "failed", score: 50 },
+          { playerId: players[2].id, phaseStatus: "completed", score: 0 },
+        ],
+      },
+    ]);
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+it("normally finishes an all-Skipped Round without awarding any Round wins or winner indicators", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game, players } = await seedCompletionGame(page);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+    const entry = page.getByRole("dialog");
+    for (const player of players) {
+      await entry.getByRole("tab", { name: player.name, exact: true }).click();
+      await entry.getByRole("button", { name: "Show extra options", exact: true }).click();
+      await entry.getByRole("button", { name: "Skipped", exact: true }).click();
+    }
+    await expectRoundProgress(page, entry, 2, 2, true, false);
+    await entry.getByRole("button", { name: "Save round", exact: true }).click();
+    const results = page.getByRole("tabpanel", { name: "Standings", exact: true });
+    await results.waitFor();
+    expect(await results.getByText("0 wins", { exact: true }).count()).toBe(2);
+    expect(await readResults(page)).toMatchObject({
+      games: [{ status: "completed", completionType: "normal", winnerIds: [players[0].id] }],
+    });
+    expect(await readRounds(page, game.id)).toMatchObject([
+      { roundWinnerId: null, scores: [{ phaseStatus: "skipped" }, { phaseStatus: "skipped" }] },
+    ]);
+    await page.getByRole("tab", { name: "Tiebreaker", exact: true }).click();
+    await page.locator('[aria-label="Tiebreaker progress by round"]').waitFor();
+    const graph = page.getByRole("table", { name: "Tiebreaker progress details", exact: true });
+    expect(await graph.getByRole("cell", { name: "0 wins", exact: true }).count()).toBe(4);
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    expect(await page.locator(".scoreboard-cell .border-current").count()).toBe(0);
+    await page.reload();
+    await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
+    expect(await page.getByRole("button", { name: /^Add round/ }).count()).toBe(0);
+    expect((await readRounds(page, game.id))[0].roundWinnerId).toBeNull();
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+async function expectRoundProgress(
+  page: Page,
+  entry: Locator,
+  completed: number,
+  total: number,
+  ready: boolean,
+  requiredWinner: boolean,
+) {
+  const progress = entry.getByRole("button", {
+    name: `Round progress: ${completed} of ${total} required entries complete`,
+    exact: true,
+  });
+  await progress.waitFor();
+  await progress.click();
+  await page.getByText(`${completed} of ${total}`, { exact: true }).waitFor();
+  expect(await page.getByRole("listitem").filter({ hasText: "Round Winner" }).count()).toBe(
+    requiredWinner ? 1 : 0,
+  );
+  expect(await page.getByText("Ready to save.", { exact: true }).count()).toBe(ready ? 1 : 0);
+  if (!requiredWinner)
+    expect(await page.getByText("Mark a Round Winner to save.", { exact: true }).count()).toBe(0);
+  await progress.click();
+}
 
 it("keeps header buttons centered together with clearance above the slant", async () => {
   const page = await browser.newPage({ hasTouch: true });
@@ -312,7 +600,10 @@ it("offers Pause and Delete before a saved Round, retains a closed draft, and di
     expect(standingsBox.x).toBeGreaterThan(195);
     expect(standingsBox.y).toBeLessThan(422);
     await page.getByRole("button", { name: "Open Phases Card" }).click();
-    await page.getByRole("dialog", { name: "Phases Card" }).waitFor({ state: "attached" });
+    await page
+      .getByRole("dialog", { name: "Phases Card" })
+      .getByRole("button", { name: "Share Phases Card", exact: true })
+      .waitFor();
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "detached" });
 
@@ -484,7 +775,12 @@ it("keeps a pending Finish on screen through dismissal attempts, shows failure, 
   }
 }, 30_000);
 
-function seedCompletionGame(page: Page, phaseCount = 1, tiebreaker: GameTiebreaker = "roundsWon") {
+function seedCompletionGame(
+  page: Page,
+  phaseCount = 1,
+  tiebreaker: GameTiebreaker = "roundsWon",
+  playerCount = 2,
+) {
   return page.evaluate<{ game: Game; players: Player[] }>(`
     Promise.all([
       import("/scorekeeper/src/data/api/games.ts"),
@@ -500,6 +796,10 @@ function seedCompletionGame(page: Page, phaseCount = 1, tiebreaker: GameTiebreak
         color: "#abcdef",
         isFavorite: 0
       });
+      const players = [amy, bob];
+      if (${playerCount} === 3) {
+        players.push(await playersApi.create({ name: "Cam Lee", color: "#456789", isFavorite: 0 }));
+      }
       const game = await gamesApi.create({
         scorekeeper: "phase10",
         phaseSet: {
@@ -508,10 +808,10 @@ function seedCompletionGame(page: Page, phaseCount = 1, tiebreaker: GameTiebreak
           name: "One Phase",
           phases: ${JSON.stringify(Array.from({ length: phaseCount }, (_, index) => `phase-${index + 1}`))}
         },
-        players: [amy.id, bob.id],
+        players: players.map((player) => player.id),
         settings: { tiebreaker: ${JSON.stringify(tiebreaker)}, roundSkipPenalty: 100, sitOutPenalty: 0 }
       });
-      return { game, players: [amy, bob] };
+      return { game, players };
     })
   `);
 }
@@ -532,7 +832,7 @@ function seedSavedRound(page: Page, game: Game, players: Player[], tied: boolean
 }
 
 function readRounds(page: Page, gameId: string) {
-  return page.evaluate(`
+  return page.evaluate<Round[]>(`
     import("/scorekeeper/src/data/api/rounds.ts").then(({ roundsApi }) =>
       roundsApi.getByGameId(${JSON.stringify(gameId)})
     )

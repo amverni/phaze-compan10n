@@ -24,8 +24,10 @@ export function roundsListOptions(gameId: GameId) {
 export function useAddRound(gameId: GameId) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { scores: ArrayAtLeastOne<AddRoundScoreInput>; roundWinnerId: PlayerId }) =>
-      roundsApi.add({ gameId, ...data }),
+    mutationFn: (data: {
+      scores: ArrayAtLeastOne<AddRoundScoreInput>;
+      roundWinnerId: PlayerId | null;
+    }) => roundsApi.add({ gameId, ...data }),
     onSuccess: (result) => {
       queryClient.setQueryData(roundKeys.list(gameId), (current: Round[] | undefined) => {
         if (!current) return current;

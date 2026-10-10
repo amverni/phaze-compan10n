@@ -7,7 +7,7 @@ import type {
   Round,
   RoundScore,
 } from "../../types";
-import { getNextCurrentPhase } from "../../utils";
+import { getNextCurrentPhase, getRoundWinnerRequirement } from "../../utils";
 import { getDB } from "../db";
 import { finalizeGame, requirePlayers, withGameTransaction } from "./gameLifecycle";
 import { assertActivePhaseGame, assertPhaseRounds } from "./games";
@@ -60,14 +60,15 @@ export const roundsApi = {
    * phase status in the previous round — callers do not provide it.
    *
    * @param data - The round data. Scores should omit `currentPhase` (it is computed).
-   *   `roundWinnerId` is required and identifies the player who went out.
+   *   `roundWinnerId` explicitly identifies the player who went out, or is null.
+   *   Rounds Won requires a winner unless every Active Player Skips or Sits Out.
    * @returns The newly created round and completion details when this round finishes the game.
    * @throws {Error} If the game does not exist.
    */
   add(data: {
     gameId: GameId;
     scores: ArrayAtLeastOne<AddRoundScoreInput>;
-    roundWinnerId: PlayerId;
+    roundWinnerId: PlayerId | null;
   }): Promise<AddRoundResult> {
     return withGameTransaction(async (tx) => {
       const gamesStore = tx.objectStore("games");
@@ -75,6 +76,26 @@ export const roundsApi = {
 
       const game = await gamesStore.get(data.gameId);
       assertActivePhaseGame(game);
+      const winnerRequirement = getRoundWinnerRequirement(
+        game.settings.tiebreaker,
+        game.activePlayers.map(
+          (playerId) =>
+            data.scores.find((score) => score.playerId === playerId)?.phaseStatus ?? null,
+        ),
+      );
+      if (data.roundWinnerId === null && winnerRequirement === "required") {
+        throw new Error("A Round Winner is required");
+      }
+      const winnerScores = data.scores.filter((score) => score.playerId === data.roundWinnerId);
+      if (
+        data.roundWinnerId !== null &&
+        (!game.activePlayers.includes(data.roundWinnerId) ||
+          winnerRequirement === "disabled" ||
+          winnerScores.length !== 1 ||
+          winnerScores[0].phaseStatus !== "completed")
+      ) {
+        throw new Error("Round Winner must be a Passed Active Player in the Round");
+      }
       const players = await requirePlayers(tx, game.players);
       const totalPhases = game.phaseSet.phases.length;
       const now = Date.now();
