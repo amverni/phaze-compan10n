@@ -9,7 +9,7 @@ export type StoredRound = PhaseRound | GenericRound;
 export interface PhaseRound extends RoundMetadata {
   scorekeeper: "phase10";
   scores: ArrayAtLeastOne<RoundScore>;
-  roundWinnerId: PlayerId;
+  roundWinnerId: PlayerId | null;
 }
 
 export type PhaseStatus = "failed" | "completed" | "skipped" | "satOut";

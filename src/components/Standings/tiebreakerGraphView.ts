@@ -224,7 +224,9 @@ function getLatestEndpointGroups(
 function getMostRecentRoundWinByPlayer(rounds: readonly Round[]): ReadonlyMap<PlayerId, number> {
   const mostRecentRoundWin = new Map<PlayerId, number>();
   for (const round of rounds) {
-    mostRecentRoundWin.set(round.roundWinnerId, round.roundNumber);
+    if (round.roundWinnerId !== null) {
+      mostRecentRoundWin.set(round.roundWinnerId, round.roundNumber);
+    }
   }
   return mostRecentRoundWin;
 }
