@@ -134,8 +134,8 @@ The phase number a Player is attempting in their next Round, based on saved Roun
 _Avoid_: Stage, tier
 
 **Phase Set**:
-The ordered list of phases used by a game.
-_Avoid_: Preset, playlist
+The ordered list of phases used by a game, distinct from the card sets required by individual phases.
+_Avoid_: Preset, playlist, Set (ambiguous with a card set)
 
 **Phase 10 Round**:
 A Round in which each Active Player records a score and phase outcome.
