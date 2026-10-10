@@ -128,13 +128,7 @@ export function GenericCreateGame() {
             >
               <TabPanel className="h-full px-4">
                 <ScrollFade className="h-full -mx-6 px-6 pb-4">
-                  <form.Field
-                    name="players"
-                    validators={{
-                      onChange: ({ value }) =>
-                        value.length === 0 ? "Select at least one Player." : undefined,
-                    }}
-                  >
+                  <form.Field name="players">
                     {(field) => (
                       <PlayerSelectionProvider
                         value={{
@@ -153,9 +147,6 @@ export function GenericCreateGame() {
                         }}
                       >
                         <Players />
-                        {field.state.meta.errors.length > 0 && (
-                          <InlineError message={field.state.meta.errors.join(", ")} />
-                        )}
                       </PlayerSelectionProvider>
                     )}
                   </form.Field>
