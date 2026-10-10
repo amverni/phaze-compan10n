@@ -8,6 +8,28 @@
   --_gs-filter: blur(0.5px) brightness(100%);
 }
 
+.listbox-viewport {
+  --anchor-gap: 0.25rem;
+  --anchor-padding: calc(
+    max(
+      var(--safe-area-inset-top),
+      var(--safe-area-inset-right),
+      var(--safe-area-inset-bottom),
+      var(--safe-area-inset-left)
+    ) + 0.5rem
+  );
+  touch-action: pan-y;
+}
+
+.listbox-viewport[data-anchor^="top"] {
+  transform-origin: bottom left;
+}
+
+.listbox-viewport [role="option"] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .listbox-options {
   --listbox-enter-duration: 300ms;
   --listbox-leave-duration: 200ms;
