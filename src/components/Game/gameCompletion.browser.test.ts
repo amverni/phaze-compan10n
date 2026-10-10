@@ -471,6 +471,9 @@ it("normally finishes an all-Skipped Round without awarding any Round wins or wi
     await page.getByRole("dialog").waitFor({ state: "detached" });
     expect(await page.locator(".scoreboard-cell .border-current").count()).toBe(0);
     await page.reload();
+    await page.getByRole("tabpanel", { name: "Standings", exact: true }).waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog", { includeHidden: true }).waitFor({ state: "detached" });
     await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
     expect(await page.getByRole("button", { name: /^Add round/ }).count()).toBe(0);
     expect((await readRounds(page, game.id))[0].roundWinnerId).toBeNull();
@@ -699,6 +702,9 @@ it("opens final Standings after a finishing Round and keeps completed snapshot n
     await updateAndDeleteSavedPlayers(page, amy.id, bob.id);
 
     await page.reload();
+    await page.getByRole("tabpanel", { name: "Standings", exact: true }).waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog", { includeHidden: true }).waitFor({ state: "detached" });
     await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor({ timeout: 5_000 });
     expect(await readResults(page)).toMatchObject({
       games: [
@@ -754,6 +760,44 @@ it("opens final Standings after a finishing Round and keeps completed snapshot n
   }
 }, 30_000);
 
+it.each([
+  "no-preference",
+  "reduce",
+] as const)("dismisses the Phases Card with Escape across repeated openings (%s motion)", async (reducedMotion) => {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    reducedMotion,
+  });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const { game } = await seedCompletionGame(page, 3);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    const trigger = page.getByRole("button", { name: "Open Phases Card", exact: true });
+    const phases = page.getByRole("dialog", {
+      name: "Phases Card",
+      exact: true,
+      includeHidden: true,
+    });
+    for (let opening = 0; opening < (reducedMotion === "reduce" ? 10 : 100); opening++) {
+      await trigger.focus();
+      if (opening % 2 === 0) await trigger.click();
+      else await trigger.press("Enter");
+      await phases.waitFor({ state: "attached" });
+      await page.keyboard.press("Escape");
+      await phases.waitFor({ state: "detached" });
+      await expect
+        .poll(() => trigger.evaluate((button) => button === document.activeElement))
+        .toBe(true);
+    }
+  } finally {
+    await page.close();
+  }
+}, 120_000);
+
 it("offers Pause and Delete before a saved Round, retains a closed draft, and discards it only when leaving", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
   page.setDefaultTimeout(5_000);
@@ -784,13 +828,20 @@ it("offers Pause and Delete before a saved Round, retains a closed draft, and di
     expect(finishBox.y).toBeGreaterThan(422);
     expect(standingsBox.x).toBeGreaterThan(195);
     expect(standingsBox.y).toBeLessThan(422);
-    await page.getByRole("button", { name: "Open Phases Card" }).click();
+    const phasesTrigger = page.getByRole("button", { name: "Open Phases Card" });
+    await phasesTrigger.focus();
+    await phasesTrigger.click();
+    const phasesCard = page.getByRole("dialog", { name: "Phases Card", includeHidden: true });
+    await phasesCard.waitFor({ state: "attached" });
     await page
       .getByRole("dialog", { name: "Phases Card" })
       .getByRole("button", { name: "Share Phases Card", exact: true })
       .waitFor();
     await page.keyboard.press("Escape");
-    await page.getByRole("dialog").waitFor({ state: "detached" });
+    await phasesCard.waitFor({ state: "detached" });
+    await expect
+      .poll(() => phasesTrigger.evaluate((button) => button === document.activeElement))
+      .toBe(true);
 
     await page.getByRole("button", { name: "Add round 1", exact: true }).click();
     const entry = page.getByRole("dialog");

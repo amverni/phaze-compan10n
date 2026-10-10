@@ -3,47 +3,40 @@
 .dialog-backdrop {
   bottom: -100lvh;
   pointer-events: none;
-}
-
-.dialog-backdrop-enter {
-  transition: opacity 300ms cubic-bezier(0, 1, 0.5, 1);
-}
-
-.dialog-backdrop-leave {
+  opacity: 0;
   transition: opacity 300ms cubic-bezier(0.5, 0, 1, 0);
 }
 
-.dialog-backdrop-closed {
-  opacity: 0;
-}
-
-.dialog-backdrop-open {
+[data-dialog-open="true"] .dialog-backdrop {
   opacity: 1;
+  transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
 }
 
 /* ── Panel slide-up / slide-down ──────────────────────────── */
 
-.dialog-panel-enter {
-  transition: transform 300ms cubic-bezier(0, 1, 0.5, 1);
-}
-
-.dialog-panel-leave {
+.dialog-panel {
+  transform: translateY(100svh);
   transition: transform 300ms cubic-bezier(0.5, 0, 1, 0);
 }
 
-.dialog-panel-closed {
-  transform: translateY(100svh);
+[data-dialog-open="true"] .dialog-panel {
+  transform: translateY(0);
+  transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
 }
 
-.dialog-panel-open {
-  transform: translateY(0);
+@starting-style {
+  [data-dialog-open="true"] .dialog-backdrop {
+    opacity: 0;
+  }
+
+  [data-dialog-open="true"] .dialog-panel {
+    transform: translateY(100svh);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dialog-backdrop-enter,
-  .dialog-backdrop-leave,
-  .dialog-panel-enter,
-  .dialog-panel-leave {
+  .dialog-backdrop,
+  .dialog-panel {
     transition: none;
   }
 }
