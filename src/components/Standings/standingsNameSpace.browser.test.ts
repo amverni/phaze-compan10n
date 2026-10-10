@@ -64,8 +64,8 @@ async function seedGame(page: Page, game: Game | GenericGame, round: Round | Gen
   );
   const prefix = game.scorekeeper === "phase10" ? "phaseCompan10n/" : "scorekeeper/";
   await page.goto(`${appUrl}#/${prefix}game/${game.id}`);
-  await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
   if (game.status !== "completed") {
+    await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
     await page.getByRole("button", { name: "Open Standings", exact: true }).click();
   }
   await page.getByRole("dialog").locator(".dialog-panel").waitFor();

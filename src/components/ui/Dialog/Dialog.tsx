@@ -1,11 +1,12 @@
+import { DialogPanel, type DialogProps, Dialog as HeadlessDialog } from "@headlessui/react";
 import {
-  DialogPanel,
-  type DialogProps,
-  Dialog as HeadlessDialog,
-  Transition,
-  TransitionChild,
-} from "@headlessui/react";
-import { type ReactNode, type PointerEvent as ReactPointerEvent, useCallback, useRef } from "react";
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import "./Dialog.css";
 
 interface AppDialogProps extends Omit<DialogProps<"div">, "children"> {
@@ -80,11 +81,33 @@ function findNearestVerticalScroller(target: EventTarget | null, contentNode: HT
  */
 export function Dialog(props: AppDialogProps) {
   const { children, open, onClose, className, afterLeave, dismissible = true, ...rest } = props;
+  const [rendered, setRendered] = useState(Boolean(open));
+  if (open && !rendered) setRendered(true);
 
   const mergedPanelClasses = [panelClasses, className].filter(Boolean).join(" ");
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (open || !rendered) return;
+    let cancelled = false;
+    // Native transitions can reverse before entry finishes. Keep the focus trap
+    // mounted until both surfaces settle; reopening cancels this removal.
+    const animations = [
+      ...(panelRef.current?.getAnimations() ?? []),
+      ...(backdropRef.current?.getAnimations() ?? []),
+    ];
+    void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+      if (cancelled) return;
+      setRendered(false);
+      afterLeave?.();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, rendered, afterLeave]);
 
   // Mutable drag state kept in a ref so React handlers can share it
   // without causing re-renders.
@@ -261,61 +284,47 @@ export function Dialog(props: AppDialogProps) {
     [applyOffset, dismissible, finishGesture],
   );
 
-  return (
-    <Transition show={open} afterLeave={afterLeave}>
-      <HeadlessDialog
-        {...rest}
-        onClose={(value) => {
-          if (dismissible) onClose?.(value);
-        }}
-        className="relative z-50"
-      >
-        {/* Dim overlay */}
-        <TransitionChild
-          enter="dialog-backdrop-enter"
-          enterFrom="dialog-backdrop-closed"
-          enterTo="dialog-backdrop-open"
-          leave="dialog-backdrop-leave"
-          leaveFrom="dialog-backdrop-open"
-          leaveTo="dialog-backdrop-closed"
-        >
-          <div className="dialog-backdrop fixed inset-0 bg-black/15 backdrop-blur-xs" />
-        </TransitionChild>
+  return rendered ? (
+    <HeadlessDialog
+      {...rest}
+      static
+      open={rendered}
+      data-dialog-open={Boolean(open)}
+      onClose={(value) => {
+        if (dismissible) onClose?.(value);
+      }}
+      className="relative z-50"
+    >
+      {/* Dim overlay */}
+      <div
+        ref={backdropRef}
+        className="dialog-backdrop fixed inset-0 bg-black/15 backdrop-blur-xs"
+      />
 
-        {/* Bottom-anchored wrapper — above the backdrop */}
-        <div className={wrapperClasses}>
-          {/* Glass panel — slides up */}
-          <TransitionChild
-            enter="dialog-panel-enter"
-            enterFrom="dialog-panel-closed"
-            enterTo="dialog-panel-open"
-            leave="dialog-panel-leave"
-            leaveFrom="dialog-panel-open"
-            leaveTo="dialog-panel-closed"
+      {/* Bottom-anchored wrapper — above the backdrop */}
+      <div className={wrapperClasses}>
+        {/* Glass panel — slides up */}
+        <DialogPanel ref={panelRef} className={mergedPanelClasses}>
+          <div aria-hidden="true" className="glass dialog-glass" />
+          {/* Drag handle */}
+          <div
+            className="flex shrink-0 cursor-grab justify-center pt-2.5 pb-1 touch-none select-none active:cursor-grabbing"
+            aria-hidden="true"
+            onPointerDown={onHandlePointerDown}
+            onPointerMove={onHandlePointerMove}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerUp}
           >
-            <DialogPanel ref={panelRef} className={mergedPanelClasses}>
-              <div aria-hidden="true" className="glass dialog-glass" />
-              {/* Drag handle */}
-              <div
-                className="flex shrink-0 cursor-grab justify-center pt-2.5 pb-1 touch-none select-none active:cursor-grabbing"
-                aria-hidden="true"
-                onPointerDown={onHandlePointerDown}
-                onPointerMove={onHandlePointerMove}
-                onPointerUp={onHandlePointerUp}
-                onPointerCancel={onHandlePointerUp}
-              >
-                <div className="h-1 w-9 rounded-full bg-gray-400/50 dark:bg-gray-500/50" />
-              </div>
-              <section
-                ref={contentCallbackRef}
-                className="dialog-content dialog-scroll min-h-0 flex-1 overflow-y-auto overscroll-none"
-              >
-                {children}
-              </section>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </HeadlessDialog>
-    </Transition>
-  );
+            <div className="h-1 w-9 rounded-full bg-gray-400/50 dark:bg-gray-500/50" />
+          </div>
+          <section
+            ref={contentCallbackRef}
+            className="dialog-content dialog-scroll min-h-0 flex-1 overflow-y-auto overscroll-none"
+          >
+            {children}
+          </section>
+        </DialogPanel>
+      </div>
+    </HeadlessDialog>
+  ) : null;
 }
