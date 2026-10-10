@@ -179,24 +179,26 @@ export function AddRoundDialog({
               value={winnerValue}
               onChange={handleWinnerSelect}
               disabled={progress.winnerRequirement === "disabled"}
-              className="w-full min-w-0"
+              className="@container/round-winner w-full min-w-0"
             >
               <SettingListRow
                 label={
-                  <ListboxLabel className="flex flex-row gap-2">
+                  <ListboxLabel className="flex items-center gap-2 whitespace-nowrap">
                     <Trophy className="size-4 shrink-0 text-yellow-500" aria-hidden />
-                    Round Winner
+                    <span className="truncate">Round Winner</span>
                   </ListboxLabel>
                 }
               >
-                <ListboxButton variant="plain" className="min-h-10 max-w-full min-w-0">
+                <ListboxButton variant="plain" className="min-h-10 min-w-15 flex-1">
                   {winnerPlayer ? (
                     <>
                       <PlayerAvatar player={winnerPlayer} size={14} />
-                      <span className="min-w-0 truncate text-right">{winnerPlayer.name}</span>
+                      <span className="min-w-0 truncate text-right @max-[18rem]/round-winner:sr-only">
+                        {winnerPlayer.name}
+                      </span>
                     </>
                   ) : (
-                    <span className="min-w-0 truncate text-right text-text-secondary">
+                    <span className="min-w-0 truncate text-right text-text-secondary @max-[18rem]/round-winner:sr-only">
                       {progress.winnerRequirement === "disabled" ? "No winner" : "Choose winner"}
                     </span>
                   )}

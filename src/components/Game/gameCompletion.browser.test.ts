@@ -30,6 +30,191 @@ afterAll(async () => {
   await server?.close();
 });
 
+it.each<GameTiebreaker>([
+  "roundsWon",
+  "lowestPoints",
+])("keeps the %s Round Winner row single-line through selection, disabled states, and resizing", async (tiebreaker) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
+  try {
+    await page.goto(`${appUrl}#/phaseCompan10n/players`);
+    await page.getByText("No players yet", { exact: true }).waitFor();
+    const longName = "Alexandria Stone with an extraordinarily long Player name";
+    const { game, players } = await seedCompletionGame(page, 3, tiebreaker, 2, [
+      "Amy Jones",
+      longName,
+    ]);
+    await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
+    await page.getByRole("button", { name: "Add round 1", exact: true }).click();
+    const entry = page.getByRole("dialog");
+    const winner = entry.getByRole("button", { name: /Round Winner/ });
+
+    expect(
+      await page.evaluate(async () => {
+        const fonts = await document.fonts.load('500 14px "Quicksand Variable"');
+        await document.fonts.ready;
+        return fonts.length;
+      }),
+    ).toBeGreaterThan(0);
+    const expectAcrossWidths = async (value: string, player?: Player) => {
+      for (const width of [390, 320, 360, 768, 1024, 320, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await expectWinnerRow(entry, value, width < 390, player);
+      }
+    };
+    await expectAcrossWidths("Choose winner");
+
+    // Keep the viewport fixed while reducing the space available to the row.
+    await entry.locator(".dialog-panel").evaluate((panel) => {
+      (panel as HTMLElement).style.width = "80vw";
+    });
+    await expectWinnerRow(entry, "Choose winner", true);
+    await entry.locator(".dialog-panel").evaluate((panel) => {
+      (panel as HTMLElement).style.removeProperty("width");
+    });
+    await expectWinnerRow(entry, "Choose winner", false);
+
+    await page.setViewportSize({ width: 320, height: 844 });
+    await winner.focus();
+    expect(await winner.evaluate((button) => button === document.activeElement)).toBe(true);
+    expect(
+      await winner.evaluate((button) => {
+        const style = getComputedStyle(button);
+        return style.outlineStyle !== "none" || style.backgroundColor !== "rgba(0, 0, 0, 0)";
+      }),
+    ).toBe(true);
+    await page.keyboard.press("Space");
+    await page.getByRole("listbox").waitFor();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await page.getByRole("listbox").waitFor({ state: "detached" });
+    expect(await winner.evaluate((button) => button === document.activeElement)).toBe(true);
+    expect(
+      await entry.getByRole("button", { name: "Passed", exact: true }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    await expectAcrossWidths(players[0].name, players[0]);
+
+    await page.setViewportSize({ width: 320, height: 844 });
+    await winner.focus();
+    await page.keyboard.press("Space");
+    const option = page.getByRole("option", { name: longName, exact: true });
+    await option.waitFor();
+    await page.getByRole("listbox").evaluate(async (listbox) => {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await Promise.all(listbox.getAnimations({ subtree: true }).map((motion) => motion.finished));
+    });
+    expect(await option.ariaSnapshot()).toContain(longName);
+    const optionBox = await option.boundingBox();
+    const optionAvatar = await option.locator('span[style*="background-color"]').boundingBox();
+    if (!optionBox || !optionAvatar) throw new Error("Missing winner option geometry");
+    expect(optionBox.height).toBeGreaterThanOrEqual(40);
+    expect(optionAvatar.width).toBe(24);
+    expect(optionAvatar.x + optionAvatar.width).toBeLessThan(optionBox.x + optionBox.width);
+    await page.keyboard.press("End");
+    await page.keyboard.press("Enter");
+    await page.getByRole("listbox").waitFor({ state: "detached" });
+    expect(await winner.evaluate((button) => button === document.activeElement)).toBe(true);
+    await expectAcrossWidths(longName, players[1]);
+    const name = winner.getByText(longName, { exact: true });
+    expect(
+      await name.evaluate((element) => ({
+        truncated: element.scrollWidth > element.clientWidth,
+        textOverflow: getComputedStyle(element).textOverflow,
+      })),
+    ).toEqual({ truncated: true, textOverflow: "ellipsis" });
+
+    await winner.focus();
+    await page.keyboard.press("Space");
+    await page.getByRole("listbox").waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("listbox").waitFor({ state: "detached" });
+    expect(await winner.evaluate((button) => button === document.activeElement)).toBe(true);
+    await expectWinnerRow(entry, longName, false, players[1]);
+    await page.keyboard.press("Space");
+    await page.getByRole("listbox").waitFor();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Enter");
+    await page.getByRole("listbox").waitFor({ state: "detached" });
+    await expectAcrossWidths("Choose winner");
+
+    for (const [index, player] of players.entries()) {
+      await entry.getByRole("tab", { name: player.name, exact: true }).click();
+      await entry.getByRole("button", { name: "Show extra options", exact: true }).click();
+      await entry
+        .getByRole("button", { name: index === 0 ? "Skipped" : "Sat Out", exact: true })
+        .click();
+    }
+    expect(await winner.isDisabled()).toBe(true);
+    await expectAcrossWidths("No winner");
+    await page.keyboard.press("Tab");
+    expect(await winner.evaluate((button) => button === document.activeElement)).toBe(false);
+    await entry.getByRole("button", { name: "Failed", exact: true }).click();
+    expect(await winner.isDisabled()).toBe(false);
+    await expectAcrossWidths("Choose winner");
+  } finally {
+    await page.close();
+  }
+}, 60_000);
+
+async function expectWinnerRow(entry: Locator, value: string, compact: boolean, player?: Player) {
+  await entry.evaluate(async (dialog) => {
+    await document.fonts.ready;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await Promise.all(dialog.getAnimations({ subtree: true }).map((motion) => motion.finished));
+  });
+  const winner = entry.getByRole("button", { name: /Round Winner/ });
+  const label = entry.getByText("Round Winner", { exact: true });
+  const text = await label.evaluate((element) => {
+    const range = document.createRange();
+    const textNode = Array.from(element.childNodes).find(
+      (node) => node.textContent?.trim() === "Round Winner",
+    );
+    if (!textNode) throw new Error("Missing Round Winner label text");
+    range.selectNodeContents(textNode);
+    const lines = new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.y)));
+    const rect = range.getBoundingClientRect();
+    const bounds = element.getBoundingClientRect();
+    return { lines: lines.size, x: rect.x, right: rect.right, visibleRight: bounds.right };
+  });
+  const control = await winner.boundingBox();
+  const valueBox = await winner.getByText(value, { exact: true }).boundingBox();
+  const chevron = await winner.locator("svg").last().boundingBox();
+  const panel = await entry.locator(".dialog-panel").boundingBox();
+  if (!control || !valueBox || !chevron || !panel) throw new Error("Missing Round Winner geometry");
+  expect(text.lines).toBe(1);
+  expect(text.right).toBeLessThanOrEqual(text.visibleRight + 1);
+  expect(text.right).toBeLessThanOrEqual(control.x);
+  expect(chevron.width).toBeGreaterThanOrEqual(14);
+  expect(chevron.x + chevron.width).toBeLessThanOrEqual(control.x + control.width);
+  expect(control.height).toBe(40);
+  expect(control.x + control.width).toBeLessThanOrEqual(panel.x + panel.width);
+  expect(text.x).toBeGreaterThanOrEqual(panel.x);
+  expect(valueBox.width > 1).toBe(!compact);
+  if (!compact) {
+    expect(valueBox.x).toBeGreaterThanOrEqual(control.x);
+    expect(valueBox.x + valueBox.width).toBeLessThan(chevron.x);
+  }
+  expect(await winner.ariaSnapshot()).toContain(`button "Round Winner ${value}"`);
+  if (player) {
+    const avatar = winner.locator('span[style*="background-color"]');
+    const avatarBox = await avatar.boundingBox();
+    if (!avatarBox) throw new Error("Missing selected Player avatar");
+    expect(avatarBox.width).toBe(24);
+    expect(avatarBox.height).toBe(24);
+    expect(avatarBox.x).toBeGreaterThanOrEqual(control.x);
+    expect(avatarBox.x + avatarBox.width).toBeLessThan(chevron.x);
+    expect(
+      Math.abs(avatarBox.y + avatarBox.height / 2 - (chevron.y + chevron.height / 2)),
+    ).toBeLessThan(1);
+    expect(await avatar.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(
+      player.color === "#123456" ? "rgb(18, 52, 86)" : "rgb(171, 205, 239)",
+    );
+    if (!compact) expect(avatarBox.x + avatarBox.width).toBeLessThan(valueBox.x);
+  }
+}
+
 it("counts the required winner separately and restores its requirement after all-Skipped/Sat Out exceptions", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.setDefaultTimeout(5_000);
@@ -780,6 +965,7 @@ function seedCompletionGame(
   phaseCount = 1,
   tiebreaker: GameTiebreaker = "roundsWon",
   playerCount = 2,
+  playerNames = ["Amy Jones", "Bob Stone", "Cam Lee"],
 ) {
   return page.evaluate<{ game: Game; players: Player[] }>(`
     Promise.all([
@@ -787,18 +973,18 @@ function seedCompletionGame(
       import("/scorekeeper/src/data/api/players.ts")
     ]).then(async ([{ gamesApi }, { playersApi }]) => {
       const amy = await playersApi.create({
-        name: "Amy Jones",
+        name: ${JSON.stringify(playerNames[0])},
         color: "#123456",
         isFavorite: 0
       });
       const bob = await playersApi.create({
-        name: "Bob Stone",
+        name: ${JSON.stringify(playerNames[1])},
         color: "#abcdef",
         isFavorite: 0
       });
       const players = [amy, bob];
       if (${playerCount} === 3) {
-        players.push(await playersApi.create({ name: "Cam Lee", color: "#456789", isFavorite: 0 }));
+        players.push(await playersApi.create({ name: ${JSON.stringify(playerNames[2])}, color: "#456789", isFavorite: 0 }));
       }
       const game = await gamesApi.create({
         scorekeeper: "phase10",
