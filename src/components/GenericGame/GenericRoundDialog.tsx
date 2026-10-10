@@ -110,6 +110,7 @@ export function GenericRoundDialogActions({
       {children}
       <Button
         type="submit"
+        variant="ready"
         aria-label="Save"
         disabled={!canSave || submitting}
         className={roundActionClasses}

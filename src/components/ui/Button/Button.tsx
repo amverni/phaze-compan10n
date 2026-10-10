@@ -11,12 +11,17 @@ const baseClasses = [
 
 const variantClasses = {
   default: ["glass", interactiveClasses].join(" "),
+  ready: [
+    "glass glass-ready",
+    interactiveClasses,
+    "data-focus:outline-solid data-focus:outline-text-secondary!",
+  ].join(" "),
   plain:
     "cursor-pointer focus:outline-none data-[focus]:outline-solid data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-current",
 };
 
 type StyledButtonProps<TTag extends ElementType = "button"> = ButtonProps<TTag> & {
-  variant?: "default" | "plain";
+  variant?: "default" | "plain" | "ready";
 };
 
 /**
@@ -24,7 +29,8 @@ type StyledButtonProps<TTag extends ElementType = "button"> = ButtonProps<TTag> 
  *
  * Accepts the same props as `@headlessui/react`'s `Button` and layers on
  * the app's shared surface styling by default. Use `variant="plain"` for
- * surface-free actions with a current-color keyboard focus outline.
+ * surface-free actions with a current-color keyboard focus outline, or
+ * `variant="ready"` to highlight enabled actions while keeping disabled ones neutral.
  */
 export function Button<TTag extends ElementType = "button">(
   props: StyledButtonProps<TTag>,

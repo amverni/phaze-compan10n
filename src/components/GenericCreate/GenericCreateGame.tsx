@@ -320,6 +320,7 @@ export function GenericCreateGame() {
               {([canSubmit, isSubmitting]) => (
                 <Button
                   type="submit"
+                  variant="ready"
                   aria-label="Start"
                   className="page-shell-button p-0"
                   disabled={!canSubmit || isSubmitting}
