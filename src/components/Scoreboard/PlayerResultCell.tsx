@@ -53,11 +53,18 @@ export function PlayerResultCell({
 
   return (
     <div className={`relative flex w-full flex-col items-center ${isGhost ? "opacity-55" : ""}`}>
-      <div className="flex w-full items-center justify-center">
+      <div className="scoreboard-entry">
         {isDealer && (
-          <DealerMarker className={["absolute left-0.75", isGhost ? "opacity-60" : ""].join(" ")} />
+          <DealerMarker
+            className={["scoreboard-entry__dealer", isGhost ? "opacity-60" : ""].join(" ")}
+          />
         )}
-        <span className={`relative text-base font-medium leading-none tabular-nums ${phaseColor}`}>
+        <span
+          className={[
+            "scoreboard-entry__value scoreboard-entry__phase relative text-base font-medium leading-none tabular-nums",
+            phaseColor,
+          ].join(" ")}
+        >
           {isRoundWinner && (
             <span
               aria-hidden
@@ -67,7 +74,10 @@ export function PlayerResultCell({
           {phaseNumber}
         </span>
         {!isGhost && StatusIcon && (
-          <span aria-hidden className={`absolute right-1.25 leading-none ${iconColor}`}>
+          <span
+            aria-hidden
+            className={["scoreboard-entry__result leading-none", iconColor].join(" ")}
+          >
             <StatusIcon size={14} strokeWidth={2.5} />
           </span>
         )}

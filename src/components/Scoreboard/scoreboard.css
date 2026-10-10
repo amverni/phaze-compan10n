@@ -18,6 +18,49 @@
   container-type: inline-size;
 }
 
+/* Spare width is split 1:2:2:1 around symmetric marker slots. The preferred
+   spread never caps intrinsic content, and markers don't affect row height. */
+.scoreboard-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) var(--entry-marker-width, 17px) minmax(0, 2fr)
+    max-content minmax(0, 2fr) var(--entry-marker-width, 17px) minmax(
+      0,
+      1fr
+    );
+  align-items: center;
+  width: 100%;
+  min-width: max-content;
+  max-width: 9rem;
+  margin-inline: auto;
+}
+
+.scoreboard-entry__value {
+  grid-column: 4;
+}
+
+.scoreboard-entry__dealer,
+.scoreboard-entry__result {
+  position: absolute;
+  grid-row: 1;
+  align-self: center;
+  justify-self: center;
+}
+
+.scoreboard-entry__dealer {
+  grid-column: 2 / 3;
+}
+
+.scoreboard-entry__result {
+  grid-column: 6 / 7;
+}
+
+.scoreboard-entry__phase {
+  min-width: 20px;
+  text-align: center;
+}
+
 .scoreboard-identity {
   position: relative;
   display: flex;

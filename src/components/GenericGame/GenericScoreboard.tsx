@@ -1,5 +1,5 @@
 import { Check, Plus, X } from "lucide-react";
-import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { GenericScoreboardView, GenericScoreTotal } from "../../types";
 import { ScoreboardPlayerName } from "../Scoreboard/ScoreboardPlayerName";
 import { DealerMarker } from "../ui";
@@ -24,6 +24,39 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
   const rootRef = useRef<HTMLElement>(null);
   const resultsId = useId();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reconnect the observer when saved Round DOM nodes change.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const columns = Array.from({ length: view.players.length }, (_, index) => {
+      const entries = Array.from(
+        root.querySelectorAll<HTMLElement>(`[data-scoreboard-column="${index}"]`),
+      );
+      const contents = entries.flatMap((entry) =>
+        Array.from(entry.querySelector(".scoreboard-entry__value")?.children ?? []),
+      );
+      return { entries, contents };
+    });
+    const alignEntries = () => {
+      // Measure glyphs, not their reserved slots, so setting widths cannot feed
+      // back into the observer. Read every column before writing any styles.
+      const widths = columns.map(({ contents }) =>
+        Math.max(0, ...contents.map((element) => element.getBoundingClientRect().width)),
+      );
+      for (const [index, { entries }] of columns.entries()) {
+        for (const entry of entries) {
+          entry.style.setProperty("--entry-value-width", `${widths[index]}px`);
+        }
+      }
+    };
+    const observer = new ResizeObserver(alignEntries);
+    for (const { contents } of columns) {
+      for (const element of contents) observer.observe(element);
+    }
+    alignEntries();
+    return () => observer.disconnect();
+  }, [view.players.length, view.rounds]);
+
   useEffect(() => {
     if (expandedRound === null) return;
     const collapseOutside = (event: PointerEvent) => {
@@ -45,6 +78,10 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
       : view.game.settings.mode === "singleRoundWinner"
         ? "Wins"
         : "Passes";
+  const entryClasses = [
+    "scoreboard-entry generic-scoreboard-entry",
+    view.game.settings.dealer ? "" : "generic-scoreboard-entry--without-dealer",
+  ].join(" ");
 
   return (
     <>
@@ -145,31 +182,28 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       roundIndex === view.rounds.length - 1 ? "scoreboard-cell--last-row" : "",
                     ].join(" ")}
                   >
-                    <div
-                      className={[
-                        "relative flex w-full flex-col items-center gap-1 text-base font-medium leading-none [&>svg]:size-4",
-                        view.game.settings.dealer ? "px-6" : "",
-                      ].join(" ")}
-                    >
+                    <div className={entryClasses} data-scoreboard-column={index}>
                       {round.dealerId === score.playerId && (
-                        <DealerMarker className="absolute top-0 left-0.75" />
+                        <DealerMarker className="scoreboard-entry__dealer" />
                       )}
-                      {"passed" in score ? (
-                        <PassFailOutcome passed={score.passed} />
-                      ) : "points" in score ? (
-                        <>
-                          <span>{score.points}</span>
-                          {score.tiebreaker !== undefined && (
-                            <span className="text-sm font-normal leading-none text-text-secondary">
-                              {score.tiebreaker}
-                            </span>
-                          )}
-                        </>
-                      ) : score.won ? (
-                        <Check className="mx-auto size-5 text-pt-green-500" aria-hidden />
-                      ) : (
-                        <X className="mx-auto size-5 text-pt-red-500" aria-hidden />
-                      )}
+                      <div className="scoreboard-entry__value flex flex-col items-center gap-1 text-base font-medium leading-none [&>svg]:size-4">
+                        {"passed" in score ? (
+                          <PassFailOutcome passed={score.passed} />
+                        ) : "points" in score ? (
+                          <>
+                            <span>{score.points}</span>
+                            {score.tiebreaker !== undefined && (
+                              <span className="text-sm font-normal leading-none text-text-secondary">
+                                {score.tiebreaker}
+                              </span>
+                            )}
+                          </>
+                        ) : score.won ? (
+                          <Check className="mx-auto size-5 text-pt-green-500" aria-hidden />
+                        ) : (
+                          <X className="mx-auto size-5 text-pt-red-500" aria-hidden />
+                        )}
+                      </div>
                     </div>
                     {expandedRound === round.roundNumber && (
                       <div
@@ -224,9 +258,12 @@ export function GenericScoreboard({ view }: { view: GenericScoreboardView }) {
                       index === view.players.length - 1 ? "scoreboard-cell--last-col" : "",
                     ].join(" ")}
                   >
-                    {view.upcomingDealerId === player.id && (
-                      <DealerMarker className="absolute left-1.25 opacity-60" />
-                    )}
+                    <div className={entryClasses} data-scoreboard-column={index}>
+                      {view.upcomingDealerId === player.id && (
+                        <DealerMarker className="scoreboard-entry__dealer opacity-60" />
+                      )}
+                      <span aria-hidden className="scoreboard-entry__value" />
+                    </div>
                   </td>
                 ))}
               </tr>

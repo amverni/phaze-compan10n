@@ -37,8 +37,8 @@ async function box(locator: Locator) {
   return bounds;
 }
 
-async function seedGame(page: Page) {
-  const players = Array.from({ length: 6 }, (_, index) => ({
+async function seedGame(page: Page, playerCount = 6, variedResults = false) {
+  const players = Array.from({ length: playerCount }, (_, index) => ({
     ...phaseGraphPlayers.amy,
     id: `player-${index}`,
     name: `Player ${index}`,
@@ -58,7 +58,9 @@ async function seedGame(page: Page) {
     const scores: RoundScore[] = players.map((player, playerIndex) => ({
       playerId: player.id,
       currentPhase: index + 1,
-      phaseStatus: "completed",
+      phaseStatus: variedResults
+        ? (["completed", "failed", "skipped", "satOut"] as const)[index % 4]
+        : "completed",
       score: playerIndex === index % players.length ? 0 : 100,
     }));
     return {
@@ -99,6 +101,142 @@ async function seedGame(page: Page) {
   await page.getByRole("region", { name: "Scoreboard", exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);
 }
+
+it.each([
+  "light",
+  "dark",
+] as const)("keeps Phase results in a centered, continuously spaced group in %s appearance", async (colorScheme) => {
+  for (const playerCount of [1, 2, 6]) {
+    const page = await browser.newPage({
+      viewport: { width: 320, height: 844 },
+      colorScheme,
+      hasTouch: true,
+    });
+    page.setDefaultTimeout(5_000);
+    page.setDefaultNavigationTimeout(30_000);
+    try {
+      await seedGame(page, playerCount, true);
+      const scoreboard = page.getByRole("region", { name: "Scoreboard", exact: true });
+      const round = scoreboard.getByRole("button", { name: /^Round 1(?:, expanded)?$/ });
+      const cell = round.locator("xpath=following-sibling::div[1]");
+      const phase = cell.getByText("1", { exact: true });
+      const dealer = cell.getByText("D", { exact: true });
+      const result = cell.locator("svg");
+      const positions: Array<{ width: number; separation: number }> = [];
+      for (const width of [320, 350, 390, 512, 1280]) {
+        await page.setViewportSize({ width, height: 844 });
+        await scoreboard.evaluate((element) => {
+          element.scrollLeft = 0;
+          element.scrollTop = 0;
+        });
+        const bounds = await box(cell);
+        const number = await box(phase);
+        const glyph = await phase.evaluate((element) => {
+          const text = Array.from(element.childNodes).find(
+            (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+          );
+          if (!text) throw new Error("Missing visible Phase number");
+          const range = document.createRange();
+          range.selectNode(text);
+          const bounds = range.getBoundingClientRect();
+          return { x: bounds.x, width: bounds.width };
+        });
+        const badge = await box(dealer);
+        const icon = await box(result);
+        const center = number.x + number.width / 2;
+        const left = badge.x + badge.width / 2;
+        const right = icon.x + icon.width / 2;
+        expect(Math.abs(center - (bounds.x + bounds.width / 2))).toBeLessThanOrEqual(0.6);
+        expect(Math.abs(glyph.x + glyph.width / 2 - center)).toBeLessThanOrEqual(0.6);
+        expect(center - left).toBeCloseTo(right - center, 1);
+        expect(badge.width).toBe(17);
+        expect(badge.height).toBe(17);
+        expect(icon.width).toBe(14);
+        expect(icon.height).toBe(14);
+        expect(await fontSize(phase)).toBe("16px");
+        expect(bounds.height).toBe(44);
+        expect(bounds.width).toBeCloseTo(
+          Math.max(70, (Math.min(width, 512) - 32 - 2 - 36) / playerCount),
+          1,
+        );
+        const ring = await box(phase.locator("[aria-hidden]"));
+        expect(ring.width).toBe(20);
+        expect(ring.x + ring.width / 2).toBeCloseTo(center, 1);
+        expect(badge.x + badge.width).toBeLessThan(ring.x);
+        expect(ring.x + ring.width).toBeLessThan(icon.x);
+        positions.push({ width: bounds.width, separation: right - left });
+        if (playerCount === 6) {
+          // The ring and symmetric 17px marker positions define the reserved footprints.
+          const outer = badge.x - (bounds.x + 2);
+          const interior = ring.x - (badge.x + badge.width);
+          expect(outer).toBeGreaterThan(0);
+          expect(interior).toBeCloseTo(outer * 2, 0);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      }
+      if (playerCount === 1) {
+        expect(positions[2].width).toBeGreaterThan(positions[0].width);
+        expect(positions[0].separation).toBeCloseTo(positions[2].separation, 1);
+        expect(positions[2].separation).toBeCloseTo(positions[3].separation, 1);
+        expect(positions[0].separation).toBeLessThan(100);
+      }
+      if (playerCount === 2) {
+        expect(positions[0].separation).toBeLessThan(positions[1].separation);
+        expect(positions[1].separation).toBeLessThan(positions[2].separation);
+        expect(positions[2].separation).toBeCloseTo(positions[3].separation, 1);
+      }
+      for (const roundNumber of [2, 3, 4, 10]) {
+        const control = scoreboard.getByRole("button", {
+          name: `Round ${roundNumber}`,
+          exact: true,
+        });
+        const resultCell = control.locator("xpath=following-sibling::div[1]");
+        const bounds = await box(resultCell);
+        const value = await box(resultCell.getByText(String(roundNumber), { exact: true }));
+        expect(
+          Math.abs(value.x + value.width / 2 - (bounds.x + bounds.width / 2)),
+        ).toBeLessThanOrEqual(0.6);
+        const status = await box(resultCell.locator("svg"));
+        expect(status.width).toBe(14);
+        expect(status.height).toBe(14);
+        expect(value.y).toBeCloseTo((await box(control.locator("span"))).y, 1);
+      }
+      const upcoming = scoreboard
+        .getByRole("button", { name: /^Add round/ })
+        .locator("xpath=following-sibling::div[1]");
+      const upcomingBounds = await box(upcoming);
+      const upcomingValue = await box(upcoming.getByText("10", { exact: true }));
+      expect(upcomingValue.x + upcomingValue.width / 2).toBeCloseTo(
+        upcomingBounds.x + upcomingBounds.width / 2 - (playerCount === 1 ? 0 : 0.5),
+        1,
+      );
+      expect(await upcoming.locator("svg").count()).toBe(0);
+      if (playerCount === 1) {
+        expect((await box(upcoming.getByText("D", { exact: true }))).x).toBeCloseTo(
+          (await box(dealer)).x,
+          1,
+        );
+      }
+      const before = await box(phase);
+      await cell.tap();
+      await expect
+        .poll(() =>
+          cell
+            .locator(".scoreboard-extras")
+            .evaluate((element) => getComputedStyle(element).opacity),
+        )
+        .toBe("1");
+      expect(await box(phase)).toEqual(before);
+      expect((await box(cell)).height).toBe(82);
+      for (const value of await cell.locator(".scoreboard-extras span:not([aria-hidden])").all()) {
+        const detail = await box(value);
+        expect(detail.x + detail.width / 2).toBeCloseTo(before.x + before.width / 2, 1);
+      }
+    } finally {
+      await page.close();
+    }
+  }
+}, 60_000);
 
 it("centers header controls together without moving the independent logo across viewport sizes and safe areas", async () => {
   const page = await browser.newPage({

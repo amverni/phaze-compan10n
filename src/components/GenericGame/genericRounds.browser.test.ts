@@ -430,7 +430,7 @@ it("rotates visible saved and upcoming Dealer markers, including expanded and re
 }, 60_000);
 
 it("keeps solo Dealer markers on every Round and reclaims their layout space when off", async () => {
-  const dealerPadding: number[] = [];
+  const reservedMarkerSpace: number[] = [];
   for (const dealer of [false, true]) {
     const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
     try {
@@ -443,14 +443,19 @@ it("keeps solo Dealer markers on every Round and reclaims their layout space whe
         exact: true,
       });
       await firstScore.waitFor();
+      await page.evaluate(() => document.fonts.ready);
       const table = page.getByRole("table", { name: "Points scoreboard" });
       expect(await table.getByText("D", { exact: true }).count()).toBe(dealer ? 3 : 0);
       expect(await page.getByRole("cell", { name: /upcoming Round/ }).count()).toBe(1);
-      dealerPadding.push(
-        await firstScore
-          .locator(":scope > div")
-          .first()
-          .evaluate((element) => Number.parseFloat(getComputedStyle(element).paddingLeft)),
+      const groupBounds = await firstScore.locator(":scope > div").first().boundingBox();
+      const valueBounds = await firstScore
+        .getByText("-9007199254740991", { exact: true })
+        .boundingBox();
+      if (!groupBounds || !valueBounds) throw new Error("Missing saved Points geometry");
+      reservedMarkerSpace.push(groupBounds.width - valueBounds.width);
+      expect(valueBounds.x + valueBounds.width / 2).toBeCloseTo(
+        groupBounds.x + groupBounds.width / 2,
+        1,
       );
       const add = page.getByRole("button", { name: "Add Round", exact: true });
       await page.getByRole("region", { name: "Scoreboard", exact: true }).evaluate((element) => {
@@ -469,8 +474,8 @@ it("keeps solo Dealer markers on every Round and reclaims their layout space whe
       await page.close();
     }
   }
-  expect(dealerPadding[0]).toBe(0);
-  expect(dealerPadding[1]).toBeGreaterThan(0);
+  expect(reservedMarkerSpace[0]).toBeLessThan(1);
+  expect(reservedMarkerSpace[1]).toBeCloseTo(48, 1);
 }, 120_000);
 
 it("keeps a modal Points draft on close, saves explicit zero and negatives, and clears after save", async () => {

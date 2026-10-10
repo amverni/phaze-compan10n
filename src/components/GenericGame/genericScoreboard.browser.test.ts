@@ -51,6 +51,7 @@ it.each([
       exact: true,
     });
     await cell.waitFor();
+    await page.evaluate(() => document.fonts.ready);
     const header = card.getByRole("columnheader", { name: /Maya Chen/ });
     expect(await header.innerText()).toContain("Total Points: -9007199254740991");
     expect(await header.innerText()).toContain("Total Tiebreaker: 9007199254740991");
@@ -67,6 +68,9 @@ it.each([
       const column = await box(header);
       expect(bounds.x).toBeGreaterThanOrEqual(column.x);
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(column.x + column.width);
+      expect(
+        Math.abs(bounds.x + bounds.width / 2 - (column.x + column.width / 2)),
+      ).toBeLessThanOrEqual(0.6);
     }
     const marker = await box(cell.getByText("D", { exact: true }));
     expect(marker.x + marker.width).toBeLessThan(
@@ -77,7 +81,40 @@ it.each([
     expect(await cell.innerText()).toContain("Accumulated Tiebreaker: 9007199254740991");
     expect(await cell.getAttribute("aria-describedby")).toBeTruthy();
     expect(await card.getByRole("row").last().getByRole("cell").allTextContents()).toEqual(["D"]);
+    const upcomingDealer = await box(
+      card.getByRole("row").last().getByRole("cell").getByText("D", { exact: true }),
+    );
+    expect(upcomingDealer.x).toBeCloseTo(marker.x, 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+    await page.evaluate(`(async () => {
+      const { genericGamesApi } = await import("/scorekeeper/src/data/api/genericGames.ts");
+      const { genericRoundsApi } = await import("/scorekeeper/src/data/api/genericRounds.ts");
+      const game = await genericGamesApi.getById(${JSON.stringify(id)});
+      await genericRoundsApi.add({ gameId: game.id, mode: "points",
+        scores: [{ playerId: game.players[0], points: "7", tiebreaker: "-1" }],
+      });
+    })()`);
+    await page.reload();
+    await cell.waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    for (const width of [320, 390, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      const savedDealer = await box(cell.getByText("D", { exact: true }));
+      for (const badge of await card.getByText("D", { exact: true }).all()) {
+        expect((await box(badge)).x).toBeCloseTo(savedDealer.x, 1);
+      }
+      const shortCell = card.getByRole("cell", {
+        name: "Maya Chen, Round 2: 7 Points, -1 Tiebreaker, Dealer",
+        exact: true,
+      });
+      const shortBounds = await box(shortCell);
+      const shortValue = await box(shortCell.getByText("7", { exact: true }));
+      expect(shortValue.x + shortValue.width / 2).toBeCloseTo(
+        shortBounds.x + shortBounds.width / 2,
+        1,
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
   } finally {
     await page.close();
   }
@@ -165,6 +202,118 @@ const modes: Array<{ label: string; settings: GenericGameSettings; metric: strin
     metric: "Passes",
   },
 ];
+
+it.each(
+  modes.flatMap((mode) => [
+    mode,
+    { ...mode, settings: { ...mode.settings, dealer: !mode.settings.dealer } },
+  ]),
+)("centers $label entries with Dealer tracking $settings.dealer without changing table density", async ({
+  settings,
+}) => {
+  for (const playerCount of [1, 2, 7]) {
+    const page = await browser.newPage({
+      viewport: { width: 320, height: 844 },
+      colorScheme: playerCount === 2 ? "dark" : "light",
+      hasTouch: true,
+    });
+    page.setDefaultTimeout(5_000);
+    try {
+      const id = await openGame(
+        page,
+        settings,
+        Array.from({ length: playerCount }, (_, index) => `Player ${index + 1}`),
+      );
+      await saveRounds(page, id, playerCount);
+      await page.evaluate(() => document.fonts.ready);
+      const card = page.getByRole("region", { name: "Scoreboard", exact: true });
+      const cell = card.getByRole("row").nth(1).getByRole("cell").first();
+      const value =
+        settings.mode === "points"
+          ? cell.getByText("-12", { exact: true })
+          : cell.locator("svg").first();
+      const positions: Array<{ width: number; offset: number }> = [];
+      for (const width of [320, 350, 390, 512, 1280]) {
+        await page.setViewportSize({ width, height: 844 });
+        const bounds = await box(cell);
+        const main = await box(value);
+        const center = main.x + main.width / 2;
+        expect(Math.abs(center - (bounds.x + bounds.width / 2))).toBeLessThanOrEqual(0.6);
+        expect(bounds.height).toBe(settings.tiebreaker ? (playerCount === 1 ? 58 : 59) : 44);
+        expect(bounds.width).toBeCloseTo(
+          playerCount === 7
+            ? settings.mode === "points" && settings.dealer
+              ? 73.515625
+              : 70
+            : (Math.min(width, 512) - 32 - 2 - 36) / playerCount,
+          1,
+        );
+        if (settings.mode === "points") {
+          expect(await value.evaluate((element) => getComputedStyle(element).fontSize)).toBe(
+            "16px",
+          );
+        } else {
+          expect(main.width).toBe(16);
+          expect(main.height).toBe(16);
+        }
+        if (settings.tiebreaker) {
+          const secondary = await box(cell.getByText("4", { exact: true }));
+          expect(secondary.x + secondary.width / 2).toBeCloseTo(center, 1);
+        }
+        if (settings.dealer) {
+          const badge = await box(cell.getByText("D", { exact: true }));
+          expect(badge.width).toBe(17);
+          expect(badge.height).toBe(17);
+          expect(badge.x + badge.width).toBeLessThan(main.x);
+          const offset = center - (badge.x + badge.width / 2);
+          positions.push({ width: bounds.width, offset });
+          expect(offset).toBeLessThan(60);
+          if (playerCount === 7) {
+            // Dealer tracking previously reserved 24px on each side of the central value.
+            const outer = badge.x + badge.width / 2 - 12 - (bounds.x + 2);
+            const interior = main.x - (badge.x + badge.width / 2 + 12);
+            expect(outer).toBeGreaterThanOrEqual(0);
+            expect(interior).toBeCloseTo(outer * 2, 0);
+          }
+        }
+        const upcoming = card.getByRole("row").last().getByRole("cell").first();
+        expect((await upcoming.innerText()).trim()).toBe(settings.dealer ? "D" : "");
+        expect((await box(upcoming)).height).toBe(44);
+        if (settings.dealer) {
+          const nextBadge = await box(upcoming.getByText("D", { exact: true }));
+          const savedBadge = await box(cell.getByText("D", { exact: true }));
+          expect(nextBadge.x).toBeCloseTo(savedBadge.x, 1);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      }
+      if (settings.dealer && playerCount === 1) {
+        expect(positions[2].width).toBeGreaterThan(positions[0].width);
+        expect(positions[0].offset).toBeCloseTo(positions[2].offset, 1);
+      }
+      if (settings.dealer && playerCount === 2) {
+        expect(positions[0].offset).toBeLessThan(positions[1].offset);
+        expect(positions[1].offset).toBeLessThan(positions[2].offset);
+        expect(positions[2].offset).toBeCloseTo(positions[3].offset, 1);
+        expect(positions[3].offset).toBeCloseTo(positions[4].offset, 1);
+      }
+      const before = await box(value);
+      const savedBounds = await box(cell);
+      await cell.tap();
+      expect(await box(value)).toEqual(before);
+      expect((await box(cell)).height).toBe(
+        settings.tiebreaker ? (playerCount === 1 ? 97 : 98) : playerCount === 1 ? 65 : 66,
+      );
+      for (const detail of await cell.locator(".scoreboard-extras span:has(> .sr-only)").all()) {
+        const bounds = await box(detail);
+        expect(bounds.x + bounds.width / 2).toBeCloseTo(before.x + before.width / 2, 1);
+      }
+      await cell.tap();
+      expect(await box(cell)).toEqual(savedBounds);
+    } finally {
+      await page.close();
+    }
+  }
+}, 60_000);
 
 it.each([2, 7])("matches the capped header/footer width with %i Players", async (playerCount) => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });

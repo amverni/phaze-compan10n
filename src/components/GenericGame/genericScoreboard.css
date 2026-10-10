@@ -7,6 +7,25 @@
   min-width: 70px;
 }
 
+/* Keep the existing 24px intrinsic allowance on either side when tracking
+   a Dealer, without adding a new column minimum when tracking is off. */
+.generic-scoreboard-entry {
+  --entry-marker-width: 24px;
+}
+
+.generic-scoreboard-entry--without-dealer {
+  --entry-marker-width: 0px;
+}
+
+.generic-scoreboard-entry > .scoreboard-entry__value {
+  min-width: var(--entry-value-width, 0px);
+}
+
+.generic-scoreboard .scoreboard-cell--anchor-top .scoreboard-entry__dealer {
+  top: 0;
+  align-self: start;
+}
+
 /* Structural row controls fill the narrow grid cell, not a floating glass button. */
 .generic-scoreboard-control {
   position: absolute;
