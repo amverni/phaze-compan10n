@@ -228,6 +228,11 @@ body,
   --_g-border: rgba(255, 80, 80, 0.6);
 }
 
+.glass-ready:not(:disabled) {
+  --button-surface-bg: var(--color-pt-blue-500);
+  color: var(--color-white);
+}
+
 button.glass.glass-result:not(.glass-danger):not(.glass-error) {
   box-shadow: var(--_g-shadow), 0 2px 10px rgba(0, 0, 0, 0.24),
     inset 0 -3px 0 rgba(0, 0, 0, 0.22);

@@ -126,6 +126,7 @@ export function CreateGame() {
 
           {/* Start game */}
           <Button
+            variant="ready"
             aria-label="Start"
             className="page-shell-button"
             disabled={!canStartGame}

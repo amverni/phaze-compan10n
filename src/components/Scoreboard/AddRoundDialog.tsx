@@ -284,6 +284,7 @@ export function AddRoundDialog({
 
           <Button
             type="button"
+            variant="ready"
             aria-label="Save round"
             onClick={handleSave}
             disabled={!canSave}
