@@ -5,6 +5,7 @@ import { webkit } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { Game, GameTiebreaker, Player } from "../../types";
+import { expectReadyAction } from "../ui/Button/readyActionTestUtils";
 
 let server: ViteDevServer;
 let browser: Browser;
@@ -96,12 +97,12 @@ it("keeps header buttons centered together with clearance above the slant", asyn
   }
 }, 30_000);
 
-it("matches Save and Cancel icon colors in both themes", async () => {
+it("keeps incomplete and pending Save neutral and highlights ready Save in both themes", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {
     await page.goto(`${appUrl}#/phaseCompan10n/players`);
     await page.getByText("No players yet", { exact: true }).waitFor();
-    const { game } = await seedCompletionGame(page);
+    const { game } = await seedCompletionGame(page, 2);
     await page.goto(`${appUrl}#/phaseCompan10n/game/${game.id}`);
     await page.getByRole("button", { name: "Add round 1", exact: true }).click();
     const dialog = page.getByRole("dialog");
@@ -109,13 +110,57 @@ it("matches Save and Cancel icon colors in both themes", async () => {
     const save = dialog.getByRole("button", { name: "Save round", exact: true });
     for (const colorScheme of ["light", "dark"] as const) {
       await page.emulateMedia({ colorScheme });
-      const cancelColor = await cancel
-        .locator("svg")
-        .evaluate((element) => getComputedStyle(element).color);
-      await expect
-        .poll(() => save.locator("svg").evaluate((element) => getComputedStyle(element).color))
-        .toBe(cancelColor);
+      await expectReadyAction(save, cancel, false);
     }
+    await dialog.getByRole("button", { name: /Round Winner/ }).click();
+    await page.getByRole("option", { name: "Amy Jones", exact: true }).click();
+    await dialog.getByRole("tab", { name: "Bob Stone", exact: true }).click();
+    await dialog.getByRole("button", { name: "Failed", exact: true }).click();
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expectReadyAction(save, cancel, true);
+      expect(await save.locator("svg.lucide-check[aria-hidden=true]").count()).toBe(1);
+      expect(await save.boundingBox()).toMatchObject({ width: 40, height: 40 });
+    }
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const request = indexedDB.open("phase10-db");
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => {
+            const db = request.result;
+            const transaction = db.transaction("games", "readwrite");
+            let locked = true;
+            window.addEventListener(
+              "release-ready-round",
+              () => {
+                locked = false;
+              },
+              { once: true },
+            );
+            transaction.oncomplete = () => db.close();
+            transaction.onabort = () => {
+              db.close();
+              reject(transaction.error);
+            };
+            const hold = () => {
+              if (locked) transaction.objectStore("games").count().onsuccess = hold;
+            };
+            hold();
+            resolve();
+          };
+        }),
+    );
+    await save.click();
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expectReadyAction(save, cancel, false);
+      expect(await cancel.isDisabled()).toBe(true);
+      expect(await save.locator("svg.lucide-loader-circle[aria-hidden=true]").count()).toBe(1);
+    }
+    await page.evaluate(() => window.dispatchEvent(new Event("release-ready-round")));
+    await dialog.waitFor({ state: "detached" });
+    await page.getByRole("button", { name: "Add round 2", exact: true }).waitFor();
   } finally {
     await page.close();
   }

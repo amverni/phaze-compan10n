@@ -5,6 +5,7 @@ import { webkit } from "playwright";
 import { createServer, type ViteDevServer } from "vite";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { GenericGameSettings } from "../../types";
+import { expectReadyAction } from "../ui/Button/readyActionTestUtils";
 
 let server: ViteDevServer;
 let browser: Browser;
@@ -39,6 +40,7 @@ it("replaces Save with a reduced-motion-aware spinner while retaining a failed d
     const close = dialog.getByRole("button", { name: "Close", exact: true });
     const save = dialog.getByRole("button", { name: "Save", exact: true });
     await dialog.getByRole("button", { name: "7", exact: true }).click();
+    await expectReadyAction(save, close, true);
 
     // Hold real storage at the IndexedDB boundary, without replacing the save lifecycle.
     await page.evaluate(
@@ -85,6 +87,10 @@ it("replaces Save with a reduced-motion-aware spinner while retaining a failed d
     const spinner = save.locator("svg[aria-hidden=true]");
     await expect.poll(() => save.isDisabled()).toBe(true);
     expect(await close.isDisabled()).toBe(true);
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expectReadyAction(save, close, false);
+    }
     expect(await save.innerText()).toBe("");
     expect(await save.locator("svg.lucide-check").count()).toBe(0);
     expect(await spinner.count()).toBe(1);
@@ -105,6 +111,7 @@ it("replaces Save with a reduced-motion-aware spinner while retaining a failed d
     expect(await save.isEnabled()).toBe(true);
     expect(await close.isEnabled()).toBe(true);
     expect(await save.locator("svg.lucide-check").count()).toBe(1);
+    await expectReadyAction(save, close, true);
     await save.click();
     await dialog.waitFor({ state: "detached" });
     await page.getByRole("cell", { name: "Maya, Round 1: 7 Points", exact: true }).waitFor();
@@ -162,16 +169,29 @@ it.each([
       expect(await save.locator("svg.lucide-check[aria-hidden=true]").count()).toBe(1);
       for (const colorScheme of ["light", "dark"] as const) {
         await page.emulateMedia({ colorScheme });
-        const closeColor = await close
-          .locator("svg")
-          .evaluate((element) => getComputedStyle(element).color);
-        await expect
-          .poll(() => save.locator("svg").evaluate((element) => getComputedStyle(element).color))
-          .toBe(closeColor);
+        await expectReadyAction(save, close, settings[index].mode !== "singleRoundWinner");
       }
       await page.emulateMedia({ colorScheme: "light" });
 
       const mode = settings[index].mode;
+      if (mode === "points") {
+        const metric = settings[index].tiebreaker ? "Maya Tiebreaker" : "Maya Points";
+        const entry = settings[index].tiebreaker
+          ? dialog.getByRole("button", { name: metric, exact: true })
+          : dialog.getByRole("button", { name: "0", exact: true });
+        await entry.focus();
+        await page.keyboard.type("1.5");
+        await dialog.getByRole("alert").filter({ hasText: "whole number" }).waitFor();
+        for (const colorScheme of ["light", "dark"] as const) {
+          await page.emulateMedia({ colorScheme });
+          await expectReadyAction(save, close, false);
+        }
+        await page.keyboard.press("Delete");
+        await expectReadyAction(save, close, true);
+        if (settings[index].tiebreaker) {
+          await dialog.getByRole("button", { name: "Maya Points", exact: true }).click();
+        }
+      }
       if (mode === "singleRoundWinner") {
         expect(await save.isDisabled()).toBe(true);
         await dialog.getByText("0/1 winner selected", { exact: true }).waitFor();
@@ -182,6 +202,10 @@ it.each([
         await dialog.getByRole("button", { name: "7", exact: true }).click();
       }
       expect(await save.isEnabled()).toBe(true);
+      for (const colorScheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme });
+        await expectReadyAction(save, close, true);
+      }
       await page.evaluate(() =>
         Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
       );
