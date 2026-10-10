@@ -20,7 +20,7 @@ import {
   type ToastHandle,
 } from "../ui";
 import { AddRoundProgressPopover } from "./AddRoundProgressPopover";
-import { getScoreEntryCompletion, isDraftComplete, toRoundScores } from "./addRoundDraft";
+import { getDraftProgress, getScoreEntryCompletion, toRoundScores } from "./addRoundDraft";
 import { RoundResultSection } from "./RoundResultSection";
 import { TiebreakerEntrySection } from "./TiebreakerEntrySection";
 import type { UseAddRoundDraft } from "./useAddRoundDraft";
@@ -64,8 +64,8 @@ export function AddRoundDialog({
     target?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [selectedIndex]);
 
-  const hasWinner = draft.draft.roundWinnerId !== null;
-  const canSave = isDraftComplete(draft.draft, game.settings.tiebreaker) && !addRound.isPending;
+  const progress = getDraftProgress(draft.draft, game.settings.tiebreaker);
+  const canSave = progress.ready && !addRound.isPending;
   const showTiebreakerEntry = game.settings.tiebreaker !== "roundsWon";
   const playerTabColumnCount = Math.max(players.length, 1);
 
@@ -79,7 +79,6 @@ export function AddRoundDialog({
       return;
     }
     const winnerId = draft.draft.roundWinnerId;
-    if (!winnerId) return;
     addRound.mutate(
       { scores, roundWinnerId: winnerId },
       {
@@ -179,6 +178,7 @@ export function AddRoundDialog({
               key="round-winner"
               value={winnerValue}
               onChange={handleWinnerSelect}
+              disabled={progress.winnerRequirement === "disabled"}
               className="w-full min-w-0"
             >
               <SettingListRow
@@ -197,7 +197,7 @@ export function AddRoundDialog({
                     </>
                   ) : (
                     <span className="min-w-0 truncate text-right text-text-secondary">
-                      Choose winner
+                      {progress.winnerRequirement === "disabled" ? "No winner" : "Choose winner"}
                     </span>
                   )}
                 </ListboxButton>
@@ -278,10 +278,8 @@ export function AddRoundDialog({
 
           <AddRoundProgressPopover
             players={players}
-            playerDrafts={draft.draft.players}
+            draft={draft.draft}
             tiebreaker={game.settings.tiebreaker}
-            roundWinnerId={draft.draft.roundWinnerId}
-            hasRoundWinner={hasWinner}
           />
 
           <Button

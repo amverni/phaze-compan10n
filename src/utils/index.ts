@@ -14,6 +14,7 @@ export {
   getProgressAfterScore,
   phaseStatusAdvances,
 } from "./phaseProgress";
+export { getRoundWinnerRequirement } from "./roundWinner";
 export { shuffle } from "./shuffle";
 export {
   formatTiebreakerValue,

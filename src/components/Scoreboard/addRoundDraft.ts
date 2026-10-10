@@ -7,6 +7,7 @@ import type {
   PlayerIdentity,
   RoundScore,
 } from "../../types";
+import { getRoundWinnerRequirement } from "../../utils";
 
 type ManualResult = Extract<PhaseStatus, "failed" | "completed">;
 
@@ -773,17 +774,38 @@ export function areScoreEntriesComplete(
   );
 }
 
-/** Validation: every player is Score Entry Complete, and roundWinnerId points to a completed player. */
+export function getDraftProgress(draft: AddRoundDraft, tiebreaker: GameTiebreaker) {
+  const winnerRequirement = getRoundWinnerRequirement(
+    tiebreaker,
+    draft.players.map((player) => player.result),
+  );
+  const winnerComplete = draft.players.some(
+    (player) => player.playerId === draft.roundWinnerId && player.result === "completed",
+  );
+  const completedPlayers = draft.players.filter(
+    (player) =>
+      getScoreEntryCompletion({ player, tiebreaker, roundWinnerId: draft.roundWinnerId }).complete,
+  ).length;
+  const winnerRequired = winnerRequirement === "required";
+  const completed = completedPlayers + (winnerRequired && winnerComplete ? 1 : 0);
+  const total = draft.players.length + (winnerRequired ? 1 : 0);
+  const validWinner = draft.roundWinnerId === null ? !winnerRequired : winnerComplete;
+
+  return {
+    winnerRequirement,
+    winnerComplete,
+    completed,
+    total,
+    ready: draft.players.length > 0 && completed === total && validWinner,
+  };
+}
+
+/** Every Player is Score Entry Complete and the conditional winner rule is satisfied. */
 export function isDraftComplete(
   draft: AddRoundDraft,
   tiebreaker: GameTiebreaker,
 ): draft is CompleteAddRoundDraft {
-  if (!areScoreEntriesComplete(draft, tiebreaker)) {
-    return false;
-  }
-
-  const roundWinner = draft.players.find((player) => player.playerId === draft.roundWinnerId);
-  return roundWinner?.result === "completed";
+  return getDraftProgress(draft, tiebreaker).ready;
 }
 
 /**
