@@ -19,6 +19,9 @@ beforeAll(async () => {
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
   appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
+  // Keep cold module transforms in the setup budget, not the first flow's timeout.
+  await server.environments.client.warmupRequest("/src/main.tsx");
+  await server.environments.client.waitForRequestsIdle();
   browser = await webkit.launch();
 }, 60_000);
 
@@ -459,6 +462,8 @@ it("keeps incomplete and pending Save neutral and highlights ready Save in both 
 
 it("opens final Standings after a finishing Round and keeps completed snapshot names and colors after saved Players change", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
   try {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
