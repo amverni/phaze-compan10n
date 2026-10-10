@@ -18,6 +18,9 @@ beforeAll(async () => {
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("Missing test server address");
   appUrl = `http://127.0.0.1:${address.port}/scorekeeper/`;
+  // Keep cold module transforms in the setup budget, not the first flow's timeout.
+  await server.environments.client.warmupRequest("/src/main.tsx");
+  await server.environments.client.waitForRequestsIdle();
   browser = await webkit.launch();
 }, 60_000);
 
@@ -123,6 +126,8 @@ it("matches Save and Cancel icon colors in both themes", async () => {
 
 it("opens final Standings after a finishing Round and keeps completed snapshot names and colors after saved Players change", async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  page.setDefaultTimeout(5_000);
+  page.setDefaultNavigationTimeout(30_000);
   try {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -262,7 +267,10 @@ it("offers Pause and Delete before a saved Round, retains a closed draft, and di
     expect(standingsBox.x).toBeGreaterThan(195);
     expect(standingsBox.y).toBeLessThan(422);
     await page.getByRole("button", { name: "Open Phases Card" }).click();
-    await page.getByRole("dialog", { name: "Phases Card" }).waitFor({ state: "attached" });
+    const phasesCard = page.getByRole("dialog", { name: "Phases Card" });
+    await expect
+      .poll(() => phasesCard.evaluate((dialog) => dialog.contains(document.activeElement)))
+      .toBe(true);
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "detached" });
 
@@ -282,6 +290,9 @@ it("offers Pause and Delete before a saved Round, retains a closed draft, and di
     expect(await entry.getByRole("button", { name: /Round Winner/ }).innerText()).toContain(
       "Amy Jones",
     );
+    await expect
+      .poll(() => entry.evaluate((dialog) => dialog.contains(document.activeElement)))
+      .toBe(true);
     await page.keyboard.press("Escape");
     await entry.waitFor({ state: "detached" });
     await finishGame.click();
