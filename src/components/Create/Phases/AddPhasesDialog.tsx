@@ -9,12 +9,10 @@ import { formatPhaseDisplayName } from "../../../utils";
 import {
   Button,
   Dialog,
+  FilterListbox,
   InlineError,
   List,
-  Listbox,
-  ListboxButton,
   ListboxOption,
-  ListboxOptions,
   SearchBar,
 } from "../../ui";
 import { useAddPhase, useGamePhases } from "../CreateGameContext";
@@ -81,7 +79,7 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
     : MELD_TYPE_OPTIONS.filter((m) => meldType.includes(m.value))
         .map((m) => m.label)
         .join(", ");
-  const phaseSetLabel = allPhaseSets.find((ps) => ps.id === phaseSetId)?.name ?? "All sets";
+  const phaseSetLabel = allPhaseSets.find((ps) => ps.id === phaseSetId)?.name ?? "All";
 
   return (
     <Dialog open={open} onClose={onClose} aria-label="Add phases">
@@ -109,33 +107,34 @@ export function AddPhasesDialog({ open, onClose }: AddPhasesDialogProps) {
             Favorites
           </Button>
 
-          <Listbox value={meldType} onChange={setMeldTypes} multiple>
-            <ListboxButton>
-              <span className="text-text-secondary">Type:</span> {meldTypeLabel}
-            </ListboxButton>
-            <ListboxOptions>
-              {MELD_TYPE_OPTIONS.map(({ label, value }) => (
-                <ListboxOption key={value} value={value} selected={meldType.includes(value)}>
-                  {label}
-                </ListboxOption>
-              ))}
-            </ListboxOptions>
-          </Listbox>
+          <FilterListbox
+            value={meldType}
+            onChange={setMeldTypes}
+            multiple
+            label="Type"
+            displayValue={meldTypeLabel}
+          >
+            {MELD_TYPE_OPTIONS.map(({ label, value }) => (
+              <ListboxOption key={value} value={value} selected={meldType.includes(value)}>
+                {label}
+              </ListboxOption>
+            ))}
+          </FilterListbox>
 
           {allPhaseSets.length > 0 && (
-            <Listbox value={phaseSetId} onChange={setPhaseSetId}>
-              <ListboxButton>
-                <span className="text-text-secondary">Set:</span> {phaseSetLabel}
-              </ListboxButton>
-              <ListboxOptions>
-                <ListboxOption value={null}>All sets</ListboxOption>
-                {allPhaseSets.map((ps) => (
-                  <ListboxOption key={ps.id} value={ps.id}>
-                    {ps.name}
-                  </ListboxOption>
-                ))}
-              </ListboxOptions>
-            </Listbox>
+            <FilterListbox
+              value={phaseSetId}
+              onChange={setPhaseSetId}
+              label="Phase Set"
+              displayValue={phaseSetLabel}
+            >
+              <ListboxOption value={null}>All</ListboxOption>
+              {allPhaseSets.map((ps) => (
+                <ListboxOption key={ps.id} value={ps.id}>
+                  {ps.name}
+                </ListboxOption>
+              ))}
+            </FilterListbox>
           )}
         </div>
 
