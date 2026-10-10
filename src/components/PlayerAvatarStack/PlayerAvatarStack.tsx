@@ -100,11 +100,10 @@ export function PlayerAvatarStack({
         {players.map((player, index) => (
           <span
             key={player.id}
-            className="player-identity-motion absolute top-0 left-0 w-full"
+            className="player-identity-motion player-identity-motion--position absolute w-full"
             style={{
-              transform: expanded
-                ? `translate(0px, ${index * (itemSize + EXPANDED_GAP_PX)}px)`
-                : `translate(${Math.min(index, visibleCount) * (itemSize - OVERLAP_PX)}px, 0px)`,
+              top: expanded ? index * (itemSize + EXPANDED_GAP_PX) : 0,
+              left: expanded ? 0 : Math.min(index, visibleCount) * (itemSize - OVERLAP_PX),
               visibility: expanded || index < visibleCount ? "visible" : "hidden",
               opacity: expanded || index < visibleCount ? 1 : 0,
             }}
