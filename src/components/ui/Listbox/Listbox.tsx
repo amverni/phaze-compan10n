@@ -8,7 +8,7 @@ import {
   type ListboxProps,
 } from "@headlessui/react";
 import { Check, ChevronDown } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { mergeClassName } from "../mergeClassName";
 import { interactiveClasses } from "../sharedClasses";
 import "./Listbox.css";
@@ -51,29 +51,9 @@ export function ListboxButton({
   const merged = [variant === "plain" ? plainButtonClasses : buttonClasses, className]
     .filter(Boolean)
     .join(" ");
-  const contentRef = useRef<HTMLSpanElement>(null);
-  const [width, setWidth] = useState<number | undefined>();
-
-  useEffect(() => {
-    if (variant === "plain") return;
-
-    const el = contentRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setWidth(entry.borderBoxSize[0].inlineSize);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [variant]);
-
   return (
-    <HeadlessListboxButton
-      className={merged}
-      style={variant === "default" && width !== undefined ? { width: width + 44 } : undefined}
-    >
-      <span ref={contentRef} className="inline-flex min-w-0 items-center gap-1.5">
-        {children}
-      </span>
+    <HeadlessListboxButton className={merged}>
+      <span className="inline-flex min-w-0 items-center gap-1.5">{children}</span>
       <span className="inline-flex shrink-0">
         <ChevronDown className="size-3.5 text-text-secondary" aria-hidden />
       </span>

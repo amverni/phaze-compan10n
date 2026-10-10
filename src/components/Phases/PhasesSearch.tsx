@@ -3,16 +3,7 @@ import { type ReactNode, type RefObject, useDeferredValue, useRef, useState } fr
 import { phaseSetListOptions } from "../../data/hooks/usePhaseSets";
 import { phaseListOptions } from "../../data/hooks/usePhases";
 import type { MeldType, VisiblePhase } from "../../types";
-import {
-  InlineError,
-  List,
-  Listbox,
-  ListboxButton,
-  ListboxOption,
-  ListboxOptions,
-  ScrollFade,
-  SearchBar,
-} from "../ui";
+import { FilterListbox, InlineError, List, ListboxOption, ScrollFade, SearchBar } from "../ui";
 
 export interface PhasesSearchProps {
   inputRef?: RefObject<HTMLInputElement | null>;
@@ -71,7 +62,7 @@ export function PhasesSearch({
     : MELD_TYPES.filter((m) => meldTypeFilter.includes(m.value))
         .map((m) => m.label)
         .join(", ");
-  const phaseSetLabel = phaseSets?.find((ps) => ps.id === phaseSetFilter)?.name ?? "All sets";
+  const phaseSetLabel = phaseSets?.find((ps) => ps.id === phaseSetFilter)?.name ?? "All";
 
   return (
     <div className="h-full w-full shrink-0 flex flex-col">
@@ -87,33 +78,34 @@ export function PhasesSearch({
 
       {/* Filters row */}
       <div className="flex items-center gap-2 pt-2 flex-wrap">
-        <Listbox value={meldTypeFilter} onChange={setMeldTypes} multiple>
-          <ListboxButton>
-            <span className="text-text-secondary">Type:</span> {meldTypeLabel}
-          </ListboxButton>
-          <ListboxOptions>
-            {MELD_TYPES.map(({ label, value }) => (
-              <ListboxOption key={value} value={value} selected={meldTypeFilter.includes(value)}>
-                {label}
-              </ListboxOption>
-            ))}
-          </ListboxOptions>
-        </Listbox>
+        <FilterListbox
+          value={meldTypeFilter}
+          onChange={setMeldTypes}
+          multiple
+          label="Type"
+          displayValue={meldTypeLabel}
+        >
+          {MELD_TYPES.map(({ label, value }) => (
+            <ListboxOption key={value} value={value} selected={meldTypeFilter.includes(value)}>
+              {label}
+            </ListboxOption>
+          ))}
+        </FilterListbox>
 
         {phaseSets && phaseSets.length > 0 && (
-          <Listbox value={phaseSetFilter} onChange={setPhaseSetFilter}>
-            <ListboxButton>
-              <span className="text-text-secondary">Set:</span> {phaseSetLabel}
-            </ListboxButton>
-            <ListboxOptions>
-              <ListboxOption value={null}>All sets</ListboxOption>
-              {phaseSets.map((ps) => (
-                <ListboxOption key={ps.id} value={ps.id}>
-                  {ps.name}
-                </ListboxOption>
-              ))}
-            </ListboxOptions>
-          </Listbox>
+          <FilterListbox
+            value={phaseSetFilter}
+            onChange={setPhaseSetFilter}
+            label="Phase Set"
+            displayValue={phaseSetLabel}
+          >
+            <ListboxOption value={null}>All</ListboxOption>
+            {phaseSets.map((ps) => (
+              <ListboxOption key={ps.id} value={ps.id}>
+                {ps.name}
+              </ListboxOption>
+            ))}
+          </FilterListbox>
         )}
       </div>
 
