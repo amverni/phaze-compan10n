@@ -4,6 +4,11 @@
   transition-timing-function: ease-in-out;
 }
 
+/* Keep avatar positions on the layout timeline with their container's clipping height. */
+.player-identity-motion--position {
+  transition-property: top, left, opacity, visibility;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .player-identity-motion {
     transition: none;

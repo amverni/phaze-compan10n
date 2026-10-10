@@ -201,6 +201,99 @@ it("coordinates avatar movement, name reveal and row height in both directions w
   }
 }, 30_000);
 
+it("keeps Players inside the phase group throughout running and interrupted transitions", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedCrowdedGame(page);
+    const card = await openCard(page);
+    await settleMotion(card);
+    for (const interrupt of [false, false, true]) {
+      const motion = await card.evaluate(async (element, interrupt) => {
+        const toggle = element.querySelector<HTMLButtonElement>(
+          'button[aria-label="Players on Phase 1"]',
+        );
+        const players = element.querySelector<HTMLElement>('[role="group"]');
+        if (!toggle || !players) throw new Error("Expected the Phase 1 Player group");
+        const avatars = [
+          ...players.querySelectorAll<HTMLElement>('span[style*="background-color"]'),
+        ];
+        if (avatars.length < 2) throw new Error("Expected multiple Players");
+        function sample() {
+          if (!players) throw new Error("Missing Player group");
+          const groupBox = players.getBoundingClientRect();
+          const avatarBoxes = avatars.map((avatar) => avatar.getBoundingClientRect());
+          return {
+            height: groupBox.height,
+            topOverflow: Math.max(0, groupBox.top - Math.min(...avatarBoxes.map((box) => box.top))),
+            bottomOverflow: Math.max(
+              0,
+              Math.max(...avatarBoxes.map((box) => box.bottom)) - groupBox.bottom,
+            ),
+          };
+        }
+        const before = sample();
+        const frames = [];
+        let interrupted = false;
+        toggle.click();
+        const started = performance.now();
+        // Let the real browser timelines run; equalizing animation clocks hides clipping.
+        do {
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          const frame = sample();
+          frames.push(frame);
+          if (
+            interrupt &&
+            !interrupted &&
+            frame.height > before.height + 10 &&
+            players
+              .getAnimations({ subtree: true })
+              .some((animation) => animation.playState === "running")
+          ) {
+            toggle.click();
+            interrupted = true;
+          }
+          if (performance.now() - started > 5_000) {
+            throw new Error("Player expansion did not settle");
+          }
+        } while (
+          frames.length < 2 ||
+          players
+            .getAnimations({ subtree: true })
+            .some((animation) => animation.playState !== "finished")
+        );
+        return { before, frames, after: sample(), interrupted, expanded: toggle.ariaExpanded };
+      }, interrupt);
+      const heights = motion.frames.map((frame) => frame.height);
+      expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(10);
+      expect(motion.interrupted).toBe(interrupt);
+      if (interrupt) {
+        expect(motion.expanded).toBe("false");
+        expect(motion.after.height).toBe(motion.before.height);
+      } else {
+        expect(
+          heights.some(
+            (height) =>
+              height > Math.min(motion.before.height, motion.after.height) + 1 &&
+              height < Math.max(motion.before.height, motion.after.height) - 1,
+          ),
+        ).toBe(true);
+      }
+      for (const frame of motion.frames) {
+        expect(
+          frame.topOverflow,
+          `Player above group at height ${frame.height}`,
+        ).toBeLessThanOrEqual(0.1);
+        expect(
+          frame.bottomOverflow,
+          `Player below group at height ${frame.height}`,
+        ).toBeLessThanOrEqual(0.1);
+      }
+    }
+  } finally {
+    await page.close();
+  }
+}, 30_000);
+
 it("reveals every overflowed Player with bounded names across responsive layouts", async () => {
   const page = await browser.newPage({ viewport: { width: 320, height: 844 } });
   try {
