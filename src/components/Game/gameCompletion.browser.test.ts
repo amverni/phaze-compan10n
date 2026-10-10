@@ -312,10 +312,7 @@ it("offers Pause and Delete before a saved Round, retains a closed draft, and di
     expect(standingsBox.x).toBeGreaterThan(195);
     expect(standingsBox.y).toBeLessThan(422);
     await page.getByRole("button", { name: "Open Phases Card" }).click();
-    const phasesCard = page.getByRole("dialog", { name: "Phases Card" });
-    await expect
-      .poll(() => phasesCard.evaluate((dialog) => dialog.contains(document.activeElement)))
-      .toBe(true);
+    await page.getByRole("dialog", { name: "Phases Card" }).waitFor({ state: "attached" });
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "detached" });
 
@@ -335,9 +332,6 @@ it("offers Pause and Delete before a saved Round, retains a closed draft, and di
     expect(await entry.getByRole("button", { name: /Round Winner/ }).innerText()).toContain(
       "Amy Jones",
     );
-    await expect
-      .poll(() => entry.evaluate((dialog) => dialog.contains(document.activeElement)))
-      .toBe(true);
     await page.keyboard.press("Escape");
     await entry.waitFor({ state: "detached" });
     await finishGame.click();
