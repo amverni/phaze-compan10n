@@ -147,7 +147,7 @@ _Avoid_: Completed player, done player
 ### Results and tiebreakers
 
 **Round Winner**:
-The player who completed their phase in that round and went out first.
+The Player who completed their Phase in a Phase 10 Round and went out first. A Round may have an unrecorded Round Winner; when every Active Player takes a Round Skip or Sits Out, there is no Round Winner.
 _Avoid_: Round leader
 
 **Phase 10 Game Winner**:
@@ -178,6 +178,9 @@ _Avoid_: Non-points tiebreaker
 **Fewest Wilds**:
 A tiebreaker that compares players by the number of wild cards used, where fewer is better.
 _Avoid_: Low points (for this rule)
+
+**Rounds Won**:
+A Phase 10 Tiebreaker that compares Players by their number of recorded Round wins, where more is better.
 
 ### Round status vocabulary
 
